@@ -115,8 +115,11 @@ const EquipmentDetails: React.FC = () => {
       }
 
       const data = await response.json();
-      setDetails(data[type]); // 'asset' or 'stock' key
-      setLogs(data.assetLogs || []);
+      console.log('EquipmentDetails API response:', data);
+      // API może zwracać dane pod kluczem type (asset/stock) lub bezpośrednio
+      const itemData = data[type] || data;
+      setDetails(itemData);
+      setLogs(data.assetLogs || data.logs || []);
     } catch (err: any) {
       showSnackbar('error', err.message || 'Wystąpił błąd podczas pobierania szczegółów sprzętu');
     } finally {
@@ -139,18 +142,12 @@ const EquipmentDetails: React.FC = () => {
 
   const handleDelete = async () => {
     if (!id) return;
-    
+
     try {
       setIsDeleting(true);
-      const success = await deleteAsset(Number(id));
-      if (success) {
-        navigate('/list'); // Przekieruj do listy sprzętu tylko po pomyślnym usunięciu
-      } else {
-        showSnackbar('error', 'Nie udało się usunąć zasobu. Spróbuj ponownie później.');
-        setTimeout(() => {
-          closeSnackbar();
-        }, 5000);
-      }
+      await deleteAsset(Number(id));
+      // Jeśli nie rzucono błędu, usunięcie się powiodło
+      navigate('/list');
     } catch (err: any) {
       if (err.message && typeof err.message === 'object') {
         if (err.message.details) {

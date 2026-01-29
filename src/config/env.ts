@@ -39,19 +39,6 @@ const getEnvVar = (key: string, defaultValue?: string): string => {
 };
 
 /**
- * Pobiera wymaganą zmienną środowiskową (rzuca błąd jeśli brak)
- */
-const getRequiredEnvVar = (key: string): string => {
-  const value = import.meta.env[key];
-
-  if (value === undefined || value === '') {
-    throw new Error(`Required environment variable ${key} is not defined`);
-  }
-
-  return value;
-};
-
-/**
  * Pobiera zmienną środowiskową jako number
  */
 const getEnvNumber = (key: string, defaultValue: number): number => {
@@ -69,19 +56,6 @@ const getEnvNumber = (key: string, defaultValue: number): number => {
   }
 
   return parsed;
-};
-
-/**
- * Pobiera zmienną środowiskową jako boolean
- */
-const getEnvBoolean = (key: string, defaultValue: boolean): boolean => {
-  const value = import.meta.env[key];
-
-  if (value === undefined || value === '') {
-    return defaultValue;
-  }
-
-  return value === 'true' || value === '1';
 };
 
 /**

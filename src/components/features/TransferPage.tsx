@@ -218,7 +218,7 @@ const TransferPage: React.FC = () => {
         return;
       }
 
-      setValue(`items.${index}.id`, response.id);
+      setValue(`items.${index}.id`, String(response.id));
       setValue(`items.${index}.status`, 'success' as ValidationStatus);
       setValue(`items.${index}.category`, response.category);
       

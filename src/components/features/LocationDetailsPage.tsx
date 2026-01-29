@@ -31,10 +31,11 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { AppSnackbar } from '../ui/AppSnackbar';
 
+// Lokalne typy dla UI komponentu
 interface Asset {
   id: number;
   serial: string;
-  location: Record<string, any>;
+  location: Record<string, unknown>;
   category: {
     id: number;
     name: string;
@@ -44,7 +45,7 @@ interface Asset {
   };
   status: 'in_stock' | 'in_transit';
   pyrcode: string;
-  accessories: null | any[];
+  accessories: null | unknown[];
 }
 
 interface StockItem {
@@ -56,11 +57,15 @@ interface StockItem {
     pyr_id: string;
     type: string;
   };
-  location: Record<string, any>;
+  location: Record<string, unknown>;
   quantity: number;
 }
 
-interface LocationDetails {
+interface LocationDetailsData {
+  id?: number;
+  name?: string;
+  details?: string | null;
+  pavilion?: string | null;
   assets: Asset[] | null;
   stock_items: StockItem[] | null;
 }
@@ -74,7 +79,7 @@ const LocationDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [locationDetails, setLocationDetails] = useState<LocationDetails | null>(null);
+  const [locationDetails, setLocationDetails] = useState<LocationDetailsData | null>(null);
   const { locations, loading: locationsLoading, error: locationsError, refetch: fetchLocations } = useLocations();
   const [selectedItems, setSelectedItems] = useState<SelectedItems>({
     assetIds: [],
@@ -96,7 +101,8 @@ const LocationDetailsPage: React.FC = () => {
       console.log('Rozpoczynam pobieranie szczegółów lokalizacji dla ID:', id);
       const data = await getLocationDetails(Number(id));
       console.log('Pobrano dane lokalizacji:', data);
-      setLocationDetails(data);
+      // Cast API response to local type (API returns more generic structure)
+      setLocationDetails(data as unknown as LocationDetailsData);
       setLocationName(data.name);
       setLocationDetailsText(data.details || 'Brak szczegółów');
       setLocationPavilion(data.pavilion || 'Brak pawilonu');

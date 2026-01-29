@@ -1,134 +1,78 @@
-import { getApiUrl } from '../config/api';
+/**
+ * Serwis API dla zasobów (assets/sprzętu)
+ */
 
-export const fetchAssetByPyrCode = async (pyrCode: string) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl(`/assets/pyrcode/${pyrCode}`), {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+import { apiClient } from './apiClient';
+import type {
+  Asset,
+  AssetValidation,
+  CreateAssetPayload,
+  BulkAddAssetPayload,
+  BulkAddAssetItem,
+  BulkAddAssetsResponse,
+  AddAssetWithoutSerialPayload,
+} from '../types/asset.types';
 
-  if (!response.ok) {
-    const errorResponse = await response.json();
-    throw new Error(errorResponse.error || 'Asset validation failed.');
-  }
+// ============================================================================
+// Asset CRUD
+// ============================================================================
 
-  return response.json();
+/**
+ * Pobiera listę wszystkich zasobów
+ */
+export const getAssetsAPI = () => apiClient.get<Asset[]>('/assets');
+
+/**
+ * Pobiera zasób po kodzie PYR
+ */
+export const fetchAssetByPyrCode = (pyrCode: string) =>
+  apiClient.get<AssetValidation>(`/assets/pyrcode/${pyrCode}`);
+
+/**
+ * Tworzy nowy zasób
+ */
+export const createAssetAPI = (payload: CreateAssetPayload) =>
+  apiClient.post<Asset>('/assets', payload);
+
+/**
+ * Usuwa zasób
+ */
+export const deleteAsset = (assetId: number) =>
+  apiClient.delete<void>(`/assets/${assetId}`);
+
+// ============================================================================
+// Bulk Operations
+// ============================================================================
+
+/**
+ * Masowe dodawanie zasobów (z transformacją formatu)
+ */
+export const bulkAddAssetsAPI = (assets: BulkAddAssetItem[]) => {
+  // Transformacja do formatu API
+  const payload: BulkAddAssetPayload = {
+    serials: assets.map((asset) => asset.serial),
+    category_id: assets[0].category_id,
+    origin: assets[0].origin,
+  };
+
+  return apiClient.post<BulkAddAssetsResponse>('/assets/bulk', payload);
 };
 
-interface BulkAddAssetRequest {
-  serial: string;
-  category_id: number;
-  origin: string;
+/**
+ * Masowe dodawanie zasobów (bezpośredni format API)
+ */
+export const createBulkAssetsAPI = (payload: BulkAddAssetPayload) =>
+  apiClient.post<BulkAddAssetsResponse>('/assets/bulk', payload);
+
+/**
+ * Odpowiedź z API dla dodawania zasobów bez numeru seryjnego
+ */
+interface AddAssetsWithoutSerialResponse {
+  created: Asset[];
 }
 
-export const bulkAddAssetsAPI = async (assets: BulkAddAssetRequest[]): Promise<any> => {
-  try {
-    const token = localStorage.getItem('token');
-    
-    // Przygotowanie danych w prawidłowym formacie
-    const payload = {
-      serials: assets.map(asset => asset.serial),
-      category_id: assets[0].category_id,
-      origin: assets[0].origin
-    };
-    
-    const response = await fetch(getApiUrl('/assets/bulk'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      if (error.errors) {
-        throw error;
-      }
-      throw new Error(error.message || 'Wystąpił błąd podczas dodawania zasobów');
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const deleteAsset = async (assetId: number): Promise<boolean> => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(getApiUrl(`/assets/${assetId}`), {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Wystąpił błąd podczas usuwania zasobu');
-    }
-
-    return response.status === 200;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getAssetsAPI = async () => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl('/assets'), {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error('Failed to fetch assets');
-  return response.json();
-};
-
-export const createAssetAPI = async (payload: any) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl('/assets'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) throw new Error('Failed to create asset');
-  return response.json();
-};
-
-export const createBulkAssetsAPI = async (payload: any) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl('/assets/bulk'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) throw new Error('Failed to create bulk assets');
-  return response.json();
-};
-
-export const addAssetsWithoutSerialAPI = async (payload: {
-  quantity: number;
-  category_id: number;
-  origin: string;
-}) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl('/assets/without-serial'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Nie udało się dodać sprzętu bez numeru seryjnego');
-  }
-  return response.json();
-};
+/**
+ * Dodawanie zasobów bez numeru seryjnego
+ */
+export const addAssetsWithoutSerialAPI = (payload: AddAssetWithoutSerialPayload) =>
+  apiClient.post<AddAssetsWithoutSerialResponse>('/assets/without-serial', payload);

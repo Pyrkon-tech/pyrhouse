@@ -1,6 +1,6 @@
 import { useTheme } from '@mui/material/styles';
 import { useMemo } from 'react';
-import { designTokens, createThemeTokens } from '../theme/designTokens';
+import { createThemeTokens } from '../theme/designTokens';
 import { SxProps, Theme } from '@mui/material';
 
 export interface StyleConfig {

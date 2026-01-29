@@ -172,7 +172,7 @@ export const getNavRoutes = (userRole?: string): RouteConfig[] => {
   return allRoutes.filter(route => {
     if (!route.showInNav) return false;
     if (route.requiredRoles && userRole) {
-      return route.requiredRoles.includes(userRole);
+      return route.requiredRoles.includes(userRole as 'admin' | 'moderator');
     }
     return true;
   });

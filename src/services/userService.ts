@@ -1,76 +1,46 @@
-import { getApiUrl } from '../config/api';
+/**
+ * Serwis API dla użytkowników
+ */
 
-export const getUsersAPI = async () => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl('/users'), {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  
-  if (!response.ok) {
-    throw new Error('Nie udało się pobrać listy użytkowników');
-  }
-  
-  return response.json();
-};
+import { apiClient } from './apiClient';
+import type { User, LoginResponse, RegisterResponse } from '../types/user.types';
 
-export const addUserPointsAPI = async (userId: number, points: number) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl(`/users/${userId}/points`), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ points }),
-  });
+// ============================================================================
+// Auth (publiczne endpointy)
+// ============================================================================
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Nie udało się zaktualizować punktów użytkownika');
-  }
+/**
+ * Logowanie użytkownika
+ */
+export const loginUser = (username: string, password: string) =>
+  apiClient.post<LoginResponse>('/users/login', { username, password }, { skipAuth: true });
 
-  return response.json();
-}; 
+/**
+ * Rejestracja użytkownika
+ */
+export const registerUser = (username: string, password: string, fullname: string) =>
+  apiClient.post<RegisterResponse>(
+    '/users/register',
+    { username, password, fullname },
+    { skipAuth: true }
+  );
 
-export const registerUser = async (username: string, password: string, fullname: string) => {
-  const response = await fetch(getApiUrl('/users/register'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      username,
-      password,
-      fullname,
-    }),
-  });
+// ============================================================================
+// User Management (wymagają autoryzacji)
+// ============================================================================
 
-  const data = await response.json();
+/**
+ * Pobiera listę wszystkich użytkowników
+ */
+export const getUsersAPI = () => apiClient.get<User[]>('/users');
 
-  if (!response.ok) {
-    throw new Error(data.message || 'Błąd rejestracji');
-  }
+/**
+ * Pobiera pojedynczego użytkownika
+ */
+export const getUserAPI = (userId: number) => apiClient.get<User>(`/users/${userId}`);
 
-  return data;
-};
-
-export const loginUser = async (username: string, password: string) => {
-  const response = await fetch(getApiUrl('/users/login'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      username,
-      password,
-    }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Błąd logowania');
-  }
-
-  return data;
-}; 
+/**
+ * Dodaje punkty użytkownikowi
+ */
+export const addUserPointsAPI = (userId: number, points: number) =>
+  apiClient.post<User>(`/users/${userId}/points`, { points });

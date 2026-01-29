@@ -50,6 +50,10 @@ src/
 | `src/routes/routes.ts` | Definicje tras |
 | `src/hooks/useStyles.ts` | Hook do stylowania |
 | `src/hooks/useAuth.ts` | Autentykacja i walidacja tokenu |
+| `src/services/apiClient.ts` | **NEW** Centralny klient API |
+| `src/config/env.ts` | **NEW** Konfiguracja zmiennych środowiskowych |
+| `src/context/NotificationContext.tsx` | **NEW** Centralne powiadomienia |
+| `src/types/index.ts` | **NEW** Centralne eksporty typów |
 
 ## Routing
 
@@ -75,11 +79,17 @@ src/
 ## Design System
 
 ### Design Tokens (`designTokens.ts`)
-- **Kolory**: primary (#ff9800), secondary (#e91e63), status colors
+- **Kolory**: primary (#ff9800 - pomarańczowy), secondary (#e91e63)
 - **Spacing**: xs (0.25rem) do 4xl (6rem)
 - **Border Radius**: none do full (9999px)
 - **Shadows**: sm do 2xl
 - **Typography**: Roboto + Cinzel
+
+### Planowane zmiany UI/UX (TODO)
+- Zmiana primary na indigo/navy (#3949ab) - lepszy kontrast w dark mode
+- Pomarańczowy jako accent color
+- Dedykowane style dla tabel (zebra striping, hover states)
+- Subtelne gradienty w nagłówkach/kartach
 
 ### Użycie stylów
 ```typescript
@@ -99,9 +109,48 @@ const { commonStyles } = useStyles();
 
 ## API
 
-- Base URL: `VITE_API_BASE_URL`
+- Base URL: `VITE_API_BASE_URL` (dostęp przez `env.API_BASE_URL`)
 - Auth: Bearer token w Authorization header
 - Services: transferService, locationService, assetService, userService
+
+### Nowy sposób (zalecany) - apiClient
+```typescript
+import { apiClient, ApiError } from '../services/apiClient';
+
+// GET
+const data = await apiClient.get<User>('/users/1');
+
+// POST
+const result = await apiClient.post<Transfer>('/transfers', payload);
+
+// Error handling
+try {
+  await apiClient.post('/endpoint', data);
+} catch (error) {
+  if (error instanceof ApiError && error.isUnauthorized()) {
+    // redirect to login
+  }
+}
+```
+
+### Status migracji do apiClient
+**Zmigrowane:**
+- transferService.ts (kompletnie)
+- assetService.ts (kompletnie)
+
+**Do migracji (~20 plików):**
+- Hooks: useCategories, useStocks, useLocations, useTransfers, useDutySchedule, useServiceDeskComments
+- Komponenty: EquipmentDetails, UserDetailsPage, List, Home, QuestBoardPage, ServiceDeskPage
+- Formularze: AddAssetForm, AddStockForm, LoginForm
+
+### Stary sposób (legacy - do migracji)
+```typescript
+import { getApiUrl, getAuthHeaders } from '../config/api';
+
+const response = await fetch(getApiUrl('/endpoint'), {
+  headers: getAuthHeaders(),
+});
+```
 
 ## Konwencje kodowania
 
@@ -122,6 +171,18 @@ const { commonStyles } = useStyles();
 - `useStorage` - localStorage/sessionStorage
 - Domenowe: useTransfers, useLocations, useCategories, etc.
 
+### Cache invalidation pattern (useCategories)
+Hook `useCategories` używa event-based pattern do synchronizacji między komponentami:
+```typescript
+// Po dodaniu/usunięciu/edycji kategorii:
+localStorage.removeItem(CACHE_KEY);        // Inwalidacja cache
+notifyCategoriesChanged();                  // Powiadom inne komponenty
+
+// Inne komponenty nasłuchują:
+window.addEventListener('categories_changed', () => fetchCategories(true));
+```
+Ten wzorzec można zastosować do innych hooków z cache'owaniem.
+
 ## Environment Variables
 
 ```env
@@ -130,6 +191,23 @@ VITE_API_TIMEOUT=30000
 VITE_APP_NAME=PyrHouse
 VITE_ENVIRONMENT=dev|prod
 ```
+
+## Ostatnie naprawy (2025-01)
+
+### useCategories - cache invalidation
+- **Problem**: Nowe kategorie nie były widoczne w innych komponentach bez odświeżenia
+- **Rozwiązanie**: Event-based pattern z `categories_changed` event
+- **Pliki**: `src/hooks/useCategories.ts`
+
+### EquipmentDetails - response format
+- **Problem**: API zwraca dane bezpośrednio, nie pod kluczem `asset/stock`
+- **Rozwiązanie**: Fallback `const itemData = data[type] || data;`
+- **Pliki**: `src/components/features/EquipmentDetails.tsx`
+
+### TypeScript errors po refaktoringu
+- Naprawiono ~15 błędów typów w: Card, Container, Button, App, routes
+- Dodano `TransferStatus = 'completed'` do typów
+- Naprawiono `CreateTransferPayload` format
 
 ## Powiązana dokumentacja
 
@@ -186,10 +264,28 @@ Po zakończeniu zadania sprawdź:
 2. Rozszerz `commonStyles` w `useStyles.ts` jeśli potrzeba
 3. Nigdy nie używaj hardkodowanych wartości kolorów/spacing
 
-### Dodawanie API call
-1. Dodaj funkcję w odpowiednim service (`services/*.ts`)
-2. Użyj `getAuthHeaders()` dla autentykacji
-3. Obsłuż błędy z odpowiednimi komunikatami
+### Dodawanie API call (nowy sposób)
+1. Użyj `apiClient` z `src/services/apiClient.ts`
+2. Dodaj typy w `src/types/`
+3. Obsłuż błędy z `ApiError`
+
+```typescript
+import { apiClient } from '../services/apiClient';
+import type { MyType } from '../types';
+
+export const getMyDataAPI = () => apiClient.get<MyType>('/endpoint');
+export const createMyDataAPI = (data: CreatePayload) =>
+  apiClient.post<MyType>('/endpoint', data);
+```
+
+### Powiadomienia
+```typescript
+import { useNotification } from '../context/NotificationContext';
+
+const { showSuccess, showError } = useNotification();
+showSuccess('Zapisano!');
+showError('Wystąpił błąd');
+```
 
 ### Testowanie
 - Framework: Vitest + React Testing Library

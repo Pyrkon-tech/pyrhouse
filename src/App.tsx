@@ -20,7 +20,7 @@ const routerFutureConfig = {
 };
 
 // Komponent dla chronionych tras
-const ProtectedRouteWrapper = ({ children }: { children: React.ReactNode }) => (
+const ProtectedRouteWrapper = () => (
   <PrivateRoute>
     <Layout>
       <Outlet />
@@ -29,12 +29,12 @@ const ProtectedRouteWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 // Komponent dla tras z wymaganą rolą
-const RoleProtectedRoute = ({ 
-  children, 
-  requiredRoles 
-}: { 
+const RoleProtectedRoute = ({
+  children,
+  requiredRoles
+}: {
   children: React.ReactNode;
-  requiredRoles: string[];
+  requiredRoles: ('admin' | 'moderator')[];
 }) => (
   <RequireRole allowed={requiredRoles}>
     {children}
@@ -76,7 +76,7 @@ function App() {
           ))}
 
           {/* Chronione trasy */}
-          <Route path="/" element={<ProtectedRouteWrapper><Outlet /></ProtectedRouteWrapper>}>
+          <Route path="/" element={<ProtectedRouteWrapper />}>
             {protectedRoutes.map((route) => (
               <Route
                 key={route.path}

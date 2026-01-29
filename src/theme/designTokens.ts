@@ -202,4 +202,4 @@ export const createThemeTokens = (theme: Theme) => ({
       strong: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
     },
   },
-}); ł
+});

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getApiUrl } from '../config/api';
 
 // Cache configuration
 const CACHE_KEY = 'categories_cache';
 const CACHE_EXPIRY = 60 * 1000; // 1 minute
+const CATEGORIES_CHANGED_EVENT = 'categories_changed';
 
 interface CacheData {
   data: Category[];
@@ -31,16 +32,18 @@ export const useCategories = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (forceRefresh = false) => {
     try {
-      // Check cache first
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      if (cachedData) {
-        const { data, timestamp } = JSON.parse(cachedData) as CacheData;
-        if (Date.now() - timestamp < CACHE_EXPIRY) {
-          setCategories(data);
-          setLoading(false);
-          return;
+      // Check cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+          const { data, timestamp } = JSON.parse(cachedData) as CacheData;
+          if (Date.now() - timestamp < CACHE_EXPIRY) {
+            setCategories(data);
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -50,13 +53,13 @@ export const useCategories = () => {
       });
       if (!response.ok) throw new Error('Failed to fetch categories');
       const data = await response.json();
-      
+
       // Update cache
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         data,
         timestamp: Date.now()
       }));
-      
+
       setCategories(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -78,7 +81,10 @@ export const useCategories = () => {
       });
       if (!response.ok) throw new Error('Failed to create category');
       const data = await response.json();
+      // Inwalidacja cache'u żeby inne komponenty dostały świeże dane
+      localStorage.removeItem(CACHE_KEY);
       setCategories(prev => [...prev, data]);
+      notifyCategoriesChanged();
       return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -121,8 +127,8 @@ export const useCategories = () => {
       localStorage.removeItem(CACHE_KEY);
       // Aktualizacja stanu lokalnego
       setCategories(prev => prev.map(cat => cat.id === id ? data : cat));
-      // Pobranie świeżych danych z serwera
-      await fetchCategories();
+      // Powiadom inne komponenty o zmianie
+      notifyCategoriesChanged();
       return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -130,8 +136,23 @@ export const useCategories = () => {
     }
   };
 
+  // Nasłuchuj na zmiany kategorii z innych komponentów
   useEffect(() => {
+    const handleCategoriesChanged = () => {
+      fetchCategories(true); // Force refresh
+    };
+
+    window.addEventListener(CATEGORIES_CHANGED_EVENT, handleCategoriesChanged);
     fetchCategories();
+
+    return () => {
+      window.removeEventListener(CATEGORIES_CHANGED_EVENT, handleCategoriesChanged);
+    };
+  }, []);
+
+  // Powiadom inne komponenty o zmianie kategorii
+  const notifyCategoriesChanged = useCallback(() => {
+    window.dispatchEvent(new Event(CATEGORIES_CHANGED_EVENT));
   }, []);
 
   const addCategory = async (payload: AddCategoryPayload) => {
@@ -157,7 +178,10 @@ export const useCategories = () => {
       }
 
       const newCategory: Category = await response.json();
+      // Inwalidacja cache'u żeby inne komponenty dostały świeże dane
+      localStorage.removeItem(CACHE_KEY);
       setCategories((prev) => [...prev, newCategory]);
+      notifyCategoriesChanged();
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
     } finally {
@@ -202,6 +226,7 @@ export const useCategories = () => {
       // Inwalidacja cache'u
       localStorage.removeItem(CACHE_KEY);
       setCategories((prev) => prev.filter((category) => category.id !== id));
+      notifyCategoriesChanged();
     } catch (err: any) {
       // Obsługa obiektu błędu z message i details
       if (err && typeof err === 'object' && 'message' in err) {

@@ -2,9 +2,13 @@ import React from 'react';
 import { Paper, PaperProps, styled } from '@mui/material';
 import { designTokens } from '../../../theme/designTokens';
 
-export interface CardProps extends PaperProps {
-  variant?: 'default' | 'elevated' | 'outlined' | 'interactive';
-  padding?: 'none' | 'sm' | 'md' | 'lg';
+// Custom types to avoid conflict with PaperProps variant
+type CardVariant = 'default' | 'elevated' | 'outlined' | 'interactive';
+type CardPadding = 'none' | 'sm' | 'md' | 'lg';
+
+export interface CardProps extends Omit<PaperProps, 'variant'> {
+  variant?: CardVariant;
+  padding?: CardPadding;
   hover?: boolean;
 }
 
@@ -12,21 +16,21 @@ const StyledCard = styled(Paper, {
   shouldForwardProp: (prop) => !['variant', 'padding', 'hover'].includes(prop as string),
 })<CardProps>(({ theme, variant = 'default', padding = 'md', hover = false }) => {
   const tokens = designTokens;
-  
+
   const baseStyles = {
     borderRadius: tokens.borderRadius.lg,
     transition: tokens.transitions.base,
     overflow: 'hidden' as const,
   };
 
-  const paddingStyles = {
+  const paddingStyles: Record<CardPadding, object> = {
     none: { padding: 0 },
     sm: { padding: tokens.spacing.md },
     md: { padding: tokens.spacing.lg },
     lg: { padding: tokens.spacing.xl },
   };
 
-  const variantStyles = {
+  const variantStyles: Record<CardVariant, object> = {
     default: {
       backgroundColor: theme.palette.background.paper,
       boxShadow: tokens.shadows.sm,
@@ -54,10 +58,13 @@ const StyledCard = styled(Paper, {
     },
   };
 
+  const v = variant as CardVariant;
+  const p = padding as CardPadding;
+
   return {
     ...baseStyles,
-    ...paddingStyles[padding],
-    ...variantStyles[variant],
+    ...paddingStyles[p],
+    ...variantStyles[v],
   };
 });
 
@@ -68,13 +75,10 @@ export const Card: React.FC<CardProps> = ({
   hover = false,
   ...props
 }) => {
+  // Use type assertion to bypass PaperProps variant conflict
+  const cardProps = { variant, padding, hover, ...props } as unknown as PaperProps & CardProps;
   return (
-    <StyledCard
-      variant={variant}
-      padding={padding}
-      hover={hover}
-      {...props}
-    >
+    <StyledCard {...cardProps}>
       {children}
     </StyledCard>
   );

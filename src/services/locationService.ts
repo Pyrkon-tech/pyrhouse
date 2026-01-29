@@ -1,157 +1,106 @@
-import { Location } from '../models/Location';
-import { getApiUrl } from '../config/api';
+/**
+ * Serwis API dla lokalizacji
+ */
 
-interface LocationDetailsResponse {
-  pavilion: string | null;
-  id: number;
-  name: string;
-  details: string | null;
-  assets: any[];
-  stock_items: any[];
-}
+import { apiClient } from './apiClient';
+import { env } from '../config/env';
+import type {
+  Location,
+  LocationDetails,
+  MapPosition,
+  CreateLocationPayload,
+  UpdateLocationPayload,
+  LocationAsset,
+  LocationStockItem,
+} from '../types/location.types';
 
-export const getLocationDetails = async (locationId: number): Promise<LocationDetailsResponse> => {
-  const token = localStorage.getItem('token');
-  
-  console.log('Pobieranie szczegółów lokalizacji:', getApiUrl(`/locations/${locationId}`));
-  
-  // Pobieranie szczegółów lokalizacji
-  const locationResponse = await fetch(
-    getApiUrl(`/locations/${locationId}`),
-    {
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-    }
-  );
+// ============================================================================
+// Location CRUD
+// ============================================================================
 
-  if (!locationResponse.ok) {
-    console.error('Błąd podczas pobierania szczegółów lokalizacji:', locationResponse.status);
-    throw new Error('Nie udało się pobrać danych lokalizacji');
-  }
+/**
+ * Pobiera szczegóły lokalizacji wraz z assetami
+ */
+export const getLocationDetails = async (locationId: number): Promise<LocationDetails> => {
+  // Równoległe pobieranie danych lokalizacji i assetów
+  const [locationData, assetsData] = await Promise.all([
+    apiClient.get<Location>(`/locations/${locationId}`),
+    apiClient.get<{ assets: LocationAsset[]; stock_items: LocationStockItem[] }>(
+      `/locations/${locationId}/assets`
+    ),
+  ]);
 
-  const locationData = await locationResponse.json();
-  console.log('Otrzymano dane lokalizacji:', locationData);
-  
-  // Pobieranie assetów lokalizacji
-  console.log('Pobieranie assetów lokalizacji:', getApiUrl(`/locations/${locationId}/assets`));
-  
-  const assetsResponse = await fetch(
-    getApiUrl(`/locations/${locationId}/assets`),
-    {
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-    }
-  );
-
-  if (!assetsResponse.ok) {
-    console.error('Błąd podczas pobierania assetów lokalizacji:', assetsResponse.status);
-    throw new Error('Nie udało się pobrać assetów lokalizacji');
-  }
-
-  const assetsData = await assetsResponse.json();
-  console.log('Otrzymano dane assetów:', assetsData);
-  
   return {
     ...locationData,
     assets: assetsData.assets || [],
-    stock_items: assetsData.stock_items || []
+    stock_items: assetsData.stock_items || [],
   };
 };
 
-export const deleteLocation = async (id: number): Promise<void> => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl(`/locations/${id}`), {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    let errorMessage = 'Nie udało się usunąć lokalizacji';
-    let errorDetails = '';
-    let errorResponse;
-    try {
-      errorResponse = await response.json();
-    } catch (e) {}
-    if (response.status === 409) {
-      errorMessage = 'Nie można usunąć lokalizacji, ponieważ jest powiązana z zasobami lub innymi danymi.';
-      if (errorResponse?.details) {
-        errorDetails = errorResponse.details;
-      }
-    } else if (response.status === 500) {
-      errorMessage = 'Wystąpił błąd serwera podczas usuwania lokalizacji.';
-    } else if (errorResponse?.error) {
-      errorMessage = errorResponse.error;
-    }
-    throw { message: errorMessage, details: errorDetails };
-  }
-};
+/**
+ * Tworzy nową lokalizację
+ */
+export const createLocation = (data: CreateLocationPayload) =>
+  apiClient.post<Location>('/locations', data);
 
-export const updateLocation = async (id: number, data: Partial<Location>): Promise<Location> => {
-  const token = localStorage.getItem('token');
-  
-  // Przygotuj obiekt z tylko tymi polami, które zostały przekazane
-  const updateData: Partial<Location> = {};
+/**
+ * Aktualizuje lokalizację
+ */
+export const updateLocation = (id: number, data: UpdateLocationPayload) => {
+  // Filtruj tylko zdefiniowane pola
+  const updateData: UpdateLocationPayload = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.details !== undefined) updateData.details = data.details;
   if (data.pavilion !== undefined) updateData.pavilion = data.pavilion;
   if (data.lat !== undefined) updateData.lat = data.lat;
   if (data.lng !== undefined) updateData.lng = data.lng;
 
-  const response = await fetch(getApiUrl(`/locations/${id}`), {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(updateData),
-  });
-  
-  if (!response.ok) {
-    throw new Error('Nie udało się zaktualizować lokalizacji');
-  }
-  
-  return response.json();
+  return apiClient.patch<Location>(`/locations/${id}`, updateData);
 };
 
-export const createLocation = async (data: Omit<Location, 'id'>): Promise<Location> => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(getApiUrl('/locations'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+/**
+ * Usuwa lokalizację
+ */
+export const deleteLocation = (id: number) =>
+  apiClient.delete<void>(`/locations/${id}`);
+
+// ============================================================================
+// Location Tracking
+// ============================================================================
+
+/**
+ * Aktualizuje lokalizację transferu
+ */
+export const updateTransferLocationAPI = (transferId: number, location: MapPosition) =>
+  apiClient.patch<void>(`/transfers/${transferId}/delivery-location`, {
+    delivery_location: {
+      ...location,
+      timestamp: new Date().toISOString(),
     },
-    body: JSON.stringify(data),
   });
-  
-  if (!response.ok) {
-    throw new Error('Nie udało się utworzyć lokalizacji');
-  }
-  
-  return response.json();
-};
 
-export interface DeliveryLocation {
-  lat: number;
-  lng: number;
-  timestamp: string;
-}
+/**
+ * Aktualizuje lokalizację assetu
+ */
+export const updateAssetLocationAPI = (assetId: number, location: MapPosition) =>
+  apiClient.patch<void>(`/assets/${assetId}/logs/location`, {
+    delivery_location: {
+      ...location,
+      timestamp: new Date().toISOString(),
+    },
+  });
 
-export interface MapPosition {
-  lat: number;
-  lng: number;
-}
+// ============================================================================
+// Geolocation Service (Browser API)
+// ============================================================================
 
+/**
+ * Serwis do obsługi geolokalizacji przeglądarki i Google Maps
+ */
 class LocationService {
-  private readonly googleMapsApiKey: string;
-
-  constructor() {
-    this.googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  }
-
+  /**
+   * Pobiera aktualną pozycję użytkownika z API przeglądarki
+   */
   async getCurrentPosition(): Promise<MapPosition> {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -159,10 +108,9 @@ class LocationService {
         return;
       }
 
-      // Dodajemy timeout, aby uniknąć zawieszenia
       const timeoutId = setTimeout(() => {
         reject(new Error('Przekroczono czas oczekiwania na lokalizację'));
-      }, 10000); // 10 sekund timeout
+      }, 10000);
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -191,62 +139,36 @@ class LocationService {
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 0
+          maximumAge: 0,
         }
       );
     });
   }
 
-  async updateTransferLocation(transferId: number, location: MapPosition): Promise<void> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(getApiUrl(`/transfers/${transferId}/delivery-location`), {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        delivery_location: {
-          ...location,
-          timestamp: new Date().toISOString(),
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Nie udało się zaktualizować lokalizacji transferu');
-    }
-  }
-
+  /**
+   * Pobiera klucz API Google Maps
+   */
   getGoogleMapsApiKey(): string {
-    return this.googleMapsApiKey;
+    return env.GOOGLE_MAPS_API_KEY;
   }
 
+  /**
+   * Aktualizuje lokalizację transferu (wrapper dla kompatybilności)
+   */
+  async updateTransferLocation(transferId: number, location: MapPosition): Promise<void> {
+    await updateTransferLocationAPI(transferId, location);
+  }
+
+  /**
+   * Aktualizuje lokalizację assetu (wrapper dla kompatybilności)
+   */
   async updateAssetLocation(assetId: number, location: MapPosition): Promise<void> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(
-      getApiUrl(`/assets/${assetId}/logs/location`),
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
-          {
-            delivery_location: {
-              ...location,
-              timestamp: new Date().toISOString(),
-            }
-          }
-        ),
-      }
-    );
-    
-    if (!response.ok) {
-      throw new Error('Nie udało się zaktualizować lokalizacji');
-    }
+    await updateAssetLocationAPI(assetId, location);
   }
 }
 
-export const locationService = new LocationService(); 
+export const locationService = new LocationService();
+
+// Re-export typów dla kompatybilności wstecznej
+export type { MapPosition, Location } from '../types/location.types';
+export type { DeliveryLocation } from '../types/location.types';

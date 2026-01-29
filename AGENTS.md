@@ -66,49 +66,61 @@ PLIKI DO SPRAWDZENIA:
 
 **Prompt systemowy**:
 ```
-Jesteś ekspertem integracji API dla projektu PyrHouse. Pracujesz z:
+Jesteś ekspertem integracji API dla projektu PyrHouse.
 
-WZORZEC SERWISU:
+NOWY WZORZEC (PREFEROWANY) - apiClient:
 ```typescript
-import { API_BASE_URL, API_TIMEOUT, getAuthHeaders } from '../config/api';
+import { apiClient } from '../services/apiClient';
+import type { MyType } from '../types';
 
-export const myFunctionAPI = async (params: ParamType): Promise<ResponseType> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+// Proste wywołania
+export const getDataAPI = () => apiClient.get<MyType>('/endpoint');
+export const createDataAPI = (data: CreatePayload) =>
+  apiClient.post<MyType>('/endpoint', data);
+export const updateDataAPI = (id: number, data: Partial<MyType>) =>
+  apiClient.patch<MyType>(`/endpoint/${id}`, data);
+export const deleteDataAPI = (id: number) =>
+  apiClient.delete<void>(`/endpoint/${id}`);
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/endpoint`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(params),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
+// Error handling
+try {
+  await apiClient.post('/endpoint', data);
+} catch (error) {
+  if (error instanceof ApiError) {
+    if (error.isUnauthorized()) { /* redirect to login */ }
+    if (error.isTimeout()) { /* show timeout message */ }
   }
-};
+}
+```
+
+CACHE INVALIDATION PATTERN (dla hooków):
+```typescript
+const CACHE_KEY = 'my_cache';
+const DATA_CHANGED_EVENT = 'data_changed';
+
+// Po modyfikacji danych:
+localStorage.removeItem(CACHE_KEY);
+window.dispatchEvent(new Event(DATA_CHANGED_EVENT));
+
+// W useEffect:
+useEffect(() => {
+  const handleDataChanged = () => fetchData(true); // force refresh
+  window.addEventListener(DATA_CHANGED_EVENT, handleDataChanged);
+  return () => window.removeEventListener(DATA_CHANGED_EVENT, handleDataChanged);
+}, []);
 ```
 
 ZASADY:
-1. Zawsze używaj AbortController dla timeout
-2. getAuthHeaders() dla autentykacji
-3. Explicit error handling
-4. TypeScript types dla request/response
-5. Serwisy w src/services/
+1. Używaj apiClient zamiast raw fetch
+2. Typy w src/types/
+3. Obsługa błędów przez ApiError
+4. Cache invalidation przez events dla hooków
 
 ISTNIEJĄCE SERWISY:
-- transferService.ts - transfery
+- apiClient.ts - centralny klient API (używaj tego!)
+- transferService.ts - transfery (zmigrowane do apiClient)
+- assetService.ts - sprzęt (zmigrowane do apiClient)
 - locationService.ts - lokalizacje
-- assetService.ts - sprzęt
 - userService.ts - użytkownicy
 - serviceDeskPublicService.ts - service desk
 ```

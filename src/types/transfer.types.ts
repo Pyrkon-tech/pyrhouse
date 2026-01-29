@@ -5,7 +5,7 @@
 import type { TransferUser } from './user.types';
 
 // Podstawowe typy dla elementów transferu
-export type TransferStatus = 'in_transit' | 'confirmed' | 'cancelled';
+export type TransferStatus = 'in_transit' | 'confirmed' | 'cancelled' | 'completed';
 export type ItemType = 'pyr_code' | 'stock';
 export type ValidationStatus = 'success' | 'failure' | '';
 
@@ -90,15 +90,11 @@ export interface PyrCodeSuggestion {
   status: 'in_stock' | 'available' | 'unavailable';
 }
 
-// Payload do tworzenia transferu
+// Payload do tworzenia transferu (rzeczywisty format API)
 export interface CreateTransferPayload {
   from_location_id: number;
-  to_location_id: number;
-  description?: string;
-  items: {
-    item_id: number;
-    quantity: number;
-    type: ItemType;
-  }[];
-  user_ids?: number[];
+  location_id: number; // docelowa lokalizacja
+  assets?: { id: number }[];
+  stocks?: { id: number; quantity: number }[];
+  users?: { id: number }[];
 } 

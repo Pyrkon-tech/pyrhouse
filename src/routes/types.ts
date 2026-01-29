@@ -1,12 +1,14 @@
 import { ComponentType, LazyExoticComponent } from 'react';
 
+export type UserRole = 'admin' | 'moderator';
+
 export interface RouteConfig {
   path: string;
   component?: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
   title?: string;
   icon?: string;
   showInNav?: boolean;
-  requiredRoles?: string[];
+  requiredRoles?: UserRole[];
   redirect?: string;
   children?: RouteConfig[];
 }

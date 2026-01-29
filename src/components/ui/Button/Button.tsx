@@ -10,10 +10,15 @@ export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   rightIcon?: React.ReactNode;
 }
 
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+type ButtonSize = 'sm' | 'md' | 'lg';
+
 const StyledButton = styled(MuiButton, {
   shouldForwardProp: (prop) => !['variant', 'size', 'loading', 'leftIcon', 'rightIcon'].includes(prop as string),
-})<ButtonProps>(({ theme, variant = 'primary', size = 'md' }) => {
+})<ButtonProps>(({ variant = 'primary', size = 'md' }) => {
   const tokens = designTokens;
+  const v = variant as ButtonVariant;
+  const s = size as ButtonSize;
   
   const baseStyles = {
     borderRadius: tokens.borderRadius.lg,
@@ -121,8 +126,8 @@ const StyledButton = styled(MuiButton, {
 
   return {
     ...baseStyles,
-    ...sizeStyles[size],
-    ...variantStyles[variant],
+    ...sizeStyles[s],
+    ...variantStyles[v],
   };
 });
 
@@ -136,13 +141,10 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const buttonProps = { variant, size, disabled: disabled || loading, ...props } as any;
   return (
-    <StyledButton
-      variant={variant}
-      size={size}
-      disabled={disabled || loading}
-      {...props}
-    >
+    <StyledButton {...buttonProps}>
       {loading && (
         <div style={{
           position: 'absolute',

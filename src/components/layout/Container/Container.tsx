@@ -2,9 +2,13 @@ import React from 'react';
 import { Box, BoxProps, styled } from '@mui/material';
 import { designTokens } from '../../../theme/designTokens';
 
+// Custom types for Container
+type ContainerVariant = 'default' | 'fluid' | 'narrow' | 'wide';
+type ContainerPadding = 'none' | 'sm' | 'md' | 'lg';
+
 export interface ContainerProps extends BoxProps {
-  variant?: 'default' | 'fluid' | 'narrow' | 'wide';
-  padding?: 'none' | 'sm' | 'md' | 'lg';
+  variant?: ContainerVariant;
+  padding?: ContainerPadding;
   maxWidth?: string | number;
 }
 
@@ -12,28 +16,28 @@ const StyledContainer = styled(Box, {
   shouldForwardProp: (prop) => !['variant', 'padding', 'maxWidth'].includes(prop as string),
 })<ContainerProps>(({ theme, variant = 'default', padding = 'md' }) => {
   const tokens = designTokens;
-  
+
   const baseStyles = {
     width: '100%',
     margin: '0 auto',
     boxSizing: 'border-box' as const,
   };
 
-  const paddingStyles = {
+  const paddingStyles: Record<ContainerPadding, object> = {
     none: { padding: 0 },
-    sm: { 
+    sm: {
       padding: tokens.spacing.md,
       [theme.breakpoints.down('sm')]: {
         padding: tokens.spacing.sm,
       },
     },
-    md: { 
+    md: {
       padding: tokens.spacing.lg,
       [theme.breakpoints.down('sm')]: {
         padding: tokens.spacing.md,
       },
     },
-    lg: { 
+    lg: {
       padding: tokens.spacing.xl,
       [theme.breakpoints.down('sm')]: {
         padding: tokens.spacing.lg,
@@ -41,7 +45,7 @@ const StyledContainer = styled(Box, {
     },
   };
 
-  const variantStyles = {
+  const variantStyles: Record<ContainerVariant, object> = {
     default: {
       maxWidth: '1200px',
       [theme.breakpoints.down('lg')]: {
@@ -65,10 +69,13 @@ const StyledContainer = styled(Box, {
     },
   };
 
+  const v = variant as ContainerVariant;
+  const p = padding as ContainerPadding;
+
   return {
     ...baseStyles,
-    ...paddingStyles[padding],
-    ...variantStyles[variant],
+    ...paddingStyles[p],
+    ...variantStyles[v],
   };
 });
 

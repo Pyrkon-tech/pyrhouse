@@ -1,478 +1,243 @@
 # PyrHouse - Propozycje usprawnień architektury
 
-## Status: Do implementacji
+## Status implementacji
+
+| # | Propozycja | Status | Plik(i) |
+|---|------------|--------|---------|
+| 1 | API Client | **DONE** | `src/services/apiClient.ts` |
+| 2 | Centralizacja typów | **DONE** | `src/types/*.ts` |
+| 3 | Rozszerzenie config/api | **DONE** | `src/config/api.ts` |
+| 4 | NotificationContext | **DONE** | `src/context/NotificationContext.tsx` |
+| 5 | Environment config | **DONE** | `src/config/env.ts` |
+| 6 | Cache invalidation pattern | **DONE** | `src/hooks/useCategories.ts` |
+| 7 | Migracja serwisów do apiClient | **IN PROGRESS** | transferService, assetService (done) |
+| 8 | UI/UX Refresh | TODO | - |
+| 9 | React Query | TODO | - |
+| 10 | Lazy loading libs | TODO | - |
+| 11 | MSW setup | TODO | - |
+| 12 | Feature folders | TODO | - |
 
 ---
 
-## 1. Warstwa API - Centralny API Client
+## Zaimplementowane (DONE)
 
-### Problem
-Każda funkcja w services pobiera token osobno i ma duplikację kodu obsługi błędów.
+### 1. Centralny API Client ✅
 
-### Rozwiązanie
-Stworzenie centralnego API client z interceptorami.
+**Plik:** `src/services/apiClient.ts`
 
+Klasa `ApiClient` z metodami `get()`, `post()`, `patch()`, `put()`, `delete()`:
+- Automatyczne dodawanie tokenu JWT
+- Obsługa timeout z AbortController
+- Jednolite error handling z `ApiError`
+- Typowane odpowiedzi
+
+**Użycie:**
 ```typescript
-// src/services/apiClient.ts
-import { API_BASE_URL } from '../config/api';
+import { apiClient, ApiError } from '../services/apiClient';
 
-const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000;
+// GET
+const user = await apiClient.get<User>('/users/1');
 
-interface RequestConfig extends RequestInit {
-  timeout?: number;
+// POST
+const transfer = await apiClient.post<Transfer>('/transfers', payload);
+
+// Z custom timeout
+const data = await apiClient.get<Data>('/slow', { timeout: 60000 });
+
+// Bez autoryzacji
+const publicData = await apiClient.get<Data>('/public', { skipAuth: true });
+
+// Error handling
+try {
+  await apiClient.post('/transfers', data);
+} catch (error) {
+  if (error instanceof ApiError) {
+    if (error.isUnauthorized()) { /* redirect to login */ }
+  }
 }
+```
 
-class ApiClient {
-  private baseUrl: string;
+---
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
+### 2. Centralizacja typów ✅
 
-  private getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    };
-  }
+**Pliki:**
+- `src/types/api.types.ts` - ApiResponse, PaginatedResponse, AsyncState
+- `src/types/asset.types.ts` - Asset, AssetCategory, StockItem
+- `src/types/location.types.ts` - Location, MapPosition, DeliveryLocation
+- `src/types/user.types.ts` - User, UserRole, JwtPayload
+- `src/types/transfer.types.ts` - Transfer, TransferItem, TransferFormData
+- `src/types/index.ts` - centralne eksporty
 
-  private async request<T>(endpoint: string, config: RequestConfig = {}): Promise<T> {
-    const controller = new AbortController();
-    const timeout = config.timeout || API_TIMEOUT;
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+**Użycie:**
+```typescript
+import { User, Asset, Transfer, Location } from '../types';
+import type { ApiResponse, PaginatedResponse } from '../types';
+```
 
+---
+
+### 3. Rozszerzenie config/api.ts ✅
+
+**Plik:** `src/config/api.ts`
+
+Dodane:
+- `API_TIMEOUT` - domyślny timeout (30s)
+- `getAuthHeaders()` - nagłówki z tokenem
+- `createAbortController()` - helper do timeout
+- `hasAuthToken()` - sprawdzenie czy zalogowany
+- `getHttpErrorMessage()` - mapowanie kodów HTTP
+
+---
+
+### 4. NotificationContext ✅
+
+**Plik:** `src/context/NotificationContext.tsx`
+
+**Integracja w App.tsx:**
+```tsx
+import { NotificationProvider } from './context/NotificationContext';
+
+function App() {
+  return (
+    <ThemeProvider>
+      <NotificationProvider>
+        {/* reszta */}
+      </NotificationProvider>
+    </ThemeProvider>
+  );
+}
+```
+
+**Użycie w komponentach:**
+```typescript
+import { useNotification } from '../context/NotificationContext';
+
+const MyComponent = () => {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
+
+  const handleSave = async () => {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        ...config,
-        headers: {
-          ...this.getAuthHeaders(),
-          ...config.headers,
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new ApiError(
-          error.message || error.error || `HTTP ${response.status}`,
-          response.status,
-          error.code
-        );
-      }
-
-      return response.json();
+      await saveData();
+      showSuccess('Zapisano pomyślnie');
     } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError('Request timeout', 408);
-      }
-      throw error;
+      showError(error.message);
     }
-  }
-
-  get<T>(endpoint: string, config?: RequestConfig): Promise<T> {
-    return this.request<T>(endpoint, { ...config, method: 'GET' });
-  }
-
-  post<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...config,
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  patch<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...config,
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  put<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...config,
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  delete<T>(endpoint: string, config?: RequestConfig): Promise<T> {
-    return this.request<T>(endpoint, { ...config, method: 'DELETE' });
-  }
-}
-
-class ApiError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public code?: string
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
-export const apiClient = new ApiClient(API_BASE_URL);
-export { ApiError };
+  };
+};
 ```
-
-### Użycie po zmianach
-```typescript
-// src/services/transferService.ts
-import { apiClient } from './apiClient';
-
-export const validatePyrCodeAPI = (pyrCode: string) =>
-  apiClient.get<AssetValidation>(`/assets/pyrcode/${pyrCode}`);
-
-export const createTransferAPI = (payload: CreateTransferPayload) =>
-  apiClient.post<Transfer>('/transfers', payload);
-```
-
-**Korzyści:**
-- 80% mniej kodu w serwisach
-- Jednolite error handling
-- Łatwe dodawanie retry logic, logging, interceptors
 
 ---
 
-## 2. Centralizacja typów
+### 5. Environment config ✅
 
-### Problem
-Typy są rozproszone w plikach services i komponentach. Niektóre używają `any`.
+**Plik:** `src/config/env.ts`
 
-### Rozwiązanie
-Struktura typów w `src/types/`:
+Centralna konfiguracja zmiennych środowiskowych:
+- Walidacja wymaganych zmiennych
+- Wartości domyślne
+- Typowanie
+- Computed properties (`IS_PRODUCTION`, `HAS_GOOGLE_MAPS`)
 
-```
-src/types/
-├── api.types.ts      # Typy API responses/requests
-├── transfer.types.ts # Typy transferów (istnieje, rozszerzyć)
-├── asset.types.ts    # Typy sprzętu
-├── user.types.ts     # Typy użytkowników
-├── location.types.ts # Typy lokalizacji
-└── index.ts          # Re-export wszystkich typów
-```
-
+**Użycie:**
 ```typescript
-// src/types/api.types.ts
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
+import { env } from '../config/env';
+
+const url = env.API_BASE_URL;
+const timeout = env.API_TIMEOUT;
+
+if (env.IS_PRODUCTION) {
+  // production-only code
 }
 
-export interface ApiError {
-  error: string;
-  code?: string;
-  status: number;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
+if (env.HAS_GOOGLE_MAPS) {
+  // enable map features
 }
 ```
 
 ---
 
-## 3. React Query dla cache'owania
+### 6. Cache invalidation pattern ✅
 
-### Problem
-Brak cache'owania danych, każda nawigacja = nowy request.
+**Plik:** `src/hooks/useCategories.ts`
 
-### Rozwiązanie
-Dodanie TanStack Query (React Query).
+Event-based pattern dla synchronizacji cache między komponentami:
+```typescript
+const CACHE_KEY = 'categories_cache';
+const CATEGORIES_CHANGED_EVENT = 'categories_changed';
+
+// Po modyfikacji:
+localStorage.removeItem(CACHE_KEY);
+window.dispatchEvent(new Event(CATEGORIES_CHANGED_EVENT));
+
+// Nasłuchiwanie w useEffect:
+useEffect(() => {
+  const handler = () => fetchCategories(true);
+  window.addEventListener(CATEGORIES_CHANGED_EVENT, handler);
+  return () => window.removeEventListener(CATEGORIES_CHANGED_EVENT, handler);
+}, []);
+```
+
+---
+
+### 7. Migracja serwisów do apiClient 🔄
+
+**Status:** IN PROGRESS
+
+**Zmigrowane:**
+- `transferService.ts` - wszystkie funkcje
+- `assetService.ts` - wszystkie funkcje
+
+**Do migracji (~20 plików):**
+- Hooks: useCategories, useStocks, useLocations, useTransfers, useDutySchedule
+- Komponenty: EquipmentDetails, UserDetailsPage, List, Home
+- Formularze: AddAssetForm, AddStockForm, LoginForm
+
+---
+
+## Do zrobienia (TODO)
+
+### 8. UI/UX Refresh
+
+**Planowane zmiany:**
+- Primary color: zmiana z pomarańczowego (#ff9800) na indigo/navy (#3949ab)
+- Pomarańczowy jako accent color
+- Lepszy kontrast w dark mode dla tabel
+- Zebra striping dla tabel
+- Subtelne gradienty w nagłówkach/kartach
+
+---
+
+### 9. React Query
+
+Cache'owanie danych, background refetch, optimistic updates.
 
 ```bash
 npm install @tanstack/react-query
 ```
 
-```typescript
-// src/hooks/useTransfersQuery.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../services/apiClient';
+---
 
-export const useTransfers = (userId: number, status: string) => {
-  return useQuery({
-    queryKey: ['transfers', userId, status],
-    queryFn: () => apiClient.get(`/transfers/user/${userId}/status/${status}`),
-    staleTime: 5 * 60 * 1000, // 5 minut
-  });
-};
+### 10. Lazy loading dla heavy dependencies
 
-export const useCreateTransfer = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload) => apiClient.post('/transfers', payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transfers'] });
-    },
-  });
-};
-```
-
-**Korzyści:**
-- Automatyczne cache'owanie
-- Background refetching
-- Optimistic updates
-- Deduplikacja requestów
+Quagga, jspdf, jsbarcode jako dynamic imports dla mniejszego initial bundle.
 
 ---
 
-## 4. Feature-based folder structure
+### 11. MSW setup
 
-### Problem
-Obecna struktura oparta na typach (components, hooks, services) utrudnia skalowanie.
-
-### Propozycja (opcjonalna migracja)
-```
-src/
-├── features/
-│   ├── transfers/
-│   │   ├── components/
-│   │   │   ├── TransferForm.tsx
-│   │   │   ├── TransferList.tsx
-│   │   │   └── TransferDetails.tsx
-│   │   ├── hooks/
-│   │   │   ├── useTransfers.ts
-│   │   │   └── useTransferDetails.ts
-│   │   ├── services/
-│   │   │   └── transferService.ts
-│   │   ├── types/
-│   │   │   └── transfer.types.ts
-│   │   └── index.ts
-│   ├── locations/
-│   ├── assets/
-│   └── users/
-├── shared/
-│   ├── components/    # UI components (Button, Card, etc.)
-│   ├── hooks/         # Shared hooks (useAuth, useStyles)
-│   ├── services/      # apiClient
-│   └── types/         # Shared types
-└── ...
-```
-
-**Rekomendacja:** Zachować obecną strukturę dla małych-średnich projektów. Feature-based lepsze przy >50 komponentach.
+Mock server dla testów jednostkowych i integracyjnych.
 
 ---
 
-## 5. Global Error Boundary z toastami
+### 12. Feature-based folder structure
 
-### Problem
-Błędy API nie są zawsze wyświetlane użytkownikowi w spójny sposób.
-
-### Rozwiązanie
-Centralny error handler z snackbar.
-
-```typescript
-// src/context/NotificationContext.tsx
-import { createContext, useContext, useState, useCallback } from 'react';
-import { Snackbar, Alert } from '@mui/material';
-
-interface Notification {
-  message: string;
-  severity: 'success' | 'error' | 'warning' | 'info';
-}
-
-interface NotificationContextType {
-  showNotification: (notification: Notification) => void;
-  showError: (message: string) => void;
-  showSuccess: (message: string) => void;
-}
-
-const NotificationContext = createContext<NotificationContextType | null>(null);
-
-export const NotificationProvider = ({ children }) => {
-  const [notification, setNotification] = useState<Notification | null>(null);
-
-  const showNotification = useCallback((n: Notification) => {
-    setNotification(n);
-  }, []);
-
-  const showError = useCallback((message: string) => {
-    setNotification({ message, severity: 'error' });
-  }, []);
-
-  const showSuccess = useCallback((message: string) => {
-    setNotification({ message, severity: 'success' });
-  }, []);
-
-  return (
-    <NotificationContext.Provider value={{ showNotification, showError, showSuccess }}>
-      {children}
-      <Snackbar
-        open={!!notification}
-        autoHideDuration={6000}
-        onClose={() => setNotification(null)}
-      >
-        {notification && (
-          <Alert severity={notification.severity}>{notification.message}</Alert>
-        )}
-      </Snackbar>
-    </NotificationContext.Provider>
-  );
-};
-
-export const useNotification = () => {
-  const context = useContext(NotificationContext);
-  if (!context) throw new Error('useNotification must be used within NotificationProvider');
-  return context;
-};
-```
+Opcjonalna migracja do struktury opartej na funkcjonalnościach (przy >50 komponentach).
 
 ---
 
-## 6. Rozszerzenie config/api.ts
+## Następne kroki
 
-### Problem
-Brak centralnych helperów dla API (timeout, headers).
-
-### Rozwiązanie
-```typescript
-// src/config/api.ts
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-export const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000;
-
-export const getApiUrl = (path: string) => `${API_BASE_URL}${path}`;
-
-export const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
-
-export const createAbortController = (timeout = API_TIMEOUT) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-  return { controller, timeoutId, clear: () => clearTimeout(timeoutId) };
-};
-```
-
----
-
-## 7. Environment-based configuration
-
-### Problem
-Brak walidacji zmiennych środowiskowych.
-
-### Rozwiązanie
-```typescript
-// src/config/env.ts
-const getEnvVar = (key: string, defaultValue?: string): string => {
-  const value = import.meta.env[key] || defaultValue;
-  if (!value && defaultValue === undefined) {
-    console.warn(`Missing environment variable: ${key}`);
-  }
-  return value || '';
-};
-
-export const env = {
-  API_BASE_URL: getEnvVar('VITE_API_BASE_URL', 'http://localhost:8080'),
-  API_TIMEOUT: Number(getEnvVar('VITE_API_TIMEOUT', '30000')),
-  APP_NAME: getEnvVar('VITE_APP_NAME', 'PyrHouse'),
-  ENVIRONMENT: getEnvVar('VITE_ENVIRONMENT', 'development'),
-  IS_PRODUCTION: getEnvVar('VITE_ENVIRONMENT') === 'production',
-  GOOGLE_MAPS_KEY: getEnvVar('VITE_GOOGLE_MAPS_KEY'),
-} as const;
-```
-
----
-
-## 8. Lazy loading dla heavy dependencies
-
-### Problem
-Quagga, jspdf, jsbarcode zwiększają initial bundle.
-
-### Rozwiązanie
-```typescript
-// src/utils/lazyImport.ts
-export const loadPdfGenerator = () => import('jspdf');
-export const loadBarcodeScanner = () => import('quagga');
-export const loadBarcodeGenerator = () => import('jsbarcode');
-
-// Użycie w komponencie
-const BarcodeScanner = lazy(() =>
-  import('quagga').then(module => ({
-    default: () => <QuaggaScanner {...module} />
-  }))
-);
-```
-
----
-
-## 9. Testing infrastructure
-
-### Problem
-Brak mock server setup dla testów.
-
-### Rozwiązanie
-```typescript
-// src/__mocks__/handlers.ts
-import { rest } from 'msw';
-import { API_BASE_URL } from '../config/api';
-
-export const handlers = [
-  rest.get(`${API_BASE_URL}/transfers`, (req, res, ctx) => {
-    return res(ctx.json({ transfers: [] }));
-  }),
-  rest.post(`${API_BASE_URL}/transfers`, (req, res, ctx) => {
-    return res(ctx.status(201), ctx.json({ id: 1 }));
-  }),
-];
-
-// src/__mocks__/server.ts
-import { setupServer } from 'msw/node';
-import { handlers } from './handlers';
-
-export const server = setupServer(...handlers);
-```
-
----
-
-## Priorytetyzacja
-
-| # | Zmiana | Wpływ | Trudność | Priorytet |
-|---|--------|-------|----------|-----------|
-| 1 | API Client | Wysoki | Średnia | **P0** |
-| 2 | Centralizacja typów | Średni | Niska | **P0** |
-| 6 | Rozszerzenie config/api | Średni | Niska | **P1** |
-| 5 | NotificationContext | Średni | Niska | **P1** |
-| 7 | Environment config | Niski | Niska | **P2** |
-| 3 | React Query | Wysoki | Średnia | **P2** |
-| 8 | Lazy loading libs | Średni | Niska | **P2** |
-| 9 | MSW setup | Średni | Średnia | **P3** |
-| 4 | Feature folders | Niski | Wysoka | **P4** |
-
----
-
-## Plan implementacji
-
-### Faza 1 (P0) - Natychmiast
-1. Stwórz `src/services/apiClient.ts`
-2. Stwórz `src/config/api.ts` z helperami
-3. Zorganizuj typy w `src/types/`
-4. Zmigruj 1 serwis jako proof of concept
-
-### Faza 2 (P1) - Krótkoterminowo
-1. Dodaj `NotificationContext`
-2. Zmigruj pozostałe serwisy do apiClient
-3. Dodaj env.ts z walidacją
-
-### Faza 3 (P2) - Średnioterminowo
-1. Dodaj React Query dla cache
-2. Lazy load heavy libs
-3. Setup MSW dla testów
-
-### Faza 4 (P3+) - Długoterminowo
-1. Rozważ feature-based structure przy dalszym wzroście
-2. Dodaj E2E testy (Playwright/Cypress)
-3. Storybook dla komponentów UI
+1. **UI/UX Refresh** - zmiana kolorystyki, lepszy dark mode
+2. **Dokończenie migracji do apiClient** - pozostałe hooki i komponenty
+3. **React Query** - rozważ dla komponentów z częstym refetchem danych
