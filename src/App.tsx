@@ -1,32 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
-import LoginForm from './components/features/LoginForm';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import PrivateRoute from './components/features/Authorisation';
 import Layout from './components/layout/Layout';
-import TransferPage from './components/features/TransferPage';
-import AddItemPage from './components/features/AddItemPage';
-import { ThemeProvider } from './theme/ThemeContext';
 import LoadingSkeleton from './components/ui/LoadingSkeleton';
-import ServiceDeskPage from './components/features/ServiceDeskPage';
-import PublicServiceDeskForm from './components/features/PublicServiceDeskForm';
+import { ThemeProvider } from './theme/ThemeContext';
+import { publicRoutes, protectedRoutes, adminRoutes } from './routes/routes';
 import RequireRole from './components/features/RequireRole';
-
-// Lazy loaded components
-const UserManagementPage = lazy(() => import('./components/features/UserManagementPage'));
-const UserDetailsPage = lazy(() => import('./components/features/UserDetailsPage'));
-const CategoryManagementPage = lazy(() => import('./components/features/CategoryManagementPage'));
-const TransfersListPage = lazy(() => import('./components/features/TransferListPage'));
-const TransferDetailsPage = lazy(() => import('./components/features/TransferDetailsPage'));
-const QuestBoard = lazy(() => import('./components/features/QuestBoardPage'));
-const EquipmentDetails = lazy(() => import('./components/features/EquipmentDetails'));
-const LocationsPage = lazy(() => import('./components/features/LocationsPage'));
-const LocationDetailsPage = lazy(() => import('./components/features/LocationDetailsPage'));
-const TutorialPage = lazy(() => import('./components/features/TutorialPage'));
-const DutySchedulePage = lazy(() => import('./components/features/DutySchedulePage'));
-const Home = lazy(() => import('./components/features/Home'));
-const List = lazy(() => import('./components/features/List'));
 
 // Konfiguracja flag React Router v7
 const routerFutureConfig = {
@@ -38,133 +19,98 @@ const routerFutureConfig = {
   v7_skipActionErrorRevalidation: true
 };
 
+// Komponent dla chronionych tras
+const ProtectedRouteWrapper = ({ children }: { children: React.ReactNode }) => (
+  <PrivateRoute>
+    <Layout>
+      <Outlet />
+    </Layout>
+  </PrivateRoute>
+);
+
+// Komponent dla tras z wymaganą rolą
+const RoleProtectedRoute = ({ 
+  children, 
+  requiredRoles 
+}: { 
+  children: React.ReactNode;
+  requiredRoles: string[];
+}) => (
+  <RequireRole allowed={requiredRoles}>
+    {children}
+  </RequireRole>
+);
+
+// Komponent dla pojedynczej trasy z obsługą błędów
+const RouteWithErrorBoundary = ({ 
+  component: Component 
+}: { 
+  component: React.ComponentType<any>;
+}) => (
+  <ErrorBoundary>
+    <Suspense fallback={<LoadingSkeleton />}>
+      <Component />
+    </Suspense>
+  </ErrorBoundary>
+);
+
 function App() {
   return (
     <ThemeProvider>
       <CssBaseline />
       <Router future={routerFutureConfig}>
         <Routes>
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/servicedesk/request" element={<PublicServiceDeskForm />} />
-          <Route path="/" element={<PrivateRoute><Layout><Outlet /></Layout></PrivateRoute>}>
-            <Route index element={<Navigate to="/home" replace />} />
-            <Route path="home" element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingSkeleton />}>
-                  <Home />
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="list" element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingSkeleton />}>
-                  <List />
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="add-item" element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingSkeleton />}>
-                  <AddItemPage />
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="transfers/create" element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingSkeleton />}>
-                  <TransferPage />
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            
-            {/* Lazy loaded routes */}
-            <Route path="users" element={
-              <RequireRole allowed={['admin', 'moderator']}>
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingSkeleton />}>
-                    <UserManagementPage />
-                  </Suspense>
-                </ErrorBoundary>
-              </RequireRole>
-            } />
-            <Route path="users/:id" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <UserDetailsPage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="categories" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <CategoryManagementPage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="transfers" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <TransfersListPage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="transfers/:id" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <TransferDetailsPage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="quests" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <QuestBoard />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="equipment/:id" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <EquipmentDetails />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="locations" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <LocationsPage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="locations/:id" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <LocationDetailsPage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="tutorial" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <TutorialPage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="duty-schedule" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <DutySchedulePage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="servicedesk" element={
-              <ErrorBoundary>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <ServiceDeskPage />
-              </Suspense>
-              </ErrorBoundary>
-            } />
+          {/* Publiczne trasy */}
+          {publicRoutes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={
+                route.component ? (
+                  <RouteWithErrorBoundary component={route.component} />
+                ) : (
+                  <Navigate to={route.redirect!} replace />
+                )
+              }
+            />
+          ))}
+
+          {/* Chronione trasy */}
+          <Route path="/" element={<ProtectedRouteWrapper><Outlet /></ProtectedRouteWrapper>}>
+            {protectedRoutes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  route.redirect ? (
+                    <Navigate to={route.redirect} replace />
+                  ) : route.component ? (
+                    <RouteWithErrorBoundary component={route.component} />
+                  ) : null
+                }
+              />
+            ))}
+
+            {/* Trasy administracyjne */}
+            {adminRoutes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  route.requiredRoles ? (
+                    <RoleProtectedRoute requiredRoles={route.requiredRoles}>
+                      <RouteWithErrorBoundary component={route.component!} />
+                    </RoleProtectedRoute>
+                  ) : (
+                    <RouteWithErrorBoundary component={route.component!} />
+                  )
+                }
+              />
+            ))}
           </Route>
+
+          {/* Fallback dla nieznanych tras */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </Router>
     </ThemeProvider>

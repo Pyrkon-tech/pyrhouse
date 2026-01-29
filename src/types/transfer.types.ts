@@ -1,10 +1,16 @@
+/**
+ * Typy związane z transferami
+ */
+
+import type { TransferUser } from './user.types';
+
 // Podstawowe typy dla elementów transferu
 export type TransferStatus = 'in_transit' | 'confirmed' | 'cancelled';
 export type ItemType = 'pyr_code' | 'stock';
 export type ValidationStatus = 'success' | 'failure' | '';
 
-// Wspólne interfejsy dla lokalizacji
-export interface Location {
+// Prosta wersja Location dla transferów (bez współrzędnych)
+export interface TransferLocation {
   id: number;
   name: string;
 }
@@ -33,8 +39,8 @@ export interface BaseTransfer {
 
 // Interfejs dla transferu z zagnieżdżonymi obiektami (używany w UI)
 export interface Transfer extends BaseTransfer {
-  from_location: Location;
-  to_location: Location;
+  from_location: TransferLocation;
+  to_location: TransferLocation;
   transfer_date: string;
 }
 
@@ -51,25 +57,24 @@ export interface FlatTransfer extends BaseTransfer {
   description: string;
 }
 
+// Element formularza transferu
+export interface TransferFormItem {
+  type: ItemType;
+  id: string;
+  pyrcode: string;
+  quantity: number;
+  status: ValidationStatus;
+  category?: {
+    label: string;
+  };
+}
+
 // Interfejs dla formularza tworzenia transferu
 export interface TransferFormData {
   fromLocation: number;
   toLocation: string;
-  items: {
-    type: ItemType;
-    id: string;
-    pyrcode: string;
-    quantity: number;
-    status: ValidationStatus;
-    category?: {
-      label: string;
-    };
-  }[];
-  users: {
-    id: number;
-    username: string;
-    fullname: string;
-  }[];
+  items: TransferFormItem[];
+  users: TransferUser[];
 }
 
 // Interfejs dla sugestii kodów PYR
@@ -77,10 +82,23 @@ export interface PyrCodeSuggestion {
   id: number;
   pyrcode: string;
   serial: string;
-  location: Location;
+  location: TransferLocation;
   category: {
     id: number;
     label: string;
   };
   status: 'in_stock' | 'available' | 'unavailable';
+}
+
+// Payload do tworzenia transferu
+export interface CreateTransferPayload {
+  from_location_id: number;
+  to_location_id: number;
+  description?: string;
+  items: {
+    item_id: number;
+    quantity: number;
+    type: ItemType;
+  }[];
+  user_ids?: number[];
 } 
