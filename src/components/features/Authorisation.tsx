@@ -24,8 +24,15 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, requiredRole }) =
   const { getToken } = useStorage();
   const token = getToken();
 
+  console.log('[PrivateRoute] Check:', {
+    hasToken: !!token,
+    tokenPreview: token?.substring(0, 30) + '...',
+    isTokenValid
+  });
+
   useEffect(() => {
     if (!token || !isTokenValid) {
+      console.log('[PrivateRoute] Redirecting to /login - token:', !!token, 'isTokenValid:', isTokenValid);
       navigate('/login');
       return;
     }

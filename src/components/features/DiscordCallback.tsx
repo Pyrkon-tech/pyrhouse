@@ -24,22 +24,33 @@ const DiscordCallback: React.FC = () => {
   const token = searchParams.get('token');
   const urlError = searchParams.get('error');
 
+  console.log('[DiscordCallback] URL params:', {
+    token: token ? token.substring(0, 30) + '...' : null,
+    error: urlError,
+    fullUrl: window.location.href
+  });
+
   useEffect(() => {
+    console.log('[DiscordCallback] useEffect triggered, hasProcessed:', hasProcessed.current);
+
     // Zapobiegaj podwójnemu wywołaniu (StrictMode)
     if (hasProcessed.current) return;
     hasProcessed.current = true;
 
     // Obsługa błędu z backendu
     if (urlError) {
+      console.log('[DiscordCallback] Error in URL:', urlError);
       return;
     }
 
     // Obsługa tokena z backendu
     if (token) {
+      console.log('[DiscordCallback] Token found, calling processTokenFromUrl');
       processTokenFromUrl(token);
       return;
     }
 
+    console.log('[DiscordCallback] No token or error in URL');
     // Brak token i error - coś poszło nie tak
   }, [token, urlError, processTokenFromUrl]);
 
