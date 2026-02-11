@@ -30,6 +30,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Switch from '@mui/material/Switch';
 import BreadcrumbsComponent from './BreadcrumbsComponent';
 import LazyIcon from '../ui/LazyIcon';
+import { designTokens } from '../../theme/designTokens';
 // Lazy loading dla ikon
 const Home = lazy(() => import('@mui/icons-material/Home'));
 const AutoAwesome = lazy(() => import('@mui/icons-material/AutoAwesome'));
@@ -48,6 +49,7 @@ const ExpandMore = lazy(() => import('@mui/icons-material/ExpandMore'));
 const AccountCircle = lazy(() => import('@mui/icons-material/AccountCircle'));
 const LightMode = lazy(() => import('@mui/icons-material/LightMode'));
 const DarkMode = lazy(() => import('@mui/icons-material/DarkMode'));
+const SettingsBrightness = lazy(() => import('@mui/icons-material/SettingsBrightness'));
 const Animation = lazy(() => import('@mui/icons-material/Animation'));
 const BlockTwoTone = lazy(() => import('@mui/icons-material/BlockTwoTone'));
 const Logout = lazy(() => import('@mui/icons-material/Logout'));
@@ -94,6 +96,7 @@ const Icons = {
   AccountCircle,
   LightMode,
   DarkMode,
+  SettingsBrightness,
   Animation,
   BlockTwoTone,
   Logout,
@@ -239,11 +242,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setUserMenuAnchor(null);
   };
 
-  const handleThemeChange = (newMode: 'light' | 'dark' | 'system') => {
-    // Ustawiamy nowy tryb motywu bez zamykania menu
-    setThemeMode(newMode);
-  };
-
   const handleProfileClick = () => {
     if (userId) {
       navigate(`/users/${userId}`);
@@ -345,52 +343,74 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <ListItemButton
                 onClick={() => item.path && handleMenuItemClick(item.path)}
                 sx={{
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   mx: 1.5,
-                  my: 0,
-                  backgroundColor: activeItem === item.path ? 'primary.light' : 'transparent',
-                  color: activeItem === item.path ? 'primary.contrastText' : 'text.primary',
+                  my: 0.3,
+                  background: activeItem === item.path
+                    ? designTokens.gradients.primary
+                    : 'transparent',
+                  color: activeItem === item.path ? '#ffffff' : 'text.primary',
+                  boxShadow: activeItem === item.path
+                    ? designTokens.glow.orangeSubtle
+                    : 'none',
                   '&:hover': {
-                    backgroundColor: activeItem === item.path ? 'primary.main' : 'action.hover',
+                    background: activeItem === item.path
+                      ? designTokens.gradients.hero
+                      : (theme) => theme.palette.mode === 'dark'
+                        ? 'rgba(255, 152, 0, 0.12)'
+                        : 'rgba(255, 152, 0, 0.08)',
                     transform: 'translateX(4px)',
+                    boxShadow: activeItem === item.path
+                      ? designTokens.glow.orange
+                      : 'none',
                   },
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  py: 1,
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  py: 1.1,
                   pl: 2,
                   fontSize: '0.9rem',
                   position: 'relative',
+                  // Orange accent bar
                   '&::before': {
                     content: '""',
                     position: 'absolute',
                     left: 0,
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    width: '3px',
-                    height: activeItem === item.path ? '70%' : '0%',
-                    backgroundColor: 'primary.main',
+                    width: activeItem === item.path ? '4px' : '3px',
+                    height: activeItem === item.path ? '80%' : '0%',
+                    background: activeItem === item.path
+                      ? '#ffffff'
+                      : designTokens.colors.primary[500],
                     borderRadius: '0 4px 4px 0',
-                    transition: 'height 0.2s ease-in-out'
+                    transition: 'all 0.25s ease-in-out',
+                    boxShadow: activeItem === item.path
+                      ? '0 0 8px rgba(255, 255, 255, 0.5)'
+                      : 'none',
                   }
                 }}
               >
-                <ListItemIcon sx={{ 
-                  color: activeItem === item.path ? 'primary.contrastText' : 'primary.main',
+                <ListItemIcon sx={{
+                  color: activeItem === item.path ? '#ffffff' : 'primary.main',
                   minWidth: '36px',
+                  transition: 'color 0.2s ease',
                   '& .MuiSvgIcon-root': {
-                    fontSize: '1.3rem'
+                    fontSize: '1.3rem',
+                    filter: activeItem === item.path
+                      ? 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))'
+                      : 'none',
                   }
                 }}>
                   <LazyIcon>
                     {item.icon}
                   </LazyIcon>
                 </ListItemIcon>
-                <ListItemText 
-                  primary={item.label} 
-                  primaryTypographyProps={{ 
-                    fontWeight: activeItem === item.path ? 500 : 400,
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontWeight: activeItem === item.path ? 600 : 400,
                     fontSize: '0.9rem',
                     letterSpacing: '0.01em'
-                  }} 
+                  }}
                 />
               </ListItemButton>
             </ListItem>
@@ -427,17 +447,29 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <ListItemButton
                   onClick={() => handleMenuItemClick(item.path)}
                   sx={{
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     mx: 1.5,
                     my: 0.3,
-                    backgroundColor: activeItem === item.path ? 'primary.light' : 'transparent',
-                    color: activeItem === item.path ? 'primary.contrastText' : 'text.primary',
+                    background: activeItem === item.path
+                      ? designTokens.gradients.primary
+                      : 'transparent',
+                    color: activeItem === item.path ? '#ffffff' : 'text.primary',
+                    boxShadow: activeItem === item.path
+                      ? designTokens.glow.orangeSubtle
+                      : 'none',
                     '&:hover': {
-                      backgroundColor: activeItem === item.path ? 'primary.main' : 'action.hover',
+                      background: activeItem === item.path
+                        ? designTokens.gradients.hero
+                        : (theme) => theme.palette.mode === 'dark'
+                          ? 'rgba(255, 152, 0, 0.12)'
+                          : 'rgba(255, 152, 0, 0.08)',
                       transform: 'translateX(4px)',
+                      boxShadow: activeItem === item.path
+                        ? designTokens.glow.orange
+                        : 'none',
                     },
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                    py: 1.2,
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    py: 1.1,
                     pl: 2,
                     fontSize: '0.9rem',
                     position: 'relative',
@@ -447,32 +479,41 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       left: 0,
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      width: '3px',
-                      height: activeItem === item.path ? '70%' : '0%',
-                      backgroundColor: 'primary.main',
+                      width: activeItem === item.path ? '4px' : '3px',
+                      height: activeItem === item.path ? '80%' : '0%',
+                      background: activeItem === item.path
+                        ? '#ffffff'
+                        : designTokens.colors.primary[500],
                       borderRadius: '0 4px 4px 0',
-                      transition: 'height 0.2s ease-in-out'
+                      transition: 'all 0.25s ease-in-out',
+                      boxShadow: activeItem === item.path
+                        ? '0 0 8px rgba(255, 255, 255, 0.5)'
+                        : 'none',
                     }
                   }}
                 >
-                  <ListItemIcon sx={{ 
-                    color: activeItem === item.path ? 'primary.contrastText' : 'primary.main',
+                  <ListItemIcon sx={{
+                    color: activeItem === item.path ? '#ffffff' : 'primary.main',
                     minWidth: '36px',
+                    transition: 'color 0.2s ease',
                     '& .MuiSvgIcon-root': {
-                      fontSize: '1.3rem'
+                      fontSize: '1.3rem',
+                      filter: activeItem === item.path
+                        ? 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))'
+                        : 'none',
                     }
                   }}>
                     <LazyIcon>
                       {item.icon}
                     </LazyIcon>
                   </ListItemIcon>
-                  <ListItemText 
-                    primary={item.label} 
-                    primaryTypographyProps={{ 
-                      fontWeight: activeItem === item.path ? 500 : 400,
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontWeight: activeItem === item.path ? 600 : 400,
                       fontSize: '0.9rem',
                       letterSpacing: '0.01em'
-                    }} 
+                    }}
                   />
                 </ListItemButton>
               </ListItem>
@@ -519,50 +560,183 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             src={pyrkonLogo}
             alt="Pyrkon Logo"
             sx={{
-              height: '40px',
+              height: '42px',
               width: 'auto',
-              mr: 0,
-              mt: -1,
-              filter: theme.palette.mode === 'light' 
-                ? 'invert(1) brightness(1.2) drop-shadow(0px 0px 2px rgba(255,255,255,0.3))'
-                : 'drop-shadow(0px 0px 2px rgba(0,0,0,0.3)) drop-shadow(0px 0px 4px rgba(0,0,0,0.2))',
+              mr: 0.5,
+              mt: -0.5,
+              filter: theme.palette.mode === 'light'
+                ? 'drop-shadow(0px 0px 4px rgba(255, 152, 0, 0.4))'
+                : 'drop-shadow(0px 0px 6px rgba(255, 152, 0, 0.5))',
               '&:hover': {
                 filter: theme.palette.mode === 'light'
-                  ? 'invert(1) brightness(1.3) drop-shadow(0px 0px 3px rgba(255,255,255,0.4))'
-                  : 'drop-shadow(0px 0px 3px rgba(0,0,0,0.4)) drop-shadow(0px 0px 5px rgba(0,0,0,0.3))',
-                transform: 'scale(1.05)',
+                  ? 'drop-shadow(0px 0px 8px rgba(255, 152, 0, 0.6)) drop-shadow(0px 0px 16px rgba(255, 152, 0, 0.3))'
+                  : 'drop-shadow(0px 0px 10px rgba(255, 152, 0, 0.7)) drop-shadow(0px 0px 20px rgba(255, 152, 0, 0.4))',
+                transform: 'scale(1.08)',
               },
-              transition: 'all 0.2s ease-in-out',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              cursor: 'pointer',
             }}
+            onClick={() => navigate('/home')}
           />
 
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{
+              flexGrow: 1,
+              fontFamily: designTokens.typography.fontFamily.secondary,
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              background: theme.palette.mode === 'dark'
+                ? designTokens.gradients.primary
+                : 'inherit',
+              WebkitBackgroundClip: theme.palette.mode === 'dark' ? 'text' : 'unset',
+              WebkitTextFillColor: theme.palette.mode === 'dark' ? 'transparent' : 'inherit',
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.9,
+              },
+            }}
+            onClick={() => navigate('/home')}
+          >
             yrhouse
           </Typography>
 
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Tooltip title="Ustawienia użytkownika">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            {/* Theme Toggle - minimalistyczny z ikonami */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                p: 0.5,
+                borderRadius: '12px',
+                background: theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.05)'
+                  : 'rgba(0, 0, 0, 0.04)',
+                border: theme.palette.mode === 'dark'
+                  ? `1px solid ${designTokens.darkPalette.border.subtle}`
+                  : '1px solid rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              <Tooltip title="Jasny motyw">
+                <IconButton
+                  size="small"
+                  onClick={() => setThemeMode('light')}
+                  sx={{
+                    p: 0.75,
+                    borderRadius: '8px',
+                    background: themeMode === 'light'
+                      ? designTokens.gradients.primary
+                      : 'transparent',
+                    color: themeMode === 'light' ? '#fff' : 'text.secondary',
+                    boxShadow: themeMode === 'light' ? designTokens.glow.orangeSubtle : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      background: themeMode === 'light'
+                        ? designTokens.gradients.hero
+                        : 'rgba(255, 152, 0, 0.1)',
+                    },
+                  }}
+                >
+                  <LazyIcon>
+                    <Icons.LightMode sx={{ fontSize: 20 }} />
+                  </LazyIcon>
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Motyw systemowy">
+                <IconButton
+                  size="small"
+                  onClick={() => setThemeMode('system')}
+                  sx={{
+                    p: 0.75,
+                    borderRadius: '8px',
+                    background: themeMode === 'system'
+                      ? designTokens.gradients.primary
+                      : 'transparent',
+                    color: themeMode === 'system' ? '#fff' : 'text.secondary',
+                    boxShadow: themeMode === 'system' ? designTokens.glow.orangeSubtle : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      background: themeMode === 'system'
+                        ? designTokens.gradients.hero
+                        : 'rgba(255, 152, 0, 0.1)',
+                    },
+                  }}
+                >
+                  <LazyIcon>
+                    <Icons.SettingsBrightness sx={{ fontSize: 20 }} />
+                  </LazyIcon>
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Ciemny motyw">
+                <IconButton
+                  size="small"
+                  onClick={() => setThemeMode('dark')}
+                  sx={{
+                    p: 0.75,
+                    borderRadius: '8px',
+                    background: themeMode === 'dark'
+                      ? designTokens.gradients.primary
+                      : 'transparent',
+                    color: themeMode === 'dark' ? '#fff' : 'text.secondary',
+                    boxShadow: themeMode === 'dark' ? designTokens.glow.orangeSubtle : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      background: themeMode === 'dark'
+                        ? designTokens.gradients.hero
+                        : 'rgba(255, 152, 0, 0.1)',
+                    },
+                  }}
+                >
+                  <LazyIcon>
+                    <Icons.DarkMode sx={{ fontSize: 20 }} />
+                  </LazyIcon>
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            <Tooltip title="Menu użytkownika">
               <IconButton
                 onClick={handleUserMenuOpen}
                 sx={{
-                  padding: 1,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
+                  padding: '8px 12px',
+                  border: '1.5px solid',
+                  borderColor: theme.palette.mode === 'dark'
+                    ? 'rgba(255, 152, 0, 0.3)'
+                    : 'rgba(255, 152, 0, 0.4)',
+                  borderRadius: '10px',
+                  background: theme.palette.mode === 'dark'
+                    ? 'rgba(255, 152, 0, 0.08)'
+                    : 'rgba(255, 152, 0, 0.05)',
+                  transition: 'all 0.25s ease',
                   '&:hover': {
-                    backgroundColor: 'action.hover',
+                    background: theme.palette.mode === 'dark'
+                      ? 'rgba(255, 152, 0, 0.15)'
+                      : 'rgba(255, 152, 0, 0.12)',
+                    borderColor: designTokens.colors.primary[500],
+                    boxShadow: designTokens.glow.orangeSubtle,
+                    transform: 'translateY(-1px)',
                   },
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <LazyIcon>
-                    <Icons.Person />
+                    <Icons.Person sx={{ color: 'primary.main' }} />
                   </LazyIcon>
-                  <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      display: { xs: 'none', sm: 'block' },
+                      fontWeight: 500,
+                      color: '#fff',
+                    }}
+                  >
                     {userId ? (username || 'Użytkownik') : ''}
                   </Typography>
                   <LazyIcon>
-                    <Icons.ExpandMore sx={{ fontSize: 20 }} />
+                    <Icons.ExpandMore sx={{ fontSize: 20, color: 'primary.main' }} />
                   </LazyIcon>
                 </Box>
               </IconButton>
@@ -572,18 +746,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               anchorEl={userMenuAnchor}
               open={Boolean(userMenuAnchor)}
               onClose={handleUserMenuClose}
-              onClick={(e) => {
-                // Zamykamy menu tylko jeśli kliknięcie nie było na przełączniku motywu
-                const target = e.target as HTMLElement;
-                if (!target.closest('[data-theme-switch]')) {
-                  handleUserMenuClose();
-                }
-              }}
               PaperProps={{
                 sx: {
-                  width: 320,
+                  width: 300,
                   maxWidth: '100%',
                   mt: 1.5,
+                  borderRadius: '12px',
+                  background: theme.palette.mode === 'dark'
+                    ? designTokens.darkPalette.background.elevated
+                    : '#ffffff',
+                  border: theme.palette.mode === 'dark'
+                    ? `1px solid ${designTokens.darkPalette.border.default}`
+                    : '1px solid rgba(0, 0, 0, 0.08)',
+                  boxShadow: designTokens.shadows.xl,
                 }
               }}
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
@@ -670,90 +845,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <ListItemText primary="Grafik" />
                 </MenuItem>
 
-                <Typography variant="overline" sx={{ px: 1, color: 'text.secondary', display: 'block', mt: 2 }}>
-                  Wygląd
-                </Typography>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1,
-                  p: 1,
-                  borderRadius: 1,
-                  '&:hover': {
-                    bgcolor: 'action.hover'
-                  }
-                }}>
-                  <LazyIcon>
-                    <Icons.LightMode sx={{ color: themeMode === 'light' ? 'primary.main' : 'text.secondary' }} />
-                  </LazyIcon>
-                  <Box sx={{ 
-                    display: 'flex',
-                    alignItems: 'center',
-                    bgcolor: 'action.selected',
-                    borderRadius: 2,
-                    p: 0.5,
-                    mx: 1,
-                    position: 'relative'
-                  }}>
-                    <Box
-                      onClick={() => handleThemeChange('light')}
-                      data-theme-switch
-                      sx={{
-                        cursor: 'pointer',
-                        p: 1,
-                        borderRadius: 1,
-                        bgcolor: themeMode === 'light' ? 'primary.main' : 'transparent',
-                        color: themeMode === 'light' ? 'primary.contrastText' : 'text.secondary',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          bgcolor: themeMode === 'light' ? 'primary.dark' : 'action.hover'
-                        }
-                      }}
-                    >
-                      <Typography variant="body2">Jasny</Typography>
-                    </Box>
-                    <Box
-                      onClick={() => handleThemeChange('system')}
-                      data-theme-switch
-                      sx={{
-                        cursor: 'pointer',
-                        p: 1,
-                        borderRadius: 1,
-                        bgcolor: themeMode === 'system' ? 'primary.main' : 'transparent',
-                        color: themeMode === 'system' ? 'primary.contrastText' : 'text.secondary',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          bgcolor: themeMode === 'system' ? 'primary.dark' : 'action.hover'
-                        }
-                      }}
-                    >
-                      <Typography variant="body2">Auto</Typography>
-                    </Box>
-                    <Box
-                      onClick={() => handleThemeChange('dark')}
-                      data-theme-switch
-                      sx={{
-                        cursor: 'pointer',
-                        p: 1,
-                        borderRadius: 1,
-                        bgcolor: themeMode === 'dark' ? 'primary.main' : 'transparent',
-                        color: themeMode === 'dark' ? 'primary.contrastText' : 'text.secondary',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          bgcolor: themeMode === 'dark' ? 'primary.dark' : 'action.hover'
-                        }
-                      }}
-                    >
-                      <Typography variant="body2">Ciemny</Typography>
-                    </Box>
-                  </Box>
-                  <LazyIcon>
-                    <Icons.DarkMode sx={{ color: themeMode === 'dark' ? 'primary.main' : 'text.secondary' }} />
-                  </LazyIcon>
-                </Box>
+                <Divider sx={{ my: 1 }} />
 
-                <Typography variant="overline" sx={{ px: 1, color: 'text.secondary', display: 'block', mt: 2 }}>
-                  Animacje
+                <Typography variant="overline" sx={{ px: 1, color: 'text.secondary', display: 'block' }}>
+                  Ustawienia
                 </Typography>
                 <MenuItem sx={{ borderRadius: 1 }}>
                   <ListItemIcon>
@@ -802,12 +897,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           keepMounted: true,
         }}
         sx={{
-          ...styles.navigation,
           display: isMobile ? 'block' : 'block',
           '& .MuiDrawer-paper': {
             width: 240,
             boxSizing: 'border-box',
-            transition: 'width 0.3s ease-in-out',
+            transition: 'all 0.3s ease-in-out',
+            // Pozycjonowanie pod AppBar
+            marginTop: isMobile ? 0 : '64px',
+            height: isMobile ? '100%' : 'calc(100% - 64px)',
+            background: theme.palette.mode === 'dark'
+              ? designTokens.gradients.darkSidebar
+              : 'linear-gradient(180deg, #ffffff 0%, #fafafa 100%)',
+            borderRight: theme.palette.mode === 'dark'
+              ? `1px solid ${designTokens.darkPalette.border.subtle}`
+              : '1px solid rgba(0, 0, 0, 0.06)',
             ...(isMobile && {
               width: '100%',
             }),

@@ -20,6 +20,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
+import { designTokens } from '../../theme/designTokens';
+
+// Quest theme colors for easier reference
+const questColors = designTokens.colors.questTheme;
 
 interface Quest {
   recipient: string;
@@ -35,8 +39,8 @@ interface Quest {
 
 const QuestCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
-  background: `linear-gradient(145deg, #E6CB99, #CFA865)`,
-  border: '2px solid #54291E',
+  background: `linear-gradient(145deg, ${questColors.parchment.medium}, ${questColors.parchment.dark})`,
+  border: `2px solid ${questColors.ink.primary}`,
   borderRadius: '8px',
   boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
   position: 'relative',
@@ -59,8 +63,8 @@ const QuestCard = styled(Paper)(({ theme }) => ({
 
 // Nowy komponent dla pilnych zadań
 const UrgentQuestCard = styled(QuestCard)(() => ({
-  background: `linear-gradient(145deg, #E6A446, #A4462D)`,
-  border: '2px solid #A4462D',
+  background: questColors.urgent.gradient,
+  border: `2px solid ${questColors.urgent.background}`,
   boxShadow: '0 4px 12px rgba(164, 70, 45, 0.5)',
   animation: 'pulse 2s infinite',
   '@keyframes pulse': {
@@ -80,13 +84,13 @@ const UrgentQuestCard = styled(QuestCard)(() => ({
 const UrgencyBadge = styled(Box)(() => ({
   position: 'absolute',
   top: -10,
-  right: 60, // Zmienione z -10 na 60, aby wyświetlać obok poziomu trudności
+  right: 60,
   padding: '4px 12px',
   borderRadius: '12px',
   fontSize: '0.8rem',
   fontWeight: 'bold',
   color: '#fff',
-  backgroundColor: '#A4462D',
+  backgroundColor: questColors.urgent.background,
   boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
   display: 'flex',
   alignItems: 'center',
@@ -106,10 +110,10 @@ const DifficultyBadge = styled(Box)<{ difficulty: string }>(({ difficulty }) => 
   fontSize: '0.8rem',
   fontWeight: 'bold',
   color: '#fff',
-  backgroundColor: 
-    difficulty === 'easy' ? '#4CAF50' :
-    difficulty === 'medium' ? '#FF9800' :
-    '#f44336',
+  backgroundColor:
+    difficulty === 'easy' ? designTokens.colors.success.main :
+    difficulty === 'medium' ? designTokens.colors.accent[500] :
+    designTokens.colors.error.main,
   boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
 }));
 
@@ -159,9 +163,9 @@ const CountdownTimer: React.FC<{ deadline: string }> = ({ deadline }) => {
 
   // Określ kolor na podstawie pozostałego czasu
   const getTimerColor = () => {
-    if (timeLeft.totalHours < 1) return '#A4462D'; // Czerwony dla mniej niż godziny
-    if (timeLeft.days < 1) return '#E6A446'; // Pomarańczowy dla mniej niż dnia
-    return '#54291E'; // Standardowy kolor
+    if (timeLeft.totalHours < 1) return questColors.urgent.background; // Czerwony dla mniej niż godziny
+    if (timeLeft.days < 1) return designTokens.colors.accent[500]; // Pomarańczowy dla mniej niż dnia
+    return questColors.ink.primary; // Standardowy kolor
   };
 
   return (
@@ -350,7 +354,7 @@ const QuestBoardPage: React.FC = () => {
           sx={{
             textAlign: 'center',
             fontFamily: '"Cinzel", serif',
-            color: '#E6CB99',
+            color: questColors.parchment.medium,
             textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
             mb: 6
           }}
@@ -359,19 +363,19 @@ const QuestBoardPage: React.FC = () => {
         </Typography>
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-          <Tabs 
-            value={activeTab} 
+          <Tabs
+            value={activeTab}
             onChange={handleTabChange}
             centered
             sx={{
               '& .MuiTab-root': {
-                color: '#E6CB99',
+                color: questColors.parchment.medium,
                 '&.Mui-selected': {
-                  color: '#A4462D',
+                  color: questColors.urgent.background,
                 },
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#A4462D',
+                backgroundColor: questColors.urgent.background,
               },
             }}
           >
@@ -391,13 +395,13 @@ const QuestBoardPage: React.FC = () => {
               onClose={() => setShowAdminInfo(false)}
               severity="info"
               sx={{
-                backgroundColor: '#54291E',
-                color: '#E6CB99',
+                backgroundColor: questColors.ink.primary,
+                color: questColors.parchment.medium,
                 '& .MuiAlert-icon': {
-                  color: '#E6CB99'
+                  color: questColors.parchment.medium
                 },
                 '& .MuiAlert-action': {
-                  color: '#E6CB99'
+                  color: questColors.parchment.medium
                 }
               }}
             >
@@ -434,8 +438,8 @@ const QuestBoardPage: React.FC = () => {
                     variant="h5"
                     sx={{
                       fontFamily: '"Cinzel", serif',
-                      color: '#54291E',
-                      borderBottom: '2px solid #54291E',
+                      color: questColors.ink.primary,
+                      borderBottom: `2px solid ${questColors.ink.primary}`,
                       pb: 1,
                       mb: 2
                     }}
@@ -448,7 +452,7 @@ const QuestBoardPage: React.FC = () => {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: '#54291E',
+                        color: questColors.ink.primary,
                         fontStyle: 'italic',
                         fontSize: '0.9rem'
                       }}
@@ -457,18 +461,18 @@ const QuestBoardPage: React.FC = () => {
                     </Typography>
                   </Box>
 
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 1, 
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
                     mt: 2,
-                    color: '#54291E',
-                    backgroundColor: 'rgba(230, 203, 153, 0.3)',
+                    color: questColors.ink.primary,
+                    backgroundColor: `${questColors.parchment.medium}4d`,
                     p: 1,
                     borderRadius: '4px',
-                    border: '1px dashed #A4462D'
+                    border: `1px dashed ${questColors.urgent.background}`
                   }}>
-                    <LocationOn sx={{ color: '#A4462D' }} />
+                    <LocationOn sx={{ color: questColors.urgent.background }} />
                     <Typography variant="body1" sx={{ fontWeight: 500 }}>
                       {quest.location} - {quest.pavilion}
                     </Typography>
@@ -478,7 +482,7 @@ const QuestBoardPage: React.FC = () => {
                     <Typography
                       variant="h6"
                       sx={{
-                        color: '#54291E',
+                        color: questColors.ink.primary,
                         fontFamily: '"Cinzel", serif',
                         mb: 1
                       }}
@@ -499,10 +503,10 @@ const QuestBoardPage: React.FC = () => {
                             alignItems: 'center',
                             gap: 1,
                             mb: 1,
-                            color: '#54291E',
+                            color: questColors.ink.primary,
                             '&::before': {
                               content: '"•"',
-                              color: '#A4462D',
+                              color: questColors.urgent.background,
                               fontWeight: 'bold',
                               fontSize: '1.2rem'
                             }
@@ -517,7 +521,7 @@ const QuestBoardPage: React.FC = () => {
                                   ml: 1,
                                   fontSize: '0.9rem',
                                   fontStyle: 'italic',
-                                  color: '#A4462D'
+                                  color: questColors.urgent.background
                                 }}
                               >
                                 ({item.notes})
@@ -534,12 +538,12 @@ const QuestBoardPage: React.FC = () => {
                     color="primary"
                     startIcon={<AddCircleOutline />}
                     onClick={() => handleCreateTransfer(quest)}
-                    sx={{ 
+                    sx={{
                       mt: 3,
                       width: '100%',
-                      backgroundColor: '#54291E',
+                      backgroundColor: questColors.ink.primary,
                       '&:hover': {
-                        backgroundColor: '#A4462D',
+                        backgroundColor: questColors.urgent.background,
                       }
                     }}
                   >

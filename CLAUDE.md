@@ -79,17 +79,22 @@ src/
 ## Design System
 
 ### Design Tokens (`designTokens.ts`)
-- **Kolory**: primary (#ff9800 - pomarańczowy), secondary (#e91e63)
+- **Primary**: Pyrkon Orange (#ff9800) - główny kolor brandingu
+- **Secondary**: Deep Burnt Orange (#d84315)
+- **Accent**: Electric Teal (#00acc1) - kontrast do orange
 - **Spacing**: xs (0.25rem) do 4xl (6rem)
 - **Border Radius**: none do full (9999px)
-- **Shadows**: sm do 2xl
-- **Typography**: Roboto + Cinzel
+- **Shadows**: sm do 2xl + primary (orange glow), accent (teal glow)
+- **Typography**: Roboto (body) + Cinzel (headings h1-h3)
+- **Glassmorphism**: glass.light, glass.dark tokens
+- **Gradients**: primary, hero, dark, darkCard, accent
+- **Glow effects**: orange, orangeStrong, orangeSubtle, teal
 
-### Planowane zmiany UI/UX (TODO)
-- Zmiana primary na indigo/navy (#3949ab) - lepszy kontrast w dark mode
-- Pomarańczowy jako accent color
-- Dedykowane style dla tabel (zebra striping, hover states)
-- Subtelne gradienty w nagłówkach/kartach
+### Dark Mode
+- Deep blue-black backgrounds (#0f0f23, #1a1a2e, #16213e)
+- Orange tint on hover/selected states
+- Custom scrollbar z orange accent
+- Gradient sidebar background
 
 ### Użycie stylów
 ```typescript

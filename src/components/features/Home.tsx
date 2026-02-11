@@ -14,18 +14,22 @@ import {
   Chip,
   Alert,
   styled,
-  alpha
+  alpha,
+  IconButton,
+  InputAdornment,
+  Tooltip
 } from '@mui/material';
-import { 
-  LocalShipping, 
-  Search, 
+import {
+  LocalShipping,
+  Search,
   RocketLaunch,
   LocationOn,
   AccessTime,
   Inventory,
   ListAlt,
   AddTask,
-  QrCodeScanner
+  QrCodeScanner,
+  KeyboardReturn
 } from '@mui/icons-material';
 import { useTransfers } from '../../hooks/useTransfers';
 import { getApiUrl } from '../../config/api';
@@ -33,6 +37,7 @@ import { jwtDecode } from 'jwt-decode';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import BarcodeScanner from '../common/BarcodeScanner';
+import { designTokens } from '../../theme/designTokens';
 
 interface PyrCodeSuggestion {
   id: number;
@@ -170,9 +175,116 @@ const QuestStatus = styled(Chip)(({ theme }) => ({
   border: `1px solid ${theme.palette.mode === 'dark' ? '#ffd700' : '#b8860b'}`,
   fontWeight: 600,
   '& .MuiChip-label': {
-    textShadow: theme.palette.mode === 'dark' 
+    textShadow: theme.palette.mode === 'dark'
       ? '1px 1px 1px rgba(0,0,0,0.8)'
       : '1px 1px 1px rgba(139, 69, 19, 0.3)',
+  },
+}));
+
+// Modern Search Container with glassmorphism
+const SearchContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  padding: theme.spacing(4),
+  marginBottom: theme.spacing(5),
+  background: theme.palette.mode === 'dark'
+    ? designTokens.glass.dark.background
+    : designTokens.glass.light.backgroundStrong,
+  backdropFilter: designTokens.glass.light.backdropBlur,
+  WebkitBackdropFilter: designTokens.glass.light.backdropBlur,
+  borderRadius: designTokens.borderRadius['2xl'],
+  border: theme.palette.mode === 'dark'
+    ? designTokens.glass.dark.border
+    : `1px solid rgba(255, 152, 0, 0.15)`,
+  boxShadow: theme.palette.mode === 'dark'
+    ? '0 8px 32px rgba(0, 0, 0, 0.3)'
+    : '0 8px 32px rgba(255, 152, 0, 0.1)',
+  overflow: 'hidden',
+  // Subtle orange gradient overlay
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '3px',
+    background: designTokens.gradients.primary,
+    opacity: 0.8,
+  },
+}));
+
+// Modern Action Card
+const ActionCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  background: theme.palette.mode === 'dark'
+    ? designTokens.darkPalette.background.elevated
+    : '#ffffff',
+  borderRadius: designTokens.borderRadius.xl,
+  border: theme.palette.mode === 'dark'
+    ? `1px solid ${designTokens.darkPalette.border.subtle}`
+    : '1px solid rgba(0, 0, 0, 0.06)',
+  position: 'relative',
+  overflow: 'hidden',
+  // Orange accent line at top
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '40%',
+    height: '3px',
+    background: designTokens.gradients.primary,
+    borderRadius: '0 0 4px 4px',
+    opacity: 0,
+    transition: 'all 0.3s ease',
+  },
+  '&:hover': {
+    transform: 'translateY(-6px)',
+    boxShadow: theme.palette.mode === 'dark'
+      ? `0 12px 28px rgba(0, 0, 0, 0.4), ${designTokens.glow.orangeSubtle}`
+      : `0 12px 28px rgba(255, 152, 0, 0.15), ${designTokens.glow.orangeSubtle}`,
+    borderColor: theme.palette.mode === 'dark'
+      ? designTokens.colors.primary[700]
+      : designTokens.colors.primary[300],
+    '&::before': {
+      opacity: 1,
+      width: '80%',
+    },
+  },
+}));
+
+// Action Icon Container
+const ActionIconWrapper = styled(Box)(({ theme }) => ({
+  width: 64,
+  height: 64,
+  borderRadius: '16px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: theme.spacing(2),
+  background: theme.palette.mode === 'dark'
+    ? designTokens.gradients.primarySoft
+    : 'rgba(255, 152, 0, 0.08)',
+  transition: 'all 0.3s ease',
+  '.MuiSvgIcon-root': {
+    fontSize: 32,
+    color: designTokens.colors.primary[500],
+    transition: 'all 0.3s ease',
+  },
+  '&:hover': {
+    background: designTokens.gradients.primary,
+    boxShadow: designTokens.glow.orangeSubtle,
+    '.MuiSvgIcon-root': {
+      color: '#ffffff',
+      transform: 'scale(1.1)',
+    },
   },
 }));
 
@@ -369,333 +481,483 @@ const HomePage: React.FC = () => {
         autoHideDuration={snackbar.autoHideDuration}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
-      <Container maxWidth="xl" sx={{ 
-        py: { xs: 4, sm: 4 },
-        mt: { xs: 2, sm: 0 }
+      <Container maxWidth="xl" sx={{
+        py: { xs: 3, sm: 4 },
+        mt: { xs: 1, sm: 0 }
       }}>
-        <Box sx={{ 
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          position: 'relative',
-          mb: 4,
-          mt: -3
-        }}>
-          <Autocomplete
-            fullWidth
-            freeSolo
-            options={pyrCodeSuggestions}
-            getOptionLabel={(option) => 
-              typeof option === 'string' ? option : option.pyrcode
-            }
-            onChange={handleOptionSelected}
-            renderOption={(props, option) => {
-              const { key, ...otherProps } = props;
-              return (
-                <Box key={key} component="li" {...otherProps}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="body1">{option.pyrcode}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {option.category.label} - {option.location.name}
-                    </Typography>
-                  </Box>
-                </Box>
-              );
+        {/* Modern Search Section */}
+        <SearchContainer>
+          <Typography
+            variant="h5"
+            sx={{
+              mb: 2,
+              fontWeight: 600,
+              color: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
             }}
-            loading={searchLoading}
-            onInputChange={(_, newValue) => {
-              setPyrcode(newValue);
-              handlePyrCodeSearch(newValue);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                variant="outlined"
-                placeholder="Wprowadź Pyrcode..."
-                onKeyDown={handleKeyDown}
-                InputProps={{
-                  ...params.InputProps,
-                  sx: {
-                    height: '48px',
-                    pr: '96px',
-                    backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#2d2d2d' : '#ffffff',
-                    borderRadius: 3,
-                    '& input': {
-                      height: '48px',
-                      padding: '0 14px',
-                    }
-                  },
-                  startAdornment: (
-                    <Search sx={{ 
-                      color: 'text.secondary', 
-                      ml: 1, 
-                      mr: 0.5 
-                    }} />
-                  ),
-                  endAdornment: (
-                    <Box sx={{ 
-                      position: 'absolute',
-                      right: 8,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5
-                    }}>
-                      {searchLoading && (
-                        <CircularProgress 
-                          color="inherit" 
-                          size={20} 
-                          sx={{ mr: 1 }}
-                        />
-                      )}
-                      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={handleSearch}
-                          sx={{ 
-                            borderRadius: 2,
-                            height: '36px',
-                            minWidth: '100px'
-                          }}
-                        >
-                          Szukaj
-                        </Button>
-                      </Box>
-                      <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => setShowScanner(true)}
-                          startIcon={<QrCodeScanner />}
-                          sx={{
-                            borderRadius: 2,
-                            height: '36px',
-                            minWidth: '100px'
-                          }}
-                        >
-                          Skanuj
-                        </Button>
-                      </Box>
+          >
+            <Search sx={{ color: 'primary.main' }} />
+            Wyszukaj sprzęt
+          </Typography>
+
+          <Box sx={{
+            display: 'flex',
+            gap: 1.5,
+            alignItems: 'stretch',
+          }}>
+            {/* Main Search Input */}
+            <Autocomplete
+              fullWidth
+              freeSolo
+              options={pyrCodeSuggestions}
+              getOptionLabel={(option) =>
+                typeof option === 'string' ? option : option.pyrcode
+              }
+              onChange={handleOptionSelected}
+              renderOption={(props, option) => {
+                const { key, ...otherProps } = props;
+                return (
+                  <Box
+                    key={key}
+                    component="li"
+                    {...otherProps}
+                    sx={{
+                      py: 1.5,
+                      px: 2,
+                      borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                      '&:last-child': { borderBottom: 'none' },
+                      '&:hover': {
+                        background: (theme) => theme.palette.mode === 'dark'
+                          ? 'rgba(255, 152, 0, 0.12)'
+                          : 'rgba(255, 152, 0, 0.08)',
+                      },
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontWeight: 600,
+                          color: 'primary.main',
+                          fontFamily: 'monospace',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {option.pyrcode}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {option.category.label} • {option.location.name}
+                      </Typography>
                     </Box>
-                  ),
+                  </Box>
+                );
+              }}
+              loading={searchLoading}
+              onInputChange={(_, newValue) => {
+                setPyrcode(newValue);
+                handlePyrCodeSearch(newValue);
+              }}
+              PaperComponent={({ children, ...props }) => (
+                <Paper
+                  {...props}
+                  sx={{
+                    mt: 1,
+                    borderRadius: designTokens.borderRadius.lg,
+                    border: (theme) => theme.palette.mode === 'dark'
+                      ? `1px solid ${designTokens.darkPalette.border.default}`
+                      : '1px solid rgba(255, 152, 0, 0.2)',
+                    boxShadow: designTokens.shadows.xl,
+                  }}
+                >
+                  {children}
+                </Paper>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Wprowadź Pyrcode (np. PYR-001)..."
+                  onKeyDown={handleKeyDown}
+                  InputProps={{
+                    ...params.InputProps,
+                    sx: {
+                      height: '56px',
+                      pr: '14px !important',
+                      backgroundColor: (theme) => theme.palette.mode === 'dark'
+                        ? designTokens.darkPalette.background.paper
+                        : '#ffffff',
+                      borderRadius: designTokens.borderRadius.lg,
+                      fontSize: '1.1rem',
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.03em',
+                      '& input': {
+                        height: '56px',
+                        padding: '0 14px !important',
+                      },
+                      '& input::placeholder': {
+                        fontFamily: '"Roboto", sans-serif',
+                        letterSpacing: 'normal',
+                        opacity: 0.7,
+                      },
+                    },
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{
+                          color: 'primary.main',
+                          fontSize: 28,
+                          ml: 0.5,
+                        }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {searchLoading && (
+                            <CircularProgress
+                              color="primary"
+                              size={24}
+                            />
+                          )}
+                          {pyrcode && (
+                            <Tooltip title="Szukaj (Enter)">
+                              <IconButton
+                                onClick={handleSearch}
+                                sx={{
+                                  color: 'primary.main',
+                                  '&:hover': {
+                                    background: 'rgba(255, 152, 0, 0.12)',
+                                  },
+                                }}
+                              >
+                                <KeyboardReturn />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: designTokens.borderRadius.lg,
+                      '& fieldset': {
+                        borderColor: (theme) => theme.palette.mode === 'dark'
+                          ? designTokens.darkPalette.border.default
+                          : 'rgba(255, 152, 0, 0.3)',
+                        borderWidth: '2px',
+                        borderRadius: designTokens.borderRadius.lg,
+                      },
+                      '&:hover fieldset': {
+                        borderColor: designTokens.colors.primary[400],
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: designTokens.colors.primary[500],
+                        boxShadow: '0 0 0 4px rgba(255, 152, 0, 0.15)',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
+
+            {/* QR Scanner Button */}
+            <Tooltip title="Skanuj kod QR">
+              <Button
+                variant="contained"
+                onClick={() => setShowScanner(true)}
+                sx={{
+                  minWidth: { xs: '56px', sm: '140px' },
+                  height: '56px',
+                  borderRadius: designTokens.borderRadius.lg,
+                  background: designTokens.gradients.primary,
+                  boxShadow: designTokens.shadows.primary,
+                  px: { xs: 0, sm: 3 },
+                  '&:hover': {
+                    background: designTokens.gradients.hero,
+                    boxShadow: designTokens.glow.orange,
+                    transform: 'translateY(-2px)',
+                  },
                 }}
-                sx={{ 
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
-                    '& fieldset': {
-                      borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-                      borderRadius: 3
-                    },
-                    '&:hover fieldset': {
-                      borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    },
-                    '& input': {
-                      color: (theme) => theme.palette.mode === 'dark' ? '#fff' : 'inherit',
-                    },
-                  }
-                }}
-              />
-            )}
-          />
-        </Box>
+              >
+                <QrCodeScanner sx={{ fontSize: 28 }} />
+                <Typography
+                  sx={{
+                    ml: 1,
+                    display: { xs: 'none', sm: 'block' },
+                    fontWeight: 600,
+                  }}
+                >
+                  Skanuj
+                </Typography>
+              </Button>
+            </Tooltip>
+          </Box>
+
+          {/* Helper text */}
+          <Typography
+            variant="caption"
+            sx={{
+              mt: 1.5,
+              display: 'block',
+              color: 'text.secondary',
+              opacity: 0.8,
+            }}
+          >
+            Wpisz kod lub zeskanuj QR, aby szybko znaleźć sprzęt
+          </Typography>
+        </SearchContainer>
 
         {scannerComponent}
 
-        {/* Szybkie akcje */}
+        {/* Szybkie akcje - Modern Design */}
         <Box sx={{ mb: 6 }}>
-          <Typography 
-            variant="h5" 
-            gutterBottom 
-            sx={{ 
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{
               mb: 3,
               fontWeight: 600,
-              color: 'text.primary'
+              color: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
             }}
           >
+            <RocketLaunch sx={{ color: 'primary.main' }} />
             Szybkie akcje
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={4} md={3}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  background: (theme) => theme.palette.mode === 'dark' 
-                    ? '#2d2d2d'
-                    : '#ffffff',
-                  borderRadius: 2,
-                  border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                  '&:hover': { 
-                    transform: 'translateY(-4px)',
-                    boxShadow: (theme) => theme.palette.mode === 'dark' 
-                      ? '0 8px 24px rgba(0,0,0,0.4)'
-                      : '0 8px 24px rgba(0,0,0,0.08)',
-                  }
-                }}
-                onClick={() => navigate('/transfers/create')}
-              >
-                <RocketLaunch sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-                <Typography variant="h6" align="center" sx={{ fontWeight: 500 }}>
-                  Utwórz quest-dostawę
+            <Grid item xs={6} sm={6} md={3}>
+              <ActionCard elevation={0} onClick={() => navigate('/transfers/create')}>
+                <ActionIconWrapper>
+                  <RocketLaunch />
+                </ActionIconWrapper>
+                <Typography
+                  variant="h6"
+                  align="center"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                    color: 'text.primary',
+                  }}
+                >
+                  Utwórz quest
                 </Typography>
-              </Paper>
+                <Typography
+                  variant="caption"
+                  align="center"
+                  sx={{
+                    color: 'text.secondary',
+                    mt: 0.5,
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
+                  Nowa dostawa
+                </Typography>
+              </ActionCard>
             </Grid>
-            <Grid item xs={12} sm={4} md={3}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  background: (theme) => theme.palette.mode === 'dark' 
-                    ? '#2d2d2d'
-                    : '#ffffff',
-                  borderRadius: 2,
-                  border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                  '&:hover': { 
-                    transform: 'translateY(-4px)',
-                    boxShadow: (theme) => theme.palette.mode === 'dark' 
-                      ? '0 8px 24px rgba(0,0,0,0.4)'
-                      : '0 8px 24px rgba(0,0,0,0.08)',
-                  }
-                }}
-                onClick={() => navigate('/add-item')}
-              >
-                <AddTask sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-                <Typography variant="h6" align="center" sx={{ fontWeight: 500 }}>
+
+            <Grid item xs={6} sm={6} md={3}>
+              <ActionCard elevation={0} onClick={() => navigate('/add-item')}>
+                <ActionIconWrapper>
+                  <AddTask />
+                </ActionIconWrapper>
+                <Typography
+                  variant="h6"
+                  align="center"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                    color: 'text.primary',
+                  }}
+                >
                   Dodaj sprzęt
                 </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} sm={4} md={3}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  background: (theme) => theme.palette.mode === 'dark' 
-                    ? '#2d2d2d'
-                    : '#ffffff',
-                  borderRadius: 2,
-                  border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                  '&:hover': { 
-                    transform: 'translateY(-4px)',
-                    boxShadow: (theme) => theme.palette.mode === 'dark' 
-                      ? '0 8px 24px rgba(0,0,0,0.4)'
-                      : '0 8px 24px rgba(0,0,0,0.08)',
-                  }
-                }}
-                onClick={() => navigate('/list')}
-              >
-                <Inventory sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-                <Typography variant="h6" align="center" sx={{ fontWeight: 500 }}>
-                  Zarządzaj magazynem
+                <Typography
+                  variant="caption"
+                  align="center"
+                  sx={{
+                    color: 'text.secondary',
+                    mt: 0.5,
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
+                  Nowy przedmiot
                 </Typography>
-              </Paper>
+              </ActionCard>
             </Grid>
-            <Grid item xs={12} sm={4} md={3}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  background: (theme) => theme.palette.mode === 'dark' 
-                    ? '#2d2d2d'
-                    : '#ffffff',
-                  borderRadius: 2,
-                  border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                  '&:hover': { 
-                    transform: 'translateY(-4px)',
-                    boxShadow: (theme) => theme.palette.mode === 'dark' 
-                      ? '0 8px 24px rgba(0,0,0,0.4)'
-                      : '0 8px 24px rgba(0,0,0,0.08)',
-                  }
-                }}
-                onClick={() => navigate('/transfers')}
-              >
-                <ListAlt sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-                <Typography variant="h6" align="center" sx={{ fontWeight: 500 }}>
-                  Przeglądaj questy-dostawy
+
+            <Grid item xs={6} sm={6} md={3}>
+              <ActionCard elevation={0} onClick={() => navigate('/list')}>
+                <ActionIconWrapper>
+                  <Inventory />
+                </ActionIconWrapper>
+                <Typography
+                  variant="h6"
+                  align="center"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                    color: 'text.primary',
+                  }}
+                >
+                  Magazyn
                 </Typography>
-              </Paper>
+                <Typography
+                  variant="caption"
+                  align="center"
+                  sx={{
+                    color: 'text.secondary',
+                    mt: 0.5,
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
+                  Zarządzaj sprzętem
+                </Typography>
+              </ActionCard>
+            </Grid>
+
+            <Grid item xs={6} sm={6} md={3}>
+              <ActionCard elevation={0} onClick={() => navigate('/transfers')}>
+                <ActionIconWrapper>
+                  <ListAlt />
+                </ActionIconWrapper>
+                <Typography
+                  variant="h6"
+                  align="center"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                    color: 'text.primary',
+                  }}
+                >
+                  Questy
+                </Typography>
+                <Typography
+                  variant="caption"
+                  align="center"
+                  sx={{
+                    color: 'text.secondary',
+                    mt: 0.5,
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
+                  Przeglądaj dostawy
+                </Typography>
+              </ActionCard>
             </Grid>
           </Grid>
         </Box>
 
-        {/* Pilne zadania */}
+        {/* Moje Questy - Modern Section */}
         <Box sx={{ mb: 6 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            mb: 3 
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 3,
+            flexWrap: 'wrap',
+            gap: 2,
           }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
+            <Typography
+              variant="h5"
+              sx={{
                 fontWeight: 600,
-                color: 'text.primary'
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
               }}
             >
+              <LocalShipping sx={{ color: 'primary.main' }} />
               Moje Questy
             </Typography>
-            <Button 
-              variant="outlined" 
-              color="primary" 
+            <Button
+              variant="outlined"
+              color="primary"
               onClick={() => navigate('/quests')}
               startIcon={<AccessTime />}
-              sx={{ 
-                borderRadius: 1,
-                textTransform: 'none'
+              sx={{
+                borderRadius: designTokens.borderRadius.lg,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderWidth: '2px',
+                '&:hover': {
+                  borderWidth: '2px',
+                  background: 'rgba(255, 152, 0, 0.08)',
+                },
               }}
             >
-              Zobacz wszystkie zadania
+              Tablica zadań
             </Button>
           </Box>
 
           {userTransfersLoading ? (
-            <Box display="flex" justifyContent="center" p={3}>
-              <CircularProgress />
+            <Box
+              display="flex"
+              justifyContent="center"
+              p={4}
+              sx={{
+                background: (theme) => theme.palette.mode === 'dark'
+                  ? designTokens.darkPalette.background.elevated
+                  : 'rgba(255, 152, 0, 0.04)',
+                borderRadius: designTokens.borderRadius.xl,
+              }}
+            >
+              <CircularProgress color="primary" />
             </Box>
           ) : userTransfersError ? (
-            <Alert severity="error">{userTransfersError}</Alert>
-          ) : userTransfers.length === 0 ? (
-            <Alert severity="info">
-              Brak aktywnych questów
+            <Alert
+              severity="error"
+              sx={{ borderRadius: designTokens.borderRadius.lg }}
+            >
+              {userTransfersError}
             </Alert>
+          ) : userTransfers.length === 0 ? (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                textAlign: 'center',
+                background: (theme) => theme.palette.mode === 'dark'
+                  ? designTokens.darkPalette.background.elevated
+                  : 'rgba(255, 152, 0, 0.04)',
+                borderRadius: designTokens.borderRadius.xl,
+                border: (theme) => theme.palette.mode === 'dark'
+                  ? `1px solid ${designTokens.darkPalette.border.subtle}`
+                  : '1px solid rgba(255, 152, 0, 0.1)',
+              }}
+            >
+              <LocalShipping
+                sx={{
+                  fontSize: 48,
+                  color: 'text.secondary',
+                  opacity: 0.5,
+                  mb: 2,
+                }}
+              />
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                Brak aktywnych questów
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Rozpocznij nową dostawę, aby zobaczyć ją tutaj
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate('/transfers/create')}
+                startIcon={<RocketLaunch />}
+                sx={{ borderRadius: designTokens.borderRadius.lg }}
+              >
+                Utwórz quest
+              </Button>
+            </Paper>
           ) : (
-            <List sx={{ mt: 2 }}>
+            <List sx={{ mt: 1 }}>
               {userTransfers.map((transfer) => (
                 <QuestItem
                   key={transfer.ID}
@@ -707,17 +969,17 @@ const HomePage: React.FC = () => {
                     <LocalShipping sx={{ color: 'inherit', fontSize: '1.2rem' }} />
                     Quest #{transfer.ID}
                   </QuestTitle>
-                  
+
                   <QuestLocation>
                     <LocationOn sx={{ fontSize: '1.1rem' }} />
                     Z: {transfer.FromLocationName}
                   </QuestLocation>
-                  
+
                   <QuestLocation>
                     <LocationOn sx={{ fontSize: '1.1rem' }} />
                     Do: {transfer.ToLocationName}
                   </QuestLocation>
-                  
+
                   <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <QuestDate>
                       Rozpoczęto: {new Date(transfer.TransferDate).toLocaleString('pl-PL')}
