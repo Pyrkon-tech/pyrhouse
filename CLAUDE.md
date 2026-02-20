@@ -59,6 +59,8 @@ src/
 
 ### Public routes
 - `/login` - Logowanie
+- `/auth/discord/callback` - Discord login callback
+- `/auth/discord/link-callback` - Discord link callback
 - `/servicedesk/request` - Publiczny formularz service desk
 
 ### Protected routes (wymagają JWT)
@@ -116,7 +118,7 @@ const { commonStyles } = useStyles();
 
 - Base URL: `VITE_API_BASE_URL` (dostęp przez `env.API_BASE_URL`)
 - Auth: Bearer token w Authorization header
-- Services: transferService, locationService, assetService, userService
+- Services: transferService, locationService, assetService, userService, discordAuthService
 
 ### Nowy sposób (zalecany) - apiClient
 ```typescript
@@ -216,7 +218,49 @@ VITE_API_BASE_URL=<API URL>
 VITE_API_TIMEOUT=30000
 VITE_APP_NAME=PyrHouse
 VITE_ENVIRONMENT=dev|prod
+VITE_DISCORD_CLIENT_ID=<Discord OAuth2 Client ID>
 ```
+
+## Discord Integration
+
+### Architektura
+- **Login**: `discordAuthService.initiateLogin()` → backend redirect → Discord OAuth → backend callback → JWT token
+- **Linking**: `discordAuthService.initiateLinking(userId)` → bezpośredni Discord OAuth → frontend callback → `POST /users/:id/link-discord`
+
+### Typy użytkowników (nowy kontrakt API)
+- `UserListItem` — lista użytkowników (GET /users), bez `discord_id`/`avatar_url`
+- `UserDetails` — szczegóły (GET /users/:id), z pełnymi danymi Discord
+- Oba mają `fullname: string | null` (null dla kont Discord)
+- `auth_provider: 'discord' | null` — metoda rejestracji
+
+### Łączenie kont (POST /users/:id/link-discord)
+- Body: `{ code: string, state: string }` — z Discord OAuth2
+- 200: Połączono pomyślnie
+- 409: Discord account już podłączone do innego usera
+- Admin widzi przycisk "Połącz z Discord" na profilu użytkownika bez Discord
+- Wymaga `VITE_DISCORD_CLIENT_ID` w env
+
+### Scalanie kont Discord (POST /users/:id/merge-discord)
+- Przenosi dane Discord z ghost konta na konto docelowe
+- Body: `{ source_user_id: number }` — ID ghost konta
+- Wymagana rola: moderator lub admin
+- 200: Sukces (`source_deleted: true/false` — ghost usunięty lub dezaktywowany)
+- 400: source == target / source bez Discorda
+- 403: Brak uprawnień
+- 404: Konto nie istnieje
+- 409: Target już ma podłączony Discord
+- Ghost konta na liście użytkowników: `auth_provider: "discord"`, `active: false` — oznaczone chipem "Ghost"
+- Dialog scalania dostępny na profilu użytkownika bez Discorda (przycisk "Scal konta Discord")
+
+### Kluczowe pliki Discord
+| Plik | Opis |
+|------|------|
+| `src/services/discordAuthService.ts` | OAuth flow (login + linking) |
+| `src/services/userService.ts` | `linkDiscordAPI()`, `mergeDiscordAPI()` |
+| `src/types/user.types.ts` | `MergeDiscordPayload`, `MergeDiscordResponse` |
+| `src/components/features/DiscordCallback.tsx` | Callback logowania |
+| `src/components/features/DiscordLinkCallback.tsx` | Callback łączenia kont |
+| `src/hooks/useDiscordAuth.ts` | Hook logowania Discord |
 
 ## Ostatnie naprawy (2025-01)
 

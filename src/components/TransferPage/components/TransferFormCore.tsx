@@ -51,7 +51,7 @@ const RefreshIcon = lazy(() => import('@mui/icons-material/Refresh'));
 interface User {
   id: number;
   username: string;
-  fullname: string;
+  fullname: string | null;
 }
 
 interface PyrCodeSuggestion {

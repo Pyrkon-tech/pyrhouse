@@ -148,11 +148,15 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.fullname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const query = searchQuery.toLowerCase();
+    return (
+      user.username.toLowerCase().includes(query) ||
+      (user.fullname ?? '').toLowerCase().includes(query) ||
+      user.role.toLowerCase().includes(query) ||
+      (user.discord_username ?? '').toLowerCase().includes(query)
+    );
+  });
 
   const getCurrentUserId = () => {
     const token = localStorage.getItem('token');
@@ -247,7 +251,26 @@ const UserManagementPage: React.FC = () => {
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Imię i nazwisko:</Typography>
-                  <Typography variant="body2">{user.fullname}</Typography>
+                  <Typography variant="body2" sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
+                    {user.fullname || '—'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">Discord:</Typography>
+                  <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                    {(user.discord_username || user.auth_provider === 'discord') ? (
+                      <Chip 
+                        label={user.discord_username || 'Połączono'}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(88, 101, 242, 0.12)', color: '#5865F2', fontWeight: 500 }}
+                      />
+                    ) : (
+                      <Chip label="Brak" size="small" variant="outlined" sx={{ color: 'text.disabled', borderColor: 'divider' }} />
+                    )}
+                    {user.auth_provider === 'discord' && !user.active && (
+                      <Chip label="Ghost" size="small" sx={{ bgcolor: 'rgba(255, 152, 0, 0.12)', color: 'warning.dark', fontWeight: 600, fontSize: '0.7rem' }} />
+                    )}
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="body2" color="text.secondary">Aktywny:</Typography>
@@ -289,7 +312,7 @@ const UserManagementPage: React.FC = () => {
       <Table>
         <TableHead>
           <TableRow sx={{ backgroundColor: 'primary.light' }}>
-            {["ID", "Ksywa", "Imię i Nazwisko", "Rola", "Aktywny"].map((field) => (
+            {["ID", "Ksywa", "Imię i Nazwisko", "Rola", "Discord", "Aktywny"].map((field) => (
               <TableCell 
                 key={field} 
                 sx={{ 
@@ -327,8 +350,8 @@ const UserManagementPage: React.FC = () => {
                 </Typography>
               </TableCell>
               <TableCell>
-                <Typography component="div">
-                  {user.fullname}
+                <Typography component="div" sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
+                  {user.fullname || '—'}
                 </Typography>
               </TableCell>
               <TableCell>
@@ -338,6 +361,26 @@ const UserManagementPage: React.FC = () => {
                   color={getRoleColor(user.role)}
                   size="small"
                 />
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {(user.discord_username || user.auth_provider === 'discord') ? (
+                    <Tooltip title={user.discord_username || 'Konto Discord'}>
+                      <Chip 
+                        label={user.discord_username || 'Discord'}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(88, 101, 242, 0.12)', color: '#5865F2', fontWeight: 500, maxWidth: 160 }}
+                      />
+                    </Tooltip>
+                  ) : (
+                    <Chip label="Brak" size="small" variant="outlined" sx={{ color: 'text.disabled', borderColor: 'divider' }} />
+                  )}
+                  {user.auth_provider === 'discord' && !user.active && (
+                    <Tooltip title="Ghost konto — do scalenia z istniejącym kontem">
+                      <Chip label="Ghost" size="small" sx={{ bgcolor: 'rgba(255, 152, 0, 0.12)', color: 'warning.dark', fontWeight: 600, fontSize: '0.7rem' }} />
+                    </Tooltip>
+                  )}
+                </Box>
               </TableCell>
               <TableCell>
                 {isAdmin || isModerator ? (

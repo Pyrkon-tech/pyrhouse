@@ -23,6 +23,9 @@ import {
   FormControl,
   CircularProgress,
   Alert,
+  ToggleButtonGroup,
+  ToggleButton,
+  Tooltip,
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuests } from '../../hooks/useQuests';
@@ -36,6 +39,8 @@ import debounce from 'lodash/debounce';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import type { QuestStatus, Quest, QuestEvent } from '../../types/quest.types';
 
+const QuestDispatcherMap = lazy(() => import('./QuestDispatcherMap'));
+
 const HourglassEmptyIcon = lazy(() => import('@mui/icons-material/HourglassEmpty'));
 const LocalShippingIcon = lazy(() => import('@mui/icons-material/LocalShipping'));
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
@@ -45,6 +50,8 @@ const SearchIcon = lazy(() => import('@mui/icons-material/Search'));
 const ClearAllIcon = lazy(() => import('@mui/icons-material/ClearAll'));
 const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
 const SendIcon = lazy(() => import('@mui/icons-material/Send'));
+import ViewListIcon from '@mui/icons-material/ViewList';
+import MapIcon from '@mui/icons-material/Map';
 
 const LIMIT = 100;
 
@@ -92,6 +99,7 @@ const QuestBoardPage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [statusFilter, setStatusFilter] = useState<QuestStatus | ''>(
     (searchParams.get('status') as QuestStatus) || ''
   );
@@ -563,25 +571,50 @@ const QuestBoardPage: React.FC = () => {
           pb: 2,
         }}
       >
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{ fontWeight: 600, color: 'primary.main' }}
-          >
-            Zapotrzebowanie
-          </Typography>
-          <Box
-            title={sseConnected ? 'Aktualizacje real-time aktywne' : 'Łączenie z real-time...'}
-            sx={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              bgcolor: sseConnected ? 'success.main' : 'warning.main',
-              flexShrink: 0,
-              transition: 'background-color 0.3s ease',
-            }}
-          />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ fontWeight: 600, color: 'primary.main' }}
+            >
+              Zapotrzebowanie
+            </Typography>
+            <Box
+              title={sseConnected ? 'Aktualizacje real-time aktywne' : 'Łączenie z real-time...'}
+              sx={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                bgcolor: sseConnected ? 'success.main' : 'warning.main',
+                flexShrink: 0,
+                transition: 'background-color 0.3s ease',
+              }}
+            />
+          </Box>
+          <Tooltip title={viewMode === 'list' ? 'Przełącz na widok mapy (Dispatch)' : 'Przełącz na widok listy'}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(_e, val) => { if (val) setViewMode(val); }}
+              size="small"
+              sx={{
+                '& .MuiToggleButton-root': {
+                  px: 1.5, py: 0.5, fontSize: 12,
+                  '&.Mui-selected': { bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } },
+                },
+              }}
+            >
+              <ToggleButton value="list" aria-label="widok listy">
+                <ViewListIcon fontSize="small" sx={{ mr: 0.5 }} />
+                Lista
+              </ToggleButton>
+              <ToggleButton value="map" aria-label="widok mapy">
+                <MapIcon fontSize="small" sx={{ mr: 0.5 }} />
+                Dispatch
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Tooltip>
         </Box>
         {hasAdminAccess && !syncLog && (
           <Button
@@ -609,9 +642,6 @@ const QuestBoardPage: React.FC = () => {
       {/* Stats */}
       {!loading && renderStatsBar()}
 
-      {/* Filters */}
-      {renderFilters()}
-
       {/* Error */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -619,40 +649,57 @@ const QuestBoardPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Content */}
-      {loading ? (
-        <LoadingSkeleton />
-      ) : filteredQuests.length === 0 ? (
-        <Box
-          sx={{
-            textAlign: 'center',
-            p: 5,
-            backgroundColor: 'background.default',
-            borderRadius: 2,
-            border: '1px dashed',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Brak zamówień
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {hasActiveFilters
-              ? 'Spróbuj zmienić kryteria wyszukiwania'
-              : 'Brak zamówień do wyświetlenia. Uruchom synchronizację z Google Sheets.'}
-          </Typography>
-          {hasActiveFilters && (
-            <Button variant="outlined" onClick={clearFilters} sx={{ borderRadius: 1, px: 3 }}>
-              Wyczyść filtry
-            </Button>
-          )}
-        </Box>
+      {viewMode === 'map' ? (
+        /* ── Dispatch Map ── */
+        loading ? (
+          <LoadingSkeleton />
+        ) : (
+          <Suspense fallback={<LoadingSkeleton />}>
+            <QuestDispatcherMap quests={quests} />
+          </Suspense>
+        )
       ) : (
-        isMobile ? renderMobileCards() : renderTable()
-      )}
+        /* ── List View ── */
+        <>
+          {/* Filters */}
+          {renderFilters()}
 
-      {/* Pagination */}
-      {!loading && renderPagination()}
+          {/* Content */}
+          {loading ? (
+            <LoadingSkeleton />
+          ) : filteredQuests.length === 0 ? (
+            <Box
+              sx={{
+                textAlign: 'center',
+                p: 5,
+                backgroundColor: 'background.default',
+                borderRadius: 2,
+                border: '1px dashed',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Brak zamówień
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {hasActiveFilters
+                  ? 'Spróbuj zmienić kryteria wyszukiwania'
+                  : 'Brak zamówień do wyświetlenia. Uruchom synchronizację z Google Sheets.'}
+              </Typography>
+              {hasActiveFilters && (
+                <Button variant="outlined" onClick={clearFilters} sx={{ borderRadius: 1, px: 3 }}>
+                  Wyczyść filtry
+                </Button>
+              )}
+            </Box>
+          ) : (
+            isMobile ? renderMobileCards() : renderTable()
+          )}
+
+          {/* Pagination */}
+          {!loading && renderPagination()}
+        </>
+      )}
     </Box>
   );
 };

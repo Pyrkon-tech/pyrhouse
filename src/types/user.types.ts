@@ -8,16 +8,58 @@
 export type UserRole = 'user' | 'admin' | 'moderator';
 
 /**
- * Podstawowy interfejs użytkownika
+ * Typ providera autoryzacji
+ */
+export type AuthProvider = 'discord' | null;
+
+/**
+ * Użytkownik na liście (GET /users)
+ * Nie zawiera discord_id ani avatar_url
+ */
+export interface UserListItem {
+  id: number;
+  username: string;
+  fullname: string | null;
+  role: UserRole;
+  points: number;
+  active: boolean;
+  discord_username: string | null;
+  auth_provider: AuthProvider;
+}
+
+/**
+ * Szczegóły użytkownika (GET /users/:id)
+ * Zawiera pełne dane Discord
+ */
+export interface UserDetails {
+  id: number;
+  username: string;
+  fullname: string | null;
+  role: UserRole;
+  points: number;
+  active: boolean;
+  discord_id: string | null;
+  discord_username: string | null;
+  avatar_url: string | null;
+  auth_provider: AuthProvider;
+}
+
+/**
+ * Podstawowy interfejs użytkownika (zachowany dla kompatybilności wstecznej)
  */
 export interface User {
   id: number;
   username: string;
-  fullname: string;
+  fullname: string | null;
   role: UserRole;
   points?: number;
   created_at?: string;
   updated_at?: string;
+  active?: boolean;
+  discord_id?: string | null;
+  discord_username?: string | null;
+  avatar_url?: string | null;
+  auth_provider?: AuthProvider;
 }
 
 /**
@@ -86,4 +128,37 @@ export interface AuthState {
   isAuthenticated: boolean;
   userRole: UserRole | null;
   userId: number | null;
+}
+
+/**
+ * Payload do łączenia konta z Discord (POST /users/:id/link-discord)
+ */
+export interface LinkDiscordPayload {
+  code: string;
+  state: string;
+}
+
+/**
+ * Odpowiedź po połączeniu z Discord
+ */
+export interface LinkDiscordResponse {
+  message: string;
+}
+
+/**
+ * Payload do scalania kont Discord (POST /users/:id/merge-discord)
+ * source_user_id — ghost konto z Discorda, z którego przenosimy dane
+ */
+export interface MergeDiscordPayload {
+  source_user_id: number;
+}
+
+/**
+ * Odpowiedź po scaleniu kont
+ * source_deleted: true — ghost konto usunięte
+ * source_deleted: false — ghost konto miało powiązane dane, zostało dezaktywowane
+ */
+export interface MergeDiscordResponse {
+  message: string;
+  source_deleted: boolean;
 }

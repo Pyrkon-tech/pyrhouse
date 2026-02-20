@@ -69,6 +69,10 @@ export const env = {
   /** Timeout dla requestów API (ms) */
   API_TIMEOUT: getEnvNumber('VITE_API_TIMEOUT', 30000),
 
+  // === Discord ===
+  /** Client ID aplikacji Discord OAuth2 */
+  DISCORD_CLIENT_ID: getEnvVar('VITE_DISCORD_CLIENT_ID', ''),
+
   // === Google Maps ===
   /** Klucz API Google Maps */
   GOOGLE_MAPS_API_KEY: getEnvVar('VITE_GOOGLE_MAPS_API_KEY', ''),
@@ -99,6 +103,11 @@ export const env = {
   /** Czy Google Maps jest skonfigurowany */
   get HAS_GOOGLE_MAPS(): boolean {
     return !!this.GOOGLE_MAPS_API_KEY;
+  },
+
+  /** Czy Discord OAuth jest skonfigurowany */
+  get HAS_DISCORD(): boolean {
+    return !!this.DISCORD_CLIENT_ID;
   },
 } as const;
 

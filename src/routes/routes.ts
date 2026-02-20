@@ -33,6 +33,11 @@ export const publicRoutes: RouteConfig[] = [
     title: 'Discord Login',
   },
   {
+    path: '/auth/discord/link-callback',
+    component: lazy(() => import('../components/features/DiscordLinkCallback')),
+    title: 'Discord Link',
+  },
+  {
     path: '/servicedesk/request',
     component: lazy(() => import('../components/features/PublicServiceDeskForm')),
     title: 'Zgłoszenie serwisowe',
