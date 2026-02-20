@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Container, Typography, Tabs, Tab, Box, Paper, ButtonGroup, Button } from '@mui/material';
+import { Container, Typography, Tabs, Tab, Box, Paper, ButtonGroup, Button, Tooltip, IconButton } from '@mui/material';
 import { AddAssetForm } from './AddAssetForm';
 import { AddStockForm } from './AddStockForm';
 import { BulkAddAssetForm } from './BulkAddAssetForm';
@@ -11,11 +11,12 @@ import LazyIcon from '../ui/LazyIcon';
 
 const Laptop = lazy(() => import('@mui/icons-material/Laptop'));
 const Inventory = lazy(() => import('@mui/icons-material/Inventory'));
+const RefreshIcon = lazy(() => import('@mui/icons-material/Refresh'));
 
 const AddItemPage: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0); // 0 = "Wartościowe", 1 = "Zasoby"
   const [addMode, setAddMode] = useState<'single' | 'bulk' | 'noSerial'>('single');
-  const { categories, error, loading } = useCategories();
+  const { categories, error, loading, refreshCategories } = useCategories();
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
 
   // Wyświetl snackbar tylko raz, gdy pojawi się error
@@ -28,9 +29,18 @@ const AddItemPage: React.FC = () => {
 
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        Dodaj Przedmiot
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h4" gutterBottom>
+          Dodaj Przedmiot
+        </Typography>
+        <Tooltip title="Odśwież kategorie">
+          <span>
+            <IconButton size="small" onClick={() => refreshCategories(true)} disabled={loading} sx={{ mb: 0.5 }}>
+              <Suspense fallback={null}><RefreshIcon fontSize="small" /></Suspense>
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
 
       <Tabs value={currentTab} onChange={(_e,newValue) => setCurrentTab(newValue)} sx={{ mt: 2 }}>
         <Tab 
@@ -50,7 +60,6 @@ const AddItemPage: React.FC = () => {
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
 
       {currentTab === 0 && (

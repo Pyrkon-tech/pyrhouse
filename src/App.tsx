@@ -6,6 +6,7 @@ import PrivateRoute from './components/features/Authorisation';
 import Layout from './components/layout/Layout';
 import LoadingSkeleton from './components/ui/LoadingSkeleton';
 import { ThemeProvider } from './theme/ThemeContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { publicRoutes, protectedRoutes, adminRoutes } from './routes/routes';
 import RequireRole from './components/features/RequireRole';
 
@@ -58,6 +59,7 @@ function App() {
   return (
     <ThemeProvider>
       <CssBaseline />
+      <NotificationProvider>
       <Router future={routerFutureConfig}>
         <Routes>
           {/* Publiczne trasy */}
@@ -113,6 +115,7 @@ function App() {
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </Router>
+      </NotificationProvider>
     </ThemeProvider>
   );
 }

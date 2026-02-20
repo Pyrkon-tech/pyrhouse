@@ -30,7 +30,7 @@ export const useStocks = () => {
       });
       if (!response.ok) throw new Error('Failed to fetch stocks');
       const data = await response.json();
-      setStocks(data);
+      setStocks(data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

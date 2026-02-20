@@ -13,3 +13,4 @@ export * from './asset.types';
 export * from './location.types';
 export * from './transfer.types';
 export * from './user.types';
+export * from './quest.types';

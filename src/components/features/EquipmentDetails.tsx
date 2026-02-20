@@ -3,11 +3,7 @@ import {
   Box,
   Typography,
   CircularProgress,
-  Divider,
   Chip,
-  Card,
-  CardContent,
-  List,
   Button,
   Dialog,
   DialogTitle,
@@ -17,6 +13,7 @@ import {
 } from '@mui/material';
 import {
   CheckCircle,
+  AddCircle,
   LocationOn,
   Inventory2,
   History,
@@ -29,6 +26,7 @@ import {
   GpsFixed,
   Navigation,
   MonitorHeart,
+  ArrowForward,
 } from '@mui/icons-material';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { deleteAsset } from '../../services/assetService';
@@ -211,30 +209,36 @@ const EquipmentDetails: React.FC = () => {
         return 'Usunięte';
       case 'LAST_KNOWN_LOCATION':
         return 'Ostatnia znana lokalizacja';
+      case 'CREATE':
+        return 'Dodano';
       default:
         return action.toUpperCase();
     }
   };
 
-  const getActionIcon = (action: string, log: AssetLog) => {
-    // Sprawdź, czy to zwrot do magazynu (to_location_id = 1)
-    const isReturnedToWarehouse = log.action.toUpperCase() === 'DELIVERED' && log.data.to_location_id === 1;
-    
-    if (isReturnedToWarehouse) {
-      return <Warehouse sx={{ mr: 1, color: 'success.main' }} />;
-    }
-    
+  const getTimelineIcon = (action: string, log: AssetLog) => {
+    const isReturn = log.action.toUpperCase() === 'DELIVERED' && log.data.to_location_id === 1;
+    if (isReturn) return <Warehouse sx={{ fontSize: 20 }} />;
     switch (action.toUpperCase()) {
-      case 'DELIVERED':
-        return <CheckCircleOutline sx={{ mr: 1, color: 'success.main' }} />;
-      case 'IN_TRANSFER':
-        return <LocalShipping sx={{ mr: 1, color: 'info.main' }} />;
-      case 'REMOVE':
-        return <RemoveCircle sx={{ mr: 1, color: 'error.main' }} />;
-      case 'LAST_KNOWN_LOCATION':
-        return <GpsFixed sx={{ mr: 1, color: 'primary.main' }} />;
-      default:
-        return <Info sx={{ mr: 1 }} />;
+      case 'DELIVERED': return <CheckCircleOutline sx={{ fontSize: 20 }} />;
+      case 'IN_TRANSFER': return <LocalShipping sx={{ fontSize: 20 }} />;
+      case 'REMOVE': return <RemoveCircle sx={{ fontSize: 20 }} />;
+      case 'CREATE': return <AddCircle sx={{ fontSize: 20 }} />;
+      case 'LAST_KNOWN_LOCATION': return <GpsFixed sx={{ fontSize: 20 }} />;
+      default: return <History sx={{ fontSize: 20 }} />;
+    }
+  };
+
+  const getActionColor = (action: string, log: AssetLog): string => {
+    const isReturn = log.action.toUpperCase() === 'DELIVERED' && log.data.to_location_id === 1;
+    if (isReturn) return 'success.main';
+    switch (action.toUpperCase()) {
+      case 'DELIVERED': return 'success.main';
+      case 'IN_TRANSFER': return 'info.main';
+      case 'REMOVE': return 'error.main';
+      case 'LAST_KNOWN_LOCATION': return 'warning.main';
+      case 'CREATE': return 'text.secondary';
+      default: return 'text.secondary';
     }
   };
 
@@ -325,6 +329,7 @@ const EquipmentDetails: React.FC = () => {
       });
       if (!response.ok) throw new Error('Nie udało się zaktualizować ilości');
       showSnackbar('success', 'Ilość zaktualizowana');
+      setIsEditingQuantity(false);
       fetchDetails();
     } catch (err: any) {
       showSnackbar('error', err.message || 'Błąd podczas aktualizacji ilości');
@@ -422,7 +427,6 @@ const EquipmentDetails: React.FC = () => {
           details={snackbar.details}
           onClose={closeSnackbar}
           autoHideDuration={snackbar.autoHideDuration}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         />
       </Box>
     );
@@ -441,7 +445,6 @@ const EquipmentDetails: React.FC = () => {
           details={snackbar.details}
           onClose={closeSnackbar}
           autoHideDuration={snackbar.autoHideDuration}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         />
       </>
     );
@@ -457,7 +460,6 @@ const EquipmentDetails: React.FC = () => {
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       
       <Typography variant="h4" gutterBottom>
@@ -977,136 +979,154 @@ const EquipmentDetails: React.FC = () => {
         </Box>
       </Box>
 
-      {/* History Logs Section */}
+      {/* History Logs Section — Timeline */}
       <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" gutterBottom sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           alignItems: 'center',
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 1
+          gap: 1.5,
+          mb: 3,
+          pb: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}>
-          <History sx={{ verticalAlign: 'bottom' }} />
-          Historia
-        </Typography>
-        <Divider sx={{ my: 2 }} />
+          <History color="action" />
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Historia
+          </Typography>
+          {logs.length > 0 && (
+            <Chip size="small" label={`${logs.length} zdarzeń`} variant="outlined" />
+          )}
+        </Box>
+
         {logs.length > 0 ? (
-          <List sx={{ 
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2
-          }}>
-            {sortedLogs.map((log) => {
+          <Box>
+            {sortedLogs.map((log, index) => {
               const locationInfo = getLocationInfo(log);
+              const isLast = index === sortedLogs.length - 1;
+              const actionColor = getActionColor(log.action, log);
+
               return (
-                <Card 
-                  key={log.id} 
-                  elevation={2} 
-                  sx={{ 
-                    marginBottom: 2,
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: 3
-                    }
-                  }}
-                >
-                  <Box 
-                    sx={{ 
-                      p: 1, 
-                      display: 'flex', 
+                <Box key={log.id} sx={{ display: 'flex', gap: 2 }}>
+                  {/* Timeline column: icon + vertical line */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 40 }}>
+                    <Box sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      bgcolor: actionColor,
+                      color: 'common.white',
+                      display: 'flex',
                       alignItems: 'center',
-                      bgcolor: log.action === 'DELIVERED' ? 'success.dark' : 
-                               log.action === 'IN_TRANSFER' ? 'info.dark' : 
-                               log.action === 'REMOVE' ? 'error.dark' : 'grey.800',
-                      color: log.action === 'DELIVERED' ? 'success.light' : 
-                             log.action === 'IN_TRANSFER' ? 'info.light' : 
-                             log.action === 'REMOVE' ? 'error.light' : 'common.white'
-                    }}
-                  >
-                    {getActionIcon(log.action, log)}
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {getActionLabel(log.action, log)}
-                    </Typography>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ ml: 'auto', color: 'inherit', opacity: 0.9 }}
-                    >
-                      {new Date(log.created_at).toLocaleString()}
-                    </Typography>
-                  </Box>
-                  <CardContent sx={{ p: 2 }}>
-                    {locationInfo && (
-                      <Box 
-                        sx={{ 
-                          mb: 2, 
-                          p: 1.5, 
-                          borderRadius: 1, 
-                          bgcolor: 'background.paper',
-                          border: '1px solid',
-                          borderColor: 'divider'
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <LocationOn sx={{ color: 'primary.main', mr: 1 }} />
-                          <Typography variant="subtitle2" color="primary">
-                            Informacje o lokalizacji
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', pl: 3 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                            <Typography variant="body2" sx={{ minWidth: '40px', fontWeight: 'bold' }}>
-                              Z:
-                            </Typography>
-                            <Typography variant="body2">
-                              {locationInfo.fromLocation} {locationInfo.fromLocationName}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="body2" sx={{ minWidth: '40px', fontWeight: 'bold' }}>
-                              Do:
-                            </Typography>
-                            <Typography variant="body2">
-                              {locationInfo.toLocation} {locationInfo.toLocationName}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    )}
-                    
-                    <Box sx={{ mb: 1 }}>
-                      <Typography variant="body2" color="textSecondary">
-                        {formatLogMessage(log)}
-                      </Typography>
+                      justifyContent: 'center',
+                      boxShadow: 2,
+                      flexShrink: 0,
+                      zIndex: 1,
+                    }}>
+                      {getTimelineIcon(log.action, log)}
                     </Box>
-                    
-                    {log.data?.quantity && (
-                      <Box 
-                        sx={{ 
-                          display: 'inline-flex', 
-                          alignItems: 'center',
-                          mt: 1,
-                          p: 0.5,
-                          borderRadius: 1,
-                          bgcolor: 'primary.dark',
-                          color: 'primary.light'
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          Ilość: {log.data.quantity}
+                    {!isLast && (
+                      <Box sx={{ width: 2, flex: 1, bgcolor: 'divider', mt: 0.5, mb: 0.5, minHeight: 24 }} />
+                    )}
+                  </Box>
+
+                  {/* Event card */}
+                  <Box sx={{ flex: 1, pb: isLast ? 0 : 2.5 }}>
+                    <Box sx={{
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      transition: 'box-shadow 0.2s',
+                      '&:hover': { boxShadow: 3 },
+                    }}>
+                      {/* Card header */}
+                      <Box sx={{
+                        px: 2,
+                        py: 1.25,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        bgcolor: 'background.paper',
+                        borderBottom: locationInfo || log.data?.quantity || log.data?.msg ? '1px solid' : 'none',
+                        borderColor: 'divider',
+                        gap: 1,
+                      }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: actionColor }}>
+                          {getActionLabel(log.action, log)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                          {new Date(log.created_at).toLocaleString('pl-PL')}
                         </Typography>
                       </Box>
-                    )}
 
-                    {renderLocationMap(log)}
-                  </CardContent>
-                </Card>
+                      {/* Card body */}
+                      <Box sx={{ px: 2, py: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {/* Location from → to */}
+                        {locationInfo && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                            <Chip
+                              size="small"
+                              icon={<LocationOn />}
+                              label={locationInfo.fromLocationName}
+                              variant="outlined"
+                              sx={{ fontSize: '0.72rem' }}
+                            />
+                            <ArrowForward sx={{ fontSize: 14, color: 'text.disabled' }} />
+                            <Chip
+                              size="small"
+                              icon={locationInfo.isReturnedToWarehouse ? <Warehouse /> : <LocationOn />}
+                              label={locationInfo.toLocationName}
+                              color={locationInfo.isReturnedToWarehouse ? 'success' : 'primary'}
+                              variant="outlined"
+                              sx={{ fontSize: '0.72rem' }}
+                            />
+                          </Box>
+                        )}
+
+                        {/* Message */}
+                        {log.data?.msg && (
+                          <Typography variant="body2" color="text.secondary">
+                            {formatLogMessage(log)}
+                          </Typography>
+                        )}
+
+                        {/* Quantity badge */}
+                        {log.data?.quantity && (
+                          <Box>
+                            <Chip
+                              size="small"
+                              icon={<Inventory2 />}
+                              label={`${log.data.quantity} szt.`}
+                              color="secondary"
+                              variant="outlined"
+                            />
+                          </Box>
+                        )}
+
+                        {/* GPS map */}
+                        {renderLocationMap(log)}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
               );
             })}
-          </List>
+          </Box>
         ) : (
-          <Typography>Brak historii dla tego elementu.</Typography>
+          <Box sx={{
+            textAlign: 'center',
+            py: 6,
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            border: '1px dashed',
+            borderColor: 'divider',
+          }}>
+            <History sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+            <Typography variant="body2" color="text.secondary">
+              Brak historii dla tego elementu
+            </Typography>
+          </Box>
         )}
       </Box>
 

@@ -19,7 +19,7 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
 import { TransferModal } from '../TransferPage/components/TransferModal';
 import { getLocationDetails } from '../../services/locationService';
@@ -77,6 +77,7 @@ interface SelectedItems {
 
 const LocationDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [locationDetails, setLocationDetails] = useState<LocationDetailsData | null>(null);
@@ -159,12 +160,10 @@ const LocationDetailsPage: React.FC = () => {
     }));
   };
 
-  const handleTransferSuccess = () => {
+  const handleTransferSuccess = (transferId: number) => {
     setSelectedItems({ assetIds: [], stockIds: [] });
-    // Odśwież dane lokalizacji
-    if (id) {
-      fetchLocationDetails();
-    }
+    showSnackbar('success', 'Transfer został utworzony pomyślnie');
+    setTimeout(() => navigate(`/transfers/${transferId}`), 500);
   };
 
   // Dodajemy funkcję tłumaczącą statusy
@@ -459,7 +458,6 @@ const LocationDetailsPage: React.FC = () => {
           details={snackbar.details}
           onClose={closeSnackbar}
           autoHideDuration={snackbar.autoHideDuration}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         />
       </Container>
     );
@@ -474,7 +472,6 @@ const LocationDetailsPage: React.FC = () => {
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       {/* Nagłówek strony */}
       <Box 
@@ -790,7 +787,7 @@ const LocationDetailsPage: React.FC = () => {
           sx={{ 
             position: 'fixed',
             bottom: 0,
-            left: 0,
+            left: 'var(--sidebar-width, 0px)',
             right: 0,
             bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : 'white',
             backdropFilter: 'blur(8px)',
@@ -803,7 +800,7 @@ const LocationDetailsPage: React.FC = () => {
             borderTop: '1px solid',
             borderColor: 'divider',
             transform: 'translateY(0)',
-            transition: 'transform 0.3s ease-in-out',
+            transition: 'transform 0.3s ease-in-out, left 0.3s ease-in-out',
             '&:hover': {
               transform: 'translateY(0)',
             },

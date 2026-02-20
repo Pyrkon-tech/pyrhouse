@@ -399,7 +399,6 @@ const TransferDetailsPage: React.FC = () => {
           details={snackbar.details}
           onClose={closeSnackbar}
           autoHideDuration={snackbar.autoHideDuration}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         />
       </Container>
     );
@@ -418,7 +417,6 @@ const TransferDetailsPage: React.FC = () => {
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       <Box sx={{ 
         display: 'flex', 

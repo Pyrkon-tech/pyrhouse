@@ -12,6 +12,7 @@ const CategoryManagementPage = lazy(() => import('../components/features/Categor
 const TransfersListPage = lazy(() => import('../components/features/TransferListPage'));
 const TransferDetailsPage = lazy(() => import('../components/features/TransferDetailsPage'));
 const QuestBoardPage = lazy(() => import('../components/features/QuestBoardPage'));
+const QuestDetailPage = lazy(() => import('../components/features/QuestDetailPage'));
 const EquipmentDetails = lazy(() => import('../components/features/EquipmentDetails'));
 const LocationsPage = lazy(() => import('../components/features/LocationsPage'));
 const LocationDetailsPage = lazy(() => import('../components/features/LocationDetailsPage'));
@@ -88,9 +89,15 @@ export const protectedRoutes: RouteConfig[] = [
   {
     path: '/quests',
     component: QuestBoardPage,
-    title: 'Tablica zadań',
+    title: 'Zamówienia sprzętu',
     icon: 'Quest',
     showInNav: true,
+  },
+  {
+    path: '/quests/:id',
+    component: QuestDetailPage,
+    title: 'Szczegóły zamówienia',
+    showInNav: false,
   },
   {
     path: '/equipment/:id',

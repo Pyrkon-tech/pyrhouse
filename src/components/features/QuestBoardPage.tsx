@@ -1,560 +1,658 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useEffect, useState, useCallback, useMemo, lazy, useRef } from 'react';
 import {
   Box,
   Typography,
-  Container,
-  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Paper,
   Button,
-  Tabs,
-  Tab,
-  Snackbar,
+  Chip,
+  TextField,
+  Card,
+  CardContent,
+  Grid,
+  useMediaQuery,
+  useTheme,
+  Divider,
+  MenuItem,
+  Select,
+  FormControl,
+  CircularProgress,
   Alert,
 } from '@mui/material';
-import { AccessTime, LocationOn, AddCircleOutline } from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
-import { useStorage } from '../../hooks/useStorage';
-import { getApiUrl } from '../../config/api';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuests } from '../../hooks/useQuests';
+import { useSync } from '../../hooks/useSync';
+import { useQuestStream } from '../../hooks/useQuestStream';
+import { useSyncStatus } from '../../hooks/useSyncStatus';
+import { useQuestCounts } from '../../hooks/useQuestCounts';
 import { useAuth } from '../../hooks/useAuth';
-import { AppSnackbar } from '../ui/AppSnackbar';
-import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
+import { useNotification } from '../../context/NotificationContext';
+import debounce from 'lodash/debounce';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
-import { designTokens } from '../../theme/designTokens';
+import type { QuestStatus, Quest, QuestEvent } from '../../types/quest.types';
 
-// Quest theme colors for easier reference
-const questColors = designTokens.colors.questTheme;
+const HourglassEmptyIcon = lazy(() => import('@mui/icons-material/HourglassEmpty'));
+const LocalShippingIcon = lazy(() => import('@mui/icons-material/LocalShipping'));
+const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
+const CancelIcon = lazy(() => import('@mui/icons-material/Cancel'));
+const SyncIcon = lazy(() => import('@mui/icons-material/Sync'));
+const SearchIcon = lazy(() => import('@mui/icons-material/Search'));
+const ClearAllIcon = lazy(() => import('@mui/icons-material/ClearAll'));
+const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
+const SendIcon = lazy(() => import('@mui/icons-material/Send'));
 
-interface Quest {
-  recipient: string;
-  delivery_date: string;
-  location: string;
-  pavilion: string;
-  items: Array<{
-    item_name: string;
-    quantity: number;
-    notes: string;
-  }>;
-}
+const LIMIT = 100;
 
-const QuestCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  background: `linear-gradient(145deg, ${questColors.parchment.medium}, ${questColors.parchment.dark})`,
-  border: `2px solid ${questColors.ink.primary}`,
-  borderRadius: '8px',
-  boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-  position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'url("/parchment-texture.png")',
-    opacity: 0.1,
-    pointerEvents: 'none',
-  },
-  '&:hover': {
-    transform: 'translateY(-4px)',
-    transition: 'transform 0.2s ease-in-out',
+const getStatusChip = (status: QuestStatus) => {
+  switch (status) {
+    case 'pending':
+      return <Chip icon={<Suspense fallback={null}><HourglassEmptyIcon /></Suspense>} label="Oczekujące" color="default" size="small" />;
+    case 'in_progress':
+      return <Chip icon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>} label="W realizacji" color="warning" size="small" />;
+    case 'completed':
+      return <Chip icon={<Suspense fallback={null}><CheckCircleIcon /></Suspense>} label="Zrealizowane" color="success" size="small" />;
+    case 'cancelled':
+      return <Chip icon={<Suspense fallback={null}><CancelIcon /></Suspense>} label="Anulowane" color="error" size="small" />;
+    default:
+      return <Chip label={status} size="small" />;
   }
-}));
+};
 
-// Nowy komponent dla pilnych zadań
-const UrgentQuestCard = styled(QuestCard)(() => ({
-  background: questColors.urgent.gradient,
-  border: `2px solid ${questColors.urgent.background}`,
-  boxShadow: '0 4px 12px rgba(164, 70, 45, 0.5)',
-  animation: 'pulse 2s infinite',
-  '@keyframes pulse': {
-    '0%': {
-      boxShadow: '0 4px 12px rgba(164, 70, 45, 0.5)',
-    },
-    '50%': {
-      boxShadow: '0 4px 20px rgba(164, 70, 45, 0.8)',
-    },
-    '100%': {
-      boxShadow: '0 4px 12px rgba(164, 70, 45, 0.5)',
-    },
+const formatDate = (dateStr: string) => {
+  try {
+    return new Date(dateStr).toLocaleDateString('pl-PL');
+  } catch {
+    return dateStr;
   }
-}));
+};
 
-// Komponent dla znacznika pilności
-const UrgencyBadge = styled(Box)(() => ({
-  position: 'absolute',
-  top: -10,
-  right: 60,
-  padding: '4px 12px',
-  borderRadius: '12px',
-  fontSize: '0.8rem',
-  fontWeight: 'bold',
-  color: '#fff',
-  backgroundColor: questColors.urgent.background,
-  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  '&::before': {
-    content: '"!"',
-    marginRight: '2px',
-  }
-}));
-
-const DifficultyBadge = styled(Box)<{ difficulty: string }>(({ difficulty }) => ({
-  position: 'absolute',
-  top: -10,
-  right: -10,
-  padding: '4px 12px',
-  borderRadius: '12px',
-  fontSize: '0.8rem',
-  fontWeight: 'bold',
-  color: '#fff',
-  backgroundColor:
-    difficulty === 'easy' ? designTokens.colors.success.main :
-    difficulty === 'medium' ? designTokens.colors.accent[500] :
-    designTokens.colors.error.main,
-  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-}));
-
-const CountdownTimer: React.FC<{ deadline: string }> = ({ deadline }) => {
-  const [timeLeft, setTimeLeft] = useState<{
-    days: number;
-    hours: number;
-    minutes: number;
-    seconds: number;
-    totalHours: number;
-  }>({ days: 0, hours: 0, minutes: 0, seconds: 0, totalHours: 0 });
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const deadlineDate = new Date(deadline);
-      const difference = deadlineDate.getTime() - now.getTime();
-      
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        const totalHours = days * 24 + hours + minutes / 60;
-
-        setTimeLeft({
-          days,
-          hours,
-          minutes,
-          seconds,
-          totalHours
-        });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, totalHours: 0 });
-      }
-    };
-
-    // Oblicz czas od razu
-    calculateTimeLeft();
-
-    // Aktualizuj co sekundę
-    const timer = setInterval(calculateTimeLeft, 1000);
-
-    // Wyczyść interval przy odmontowaniu komponentu
-    return () => clearInterval(timer);
-  }, [deadline]);
-
-  // Określ kolor na podstawie pozostałego czasu
-  const getTimerColor = () => {
-    if (timeLeft.totalHours < 1) return questColors.urgent.background; // Czerwony dla mniej niż godziny
-    if (timeLeft.days < 1) return designTokens.colors.accent[500]; // Pomarańczowy dla mniej niż dnia
-    return questColors.ink.primary; // Standardowy kolor
-  };
-
-  return (
-    <Box sx={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: 1,
-      color: getTimerColor(),
-      fontFamily: '"Cinzel", serif'
-    }}>
-      <AccessTime sx={{ fontSize: '1.2rem' }} />
-      <Typography variant="h6" sx={{ fontFamily: 'inherit' }}>
-        {timeLeft.days > 0 && `${timeLeft.days}d `}
-        {timeLeft.hours.toString().padStart(2, '0')}:
-        {timeLeft.minutes.toString().padStart(2, '0')}:
-        {timeLeft.seconds.toString().padStart(2, '0')}
-      </Typography>
-    </Box>
-  );
+const formatRelativeTime = (dateStr: string) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'przed chwilą';
+  if (minutes < 60) return `${minutes} min temu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} godz. temu`;
+  const days = Math.floor(hours / 24);
+  return `${days} dni temu`;
 };
 
 const QuestBoardPage: React.FC = () => {
-  const { getToken } = useStorage();
+  const { quests, count, loading, error, fetchQuests } = useQuests();
+  const { syncLog, syncing, triggerSync } = useSync();
   const { userRole } = useAuth();
-  const [quests, setQuests] = useState<Quest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'active' | 'delivered'>('active');
-  const [showAdminInfo, setShowAdminInfo] = useState(true);
+  const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Funkcja sprawdzająca, czy użytkownik ma uprawnienia administratora
-  const hasAdminAccess = () => {
-    return userRole === 'admin' || userRole === 'moderator';
-  };
+  const [statusFilter, setStatusFilter] = useState<QuestStatus | ''>(
+    (searchParams.get('status') as QuestStatus) || ''
+  );
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [page, setPage] = useState(0);
 
-  // Automatyczne zamykanie informacji dla administratorów po 5 sekundach
-  useEffect(() => {
-    const hasVisited = localStorage.getItem('hasVisitedQuestBoard');
-    if (!hasVisited) {
-      setShowAdminInfo(true);
-      localStorage.setItem('hasVisitedQuestBoard', 'true');
-    }
-  }, []);
+  // Sync status (scheduler info)
+  const { status: syncStatus, formatInterval } = useSyncStatus();
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const status = searchParams.get('status');
-    if (status === 'delivered') {
-      setActiveTab('delivered');
-    }
-  }, [location]);
+  // Liczniki per status — niezależne od aktywnego filtra tabeli
+  const { counts: stats, refreshCounts } = useQuestCounts();
 
-  useEffect(() => {
-    fetchQuests();
-  }, [activeTab]);
+  // SSE — auto-refresh po każdym syncu backendu
+  // pageRef + statusFilterRef żeby uniknąć stale closure w useCallback
+  const pageRef = useRef(page);
+  const statusFilterRef = useRef(statusFilter);
+  useEffect(() => { pageRef.current = page; }, [page]);
+  useEffect(() => { statusFilterRef.current = statusFilter; }, [statusFilter]);
 
-  useEffect(() => {
-    if (error) {
-      showSnackbar('error', error);
-    }
-  }, [error]);
-
-  const fetchQuests = async () => {
-    try {
-      setLoading(true);
-      const token = getToken();
-      const url = activeTab === 'delivered' 
-        ? getApiUrl('/sheets/quests?status=delivered')
-        : getApiUrl('/sheets/quests');
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+  const onSseEvent = useCallback((event: QuestEvent) => {
+    if (event.type === 'sync_completed') {
+      fetchQuests({
+        limit: LIMIT,
+        offset: pageRef.current * LIMIT,
+        status: statusFilterRef.current || undefined,
       });
-
-      if (!response.ok) {
-        throw new Error('Nie udało się pobrać questów');
-      }
-
-      const data = await response.json();
-      setQuests(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Wystąpił błąd podczas pobierania questów');
-    } finally {
-      setLoading(false);
+      refreshCounts();
     }
-  };
+  }, [fetchQuests, refreshCounts]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: 'active' | 'delivered') => {
-    setActiveTab(newValue);
-    const searchParams = new URLSearchParams(location.search);
-    if (newValue === 'delivered') {
-      searchParams.set('status', 'delivered');
-    } else {
-      searchParams.delete('status');
-    }
-    navigate({ search: searchParams.toString() });
-  };
+  const { connected: sseConnected } = useQuestStream({ onEvent: onSseEvent });
 
-  const handleCreateTransfer = (quest: Quest) => {
-    // Przekazujemy dane questa jako parametry URL
-    navigate('/transfers/create', { 
-      state: { 
-        questData: {
-          recipient: quest.recipient,
-          deliveryDate: quest.delivery_date,
-          location: quest.location,
-          pavilion: quest.pavilion,
-          items: quest.items
-        }
-      } 
-    });
-  };
+  const hasAdminAccess = userRole === 'admin' || userRole === 'moderator';
 
-  // Funkcja określająca poziom trudności na podstawie liczby przedmiotów
-  const determineDifficulty = (items: Quest['items']): 'easy' | 'medium' | 'hard' => {
-    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-    if (totalItems <= 2) return 'easy';
-    if (totalItems <= 5) return 'medium';
-    return 'hard';
-  };
+  // Fetch quests on mount and filter/page change
+  useEffect(() => {
+    const params: { status?: QuestStatus; limit: number; offset: number } = {
+      limit: LIMIT,
+      offset: page * LIMIT,
+    };
+    if (statusFilter) params.status = statusFilter;
+    fetchQuests(params);
+  }, [statusFilter, page, fetchQuests]);
 
-  // Funkcja formatująca datę
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  // Sync search params with URL
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    if (statusFilter) params.status = statusFilter;
+    if (searchQuery) params.q = searchQuery;
+    setSearchParams(params, { replace: true });
+    // eslint-disable-next-line
+  }, [statusFilter, searchQuery]);
 
-  // Funkcja sprawdzająca, czy zadanie jest pilne (mniej niż 3 dni)
-  const isUrgent = (deadline: string): boolean => {
-    const now = new Date();
-    const deadlineDate = new Date(deadline);
-    const difference = deadlineDate.getTime() - now.getTime();
-    const daysLeft = difference / (1000 * 60 * 60 * 24);
-    return daysLeft < 3 && daysLeft > 0;
-  };
-
-  // Sortowanie zadań po dacie dostawy
-  const sortedQuests = [...quests].sort((a, b) => 
-    new Date(a.delivery_date).getTime() - new Date(b.delivery_date).getTime()
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      setSearchQuery(query);
+    }, 300),
+    []
   );
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
-        <LoadingSkeleton />
-      </Box>
+  // Client-side text search
+  const filteredQuests = useMemo(() => {
+    if (!searchQuery) return quests;
+    const q = searchQuery.toLowerCase();
+    return quests.filter(
+      (quest) =>
+        quest.recipient.toLowerCase().includes(q) ||
+        quest.destination.location.toLowerCase().includes(q) ||
+        quest.destination.pavilion.toLowerCase().includes(q) ||
+        quest.id.toLowerCase().includes(q)
     );
-  }
+  }, [quests, searchQuery]);
 
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <AppSnackbar
-          open={snackbar.open}
-          type={snackbar.type}
-          message={snackbar.message}
-          details={snackbar.details}
-          onClose={closeSnackbar}
-          autoHideDuration={snackbar.autoHideDuration}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        />
-      </Box>
-    );
-  }
+  const handleSync = async () => {
+    try {
+      const result = await triggerSync();
+      showSuccess(
+        `Synchronizacja zakończona: ${result.stats.quests_created} nowych, ${result.stats.quests_updated} zaktualizowanych`
+      );
+      setPage(0);
+      fetchQuests({ limit: LIMIT, offset: 0, status: statusFilter || undefined });
+      refreshCounts();
+    } catch {
+      showError('Błąd podczas synchronizacji');
+    }
+  };
 
-  return (
-    <Box sx={{ 
-      p: 4, 
-      minHeight: '100vh',
-      background: '#171713',
-      backgroundImage: 'url("/wooden-texture.png")',
-      backgroundBlend: 'multiply'
-    }}>
-      <Container maxWidth="lg">
-        <Typography
-          variant="h2"
-          gutterBottom
-          sx={{
-            textAlign: 'center',
-            fontFamily: '"Cinzel", serif',
-            color: questColors.parchment.medium,
-            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-            mb: 6
-          }}
-        >
-          📜 Tablica Zadań 📜
-        </Typography>
+  const clearFilters = () => {
+    setStatusFilter('');
+    setSearchQuery('');
+    setPage(0);
+  };
 
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            centered
+  const hasActiveFilters = statusFilter || searchQuery;
+
+  const renderStatsBar = () => (
+    <Grid container spacing={1.5} sx={{ mb: 2 }}>
+      {([
+        { key: 'pending', label: 'Oczekujące', color: theme.palette.grey[500] },
+        { key: 'in_progress', label: 'W realizacji', color: theme.palette.warning.main },
+        { key: 'completed', label: 'Zrealizowane', color: theme.palette.success.main },
+        { key: 'cancelled', label: 'Anulowane', color: theme.palette.error.main },
+      ] as const).map(({ key, label, color }) => (
+        <Grid item xs={6} sm={3} key={key}>
+          <Paper
             sx={{
-              '& .MuiTab-root': {
-                color: questColors.parchment.medium,
-                '&.Mui-selected': {
-                  color: questColors.urgent.background,
-                },
-              },
-              '& .MuiTabs-indicator': {
-                backgroundColor: questColors.urgent.background,
-              },
+              p: 1.5,
+              textAlign: 'center',
+              borderTop: `3px solid ${color}`,
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+              '&:hover': { transform: 'translateY(-2px)' },
+              bgcolor: statusFilter === key ? 'action.selected' : 'background.paper',
+            }}
+            onClick={() => {
+              setStatusFilter(statusFilter === key ? '' : key);
+              setPage(0);
             }}
           >
-            <Tab label="Aktywne Questy" value="active" />
-            <Tab label="Dostarczone Questy" value="delivered" />
-          </Tabs>
-        </Box>
-
-        {hasAdminAccess() && (
-          <Snackbar
-            open={showAdminInfo}
-            autoHideDuration={3000}
-            onClose={() => setShowAdminInfo(false)}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          >
-            <Alert
-              onClose={() => setShowAdminInfo(false)}
-              severity="info"
-              sx={{
-                backgroundColor: questColors.ink.primary,
-                color: questColors.parchment.medium,
-                '& .MuiAlert-icon': {
-                  color: questColors.parchment.medium
-                },
-                '& .MuiAlert-action': {
-                  color: questColors.parchment.medium
-                }
-              }}
-            >
-              <Typography variant="subtitle1" sx={{ fontFamily: '"Cinzel", serif', mb: 1 }}>
-                Informacja dla administratorów
-              </Typography>
-              <Typography variant="body2">
-                Lista questów jest aktualizowana z excela. Po utworzeniu transferu dla questa, musisz ręcznie oznaczyć go jako dostarczony w excelu.
-              </Typography>
-            </Alert>
-          </Snackbar>
-        )}
-
-        <Grid container spacing={4}>
-          {sortedQuests.map((quest, index) => {
-            const urgent = isUrgent(quest.delivery_date);
-            const difficulty = determineDifficulty(quest.items);
-            const CardComponent = urgent ? UrgentQuestCard : QuestCard;
-            
-            return (
-              <Grid item xs={12} md={6} key={index}>
-                <CardComponent elevation={3}>
-                  <DifficultyBadge difficulty={difficulty}>
-                    {difficulty.toUpperCase()}
-                  </DifficultyBadge>
-                  
-                  {urgent && (
-                    <UrgencyBadge>
-                      PILNE
-                    </UrgencyBadge>
-                  )}
-                  
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontFamily: '"Cinzel", serif',
-                      color: questColors.ink.primary,
-                      borderBottom: `2px solid ${questColors.ink.primary}`,
-                      pb: 1,
-                      mb: 2
-                    }}
-                  >
-                    Zlecenie dla: {quest.recipient}
-                  </Typography>
-
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <CountdownTimer deadline={quest.delivery_date} />
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: questColors.ink.primary,
-                        fontStyle: 'italic',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      Termin dostawy: {formatDate(quest.delivery_date)}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mt: 2,
-                    color: questColors.ink.primary,
-                    backgroundColor: `${questColors.parchment.medium}4d`,
-                    p: 1,
-                    borderRadius: '4px',
-                    border: `1px dashed ${questColors.urgent.background}`
-                  }}>
-                    <LocationOn sx={{ color: questColors.urgent.background }} />
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {quest.location} - {quest.pavilion}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ mt: 3 }}>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        color: questColors.ink.primary,
-                        fontFamily: '"Cinzel", serif',
-                        mb: 1
-                      }}
-                    >
-                      Wymagane przedmioty:
-                    </Typography>
-                    <Box component="ul" sx={{ 
-                      m: 0, 
-                      pl: 2,
-                      listStyle: 'none'
-                    }}>
-                      {quest.items.map((item, idx) => (
-                        <Box
-                          component="li"
-                          key={idx}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mb: 1,
-                            color: questColors.ink.primary,
-                            '&::before': {
-                              content: '"•"',
-                              color: questColors.urgent.background,
-                              fontWeight: 'bold',
-                              fontSize: '1.2rem'
-                            }
-                          }}
-                        >
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {item.quantity}x {item.item_name}
-                            {item.notes && (
-                              <Typography
-                                component="span"
-                                sx={{
-                                  ml: 1,
-                                  fontSize: '0.9rem',
-                                  fontStyle: 'italic',
-                                  color: questColors.urgent.background
-                                }}
-                              >
-                                ({item.notes})
-                              </Typography>
-                            )}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<AddCircleOutline />}
-                    onClick={() => handleCreateTransfer(quest)}
-                    sx={{
-                      mt: 3,
-                      width: '100%',
-                      backgroundColor: questColors.ink.primary,
-                      '&:hover': {
-                        backgroundColor: questColors.urgent.background,
-                      }
-                    }}
-                  >
-                    Rozpocznij Quest
-                  </Button>
-                </CardComponent>
-              </Grid>
-            );
-          })}
+            <Typography variant="h5" sx={{ fontWeight: 700, color }}>
+              {stats[key]}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {label}
+            </Typography>
+          </Paper>
         </Grid>
-      </Container>
+      ))}
+    </Grid>
+  );
+
+  const renderSyncInfo = () => {
+    if (!syncLog) return null;
+    return (
+      <Alert
+        severity={syncLog.success ? 'info' : 'warning'}
+        sx={{ mb: 2 }}
+        action={
+          hasAdminAccess ? (
+            <Button
+              size="small"
+              color="inherit"
+              startIcon={
+                syncing ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <Suspense fallback={null}><SyncIcon /></Suspense>
+                )
+              }
+              onClick={handleSync}
+              disabled={syncing}
+            >
+              {syncing ? 'Synchronizuję...' : 'Synchronizuj'}
+            </Button>
+          ) : undefined
+        }
+      >
+        Ostatnia synchronizacja: {formatRelativeTime(syncLog.synced_at)}
+        {syncLog.success && ` (${syncLog.quests_created} nowych, ${syncLog.quests_updated} zaktualizowanych)`}
+        {syncLog.errors && ` — Błędy: ${syncLog.errors}`}
+        {syncStatus?.enabled && (
+          <Typography component="span" variant="body2" sx={{ ml: 1, opacity: 0.75 }}>
+            {syncStatus.next_sync
+              ? `· Następny: ${new Date(syncStatus.next_sync).toLocaleTimeString('pl-PL')} (co ${formatInterval(syncStatus.interval)})`
+              : `(co ${formatInterval(syncStatus.interval)})`}
+          </Typography>
+        )}
+      </Alert>
+    );
+  };
+
+  const renderFilters = () => (
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 1.5,
+        alignItems: 'center',
+        mb: 2,
+        backgroundColor: 'background.default',
+        borderRadius: 1,
+        p: { xs: 1, sm: 1.5 },
+        boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+      }}
+    >
+      <TextField
+        size="small"
+        variant="outlined"
+        placeholder="Szukaj po odbiorcy, lokalizacji..."
+        defaultValue={searchQuery}
+        onChange={(e) => debouncedSearch(e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <Suspense fallback={null}>
+              <SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} />
+            </Suspense>
+          ),
+          sx: { borderRadius: 1 },
+        }}
+        sx={{ minWidth: 200, flex: 2 }}
+      />
+      <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
+        <Select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as QuestStatus | '');
+            setPage(0);
+          }}
+          displayEmpty
+        >
+          <MenuItem value="">Wszystkie statusy</MenuItem>
+          <MenuItem value="pending">Oczekujące</MenuItem>
+          <MenuItem value="in_progress">W realizacji</MenuItem>
+          <MenuItem value="completed">Zrealizowane</MenuItem>
+          <MenuItem value="cancelled">Anulowane</MenuItem>
+        </Select>
+      </FormControl>
+      {hasActiveFilters && (
+        <Button
+          size="small"
+          variant="outlined"
+          color="secondary"
+          onClick={clearFilters}
+          sx={{ minWidth: 36, px: 1 }}
+        >
+          <Suspense fallback={null}><ClearAllIcon fontSize="small" /></Suspense>
+        </Button>
+      )}
+    </Box>
+  );
+
+  const getItemsSummary = (quest: Quest) => {
+    const items = quest.items.map((i) => `${i.name} (${i.quantity})`);
+    if (items.length <= 3) return items.join(', ');
+    return `${items.slice(0, 2).join(', ')} +${items.length - 2}`;
+  };
+
+  const renderTable = () => (
+    <TableContainer
+      component={Paper}
+      sx={{
+        borderRadius: 2,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        overflow: 'hidden',
+      }}
+    >
+      <Table>
+        <TableHead>
+          <TableRow sx={{ backgroundColor: 'primary.light' }}>
+            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Cel</TableCell>
+            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Odbiorca</TableCell>
+            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Data dostawy</TableCell>
+            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Przedmioty</TableCell>
+            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Status</TableCell>
+            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }} align="center">
+              Akcje
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {filteredQuests.map((quest) => (
+            <TableRow
+              key={quest.id}
+              sx={{
+                cursor: 'pointer',
+                bgcolor: quest.status === 'in_progress' ? 'rgba(237, 108, 2, 0.1)' : 'inherit',
+                '&:hover': { bgcolor: 'action.hover' },
+                transition: 'background-color 0.2s ease',
+              }}
+              onClick={() => navigate(`/quests/${quest.id}`)}
+            >
+              <TableCell>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {quest.destination.pavilion}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {quest.destination.location}
+                </Typography>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 500 }}>{quest.recipient}</TableCell>
+              <TableCell>
+                {formatDate(quest.delivery_date)}
+                {quest.pickup_time && (
+                  <Typography variant="caption" display="block" color="text.secondary">
+                    {quest.pickup_time}
+                  </Typography>
+                )}
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
+                  {getItemsSummary(quest)}
+                </Typography>
+              </TableCell>
+              <TableCell>{getStatusChip(quest.status)}</TableCell>
+              <TableCell align="center">
+                <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {quest.transfer_id ? (
+                    <Chip
+                      icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
+                      label={`Transfer #${quest.transfer_id}`}
+                      size="small"
+                      color="info"
+                      clickable
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/transfers/${quest.transfer_id}`);
+                      }}
+                    />
+                  ) : quest.status === 'pending' ? (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      startIcon={<Suspense fallback={null}><SendIcon /></Suspense>}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/quests/${quest.id}`);
+                      }}
+                    >
+                      Wydaj
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="text"
+                      color="primary"
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/quests/${quest.id}`);
+                      }}
+                    >
+                      Szczegóły
+                    </Button>
+                  )}
+                </Box>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  const renderMobileCards = () => (
+    <Grid container spacing={2}>
+      {filteredQuests.map((quest) => (
+        <Grid item xs={12} key={quest.id}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              bgcolor: quest.status === 'in_progress' ? 'rgba(237, 108, 2, 0.1)' : 'inherit',
+              '&:hover': { bgcolor: 'action.hover', cursor: 'pointer' },
+              transition: 'background-color 0.2s ease',
+            }}
+            onClick={() => navigate(`/quests/${quest.id}`)}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  {quest.destination.pavilion} — {quest.destination.location}
+                </Typography>
+                {getStatusChip(quest.status)}
+              </Box>
+              <Divider sx={{ my: 1 }} />
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Odbiorca:</Typography>
+                  <Typography variant="body2" fontWeight="bold">{quest.recipient}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Data dostawy:</Typography>
+                  <Typography variant="body2">{formatDate(quest.delivery_date)}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Przedmioty:</Typography>
+                  <Typography variant="body2">{quest.items.length} poz.</Typography>
+                </Box>
+                {quest.transfer_id && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">Transfer:</Typography>
+                    <Chip
+                      icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
+                      label={`#${quest.transfer_id}`}
+                      size="small"
+                      color="info"
+                      clickable
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/transfers/${quest.transfer_id}`);
+                      }}
+                    />
+                  </Box>
+                )}
+              </Box>
+              {!quest.transfer_id && quest.status === 'pending' && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="small"
+                  fullWidth
+                  sx={{ mt: 1.5 }}
+                  startIcon={<Suspense fallback={null}><SendIcon /></Suspense>}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/quests/${quest.id}`);
+                  }}
+                >
+                  Utwórz transfer
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
+  const renderPagination = () => {
+    if (count <= LIMIT) return null;
+    const totalPages = Math.ceil(count / LIMIT);
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 3 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={page === 0}
+          onClick={() => setPage((p) => p - 1)}
+        >
+          Poprzednia
+        </Button>
+        <Typography variant="body2" color="text.secondary">
+          Strona {page + 1} z {totalPages}
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={page >= totalPages - 1}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Następna
+        </Button>
+      </Box>
+    );
+  };
+
+  return (
+    <Box
+      sx={{
+        margin: '0 auto',
+        padding: { xs: 2, sm: 3 },
+        maxWidth: '1400px',
+        backgroundColor: 'background.paper',
+        borderRadius: 2,
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          mb: 3,
+          gap: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          pb: 2,
+        }}
+      >
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ fontWeight: 600, color: 'primary.main' }}
+          >
+            Zapotrzebowanie
+          </Typography>
+          <Box
+            title={sseConnected ? 'Aktualizacje real-time aktywne' : 'Łączenie z real-time...'}
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              bgcolor: sseConnected ? 'success.main' : 'warning.main',
+              flexShrink: 0,
+              transition: 'background-color 0.3s ease',
+            }}
+          />
+        </Box>
+        {hasAdminAccess && !syncLog && (
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={
+              syncing ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <Suspense fallback={null}><SyncIcon /></Suspense>
+              )
+            }
+            onClick={handleSync}
+            disabled={syncing}
+            sx={{ borderRadius: 1, px: 3 }}
+          >
+            {syncing ? 'Synchronizuję...' : 'Synchronizuj z Sheets'}
+          </Button>
+        )}
+      </Box>
+
+      {/* Sync info */}
+      {renderSyncInfo()}
+
+      {/* Stats */}
+      {!loading && renderStatsBar()}
+
+      {/* Filters */}
+      {renderFilters()}
+
+      {/* Error */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Content */}
+      {loading ? (
+        <LoadingSkeleton />
+      ) : filteredQuests.length === 0 ? (
+        <Box
+          sx={{
+            textAlign: 'center',
+            p: 5,
+            backgroundColor: 'background.default',
+            borderRadius: 2,
+            border: '1px dashed',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Brak zamówień
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            {hasActiveFilters
+              ? 'Spróbuj zmienić kryteria wyszukiwania'
+              : 'Brak zamówień do wyświetlenia. Uruchom synchronizację z Google Sheets.'}
+          </Typography>
+          {hasActiveFilters && (
+            <Button variant="outlined" onClick={clearFilters} sx={{ borderRadius: 1, px: 3 }}>
+              Wyczyść filtry
+            </Button>
+          )}
+        </Box>
+      ) : (
+        isMobile ? renderMobileCards() : renderTable()
+      )}
+
+      {/* Pagination */}
+      {!loading && renderPagination()}
     </Box>
   );
 };

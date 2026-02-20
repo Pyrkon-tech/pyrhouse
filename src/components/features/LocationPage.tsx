@@ -365,7 +365,6 @@ const LocationPage: React.FC = () => {
           details={snackbar.details}
           onClose={closeSnackbar}
           autoHideDuration={snackbar.autoHideDuration}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         />
       </Box>
     );
@@ -390,7 +389,6 @@ const LocationPage: React.FC = () => {
           details={snackbar.details}
           onClose={closeSnackbar}
           autoHideDuration={snackbar.autoHideDuration}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         />
       </Box>
     );
@@ -617,7 +615,6 @@ const LocationPage: React.FC = () => {
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
     </Box>
   );

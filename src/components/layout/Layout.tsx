@@ -22,8 +22,6 @@ import { jwtDecode } from 'jwt-decode';
 import { useTokenValidation } from '../../hooks/useTokenValidation';
 import { useStorage } from '../../hooks/useStorage';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
-import QuestBoardTransition from '../animations/QuestBoardTransition';
-import { LocationTransition } from '../animations/LocationTransition';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
@@ -124,11 +122,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const SCROLL_DELAY = 150; // Opóźnienie w milisekundach (tylko dla chowania paska)
   const [userRole, setUserRole] = useState<string>('');
   const [userId, setUserId] = useState<number | null>(null);
-  const [showQuestTransition, setShowQuestTransition] = useState(false);
-  const [showLocationTransition, setShowLocationTransition] = useState(false);
   const { prefersAnimations, toggleAnimations, isSystemReducedMotion } = useAnimationPreference();
   const { getToken, removeToken, getUsername } = useStorage();
   const [username, setUsername] = useState<string>('');
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--sidebar-width',
+      open && !isMobile ? '240px' : '0px'
+    );
+  }, [open, isMobile]);
 
   const handleLogout = useCallback(() => {
     removeToken();
@@ -254,29 +257,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const handleMenuItemClick = (path: string): void => {
-    if ((path === '/quests' || path === '/locations') && prefersAnimations && !isSystemReducedMotion) {
-      if (path === '/quests') {
-        setShowQuestTransition(true);
-      } else {
-        setShowLocationTransition(true);
-      }
-      window.setTimeout(() => {
-        navigate(path);
-      }, 500);
-    } else {
-      navigate(path);
-    }
+    navigate(path);
     setActiveItem(path);
-    
+
     // Zamykamy sidebar na urządzeniach mobilnych po kliknięciu w element menu
     if (isMobile) {
       setMobileOpen(false);
     }
-  };
-
-  const handleTransitionComplete = (): void => {
-    setShowQuestTransition(false);
-    setShowLocationTransition(false);
   };
 
   const menuItems: MenuItem[] = [
@@ -286,9 +273,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: 'Questy',
       icon: <Icons.AutoAwesome sx={{ fontSize: '0.9rem' }} />
     },
-    { path: '/transfers/create', label: 'Nowy quest', icon: <Icons.RocketLaunch /> },
-    { path: '/transfers', label: 'Questy', icon: <Icons.Quiz /> },
-    { path: '/quests', label: 'Quest Board', icon: <Icons.Castle /> },
+    { path: '/transfers/create', label: 'Nowe wydanie', icon: <Icons.RocketLaunch /> },
+    { path: '/transfers', label: 'Wydania', icon: <Icons.Quiz /> },
+    { path: '/quests', label: 'Zapotrzebowanie', icon: <Icons.Castle /> },
     { path: '/servicedesk', label: 'Service Desk', icon: <Icons.MedicalServices /> },
     { 
       type: 'divider',
@@ -937,12 +924,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {generateBreadcrumbs()}
           {children}
         </Suspense>
-        {showQuestTransition && (
-          <QuestBoardTransition onAnimationComplete={handleTransitionComplete} />
-        )}
-        {showLocationTransition && (
-          <LocationTransition onAnimationComplete={handleTransitionComplete} />
-        )}
       </Box>
     </Box>
   );

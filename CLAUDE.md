@@ -176,6 +176,27 @@ const response = await fetch(getApiUrl('/endpoint'), {
 - `useStorage` - localStorage/sessionStorage
 - Domenowe: useTransfers, useLocations, useCategories, etc.
 
+### Formularze z czytnikiem kodów kreskowych
+
+**KRYTYCZNE**: Czytnik kodów kreskowych (barcode/QR) symuluje klawiaturę — wpisuje kod i wciska **Enter**. Bez `e.preventDefault()` w onKeyDown Enter submituje formularz lub dodaje nową linię.
+
+- `src/components/features/TransferPage.tsx` — jedyny formularz w projekcie przygotowany pod skaner
+- `src/components/common/BarcodeScanner.tsx` — kamera (Quagga.js, CODE_128)
+- **Nie buduj własnych inline formularzy do wydania sprzętu** — zamiast tego przekieruj do `/transfers/create` z kontekstem w route state
+- Wzorzec dla pola PYR code: `onKeyDown={(e) => { if (e.key==='Enter') { e.preventDefault(); validate(); } }}`
+- Po walidacji: auto-focus następnego rzędu przez `setTimeout(..., 100)`
+
+**Tworzenie transferu z kontekstem questa:**
+```typescript
+navigate('/transfers/create', {
+  state: {
+    questId: quest.id,           // → po submit: createTransferFromQuestAPI, redirect /quests/{id}
+    questData: { recipient, deliveryDate, location, pavilion, items },
+  },
+});
+```
+TransferPage wykrywa `questId` w state i wywołuje quest-specific API zamiast zwykłego transfer API.
+
 ### Cache invalidation pattern (useCategories)
 Hook `useCategories` używa event-based pattern do synchronizacji między komponentami:
 ```typescript

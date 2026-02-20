@@ -37,7 +37,7 @@ interface TransferModalProps {
   locations: any[];
   locationsLoading?: boolean;
   locationsError?: string | null;
-  onSuccess: () => void;
+  onSuccess: (transferId: number) => void;
 }
 
 export const TransferModal: React.FC<TransferModalProps> = ({
@@ -104,8 +104,8 @@ export const TransferModal: React.FC<TransferModalProps> = ({
         })),
       };
 
-      await createTransferAPI(payload);
-      onSuccess();
+      const response = await createTransferAPI(payload);
+      onSuccess(response.id);
       onClose();
     } catch (err: any) {
       setError(err.message || 'Wystąpił błąd podczas tworzenia transferu');

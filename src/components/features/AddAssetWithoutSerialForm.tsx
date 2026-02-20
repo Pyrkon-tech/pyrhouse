@@ -109,7 +109,6 @@ export const AddAssetWithoutSerialForm: React.FC<{ categories: any[] }> = ({ cat
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       <Grid container spacing={2}>
         <Grid item xs={12} md={3}>

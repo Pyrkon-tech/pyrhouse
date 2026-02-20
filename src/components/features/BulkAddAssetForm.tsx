@@ -224,7 +224,6 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>

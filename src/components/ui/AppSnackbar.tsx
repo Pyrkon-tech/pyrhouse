@@ -1,4 +1,4 @@
-import { Snackbar, Alert, Box, Typography, SnackbarOrigin } from '@mui/material';
+import { Snackbar, Alert, Box, Typography, Slide, SlideProps } from '@mui/material';
 import React from 'react';
 
 interface AppSnackbarProps {
@@ -8,7 +8,16 @@ interface AppSnackbarProps {
   details?: string;
   onClose: () => void;
   autoHideDuration?: number | null;
-  anchorOrigin?: SnackbarOrigin;
+}
+
+const TITLES: Record<AppSnackbarProps['type'], string> = {
+  success: 'Sukces',
+  error: 'Błąd',
+  warning: 'Uwaga',
+};
+
+function SlideLeft(props: SlideProps) {
+  return <Slide {...props} direction="left" />;
 }
 
 export const AppSnackbar: React.FC<AppSnackbarProps> = ({
@@ -17,25 +26,40 @@ export const AppSnackbar: React.FC<AppSnackbarProps> = ({
   message,
   details,
   onClose,
-  autoHideDuration = 3000,
-  anchorOrigin = { vertical: 'top', horizontal: 'center' },
+  autoHideDuration = 4000,
 }) => (
   <Snackbar
     open={open}
     autoHideDuration={autoHideDuration}
     onClose={onClose}
-    anchorOrigin={anchorOrigin}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    TransitionComponent={SlideLeft}
   >
-    <Alert severity={type} onClose={onClose} sx={{ borderRadius: 1, minWidth: 320 }}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-        <Typography variant="subtitle1" fontWeight="500">
-          {type === 'error' ? 'Wystąpił błąd' : 'Sukces'}
+    <Alert
+      severity={type}
+      variant="filled"
+      elevation={8}
+      onClose={onClose}
+      sx={{
+        minWidth: 300,
+        maxWidth: 480,
+        borderRadius: 2,
+        '& .MuiAlert-message': { width: '100%' },
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+        <Typography variant="subtitle2" fontWeight={600} lineHeight={1.3}>
+          {TITLES[type]}
         </Typography>
-        <Typography variant="body1">{message}</Typography>
+        <Typography variant="body2" lineHeight={1.4}>
+          {message}
+        </Typography>
         {details && (
-          <Typography variant="body2" color="text.secondary">{details}</Typography>
+          <Typography variant="caption" sx={{ opacity: 0.85, mt: 0.25 }}>
+            {details}
+          </Typography>
         )}
       </Box>
     </Alert>
   </Snackbar>
-); 
+);

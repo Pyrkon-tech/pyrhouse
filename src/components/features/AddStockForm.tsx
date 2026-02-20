@@ -70,8 +70,8 @@ export const AddStockForm: React.FC<{ categories: any[]; loading: boolean }> = (
         return;
       }
 
-      const responseData = await response.json();
-      console.log('Stock added:', responseData);
+      await response.json();
+      showSnackbar('success', 'Stan magazynowy został dodany pomyślnie');
 
       // Reset form
       setStockCategoryID('');
@@ -94,7 +94,6 @@ export const AddStockForm: React.FC<{ categories: any[]; loading: boolean }> = (
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
 
       {/* Category Select */}

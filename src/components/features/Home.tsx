@@ -479,7 +479,6 @@ const HomePage: React.FC = () => {
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       <Container maxWidth="xl" sx={{
         py: { xs: 3, sm: 4 },

@@ -46,7 +46,7 @@ const NotificationContext = createContext<NotificationContextType | null>(null);
 
 // Transition component
 function SlideTransition(props: SlideProps) {
-  return <Slide {...props} direction="up" />;
+  return <Slide {...props} direction="left" />;
 }
 
 // Domyślne czasy wyświetlania (ms)
@@ -126,7 +126,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         open={!!notification}
         autoHideDuration={notification?.autoHideDuration}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         TransitionComponent={SlideTransition}
       >
         {notification ? (

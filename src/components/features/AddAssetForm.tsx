@@ -114,7 +114,6 @@ export const AddAssetForm: React.FC<{ categories: any[]; loading: boolean }> = (
         details={snackbar.details}
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
 
       {/* Serial Input */}

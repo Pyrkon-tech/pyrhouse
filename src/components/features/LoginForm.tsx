@@ -490,7 +490,6 @@ const LoginForm: React.FC = () => {
               details={snackbar.details}
               onClose={closeSnackbar}
               autoHideDuration={snackbar.autoHideDuration}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             />
           </Paper>
         </Container>
