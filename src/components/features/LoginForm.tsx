@@ -28,7 +28,7 @@ import { getApiUrl } from '../../config/api';
 import { useStorage } from '../../hooks/useStorage';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
 import pyrkonLogo from '../../assets/images/p-logo.svg';
-import { hyperJumpAnimation, starStreakAnimation } from '../../animations/keyframes';
+import { hyperJumpAnimation, starStreakAnimation } from '../animations/keyframes';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { jwtDecode } from 'jwt-decode';

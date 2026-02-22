@@ -29,7 +29,7 @@ import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import debounce from 'lodash/debounce';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import Autocomplete from '@mui/material/Autocomplete';
-import { Location } from '../../models/Location';
+import { Location } from '../../types/location.types';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 

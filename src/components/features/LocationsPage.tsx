@@ -32,7 +32,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
 import { deleteLocation, updateLocation, createLocation } from '../../services/locationService';
-import { Location } from '../../models/Location';
+import { Location } from '../../types/location.types';
 import * as Icons from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { AppSnackbar } from '../ui/AppSnackbar';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getApiUrl } from '../config/api';
-import { Transfer } from '../models/transfer';
+import { Transfer } from '../types/transfer.types';
 
 export const useTransfers = () => {
   const [transfers, setTransfers] = useState<Transfer[]>([]);

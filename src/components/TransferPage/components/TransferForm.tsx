@@ -24,7 +24,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { searchPyrCodesAPI } from '../../../services/transferService';
 import './TransferForm.css';
 import { TransferFormData } from '../../../types/transfer.types';
-import { Location } from '../../../models/Location';
+import { Location } from '../../../types/location.types';
 
 const LocationPicker = lazy(() => import('../../common/LocationPicker'));
 

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Location } from '../models/Location';
+import { Location } from '../types/location.types';
 import { getApiUrl } from '../config/api';
 
 export const useLocations = () => {
