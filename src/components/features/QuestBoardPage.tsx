@@ -99,7 +99,9 @@ const QuestBoardPage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>(
+    searchParams.get('view') === 'map' ? 'map' : 'list'
+  );
   const [statusFilter, setStatusFilter] = useState<QuestStatus | ''>(
     (searchParams.get('status') as QuestStatus) || ''
   );
@@ -149,9 +151,10 @@ const QuestBoardPage: React.FC = () => {
     const params: Record<string, string> = {};
     if (statusFilter) params.status = statusFilter;
     if (searchQuery) params.q = searchQuery;
+    if (viewMode === 'map') params.view = 'map';
     setSearchParams(params, { replace: true });
     // eslint-disable-next-line
-  }, [statusFilter, searchQuery]);
+  }, [statusFilter, searchQuery, viewMode]);
 
   const debouncedSearch = useCallback(
     debounce((query: string) => {

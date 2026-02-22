@@ -28,18 +28,18 @@ import Checkbox from '@mui/material/Checkbox';
 import Avatar from '@mui/material/Avatar';
 
 // Services and hooks
-import { getTransferDetailsAPI, confirmTransferAPI, restoreAssetToLocationAPI, restoreStockToLocationAPI, cancelTransferAPI, updateTransferUsersAPI } from '../../services/transferService';
-import { useLocations } from '../../hooks/useLocations';
-import { useServiceDeskUsers } from '../../hooks/useServiceDeskUsers';
-import { MapPosition, locationService } from '../../services/locationService';
-import { useAuth } from '../../hooks/useAuth';
-import { AppSnackbar } from '../ui/AppSnackbar';
-import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
+import { getTransferDetailsAPI, confirmTransferAPI, restoreAssetToLocationAPI, restoreStockToLocationAPI, cancelTransferAPI, updateTransferUsersAPI } from '../../../services/transferService';
+import { useLocations } from '../../../hooks/useLocations';
+import { useServiceDeskUsers } from '../../../hooks/useServiceDeskUsers';
+import { MapPosition, locationService } from '../../../services/locationService';
+import { useAuth } from '../../../hooks/useAuth';
+import { AppSnackbar } from '../../ui/AppSnackbar';
+import { useSnackbarMessage } from '../../../hooks/useSnackbarMessage';
 import { useMediaQuery, useTheme } from '@mui/material';
 // Lazy loaded components
-const MapComponent = lazy(() => import('../common/MapComponent'));
-const LocationPicker = lazy(() => import('../common/LocationPicker'));
-const RestoreDialog = lazy(() => import('../common/RestoreDialog'));
+const MapComponent = lazy(() => import('../../common/MapComponent'));
+const LocationPicker = lazy(() => import('../../common/LocationPicker'));
+const RestoreDialog = lazy(() => import('../../common/RestoreDialog'));
 
 const statusTranslations: { [key: string]: string } = {
   'created': 'Utworzony',

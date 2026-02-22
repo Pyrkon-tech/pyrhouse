@@ -5,12 +5,12 @@ import { RouteConfig } from './types';
 const Home = lazy(() => import('../components/features/Home'));
 const List = lazy(() => import('../components/features/List'));
 const AddItemPage = lazy(() => import('../components/features/AddItemPage'));
-const TransferPage = lazy(() => import('../components/features/TransferPage'));
+const TransferPage = lazy(() => import('../components/features/Transfer/TransferCreatePage'));
 const UserManagementPage = lazy(() => import('../components/features/UserManagementPage'));
 const UserDetailsPage = lazy(() => import('../components/features/UserDetailsPage'));
 const CategoryManagementPage = lazy(() => import('../components/features/CategoryManagementPage'));
-const TransfersListPage = lazy(() => import('../components/features/TransferListPage'));
-const TransferDetailsPage = lazy(() => import('../components/features/TransferDetailsPage'));
+const TransfersListPage = lazy(() => import('../components/features/Transfer/TransferListPage'));
+const TransferDetailsPage = lazy(() => import('../components/features/Transfer/TransferDetailsPage'));
 const QuestBoardPage = lazy(() => import('../components/features/QuestBoardPage'));
 const QuestDetailPage = lazy(() => import('../components/features/QuestDetailPage'));
 const EquipmentDetails = lazy(() => import('../components/features/EquipmentDetails'));
@@ -18,7 +18,7 @@ const LocationsPage = lazy(() => import('../components/features/LocationsPage'))
 const LocationDetailsPage = lazy(() => import('../components/features/LocationDetailsPage'));
 const TutorialPage = lazy(() => import('../components/features/TutorialPage'));
 const DutySchedulePage = lazy(() => import('../components/features/DutySchedulePage'));
-const ServiceDeskPage = lazy(() => import('../components/features/ServiceDeskPage'));
+const ServiceDeskPage = lazy(() => import('../components/features/ServiceDesk/ServiceDeskPage'));
 
 // Public routes (nie wymagają autoryzacji)
 export const publicRoutes: RouteConfig[] = [
@@ -39,7 +39,7 @@ export const publicRoutes: RouteConfig[] = [
   },
   {
     path: '/servicedesk/request',
-    component: lazy(() => import('../components/features/PublicServiceDeskForm')),
+    component: lazy(() => import('../components/features/ServiceDesk/PublicServiceDeskForm')),
     title: 'Zgłoszenie serwisowe',
   },
 ];

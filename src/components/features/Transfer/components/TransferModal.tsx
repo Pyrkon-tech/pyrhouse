@@ -15,7 +15,7 @@ import {
   Alert,
   TextField,
 } from '@mui/material';
-import { createTransferAPI } from '../../../services/transferService';
+import { createTransferAPI } from '../../../../services/transferService';
 
 interface StockItem {
   id: number;

@@ -1,20 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Box, Typography, Button, TextField, InputAdornment, Tabs, Tab, CircularProgress, Alert, Dialog, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { Search as SearchIcon, Refresh as RefreshIcon, OpenInNew as OpenInNewIcon, Task as TaskIcon, ViewModule as ViewModuleIcon, ViewList as ViewListIcon } from '@mui/icons-material';
-import { getApiUrl } from '../../config/api';
+import { getApiUrl } from '../../../config/api';
 import ServiceDeskForm from './ServiceDeskForm';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { AppSnackbar } from '../ui/AppSnackbar';
-import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
-import { useServiceDeskTypes } from '../../hooks/useServiceDeskTypes';
-import { useServiceDeskRequests } from '../../hooks/useServiceDeskRequests';
-import { usePageVisibility } from '../../hooks/usePageVisibility';
-import { useServiceDeskUsers } from '../../hooks/useServiceDeskUsers';
-import ServiceDeskCardsView from './ServiceDesk/ServiceDeskCardsView';
-import ServiceDeskListView from './ServiceDesk/ServiceDeskListView';
-import ServiceDeskDetailsModal from './ServiceDesk/ServiceDeskDetailsModal';
-import { addUserPointsAPI } from '../../services/userService';
+import { AppSnackbar } from '../../ui/AppSnackbar';
+import { useSnackbarMessage } from '../../../hooks/useSnackbarMessage';
+import { useServiceDeskTypes } from '../../../hooks/useServiceDeskTypes';
+import { useServiceDeskRequests } from '../../../hooks/useServiceDeskRequests';
+import { usePageVisibility } from '../../../hooks/usePageVisibility';
+import { useServiceDeskUsers } from '../../../hooks/useServiceDeskUsers';
+import ServiceDeskCardsView from './components/ServiceDeskCardsView';
+import ServiceDeskListView from './components/ServiceDeskListView';
+import ServiceDeskDetailsModal from './components/ServiceDeskDetailsModal';
+import { addUserPointsAPI } from '../../../services/userService';
 
 const ServiceDeskPage: React.FC = () => {
   const [status, setStatus] = useState('new');

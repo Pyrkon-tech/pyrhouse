@@ -3,9 +3,22 @@
 > Instrukcje dla modeli AI i deweloperów. Każde zadanie ma konkretne pliki: skąd → dokąd.
 > Po każdym kroku: `npx tsc --noEmit` + test w przeglądarce.
 
+## Status wykonania
+
+| Zadanie | Status |
+|---------|--------|
+| 1.1 Usunięcie `src/models/` | DONE |
+| 1.2 Usunięcie `src/containers/` | DONE |
+| 1.3 Konsolidacja animacji | DONE |
+| 2.1 Konsolidacja modułu Transfer | DONE |
+| 2.2 Konsolidacja modułu ServiceDesk | DONE |
+| 3.1 Barrel export hooks/ | TODO |
+| 3.2 Barrel export services/ | TODO |
+| 3.3 Konwersja TransferForm.css → MUI sx | DONE (plik usunięty z importem) |
+
 ---
 
-## 1. Stan obecny — problemy
+## 1. Stan obecny — problemy (ROZWIĄZANE)
 
 ### 1.1 Duplikacja Transfer
 

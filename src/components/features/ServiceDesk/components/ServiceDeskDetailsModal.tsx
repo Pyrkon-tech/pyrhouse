@@ -1,8 +1,8 @@
 import React from 'react';
 import { Dialog, Box, Typography, IconButton, Chip, Select, MenuItem, Avatar, Divider, Grid, Menu, CircularProgress, TextField, Button, Fade } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { useServiceDeskComments } from '../../../hooks/useServiceDeskComments';
-import { useAuth } from '../../../hooks/useAuth';
+import { useServiceDeskComments } from '../../../../hooks/useServiceDeskComments';
+import { useAuth } from '../../../../hooks/useAuth';
 
 interface ServiceDeskDetailsModalProps {
   open: boolean;

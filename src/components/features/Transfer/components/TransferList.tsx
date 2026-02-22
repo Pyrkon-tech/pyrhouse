@@ -10,7 +10,7 @@ import {
   IconButton,
   Tooltip
 } from '@mui/material';
-import { Transfer } from '../../../types/transfer.types';
+import { Transfer } from '../../../../types/transfer.types';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { format } from 'date-fns';
 

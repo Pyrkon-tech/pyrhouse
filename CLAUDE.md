@@ -28,15 +28,18 @@ src/
 ├── components/
 │   ├── ui/           # Reużywalne komponenty (Button, Card, Container)
 │   ├── layout/       # Layout, Navigation, Breadcrumbs
-│   ├── features/     # Strony funkcjonalne (30 komponentów)
+│   ├── features/     # Strony funkcjonalne (flat files + moduły folderowe)
+│   │   ├── Transfer/           # Moduł transferów (create, details, list + sub-components)
+│   │   ├── ServiceDesk/        # Moduł service desk (page, form, views + sub-components)
+│   │   ├── QuestDispatcherMap/ # Mapa dispatch (SVG overlay, sidebar, zones)
+│   │   └── *.tsx               # Proste strony (<150 LOC)
 │   ├── common/       # Wspólne (BarcodeScanner, MapComponent)
-│   └── animations/   # Animacje przejść stron
-├── hooks/            # Custom hooks (18 hooków)
-├── services/         # Warstwa API (5 serwisów)
+│   └── animations/   # Animacje przejść stron + keyframes
+├── hooks/            # Custom hooks (27 hooków)
+├── services/         # Warstwa API (8 serwisów)
 ├── theme/            # Design tokens + theme
 ├── routes/           # Konfiguracja routingu
-├── types/            # Definicje TypeScript
-├── models/           # Modele danych
+├── types/            # Definicje TypeScript (jedyne źródło typów)
 └── context/          # React Context providers
 ```
 
@@ -50,10 +53,13 @@ src/
 | `src/routes/routes.ts` | Definicje tras |
 | `src/hooks/useStyles.ts` | Hook do stylowania |
 | `src/hooks/useAuth.ts` | Autentykacja i walidacja tokenu |
-| `src/services/apiClient.ts` | **NEW** Centralny klient API |
-| `src/config/env.ts` | **NEW** Konfiguracja zmiennych środowiskowych |
-| `src/context/NotificationContext.tsx` | **NEW** Centralne powiadomienia |
-| `src/types/index.ts` | **NEW** Centralne eksporty typów |
+| `src/services/apiClient.ts` | Centralny klient API |
+| `src/config/env.ts` | Konfiguracja zmiennych środowiskowych |
+| `src/context/NotificationContext.tsx` | Centralne powiadomienia |
+| `src/types/index.ts` | Centralne eksporty typów |
+| `src/components/features/Transfer/` | Moduł transferów (3 strony + 5 sub-components) |
+| `src/components/features/ServiceDesk/` | Moduł service desk (strona + formularz + 3 widoki) |
+| `src/components/features/QuestDispatcherMap/` | Mapa dispatch MTP z overlayami stref |
 
 ## Routing
 

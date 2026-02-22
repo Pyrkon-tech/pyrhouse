@@ -13,7 +13,7 @@ import {
   Chip,
 } from '@mui/material';
 import { LocationOn, Person, Inventory } from '@mui/icons-material';
-import { TransferFormData } from '../../../types/transfer.types';
+import { TransferFormData } from '../../../../types/transfer.types';
 
 interface ConfirmationDialogProps {
   open: boolean;

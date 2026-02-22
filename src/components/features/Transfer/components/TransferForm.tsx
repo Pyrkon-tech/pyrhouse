@@ -21,12 +21,11 @@ import {
   Chip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { searchPyrCodesAPI } from '../../../services/transferService';
-import './TransferForm.css';
-import { TransferFormData } from '../../../types/transfer.types';
-import { Location } from '../../../types/location.types';
+import { searchPyrCodesAPI } from '../../../../services/transferService';
+import { TransferFormData } from '../../../../types/transfer.types';
+import { Location } from '../../../../types/location.types';
 
-const LocationPicker = lazy(() => import('../../common/LocationPicker'));
+const LocationPicker = lazy(() => import('../../../common/LocationPicker'));
 
 interface User {
   id: number;

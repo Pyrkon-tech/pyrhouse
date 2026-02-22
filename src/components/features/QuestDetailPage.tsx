@@ -28,7 +28,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../context/NotificationContext';
 import type { QuestEvent } from '../../types/quest.types';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
-import TransferFormCore from '../TransferPage/components/TransferFormCore';
+import TransferFormCore from './Transfer/components/TransferFormCore';
 import type { QuestStatus, CategoryMatchType } from '../../types/quest.types';
 
 const ArrowBackIcon = lazy(() => import('@mui/icons-material/ArrowBack'));

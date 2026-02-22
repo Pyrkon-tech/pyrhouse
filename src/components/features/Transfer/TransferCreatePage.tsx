@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import TransferFormCore from '../TransferPage/components/TransferFormCore';
-import type { QuestData } from '../TransferPage/components/TransferFormCore';
+import TransferFormCore from './components/TransferFormCore';
+import type { QuestData } from './components/TransferFormCore';
 
 const TransferPage: React.FC = () => {
   const location = useLocation();

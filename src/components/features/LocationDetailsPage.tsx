@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
-import { TransferModal } from '../TransferPage/components/TransferModal';
+import { TransferModal } from './Transfer/components/TransferModal';
 import { getLocationDetails } from '../../services/locationService';
 import { useTheme, useMediaQuery } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';

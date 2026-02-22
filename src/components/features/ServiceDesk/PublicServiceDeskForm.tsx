@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import ServiceDeskForm from './ServiceDeskForm';
-import logo from '../../assets/images/p-logo.svg';
+import logo from '../../../assets/images/p-logo.svg';
 
 const PublicServiceDeskForm: React.FC = () => {
   return (

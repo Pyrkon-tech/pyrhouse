@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, MenuItem, Alert, CircularProgress, InputLabel, FormControl } from '@mui/material';
-import { useSendPublicServiceDeskRequest } from '../../services/serviceDeskPublicService';
+import { useSendPublicServiceDeskRequest } from '../../../services/serviceDeskPublicService';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { StyledPaper, StyledTextField, StyledSelect, StyledButton } from './ServiceDeskForm.styles';
 
