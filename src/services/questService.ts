@@ -19,6 +19,12 @@ import type {
   TransferPreview,
   CreateTransferFromQuestRequest,
   CreateTransferFromQuestResponse,
+  LocationMapping,
+  LocationMappingsResponse,
+  CreateLocationMappingPayload,
+  UpdateQuestLocationPayload,
+  UpdateQuestLocationResponse,
+  UnresolvedLocationsResponse,
 } from '../types/quest.types';
 
 // ============================================================================
@@ -31,6 +37,7 @@ import type {
 export const getQuestsAPI = (params?: QuestsListParams) => {
   const queryParts: string[] = [];
   if (params?.status) queryParts.push(`status=${params.status}`);
+  if (params?.location_id !== undefined) queryParts.push(`location_id=${params.location_id}`);
   if (params?.limit) queryParts.push(`limit=${params.limit}`);
   if (params?.offset !== undefined) queryParts.push(`offset=${params.offset}`);
   const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
@@ -117,4 +124,42 @@ export const getCategoryMappingsAPI = () =>
  */
 export const deleteCategoryMappingAPI = (id: number): Promise<void> =>
   apiClient.delete<void>(`/equipment-requests/category-mappings/${id}`);
+
+// ============================================================================
+// Location Resolution
+// ============================================================================
+
+/**
+ * Questy z nierozwiązaną lokalizacją (location_resolved: false)
+ */
+export const getUnresolvedLocationsAPI = () =>
+  apiClient.get<UnresolvedLocationsResponse>('/equipment-requests/quests/unresolved-locations');
+
+/**
+ * Ręczne przypisanie lokalizacji do questa
+ * save_mapping: true → zapisz jako mapping do auto-resolution w przyszłości
+ */
+export const updateQuestLocationAPI = (questId: string, payload: UpdateQuestLocationPayload) =>
+  apiClient.patch<UpdateQuestLocationResponse>(
+    `/equipment-requests/quests/${questId}/location`,
+    payload,
+  );
+
+/**
+ * Lista mapowań pavilion+location_name → location_id
+ */
+export const getLocationMappingsAPI = () =>
+  apiClient.get<LocationMappingsResponse>('/equipment-requests/location-mappings');
+
+/**
+ * Tworzy nowe mapowanie lokalizacji
+ */
+export const createLocationMappingAPI = (payload: CreateLocationMappingPayload) =>
+  apiClient.post<{ message: string; mapping: LocationMapping }>('/equipment-requests/location-mappings', payload);
+
+/**
+ * Usuwa mapowanie lokalizacji (204 No Content)
+ */
+export const deleteLocationMappingAPI = (id: number): Promise<void> =>
+  apiClient.delete<void>(`/equipment-requests/location-mappings/${id}`);
 

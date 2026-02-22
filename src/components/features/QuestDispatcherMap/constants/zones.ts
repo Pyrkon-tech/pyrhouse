@@ -23,19 +23,23 @@ export const ZONES: Zone[] = [
 
   { id: 'paw13', label: '13',
     aliases: ['13', 'hala 13', 'pawilon 13'],
-    points: [[834,514],[849,582],[930,555],[912,500]] },
+    points: [[837,514],[850,563],[925,550],[910,500]] },
 
-  { id: 'paw14', label: '14',
+  { id: 'paw14', label: '14stka',
     aliases: ['14', 'hala 14', 'pawilon 14'],
     points: [[778,523],[800,605],[722,620],[700,540]] },
 
   { id: 'paw6a', label: '6A',
     aliases: ['6a', 'hala 6a', 'pawilon 6a'],
-    points: [[1165,312],[1190,405],[1615,325],[1587,235]] },
-
-  { id: 'paw6', label: '6',
-    aliases: ['6', 'hala 6', 'pawilon 6', 'hall 6', 'h6'],
     points: [[1590,233],[1613,305],[1806,270],[1785,200]] },
+
+  { id: 'paw6b', label: '6B',
+    aliases: ['6b', 'hala 6b', 'pawilon 6b'],
+    points: [[1370,275],[1395,360],[1615,320],[1587,235]] },
+
+  { id: 'paw6c', label: '6c',
+    aliases: ['6c', 'hala 6c', 'pawilon 6c'],
+    points: [[1170,310],[1370,275],[1395,360],[1193,395]] },
 
   { id: 'paw5a', label: '5A',
     aliases: ['5a', 'hala 5a', 'pawilon 5a'],
@@ -51,7 +55,7 @@ export const ZONES: Zone[] = [
 
   { id: 'paw2', label: '2',
     aliases: ['2', 'hala 2', 'pawilon 2', 'hall 2', 'h2'],
-    points: [[547,728],[851,832],[796,922],[506,818]] },
+    points: [[550,725],[845,825],[795,915],[500,815]] },
 
   { id: 'paw4', label: '4',
     aliases: ['4', 'hala 4', 'pawilon 4', 'hall 4', 'h4'],
@@ -73,4 +77,15 @@ export const ZONES: Zone[] = [
   { id: 'paw3a', label: '3A',
     aliases: ['3a', 'hala 3a', 'pawilon 3a'],
     points: [[1794,701],[1860,921],[2075,878],[2005,661]] },
+  
+  { id: 'west', label: 'Zachód',
+    aliases: ['zachód', 'Akredytacja Zachód', 'west', 'wst', 'WST'],
+    shape: 'ellipse',
+    points: [[700,150],[720,170],[740,145],[720,140]] },
+  { id: 'east', label: 'Wschód',
+    aliases: ['wschód', 'Akredytacja Wschód', 'east', 'est', 'EST'],
+    points: [[1119,925],[1135,990],[1470,928],[1452,860]] },
+  { id: 'wtc', label: 'WTC',
+    aliases: ['WTC', 'Biuro Akredytacji', 'Akredytacj Północ', 'NRT'],
+    points: [[1765,361],[1805,490],[1920,468],[1880,340]] },
 ];

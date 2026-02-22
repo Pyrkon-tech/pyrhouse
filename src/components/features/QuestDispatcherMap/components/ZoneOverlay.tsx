@@ -7,9 +7,10 @@ interface ZoneOverlayProps {
   metrics: ZoneMetrics;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  onDispatch?: (zoneId: string) => void;
 }
 
-const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, onSelect }) => {
+const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, onSelect, onDispatch }) => {
   const hasQuests = metrics.total > 0;
   const isUrgent = metrics.pending > 0;
   const isActive = metrics.inProgress > 0;
@@ -36,7 +37,11 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
 
   return (
     <g
-      onClick={(e) => { e.stopPropagation(); onSelect(zone.id); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (isUrgent && onDispatch) onDispatch(zone.id);
+        else onSelect(zone.id);
+      }}
       style={{ cursor: 'pointer' }}
       role="button"
       aria-label={`Pawilon ${zone.label}`}
@@ -119,13 +124,41 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
         </text>
       )}
 
-      {/* Pulsing beacon */}
-      {metrics.pending > 0 && (
-        <circle cx={bb.maxX - 18} cy={bb.minY + 18} r={10} fill="#ff9800">
-          <animate attributeName="r" values="8;14;8" dur="1.6s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite" />
-        </circle>
-      )}
+      {/* Quest-ready icon — exclamation circle at top-left corner of building */}
+      {metrics.pending > 0 && (() => {
+        const r = 24;
+        // Use first polygon point as the corner anchor
+        const [px, py] = zone.points[0];
+        return (
+          <g style={{ pointerEvents: 'none' }}>
+            {/* Glow */}
+            <circle cx={px} cy={py} r={r + 8} fill="#ff9800" opacity={0.15} style={{ filter: 'blur(10px)' }}>
+              <animate attributeName="opacity" values="0.15;0.35;0.15" dur="1.6s" repeatCount="indefinite" />
+            </circle>
+            {/* Circle background */}
+            <circle cx={px} cy={py} r={r} fill="#ff9800" stroke="rgba(255,255,255,0.6)" strokeWidth={2.5}>
+              <animate attributeName="opacity" values="1;0.7;1" dur="1.6s" repeatCount="indefinite" />
+            </circle>
+            {/* Exclamation mark */}
+            <text
+              x={px} y={py + 1}
+              textAnchor="middle" dominantBaseline="central"
+              fill="#fff" fontSize={r * 1.4} fontWeight="bold" fontFamily="monospace"
+            >!</text>
+            {/* Counter badge */}
+            {metrics.pending > 1 && (
+              <>
+                <circle cx={px + r - 2} cy={py - r + 2} r={9} fill="#d32f2f" stroke="rgba(255,255,255,0.5)" strokeWidth={1} />
+                <text
+                  x={px + r - 2} y={py - r + 3}
+                  textAnchor="middle" dominantBaseline="central"
+                  fill="#fff" fontSize={11} fontWeight="bold" fontFamily="monospace"
+                >{metrics.pending}</text>
+              </>
+            )}
+          </g>
+        );
+      })()}
       {metrics.inProgress > 0 && metrics.pending === 0 && (
         <circle cx={bb.maxX - 18} cy={bb.minY + 18} r={8} fill="#ffd54f">
           <animate attributeName="opacity" values="1;0.4;1" dur="2.4s" repeatCount="indefinite" />

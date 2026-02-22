@@ -28,6 +28,9 @@ export interface Quest {
   status: QuestStatus;
   transfer_id?: number | null;
   transfer_status?: string | null;
+  location_id: number | null;
+  location_name: string | null;
+  location_resolved: boolean;
   source_rows: number[];
   last_synced: string;
 }
@@ -41,6 +44,7 @@ export interface QuestsListResponse {
 
 export interface QuestsListParams {
   status?: QuestStatus;
+  location_id?: number;
   limit?: number;
   offset?: number;
 }
@@ -110,6 +114,43 @@ export interface CreateCategoryMappingPayload {
   form_item_name: string;
   category_id: number;
   created_by?: number;
+}
+
+// Location Resolution Types
+
+export interface LocationMapping {
+  id: number;
+  pavilion: string;
+  location_name: string;
+  location_id: number;
+  created_at: string;
+  usage_count: number;
+}
+
+export interface LocationMappingsResponse {
+  count: number;
+  mappings: LocationMapping[];
+}
+
+export interface CreateLocationMappingPayload {
+  pavilion: string;
+  location_name: string;
+  location_id: number;
+}
+
+export interface UpdateQuestLocationPayload {
+  location_id: number;
+  save_mapping?: boolean;
+}
+
+export interface UpdateQuestLocationResponse {
+  message: string;
+  location_id: number;
+}
+
+export interface UnresolvedLocationsResponse {
+  count: number;
+  quests: Quest[];
 }
 
 // Transfer Integration Types

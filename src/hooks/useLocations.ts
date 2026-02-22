@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Location } from '../types/location.types';
-import { getApiUrl } from '../config/api';
+import { apiClient, ApiError } from '../services/apiClient';
+import type { Location } from '../types/location.types';
 
 export const useLocations = () => {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -10,17 +10,11 @@ export const useLocations = () => {
   const fetchLocations = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/locations'), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) {
-        throw new Error('Nie udało się pobrać lokalizacji');
-      }
-      const data = await response.json();
+      setError(null);
+      const data = await apiClient.get<Location[]>('/locations');
       setLocations(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Nie udało się pobrać lokalizacji');
     } finally {
       setLoading(false);
     }

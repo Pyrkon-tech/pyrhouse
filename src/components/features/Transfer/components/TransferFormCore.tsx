@@ -119,17 +119,19 @@ export interface QuestData {
 export interface TransferFormCoreProps {
   questId?: string;
   questData?: QuestData;
+  /** Pre-fills toLocation when quest has a resolved location_id */
+  questLocationId?: number | null;
   onSuccess?: (transferId?: number) => void;
   onCancel?: () => void;
   /** Inkrementowany gdy SSE wykryje stocks_changed — triggery re-fetch stocków */
   stocksRefreshTrigger?: number;
 }
 
-const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, onSuccess, onCancel, stocksRefreshTrigger }) => {
+const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocationId, onSuccess, onCancel, stocksRefreshTrigger }) => {
   const { control, handleSubmit, setValue, watch, reset } = useForm<FormData>({
     defaultValues: {
       fromLocation: 1,
-      toLocation: '',
+      toLocation: questLocationId != null ? String(questLocationId) : '',
       items: [{ type: 'pyr_code', id: '', pyrcode: '', quantity: 0, status: '' }],
       users: [],
     },

@@ -11,10 +11,11 @@ interface MapCanvasProps {
   questsByZone: Record<string, Quest[]>;
   selectedZoneId: string | null;
   onZoneSelect: (id: string | null) => void;
+  onZoneDispatch?: (zoneId: string) => void;
   debugMode?: boolean;
 }
 
-const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZoneSelect, debugMode = false }) => {
+const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZoneSelect, onZoneDispatch, debugMode = false }) => {
   const unmatchedQuests = questsByZone['__unmatched'] ?? [];
 
   // Debug state
@@ -99,6 +100,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
               metrics={getZoneMetrics(questsByZone[zone.id] ?? [])}
               isSelected={selectedZoneId === zone.id}
               onSelect={(id) => onZoneSelect(selectedZoneId === id ? null : id)}
+              onDispatch={onZoneDispatch}
             />
           ))}
 

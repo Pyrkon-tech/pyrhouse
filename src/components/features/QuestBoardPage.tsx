@@ -176,6 +176,11 @@ const QuestBoardPage: React.FC = () => {
     );
   }, [quests, searchQuery]);
 
+  const unresolvedLocationCount = useMemo(
+    () => quests.filter(q => !q.location_resolved).length,
+    [quests],
+  );
+
   const handleSync = async () => {
     try {
       const result = await triggerSync();
@@ -595,6 +600,18 @@ const QuestBoardPage: React.FC = () => {
               }}
             />
           </Box>
+          {unresolvedLocationCount > 0 && (
+            <Tooltip title="Questy wymagające ręcznego przypisania lokalizacji">
+              <Chip
+                label={`⚠ ${unresolvedLocationCount} bez lokalizacji`}
+                size="small"
+                color="warning"
+                variant="outlined"
+                onClick={() => setStatusFilter('pending')}
+                sx={{ cursor: 'pointer' }}
+              />
+            </Tooltip>
+          )}
           <Tooltip title={viewMode === 'list' ? 'Przełącz na widok mapy (Dispatch)' : 'Przełącz na widok listy'}>
             <ToggleButtonGroup
               value={viewMode}
@@ -658,7 +675,10 @@ const QuestBoardPage: React.FC = () => {
           <LoadingSkeleton />
         ) : (
           <Suspense fallback={<LoadingSkeleton />}>
-            <QuestDispatcherMap quests={quests} />
+            <QuestDispatcherMap
+              quests={quests}
+              onQuestUpdated={() => fetchQuests({ limit: LIMIT, offset: page * LIMIT, status: statusFilter || undefined })}
+            />
           </Suspense>
         )
       ) : (

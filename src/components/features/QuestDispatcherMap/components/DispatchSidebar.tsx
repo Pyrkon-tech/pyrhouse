@@ -1,7 +1,8 @@
-import React from 'react';
-import { Box, Typography, Chip, Divider, IconButton, Tooltip } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Chip, Divider, IconButton, Tooltip, Select, MenuItem, FormControl, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Quest, QuestStatus } from '../../../../types/quest.types';
+import type { Location } from '../../../../types/location.types';
 import type { Zone } from '../types';
 import { STATUS_COLORS, STATUS_LABELS } from '../constants/statusConfig';
 import { getZoneMetrics, formatDate } from '../utils/matching';
@@ -11,36 +12,129 @@ interface DispatchSidebarProps {
   selectedZoneId: string | null;
   questsByZone: Record<string, Quest[]>;
   onZoneSelect: (id: string | null) => void;
+  onDispatchQuest?: (quest: Quest) => void;
   bottomPanel?: React.ReactNode;
+  locations?: Location[];
+  onAssignQuestLocation?: (questId: string, locationId: number) => Promise<void>;
 }
 
-const QuestItem: React.FC<{ quest: Quest; onClick: () => void }> = ({ quest, onClick }) => (
-  <Box
-    onClick={onClick}
-    sx={{
-      p: 1.5, borderRadius: 1, cursor: 'pointer',
-      bgcolor: '#07111e', border: '1px solid #1a3548',
-      borderLeft: `3px solid ${STATUS_COLORS[quest.status]}`,
-      '&:hover': { bgcolor: '#0e1f31', borderColor: '#2a4a60' },
-      transition: 'all 0.15s ease',
-    }}
-  >
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 0.5 }}>
-      <Typography variant="caption" sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontWeight: 700, lineHeight: 1.3, fontSize: 12 }}>
-        {quest.recipient}
+const QuestItem: React.FC<{
+  quest: Quest;
+  onClick: () => void;
+  onDispatch?: (quest: Quest) => void;
+}> = ({ quest, onClick, onDispatch }) => {
+  const locationLabel = quest.location_name ?? `${quest.destination.pavilion} · ${quest.destination.location}`;
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        p: 1.5, borderRadius: 1, cursor: 'pointer',
+        bgcolor: '#07111e', border: '1px solid #1a3548',
+        borderLeft: `3px solid ${STATUS_COLORS[quest.status]}`,
+        '&:hover': { bgcolor: '#0e1f31', borderColor: '#2a4a60' },
+        transition: 'all 0.15s ease',
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 0.5 }}>
+        <Typography variant="caption" sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontWeight: 700, lineHeight: 1.3, fontSize: 12 }}>
+          {quest.recipient}
+        </Typography>
+        <Chip label={STATUS_LABELS[quest.status]} size="small"
+          sx={{ height: 18, fontSize: 9, flexShrink: 0, bgcolor: `${STATUS_COLORS[quest.status]}22`, color: STATUS_COLORS[quest.status], border: `1px solid ${STATUS_COLORS[quest.status]}44` }}
+        />
+      </Box>
+      <Typography variant="caption" sx={{ color: '#3a7a8a', fontFamily: 'monospace', display: 'block', mt: 0.25, fontSize: 10 }}>
+        {locationLabel} · {quest.items.length} poz.
       </Typography>
-      <Chip label={STATUS_LABELS[quest.status]} size="small"
-        sx={{ height: 18, fontSize: 9, flexShrink: 0, bgcolor: `${STATUS_COLORS[quest.status]}22`, color: STATUS_COLORS[quest.status], border: `1px solid ${STATUS_COLORS[quest.status]}44` }}
-      />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.25 }}>
+        <Typography variant="caption" sx={{ color: '#204050', fontFamily: 'monospace', fontSize: 10 }}>
+          {formatDate(quest.delivery_date)}{quest.pickup_time && ` · ${quest.pickup_time}`}
+        </Typography>
+        {quest.status === 'pending' && onDispatch && (
+          <Box
+            component="button"
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); onDispatch(quest); }}
+            sx={{
+              display: 'inline-flex', alignItems: 'center', gap: 0.25,
+              px: 0.75, py: 0.25, border: '1px solid #ff980066',
+              borderRadius: 0.5, bgcolor: 'rgba(255,152,0,0.1)',
+              color: '#ff9800', fontFamily: 'monospace', fontSize: 9,
+              fontWeight: 700, cursor: 'pointer', letterSpacing: 0.5,
+              transition: 'all 0.15s ease',
+              '&:hover': { bgcolor: 'rgba(255,152,0,0.2)', borderColor: '#ff9800' },
+            }}
+          >
+            DISPATCH
+          </Box>
+        )}
+      </Box>
     </Box>
-    <Typography variant="caption" sx={{ color: '#3a7a8a', fontFamily: 'monospace', display: 'block', mt: 0.25, fontSize: 10 }}>
-      {quest.destination.pavilion} · {quest.destination.location} · {quest.items.length} poz.
-    </Typography>
-    <Typography variant="caption" sx={{ color: '#204050', fontFamily: 'monospace', fontSize: 10 }}>
-      {formatDate(quest.delivery_date)}{quest.pickup_time && ` · ${quest.pickup_time}`}
-    </Typography>
-  </Box>
-);
+  );
+};
+
+/**
+ * Inline location picker for quests with unresolved locations (shown in __unmatched zone).
+ */
+const InlineLocationAssign: React.FC<{
+  quest: Quest;
+  locations: Location[];
+  onAssign: (locationId: number) => Promise<void>;
+}> = ({ quest, locations, onAssign }) => {
+  const [selected, setSelected] = useState<number | ''>('');
+  const [saving, setSaving] = useState(false);
+
+  const handleAssign = async () => {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      await onAssign(selected as number);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Box sx={{ mt: 0.75, display: 'flex', gap: 0.5, alignItems: 'center' }}>
+      <FormControl size="small" sx={{ flex: 1 }}>
+        <Select
+          value={selected}
+          onChange={(e) => setSelected(e.target.value as number | '')}
+          displayEmpty
+          sx={{
+            fontSize: 10, fontFamily: 'monospace', color: '#9ad0e0',
+            bgcolor: '#040c18', border: '1px solid #1a3548',
+            '& .MuiSelect-icon': { color: '#3a7a8a' },
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'transparent' },
+          }}
+        >
+          <MenuItem value="" disabled sx={{ fontSize: 10, fontFamily: 'monospace' }}>
+            Przypisz lokalizację…
+          </MenuItem>
+          {locations.map(loc => (
+            <MenuItem key={loc.id} value={loc.id} sx={{ fontSize: 10, fontFamily: 'monospace' }}>
+              {loc.pavilion ? `[${loc.pavilion}] ` : ''}{loc.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <Button
+        size="small"
+        disabled={!selected || saving}
+        onClick={handleAssign}
+        sx={{
+          minWidth: 0, px: 1, py: 0.5, fontSize: 9, fontFamily: 'monospace',
+          fontWeight: 700, letterSpacing: 0.5, flexShrink: 0,
+          bgcolor: selected ? 'rgba(255,152,0,0.15)' : 'transparent',
+          color: '#ff9800', border: '1px solid #ff980044',
+          '&:hover': { bgcolor: 'rgba(255,152,0,0.25)' },
+          '&.Mui-disabled': { color: '#3a4a5a', borderColor: '#1a2a38' },
+        }}
+      >
+        {saving ? '…' : 'OK'}
+      </Button>
+    </Box>
+  );
+};
 
 const ZoneDetail: React.FC<{
   zone: Zone | null;
@@ -48,7 +142,10 @@ const ZoneDetail: React.FC<{
   quests: Quest[];
   onClose: () => void;
   onNavigate: (id: string) => void;
-}> = ({ zone, isUnmatched, quests, onClose, onNavigate }) => (
+  onDispatchQuest?: (quest: Quest) => void;
+  locations?: Location[];
+  onAssignQuestLocation?: (questId: string, locationId: number) => Promise<void>;
+}> = ({ zone, isUnmatched, quests, onClose, onNavigate, onDispatchQuest, locations, onAssignQuestLocation }) => (
   <>
     <Box sx={{ p: 1.5, borderBottom: '1px solid #1a3548', bgcolor: '#050d18', flexShrink: 0 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -78,7 +175,18 @@ const ZoneDetail: React.FC<{
     <Box sx={{ flex: 1, overflowY: 'auto', p: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
       {quests.length === 0
         ? <Typography sx={{ color: '#1a4a5a', fontFamily: 'monospace', textAlign: 'center', mt: 3, fontSize: 11 }}>Brak zamówień</Typography>
-        : quests.map(q => <QuestItem key={q.id} quest={q} onClick={() => onNavigate(q.id)} />)}
+        : quests.map(q => (
+          <Box key={q.id}>
+            <QuestItem quest={q} onClick={() => onNavigate(q.id)} onDispatch={onDispatchQuest} />
+            {isUnmatched && !q.location_resolved && locations && locations.length > 0 && onAssignQuestLocation && (
+              <InlineLocationAssign
+                quest={q}
+                locations={locations}
+                onAssign={(locationId) => onAssignQuestLocation(q.id, locationId)}
+              />
+            )}
+          </Box>
+        ))}
     </Box>
   </>
 );
@@ -135,7 +243,7 @@ const ZoneSummary: React.FC<{
   );
 };
 
-const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, onZoneSelect, bottomPanel }) => {
+const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, onZoneSelect, onDispatchQuest, bottomPanel, locations, onAssignQuestLocation }) => {
   const navigate = useNavigate();
   const isUnmatched = selectedZoneId === '__unmatched';
   const selectedZone = ZONES.find(z => z.id === selectedZoneId) ?? null;
@@ -162,6 +270,9 @@ const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, quest
             quests={selectedQuests}
             onClose={() => onZoneSelect(null)}
             onNavigate={(id) => navigate(`/quests/${id}`)}
+            onDispatchQuest={onDispatchQuest}
+            locations={locations}
+            onAssignQuestLocation={onAssignQuestLocation}
           />
         ) : (
           <ZoneSummary

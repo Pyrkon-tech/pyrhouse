@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useCallback, lazy } from 'react';
+import React, { Suspense, useState, useCallback, useEffect, lazy } from 'react';
 import {
   Box,
   Typography,
@@ -20,12 +20,18 @@ import {
   DialogContentText,
   DialogActions,
   Divider,
+  FormControlLabel,
+  Checkbox,
+  Autocomplete,
+  TextField,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuestDetail } from '../../hooks/useQuestDetail';
 import { useQuestStream } from '../../hooks/useQuestStream';
+import { useLocations } from '../../hooks/useLocations';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../context/NotificationContext';
+import { updateQuestLocationAPI } from '../../services/questService';
 import type { QuestEvent } from '../../types/quest.types';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import TransferFormCore from './Transfer/components/TransferFormCore';
@@ -126,6 +132,30 @@ const QuestDetailPage: React.FC = () => {
   const [updating, setUpdating] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
   const [stocksRefreshTrigger, setStocksRefreshTrigger] = useState(0);
+
+  // Location resolution
+  const { locations, refetch: fetchLocations } = useLocations();
+  const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
+  const [saveMapping, setSaveMapping] = useState(true);
+  const [assigningLocation, setAssigningLocation] = useState(false);
+
+  useEffect(() => {
+    if (quest) fetchLocations();
+  }, [quest?.id, fetchLocations]);
+
+  const handleAssignLocation = async () => {
+    if (!quest || selectedLocationId == null) return;
+    try {
+      setAssigningLocation(true);
+      await updateQuestLocationAPI(quest.id, { location_id: selectedLocationId, save_mapping: saveMapping });
+      showSuccess('Lokalizacja przypisana pomyślnie');
+      await refreshQuest();
+    } catch {
+      showError('Błąd podczas przypisywania lokalizacji');
+    } finally {
+      setAssigningLocation(false);
+    }
+  };
 
   const onSseEvent = useCallback((event: QuestEvent) => {
     if (event.type === 'stocks_changed') {
@@ -270,6 +300,18 @@ const QuestDetailPage: React.FC = () => {
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {quest.destination.pavilion} — {quest.destination.location}
                 </Typography>
+                {quest.location_resolved && quest.location_name && (
+                  <Chip
+                    label={quest.location_name}
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                    sx={{ mt: 0.5 }}
+                  />
+                )}
+                {!quest.location_resolved && (
+                  <Chip label="Nieprzypisana" size="small" color="warning" variant="outlined" sx={{ mt: 0.5 }} />
+                )}
               </Box>
             </Box>
           </Grid>
@@ -313,16 +355,78 @@ const QuestDetailPage: React.FC = () => {
         </Grid>
       </Paper>
 
+      {/* Location resolution banner */}
+      {!quest.location_resolved && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          action={null}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+            Lokalizacja nieprzypisana — wymagane ręczne przypisanie przed wydaniem sprzętu
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+            Formularz: <strong>{quest.destination.pavilion}</strong> / <strong>{quest.destination.location}</strong> — nie pasuje do żadnej lokalizacji w systemie
+          </Typography>
+          {hasAdminAccess && (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap', mt: 1 }}>
+              <Autocomplete
+                size="small"
+                options={locations}
+                getOptionLabel={(opt) => `${opt.pavilion ? `Paw. ${opt.pavilion} — ` : ''}${opt.name}`}
+                value={locations.find(l => l.id === selectedLocationId) ?? null}
+                onChange={(_, val) => setSelectedLocationId(val?.id ?? null)}
+                renderInput={(params) => (
+                  <TextField {...params} label="Wybierz lokalizację" sx={{ minWidth: 280 }} />
+                )}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={saveMapping}
+                    onChange={(e) => setSaveMapping(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label={<Typography variant="caption">Zapisz jako mapping</Typography>}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                disabled={selectedLocationId == null || assigningLocation}
+                onClick={handleAssignLocation}
+                startIcon={assigningLocation ? <CircularProgress size={14} color="inherit" /> : null}
+              >
+                Przypisz
+              </Button>
+            </Box>
+          )}
+        </Alert>
+      )}
+
       {/* Action buttons */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        {/* Issue button - only for pending quests without a transfer */}
-        {canCreateTransfer && (
+        {/* Issue button - only for pending quests without a transfer and with resolved location */}
+        {canCreateTransfer && quest.location_resolved && (
           <Button
             variant="contained"
             color="primary"
             onClick={handleStartIssue}
             startIcon={<Suspense fallback={null}><SendIcon /></Suspense>}
             sx={{ px: 3 }}
+          >
+            Wydaj sprzęt
+          </Button>
+        )}
+        {canCreateTransfer && !quest.location_resolved && (
+          <Button
+            variant="contained"
+            color="primary"
+            disabled
+            startIcon={<Suspense fallback={null}><SendIcon /></Suspense>}
+            sx={{ px: 3 }}
+            title="Przypisz lokalizację przed wydaniem sprzętu"
           >
             Wydaj sprzęt
           </Button>
@@ -415,6 +519,7 @@ const QuestDetailPage: React.FC = () => {
         <Box sx={{ mb: 3 }}>
           <TransferFormCore
             questId={quest.id}
+            questLocationId={quest.location_id}
             stocksRefreshTrigger={stocksRefreshTrigger}
             questData={{
               recipient: quest.recipient,
