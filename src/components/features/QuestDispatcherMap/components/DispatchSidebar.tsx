@@ -79,7 +79,7 @@ const InlineLocationAssign: React.FC<{
   quest: Quest;
   locations: Location[];
   onAssign: (locationId: number) => Promise<void>;
-}> = ({ quest, locations, onAssign }) => {
+}> = ({ locations, onAssign }) => {
   const [selected, setSelected] = useState<number | ''>('');
   const [saving, setSaving] = useState(false);
 
