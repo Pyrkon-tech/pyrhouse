@@ -101,7 +101,6 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({ quests, onQuest
           selectedZoneId={selectedZoneId}
           onZoneSelect={setSelectedZoneId}
           onZoneDispatch={handleZoneDispatch}
-          debugMode={true} // Set to true to enable polygon tracing debug tools
         />
         <VolunteerPanel volunteers={volunteers} />
       </Box>

@@ -1,8 +1,8 @@
 import type { Zone } from '../types';
 
 export const ZONES: Zone[] = [
-  { id: 'congress', label: 'PCC',
-    aliases: ['kongresowe', 'centrum kongresowe', 'ck', 'congress', 'poznań congress center', 'congress center', 'aula', 'centrum', 'pcc', '15', 'hala 15', 'pawilon 15'],
+  { id: 'pcc', label: 'PCC',
+    aliases: ['PCC','RedPoint PCC', 'poznań congress center', 'aula', 'centrum', 'maskarada', 'pcc', '15', 'pawilon 15'],
     points: [[388,334],[522,299],[547,358],[439,395],[441,414],[486,430],[473,452],[500,467],[528,548],[473,630],[263,552]] },
 
   { id: 'paw7a', label: '7A',
@@ -46,7 +46,7 @@ export const ZONES: Zone[] = [
     points: [[937,518],[960,595],[1234,544],[1210,466]] },
 
   { id: 'paw5', label: '5',
-    aliases: ['5', 'hala 5', 'pawilon 5', 'hall 5', 'h5'],
+    aliases: ['5', 'hala 5', 'pawilon 5', 'pow', 'POW', 'hall 5', 'h5'],
     points: [[1210,466],[1250,595],[1805,495],[1765,361]] },
 
   { id: 'paw1', label: '1',
@@ -83,9 +83,9 @@ export const ZONES: Zone[] = [
     shape: 'ellipse',
     points: [[700,150],[720,170],[740,145],[720,140]] },
   { id: 'east', label: 'Wschód',
-    aliases: ['wschód', 'Akredytacja Wschód', 'east', 'est', 'EST'],
+    aliases: ['wschód', 'Akredytacja Wschód','Wejście wschodnie', 'east', 'est', 'EST'],
     points: [[1119,925],[1135,990],[1470,928],[1452,860]] },
   { id: 'wtc', label: 'WTC',
-    aliases: ['WTC', 'Biuro Akredytacji', 'Akredytacj Północ', 'NRT'],
+    aliases: ['WTC', 'Biuro Akredytacji', 'Wejście północne', 'Akredytacj Północ', 'NRT'],
     points: [[1765,361],[1805,490],[1920,468],[1880,340]] },
 ];

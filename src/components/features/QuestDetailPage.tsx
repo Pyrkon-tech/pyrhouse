@@ -483,7 +483,7 @@ const QuestDetailPage: React.FC = () => {
             <TableRow sx={{ backgroundColor: 'primary.light' }}>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Nazwa</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }} align="center">Ilość</TableCell>
-              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Kategoria</TableCell>
+              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Dopasowanie kategorii</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Budget Owner</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Notatki</TableCell>
             </TableRow>

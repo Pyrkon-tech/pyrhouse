@@ -180,7 +180,6 @@ const QuestBoardPage: React.FC = () => {
     () => quests.filter(q => !q.location_resolved).length,
     [quests],
   );
-
   const handleSync = async () => {
     try {
       const result = await triggerSync();
