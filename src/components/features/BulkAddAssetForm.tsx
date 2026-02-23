@@ -17,6 +17,7 @@ import { bulkAddAssetsAPI } from '../../services/assetService';
 import { BarcodeGenerator } from '../common/BarcodeGenerator';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
+import { OriginSelect } from '../ui/OriginSelect';
 
 interface AssetEntry {
   id: string;
@@ -46,17 +47,6 @@ interface BulkAddAssetFormProps {
   categories: any[];
 }
 
-const ORIGIN_OPTIONS = [
-  { value: 'druga-era', label: 'Druga Era' },
-  { value: 'probis', label: 'Probis' },
-  { value: 'netland', label: 'Netland' },
-  { value: 'dj-sound', label: 'DJ Sound' },
-  { value: 'oki-event', label: 'Oki Event' },
-  { value: 'targowe', label: 'Targowe' },
-  { value: 'personal', label: 'Personal' },
-  { value: 'other', label: 'Inne' },
-];
-
 const DeleteIcon = lazy(() => import('@mui/icons-material/Delete'));
 const AddIcon = lazy(() => import('@mui/icons-material/Add'));
 
@@ -69,7 +59,6 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
   ]);
   const [categoryId, setCategoryId] = useState<number>(0);
   const [origin, setOrigin] = useState<string>('');
-  const [customOrigin, setCustomOrigin] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdAssets, setCreatedAssets] = useState<CreatedAsset[]>([]);
   const [showBarcodes, setShowBarcodes] = useState(false);
@@ -106,7 +95,6 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
     setAssets([{ id: Date.now().toString(), serial: '' }]);
     setCategoryId(0);
     setOrigin('');
-    setCustomOrigin('');
     setCreatedAssets([]);
     setShowBarcodes(false);
     setIsSubmitting(false);
@@ -129,12 +117,6 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
       return;
     }
 
-    if (origin === 'other' && !customOrigin) {
-      showSnackbar('error', 'Podaj pochodzenie');
-      setIsSubmitting(false);
-      return;
-    }
-
     const validAssets = assets.filter(asset => asset.serial.trim() !== '');
     if (validAssets.length === 0) {
       showSnackbar('error', 'Dodaj co najmniej jeden numer seryjny');
@@ -151,15 +133,10 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
     }
 
     try {
-      // Construct final origin
-      let finalOrigin = origin;
-      if (origin === 'personal') finalOrigin = `personal-${customOrigin}`;
-      else if (origin === 'other') finalOrigin = `other-${customOrigin}`;
-
       const assetsToSubmit = validAssets.map(asset => ({
         serial: asset.serial,
         category_id: categoryId,
-        origin: finalOrigin,
+        origin,
       }));
 
       const response = await bulkAddAssetsAPI(assetsToSubmit);
@@ -169,7 +146,6 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
         setAssets([{ id: Date.now().toString(), serial: '' }]);
         setCategoryId(0);
         setOrigin('');
-        setCustomOrigin('');
         
         // Zachowaj tylko komunikat sukcesu i otwórz modal z kodami
         showSnackbar('success', 'Zasoby zostały dodane pomyślnie');
@@ -244,30 +220,11 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
           </FormControl>
         </Grid>
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>Pochodzenie</InputLabel>
-            <Select
-              value={origin || ''}
-              onChange={(e) => setOrigin(e.target.value)}
-              label="Pochodzenie"
-            >
-              {ORIGIN_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {origin === 'other' && (
-            <TextField
-              fullWidth
-              value={customOrigin}
-              onChange={(e) => setCustomOrigin(e.target.value)}
-              placeholder="Podaj pochodzenie"
-              size="small"
-              sx={{ mt: 1 }}
-            />
-          )}
+          <OriginSelect
+            value={origin}
+            onChange={setOrigin}
+            required
+          />
         </Grid>
       </Grid>
 

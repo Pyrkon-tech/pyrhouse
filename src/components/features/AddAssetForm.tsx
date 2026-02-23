@@ -12,9 +12,7 @@ import { BarcodeGenerator } from '../common/BarcodeGenerator';
 import { getApiUrl } from '../../config/api';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
-
-// Origin options array
-const ORIGIN_OPTIONS = ['druga-era', 'probis', 'netland', 'dj-sound', 'oki-event', 'targowe', 'personal', 'other'];
+import { OriginSelect } from '../ui/OriginSelect';
 
 interface Asset {
   id: number;
@@ -39,7 +37,6 @@ interface Asset {
 export const AddAssetForm: React.FC<{ categories: any[]; loading: boolean }> = ({ categories }) => {
   const [serial, setSerial] = useState('');
   const [origin, setOrigin] = useState('probis');
-  const [customOrigin, setCustomOrigin] = useState('');
   const [categoryID, setCategoryID] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [createdAsset, setCreatedAsset] = useState<Asset | null>(null);
@@ -55,17 +52,7 @@ export const AddAssetForm: React.FC<{ categories: any[]; loading: boolean }> = (
     setCreatedAsset(null);
     setShowBarcode(false);
 
-    // Validate custom origin
-    if ((origin === 'personal' || origin === 'other') && !customOrigin.trim()) {
-      showSnackbar('error', 'Wymagane dodatkowe informacje dla personal/other');
-      setSubmitting(false);
-      return;
-    }
-
-    // Construct final origin
-    let finalOrigin = origin;
-    if (origin === 'personal') finalOrigin = `personal-${customOrigin}`;
-    else if (origin === 'other') finalOrigin = `other-${customOrigin}`;
+    const finalOrigin = origin;
 
     try {
       const token = localStorage.getItem('token');
@@ -96,7 +83,6 @@ export const AddAssetForm: React.FC<{ categories: any[]; loading: boolean }> = (
       setSerial('');
       setCategoryID('');
       setOrigin('probis');
-      setCustomOrigin('');
     } catch (err: any) {
       showSnackbar('error', 'Wystąpił nieoczekiwany błąd', err.message || 'Brak szczegółów', null);
     } finally {
@@ -146,35 +132,12 @@ export const AddAssetForm: React.FC<{ categories: any[]; loading: boolean }> = (
       </Select>
 
       {/* Origin Select */}
-      <Select
+      <OriginSelect
         value={origin}
-        onChange={(e) => setOrigin(e.target.value)}
-        displayEmpty
-        fullWidth
+        onChange={setOrigin}
         required
-        sx={{ mb: 2, borderRadius: 0 }}
-      >
-        <MenuItem value="" disabled>
-          Wybierz pochodzenie
-        </MenuItem>
-        {ORIGIN_OPTIONS.map((option) => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </Select>
-
-      {/* Custom Origin Input */}
-      {(origin === 'personal' || origin === 'other') && (
-        <TextField
-          label={origin === 'personal' ? 'Do kogo należy?' : 'Inne? Jakie?'}
-          value={customOrigin}
-          onChange={(e) => setCustomOrigin(e.target.value)}
-          fullWidth
-          required
-          sx={{ mb: 2 }}
-        />
-      )}
+        sx={{ mb: 2 }}
+      />
 
       {/* Submit Button */}
       <Button variant="contained" color="primary" type="submit" disabled={submitting}>

@@ -18,17 +18,7 @@ import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { addAssetsWithoutSerialAPI } from '../../services/assetService';
 import { BarcodeGenerator } from '../common/BarcodeGenerator';
-
-const ORIGIN_OPTIONS = [
-  { value: 'druga-era', label: 'Druga Era' },
-  { value: 'probis', label: 'Probis' },
-  { value: 'netland', label: 'Netland' },
-  { value: 'dj-sound', label: 'DJ Sound' },
-  { value: 'oki-event', label: 'Oki Event' },
-  { value: 'targowe', label: 'Targowe' },
-  { value: 'personal', label: 'Personal' },
-  { value: 'other', label: 'Inne' },
-];
+import { OriginSelect } from '../ui/OriginSelect';
 
 export const AddAssetWithoutSerialForm: React.FC<{ categories: any[] }> = ({ categories }) => {
   const assetCategories = categories.filter((category) => category.type === 'asset');
@@ -89,7 +79,7 @@ export const AddAssetWithoutSerialForm: React.FC<{ categories: any[] }> = ({ cat
         // Resetuj formularz
         setQuantity(1);
         setCategoryId('');
-        setOrigin('purchase');
+        setOrigin('probis');
       } else {
         showSnackbar('error', 'Niepoprawna odpowiedź z API');
       }
@@ -141,20 +131,11 @@ export const AddAssetWithoutSerialForm: React.FC<{ categories: any[] }> = ({ cat
           </FormControl>
         </Grid>
         <Grid item xs={12} md={3}>
-          <FormControl fullWidth required>
-            <InputLabel>Pochodzenie</InputLabel>
-            <Select
-              value={origin}
-              onChange={(e) => setOrigin(e.target.value)}
-              label="Pochodzenie"
-            >
-              {ORIGIN_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <OriginSelect
+            value={origin}
+            onChange={setOrigin}
+            required
+          />
         </Grid>
       </Grid>
       <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>

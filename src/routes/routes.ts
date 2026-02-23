@@ -9,6 +9,8 @@ const TransferPage = lazy(() => import('../components/features/Transfer/Transfer
 const UserManagementPage = lazy(() => import('../components/features/UserManagementPage'));
 const UserDetailsPage = lazy(() => import('../components/features/UserDetailsPage'));
 const CategoryManagementPage = lazy(() => import('../components/features/CategoryManagementPage'));
+const OriginsManagementPage = lazy(() => import('../components/features/OriginsManagementPage'));
+const SettingsPage = lazy(() => import('../components/features/SettingsPage'));
 const TransfersListPage = lazy(() => import('../components/features/Transfer/TransferListPage'));
 const TransferDetailsPage = lazy(() => import('../components/features/Transfer/TransferDetailsPage'));
 const QuestBoardPage = lazy(() => import('../components/features/QuestBoardPage'));
@@ -170,6 +172,22 @@ export const adminRoutes: RouteConfig[] = [
     icon: 'Categories',
     showInNav: true,
     requiredRoles: ['admin', 'moderator'],
+  },
+  {
+    path: '/origins',
+    component: OriginsManagementPage,
+    title: 'Zarządzanie originami',
+    icon: 'Origins',
+    showInNav: true,
+    requiredRoles: ['admin', 'moderator'],
+  },
+  {
+    path: '/settings',
+    component: SettingsPage,
+    title: 'Ustawienia',
+    icon: 'Settings',
+    showInNav: true,
+    requiredRoles: ['admin'],
   },
 ];
 

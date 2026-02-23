@@ -10,15 +10,13 @@ import FormControl from '@mui/material/FormControl';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { getApiUrl } from '../../config/api';
-
-const ORIGIN_OPTIONS = ['druga-era', 'probis', 'netland', 'dj-sound', 'oki-event', 'targowe', 'personal', 'other'];
+import { OriginSelect } from '../ui/OriginSelect';
 
 export const AddStockForm: React.FC<{ categories: any[]; loading: boolean }> = ({ categories }) => {
   const stockCategories = categories.filter((category) => category.type === 'stock');
   const [stockCategoryID, setStockCategoryID] = useState('');
   const [quantity, setQuantity] = useState<number | string>('');
-  const [origin, setOrigin] = useState('probis'); // Default value for origin
-  const [customOrigin, setCustomOrigin] = useState(''); // For personal/other origin
+  const [origin, setOrigin] = useState('probis');
   const [submitting, setSubmitting] = useState(false);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
 
@@ -26,17 +24,7 @@ export const AddStockForm: React.FC<{ categories: any[]; loading: boolean }> = (
     event.preventDefault();
     setSubmitting(true);
 
-    // Validate custom origin if required
-    if ((origin === 'personal' || origin === 'other') && !customOrigin.trim()) {
-      showSnackbar('error', 'Wymagane dodatkowe informacje dla personal/other');
-      setSubmitting(false);
-      return;
-    }
-
-    // Construct final origin
-    let finalOrigin = origin;
-    if (origin === 'personal') finalOrigin = `personal-${customOrigin}`;
-    else if (origin === 'other') finalOrigin = `other-${customOrigin}`;
+    const finalOrigin = origin;
 
     if (!stockCategoryID) {
       showSnackbar('error', 'Wybierz kategorię');
@@ -76,8 +64,6 @@ export const AddStockForm: React.FC<{ categories: any[]; loading: boolean }> = (
       // Reset form
       setStockCategoryID('');
       setQuantity('');
-      // setOrigin('probis'); // Reset to default origin
-      setCustomOrigin(''); // Clear custom origin
     } catch (err: any) {
       showSnackbar('error', 'Wystąpił błąd podczas dodawania zasobu', err.message);
     } finally {
@@ -132,33 +118,12 @@ export const AddStockForm: React.FC<{ categories: any[]; loading: boolean }> = (
       />
 
       {/* Origin Select */}
-      <FormControl fullWidth required sx={{ mb: 2 }}>
-        <InputLabel>Pochodzenie</InputLabel>
-        <Select
-          value={origin}
-          onChange={(e) => setOrigin(e.target.value)}
-          label="Pochodzenie"
-          defaultValue='druga-era'
-        >
-          {ORIGIN_OPTIONS.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* Custom Origin Input */}
-      {(origin === 'personal' || origin === 'other') && (
-        <TextField
-          label={origin === 'personal' ? 'Do kogo należy?' : 'Inne? Jakie?'}
-          value={customOrigin}
-          onChange={(e) => setCustomOrigin(e.target.value)}
-          fullWidth
-          required
-          sx={{ mb: 2 }}
-        />
-      )}
+      <OriginSelect
+        value={origin}
+        onChange={setOrigin}
+        required
+        sx={{ mb: 2 }}
+      />
 
       {/* Submit Button */}
       <Button variant="contained" color="primary" type="submit" disabled={submitting}>

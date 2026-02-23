@@ -126,7 +126,7 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
             {hidePriority && (
               <StyledTextField
                 isPublic
-                label="Kto zgłasza? (Imię, ksywka)"
+                label="Kto zgłasza? (Ksywka, imię...)"
                 name="created_by"
                 value={form.created_by}
                 onChange={handleChange}
@@ -139,7 +139,7 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
             )}
             <StyledTextField
               isPublic={hidePriority}
-              label="Co się stało?"
+              label="Tytuł (co się stało?)"
               name="title"
               value={form.title}
               onChange={handleChange}
@@ -165,10 +165,10 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
               <InputLabel id="type-label">{'Typ zgłoszenia'}</InputLabel>
               <StyledSelect
                 isPublic={hidePriority}
+                label="Typ zgłoszenia"
                 labelId="type-label"
                 name="type"
                 value={form.type}
-                label="Typ zgłoszenia"
                 onChange={handleChange}
               >
                 {REQUEST_TYPES.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
@@ -206,7 +206,6 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
               isPublic={hidePriority}
               type="submit"
               variant="contained"
-              color="primary"
               fullWidth
               disabled={!isValid || loading}
               endIcon={loading ? <CircularProgress size={20} /> : null}
