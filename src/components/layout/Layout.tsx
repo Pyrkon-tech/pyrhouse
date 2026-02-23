@@ -55,6 +55,8 @@ const MedicalServices = lazy(() => import('@mui/icons-material/MedicalServices')
 const LocalShipping = lazy(() => import('@mui/icons-material/LocalShipping'));
 const Help = lazy(() => import('@mui/icons-material/Help'));
 const Event = lazy(() => import('@mui/icons-material/Event'));
+const Source = lazy(() => import('@mui/icons-material/Source'));
+const SettingsIcon = lazy(() => import('@mui/icons-material/Settings'));
 interface JwtPayload {
   role: string;
   userID: number;
@@ -101,7 +103,9 @@ const Icons = {
   MedicalServices,
   LocalShipping,
   Help,
-  Event
+  Event,
+  Source,
+  Settings: SettingsIcon,
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -288,9 +292,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const adminMenuItems = [
-    { path: '/categories', label: 'Kategorie', icon: <Icons.Category /> },
-    { path: '/users', label: 'Użytkownicy', icon: <Icons.People /> },
-  ];
+    { path: '/categories', label: 'Kategorie', icon: <Icons.Category />, adminOnly: false },
+    { path: '/origins', label: 'Pochodzenie', icon: <Icons.Source />, adminOnly: false },
+    { path: '/users', label: 'Użytkownicy', icon: <Icons.People />, adminOnly: false },
+    { path: '/settings', label: 'Ustawienia', icon: <Icons.Settings />, adminOnly: true },
+  ].filter(item => !item.adminOnly || userRole === 'admin');
 
   const drawer = (
     <Box sx={{ 
