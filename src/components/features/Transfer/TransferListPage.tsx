@@ -2,13 +2,10 @@ import React, { Suspense, useEffect, useState, useCallback, lazy } from 'react';
 import {
   Box,
   Typography,
-  Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Button,
   Chip,
   TextField,
@@ -22,6 +19,7 @@ import {
   Select,
   FormControl,
 } from '@mui/material';
+import { DataTable } from '../../ui/DataTable';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTransfers } from '../../../hooks/useTransfers';
 import { AppSnackbar } from '../../ui/AppSnackbar';
@@ -184,67 +182,54 @@ const TransfersListPage: React.FC = () => {
   };
 
   const renderTable = () => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}
-    >
-      <Table>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: 'primary.light' }}>
-            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}><strong>ID</strong></TableCell>
-            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}><strong>Z lokalizacji</strong></TableCell>
-            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}><strong>Do lokalizacji</strong></TableCell>
-            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}><strong>Data transferu</strong></TableCell>
-            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}><strong>Status</strong></TableCell>
-            <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }} align="center"><strong>Akcje</strong></TableCell>
+    <DataTable>
+      <TableHead>
+        <TableRow>
+          <TableCell>ID</TableCell>
+          <TableCell>Z lokalizacji</TableCell>
+          <TableCell>Do lokalizacji</TableCell>
+          <TableCell>Data transferu</TableCell>
+          <TableCell>Status</TableCell>
+          <TableCell align="center">Akcje</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {sortedTransfers.map((transfer) => (
+          <TableRow
+            key={transfer.id}
+            sx={{
+              cursor: 'pointer',
+              bgcolor: transfer.status === 'in_transit' ? 'rgba(237, 108, 2, 0.1)' : undefined,
+            }}
+            onClick={() => navigate(`/transfers/${transfer.id}`)}
+          >
+            <TableCell>
+              <Typography component="div" sx={{ fontWeight: 500 }}>
+                {transfer.id}
+              </Typography>
+            </TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }}>{transfer.from_location.name}</TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }}>{transfer.to_location.name}</TableCell>
+            <TableCell>
+              {new Date(transfer.transfer_date).toLocaleString('pl-PL')}
+            </TableCell>
+            <TableCell>{getStatusChip(transfer.status)}</TableCell>
+            <TableCell align="center">
+              <Button
+                variant="text"
+                color="primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/transfers/${transfer.id}`);
+                }}
+              >
+                Szczegóły
+              </Button>
+            </TableCell>
           </TableRow>
-        </TableHead>
-        <TableBody>
-          {sortedTransfers.map((transfer) => (
-            <TableRow
-              key={transfer.id}
-              sx={{
-                cursor: 'pointer',
-                bgcolor: transfer.status === 'in_transit' ? 'rgba(237, 108, 2, 0.1)' : 'inherit',
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-                transition: 'background-color 0.2s ease'
-              }}
-              onClick={() => navigate(`/transfers/${transfer.id}`)}
-            >
-              <TableCell>
-                <Typography component="div" sx={{ fontWeight: 500 }}>
-                  {transfer.id}
-                </Typography>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>{transfer.from_location.name}</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>{transfer.to_location.name}</TableCell>
-              <TableCell>
-                {new Date(transfer.transfer_date).toLocaleString('pl-PL')}
-              </TableCell>
-              <TableCell>{getStatusChip(transfer.status)}</TableCell>
-              <TableCell align="center">
-                <Button
-                  variant="text"
-                  color="primary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/transfers/${transfer.id}`);
-                  }}
-                >
-                  Szczegóły
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+        ))}
+      </TableBody>
+    </DataTable>
   );
 
   const renderMobileCards = () => (

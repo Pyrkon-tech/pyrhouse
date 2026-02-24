@@ -2,13 +2,10 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import {
   Box,
   Button,
-  Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TextField,
   Typography,
   CircularProgress,
@@ -28,6 +25,7 @@ import {
   Switch,
   Tooltip,
 } from '@mui/material';
+import { DataTable } from '../ui/DataTable';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../config/api';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
@@ -301,115 +299,91 @@ const UserManagementPage: React.FC = () => {
   );
 
   const renderTable = () => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}
-    >
-      <Table>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: 'primary.light' }}>
-            {["ID", "Ksywa", "Imię i Nazwisko", "Rola", "Discord", "Aktywny"].map((field) => (
-              <TableCell 
-                key={field} 
-                sx={{ 
-                  fontWeight: 600,
-                  color: 'primary.contrastText',
-                  py: 2
-                }}
-              >
-                {field}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredUsers.map((user) => (
-            <TableRow 
-              key={user.id}
-              onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
-              sx={{ 
-                cursor: 'pointer', 
-                '&:hover': { 
-                  bgcolor: 'action.hover',
-                },
-                transition: 'background-color 0.2s ease'
-              }}
-            >
-              <TableCell>
-                <Typography component="div" sx={{ fontWeight: 500 }}>
-                  {user.id}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div">
-                  {user.username}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div" sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
-                  {user.fullname || '—'}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Chip 
-                  icon={getRoleIcon(user.role)}
-                  label={user.role} 
-                  color={getRoleColor(user.role)}
-                  size="small"
-                />
-              </TableCell>
-              <TableCell>
-                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
-                  {(user.discord_username || user.auth_provider === 'discord') ? (
-                    <Tooltip title={user.discord_username || 'Konto Discord'}>
-                      <Chip 
-                        label={user.discord_username || 'Discord'}
-                        size="small"
-                        sx={{ bgcolor: 'rgba(88, 101, 242, 0.12)', color: '#5865F2', fontWeight: 500, maxWidth: 160 }}
-                      />
-                    </Tooltip>
-                  ) : (
-                    <Chip label="Brak" size="small" variant="outlined" sx={{ color: 'text.disabled', borderColor: 'divider' }} />
-                  )}
-                  {user.auth_provider === 'discord' && !user.active && (
-                    <Tooltip title="Ghost konto — do scalenia z istniejącym kontem">
-                      <Chip label="Ghost" size="small" sx={{ bgcolor: 'rgba(255, 152, 0, 0.12)', color: 'warning.dark', fontWeight: 600, fontSize: '0.7rem' }} />
-                    </Tooltip>
-                  )}
-                </Box>
-              </TableCell>
-              <TableCell>
-                {isAdmin || isModerator ? (
-                  <Tooltip title={user.active ? 'Aktywny' : 'Nieaktywny'}>
-                    <span>
-                      <Switch
-                        checked={user.active}
-                        color={user.active ? 'primary' : 'default'}
-                        disabled={!isAdmin && !isModerator || user.id === currentUserId || loadingIds.includes(user.id)}
-                        onClick={e => e.stopPropagation()}
-                        onChange={() => handleToggleActive(user)}
-                        inputProps={{ 'aria-label': 'toggle active' }}
-                      />
-                    </span>
+    <DataTable>
+      <TableHead>
+        <TableRow>
+          {["ID", "Ksywa", "Imię i Nazwisko", "Rola", "Discord", "Aktywny"].map((field) => (
+            <TableCell key={field}>{field}</TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {filteredUsers.map((user) => (
+          <TableRow
+            key={user.id}
+            onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
+            sx={{ cursor: 'pointer' }}
+          >
+            <TableCell>
+              <Typography component="div" sx={{ fontWeight: 500 }}>
+                {user.id}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div">
+                {user.username}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div" sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
+                {user.fullname || '—'}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Chip
+                icon={getRoleIcon(user.role)}
+                label={user.role}
+                color={getRoleColor(user.role)}
+                size="small"
+              />
+            </TableCell>
+            <TableCell>
+              <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                {(user.discord_username || user.auth_provider === 'discord') ? (
+                  <Tooltip title={user.discord_username || 'Konto Discord'}>
+                    <Chip
+                      label={user.discord_username || 'Discord'}
+                      size="small"
+                      sx={{ bgcolor: 'rgba(88, 101, 242, 0.12)', color: '#5865F2', fontWeight: 500, maxWidth: 160 }}
+                    />
                   </Tooltip>
                 ) : (
-                  <Chip
-                    label={user.active ? 'Aktywny' : 'Nieaktywny'}
-                    color={user.active ? 'primary' : 'default'}
-                    size="small"
-                    variant="outlined"
-                  />
+                  <Chip label="Brak" size="small" variant="outlined" sx={{ color: 'text.disabled', borderColor: 'divider' }} />
                 )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+                {user.auth_provider === 'discord' && !user.active && (
+                  <Tooltip title="Ghost konto — do scalenia z istniejącym kontem">
+                    <Chip label="Ghost" size="small" sx={{ bgcolor: 'rgba(255, 152, 0, 0.12)', color: 'warning.dark', fontWeight: 600, fontSize: '0.7rem' }} />
+                  </Tooltip>
+                )}
+              </Box>
+            </TableCell>
+            <TableCell>
+              {isAdmin || isModerator ? (
+                <Tooltip title={user.active ? 'Aktywny' : 'Nieaktywny'}>
+                  <span>
+                    <Switch
+                      checked={user.active}
+                      color={user.active ? 'primary' : 'default'}
+                      disabled={!isAdmin && !isModerator || user.id === currentUserId || loadingIds.includes(user.id)}
+                      onClick={e => e.stopPropagation()}
+                      onChange={() => handleToggleActive(user)}
+                      inputProps={{ 'aria-label': 'toggle active' }}
+                    />
+                  </span>
+                </Tooltip>
+              ) : (
+                <Chip
+                  label={user.active ? 'Aktywny' : 'Nieaktywny'}
+                  color={user.active ? 'primary' : 'default'}
+                  size="small"
+                  variant="outlined"
+                />
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </DataTable>
   );
 
   if (error) {

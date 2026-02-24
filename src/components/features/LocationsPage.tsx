@@ -2,13 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Button,
   IconButton,
   Dialog,
@@ -26,6 +23,7 @@ import {
   Divider,
   Chip,
 } from '@mui/material';
+import { DataTable } from '../ui/DataTable';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -178,100 +176,72 @@ const LocationsPage: React.FC = () => {
     // .sort((a, b) => a.id - b.id);
 
   const renderTable = () => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}
-    >
-      <Table>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: 'primary.light' }}>
-            {['ID', 'Nazwa', 'Pawilon', 'Szczegóły', hasAdminAccess() ? 'Akcje' : ''].map((field) => (
-              <TableCell 
-                key={field} 
-                sx={{ 
-                  fontWeight: 600,
-                  color: 'primary.contrastText',
-                  py: 2
-                }}
-              >
-                {field}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredLocations.map((location) => (
-            <TableRow 
-              key={location.id}
-              onClick={() => navigate(`/locations/${location.id}`)}
-              sx={{ 
-                cursor: 'pointer',
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-                transition: 'background-color 0.2s ease'
-              }}
-            >
-              <TableCell>
-                <Typography component="div" sx={{ fontWeight: 500 }}>
-                  {location.id}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div">
-                  {location.name}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div">
-                  {location.pavilion ? location.pavilion : '-'}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div" color="text.secondary">
-                  {location.details ? (
-                    location.details.length > 48 
-                      ? `${location.details.substring(0, 48)}...` 
-                      : location.details
-                  ) : '-'}
-                </Typography>
-              </TableCell>
-              {hasAdminAccess() && (
-                <TableCell>
-                  <Box 
-                    sx={{ 
-                      display: 'flex', 
-                      gap: 1,
-                      justifyContent: 'flex-end'
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleOpenDialog(location)}
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleOpenDeleteModal(location.id)}
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                </TableCell>
-              )}
-            </TableRow>
+    <DataTable>
+      <TableHead>
+        <TableRow>
+          {['ID', 'Nazwa', 'Pawilon', 'Szczegóły', hasAdminAccess() ? 'Akcje' : ''].map((field) => (
+            <TableCell key={field}>{field}</TableCell>
           ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {filteredLocations.map((location) => (
+          <TableRow
+            key={location.id}
+            onClick={() => navigate(`/locations/${location.id}`)}
+            sx={{ cursor: 'pointer' }}
+          >
+            <TableCell>
+              <Typography component="div" sx={{ fontWeight: 500 }}>
+                {location.id}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div">
+                {location.name}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div">
+                {location.pavilion ? location.pavilion : '-'}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div" color="text.secondary">
+                {location.details ? (
+                  location.details.length > 48
+                    ? `${location.details.substring(0, 48)}...`
+                    : location.details
+                ) : '-'}
+              </Typography>
+            </TableCell>
+            {hasAdminAccess() && (
+              <TableCell>
+                <Box
+                  sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <IconButton
+                    color="primary"
+                    onClick={() => handleOpenDialog(location)}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    color="error"
+                    onClick={() => handleOpenDeleteModal(location.id)}
+                    size="small"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              </TableCell>
+            )}
+          </TableRow>
+        ))}
+      </TableBody>
+    </DataTable>
   );
 
   const renderMobileCards = () => (

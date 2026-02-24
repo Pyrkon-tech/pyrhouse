@@ -4,17 +4,15 @@ import {
   Typography,
   TextField,
   CircularProgress,
-  Paper,
-  Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   IconButton,
   Tooltip,
   Chip,
 } from '@mui/material';
+import { DataTable, DataTableLoadingRow, DataTableEmptyRow } from '../ui/DataTable';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
@@ -132,7 +130,7 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 800 }}>
+    <Box sx={{ p: 3 }}>
       <AppSnackbar
         open={snackbar.open}
         type={snackbar.type}
@@ -162,120 +160,111 @@ const SettingsPage: React.FC = () => {
         </Box>
       </Box>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Klucz</TableCell>
-                <TableCell>Opis</TableCell>
-                <TableCell>Ostatnia zmiana</TableCell>
-                <TableCell>Wartość / Akcja</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {settings.map((setting) => {
-                const row = getRow(setting.key);
-                return (
-                  <TableRow key={setting.key}>
-                    <TableCell>
-                      <Typography variant="body2" fontFamily="monospace" fontSize="0.8rem">
-                        {setting.key}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {setting.description}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
-                        {new Date(setting.updated_at).toLocaleString('pl-PL')}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ minWidth: 280 }}>
-                      {row.editing ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <TextField
-                            value={row.editValue}
-                            onChange={(e) => updateRow(setting.key, { editValue: e.target.value })}
-                            size="small"
-                            fullWidth
-                            disabled={row.saving}
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSave(setting.key);
-                              if (e.key === 'Escape') handleCancel(setting.key);
-                            }}
-                          />
-                          <Tooltip title="Zapisz (Enter)">
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => handleSave(setting.key)}
-                                disabled={row.saving}
-                              >
-                                {row.saving ? <CircularProgress size={16} /> : <CheckIcon fontSize="small" />}
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                          <Tooltip title="Anuluj (Esc)">
+      <DataTable>
+        <TableHead>
+          <TableRow>
+            <TableCell>Klucz</TableCell>
+            <TableCell>Opis</TableCell>
+            <TableCell>Ostatnia zmiana</TableCell>
+            <TableCell>Wartość / Akcja</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {loading ? (
+            <DataTableLoadingRow colSpan={4} />
+          ) : settings.length === 0 ? (
+            <DataTableEmptyRow colSpan={4} message="Brak ustawień" />
+          ) : (
+            settings.map((setting) => {
+              const row = getRow(setting.key);
+              return (
+                <TableRow key={setting.key}>
+                  <TableCell>
+                    <Typography variant="body2" fontFamily="monospace" fontSize="0.8rem">
+                      {setting.key}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {setting.description}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
+                      {new Date(setting.updated_at).toLocaleString('pl-PL')}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ minWidth: 280 }}>
+                    {row.editing ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TextField
+                          value={row.editValue}
+                          onChange={(e) => updateRow(setting.key, { editValue: e.target.value })}
+                          size="small"
+                          fullWidth
+                          disabled={row.saving}
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSave(setting.key);
+                            if (e.key === 'Escape') handleCancel(setting.key);
+                          }}
+                        />
+                        <Tooltip title="Zapisz (Enter)">
+                          <span>
                             <IconButton
                               size="small"
-                              onClick={() => handleCancel(setting.key)}
+                              color="primary"
+                              onClick={() => handleSave(setting.key)}
                               disabled={row.saving}
                             >
-                              <CloseIcon fontSize="small" />
+                              {row.saving ? <CircularProgress size={16} /> : <CheckIcon fontSize="small" />}
                             </IconButton>
-                          </Tooltip>
-                        </Box>
-                      ) : (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {row.revealedValue !== null && (
-                            <Chip
-                              label={row.revealedValue || '(puste)'}
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Anuluj (Esc)">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCancel(setting.key)}
+                            disabled={row.saving}
+                          >
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    ) : (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {row.revealedValue !== null && (
+                          <Chip
+                            label={row.revealedValue || '(puste)'}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontFamily: 'monospace', fontSize: '0.75rem', maxWidth: 200 }}
+                          />
+                        )}
+                        <Tooltip title={row.revealedValue !== null ? 'Edytuj wartość' : 'Pokaż i edytuj wartość'}>
+                          <span>
+                            <IconButton
                               size="small"
-                              variant="outlined"
-                              sx={{ fontFamily: 'monospace', fontSize: '0.75rem', maxWidth: 200 }}
-                            />
-                          )}
-                          <Tooltip title={row.revealedValue !== null ? 'Edytuj wartość' : 'Pokaż i edytuj wartość'}>
-                            <span>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleEdit(setting.key)}
-                                disabled={row.loadingValue}
-                              >
-                                {row.loadingValue ? (
-                                  <CircularProgress size={16} />
-                                ) : (
-                                  <EditIcon fontSize="small" />
-                                )}
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </Box>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {settings.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    Brak ustawień
+                              onClick={() => handleEdit(setting.key)}
+                              disabled={row.loadingValue}
+                            >
+                              {row.loadingValue ? (
+                                <CircularProgress size={16} />
+                              ) : (
+                                <EditIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </Box>
+                    )}
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+              );
+            })
+          )}
+        </TableBody>
+      </DataTable>
     </Box>
   );
 };

@@ -1,14 +1,11 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import {
-  Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Typography,
   Box,
-  Paper,
   TextField,
   Autocomplete,
   Select,
@@ -29,6 +26,7 @@ import {
   InputLabel,
   FormControl,
 } from '@mui/material';
+import { DataTable } from '../ui/DataTable';
 import { useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
 import { useCategories } from '../../hooks/useCategories';
@@ -342,96 +340,71 @@ const EquipmentList: React.FC = () => {
 
   // Renderowanie tabeli dla desktop
   const renderTable = () => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}
-    >
-      <Table>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: 'primary.light' }}>
-            {['ID', 'Typ', 'Lokalizacja', 'Status', 'Ilość/PYR_CODE', 'Pochodzenie'].map((field) => (
-              <TableCell 
-                key={field} 
-                sx={{ 
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  color: 'primary.contrastText',
-                  py: 2
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  {field.toUpperCase()}
-                </Box>
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredEquipment.map((item) => (
-            <TableRow
-              key={`${item.id}-${item.type}`}
-              sx={{
-                bgcolor: item.state === 'in_transit' ? 'rgba(222, 198, 49, 0.1)' : 'inherit',
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                  cursor: 'pointer',
-                },
-                transition: 'background-color 0.2s ease'
-              }}
-              onClick={() => navigate(`/equipment/${item.id}?type=${item.type}`)}
-              aria-label={`Szczegóły dla elementu ${item.id}`}
-            >
-              <TableCell>
-                <Typography component="div" sx={{ fontWeight: 500 }}>
-                  {String(item.id)}
-                  {item.serial === null && (
-                    <Tooltip title="Sprzęt wymaga aktualizacji numeru seryjnego">
-                      <WarningIcon 
-                        sx={{ 
-                          ml: 1, 
-                          color: 'warning.main',
-                          fontSize: '1rem',
-                          verticalAlign: 'middle'
-                        }} 
-                      />
-                    </Tooltip>
-                  )}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div">
-                  {typeof item.category === 'string' ? item.category : (item.category as any).label}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div">
-                  {item.location.name} {item.location.pavilion ? `(${item.location.pavilion})` : ''}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                {item.type === 'asset' ? renderStatusOrQuantity(item) : '-'}
-              </TableCell>
-              <TableCell>
-                {item.type === 'stock' ? renderStatusOrQuantity(item) : (
-                  <Typography component="div">
-                    {item.pyr_code || '-'}
-                  </Typography>
-                )}
-              </TableCell>
-              <TableCell>
-                <Typography component="div">
-                  {item.origin}
-                </Typography>
-              </TableCell>
-            </TableRow>
+    <DataTable>
+      <TableHead>
+        <TableRow>
+          {['ID', 'Typ', 'Lokalizacja', 'Status', 'Ilość/PYR_CODE', 'Pochodzenie'].map((field) => (
+            <TableCell key={field}>{field.toUpperCase()}</TableCell>
           ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {filteredEquipment.map((item) => (
+          <TableRow
+            key={`${item.id}-${item.type}`}
+            sx={{
+              cursor: 'pointer',
+              bgcolor: item.state === 'in_transit' ? 'rgba(222, 198, 49, 0.1)' : undefined,
+            }}
+            onClick={() => navigate(`/equipment/${item.id}?type=${item.type}`)}
+            aria-label={`Szczegóły dla elementu ${item.id}`}
+          >
+            <TableCell>
+              <Typography component="div" sx={{ fontWeight: 500 }}>
+                {String(item.id)}
+                {item.serial === null && (
+                  <Tooltip title="Sprzęt wymaga aktualizacji numeru seryjnego">
+                    <WarningIcon
+                      sx={{
+                        ml: 1,
+                        color: 'warning.main',
+                        fontSize: '1rem',
+                        verticalAlign: 'middle'
+                      }}
+                    />
+                  </Tooltip>
+                )}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div">
+                {typeof item.category === 'string' ? item.category : (item.category as any).label}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div">
+                {item.location.name} {item.location.pavilion ? `(${item.location.pavilion})` : ''}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              {item.type === 'asset' ? renderStatusOrQuantity(item) : '-'}
+            </TableCell>
+            <TableCell>
+              {item.type === 'stock' ? renderStatusOrQuantity(item) : (
+                <Typography component="div">
+                  {item.pyr_code || '-'}
+                </Typography>
+              )}
+            </TableCell>
+            <TableCell>
+              <Typography component="div">
+                {item.origin}
+              </Typography>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </DataTable>
   );
 
   // Renderowanie kart dla urządzeń mobilnych

@@ -93,7 +93,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({ quests, onQuest
   }, [handleCloseDispatch, navigate]);
 
   return (
-    <Box sx={{ display: 'flex', gap: 2, minHeight: 520 }}>
+    <Box sx={{ display: 'flex', gap: 2, height: '100%', minHeight: 520 }}>
       {/* Left column: map + volunteer panel */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
         <MapCanvas

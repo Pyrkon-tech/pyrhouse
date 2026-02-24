@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Box, Typography, Button, TextField, InputAdornment, Tabs, Tab, CircularProgress, Alert, Dialog, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { Search as SearchIcon, Refresh as RefreshIcon, OpenInNew as OpenInNewIcon, Task as TaskIcon, ViewModule as ViewModuleIcon, ViewList as ViewListIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Refresh as RefreshIcon, OpenInNew as OpenInNewIcon, Task as TaskIcon, ViewModule as ViewModuleIcon, ViewList as ViewListIcon, ViewKanban as ViewKanbanIcon } from '@mui/icons-material';
 import { getApiUrl } from '../../../config/api';
 import ServiceDeskForm from './ServiceDeskForm';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -13,15 +13,17 @@ import { usePageVisibility } from '../../../hooks/usePageVisibility';
 import { useServiceDeskUsers } from '../../../hooks/useServiceDeskUsers';
 import ServiceDeskCardsView from './components/ServiceDeskCardsView';
 import ServiceDeskListView from './components/ServiceDeskListView';
+import ServiceDeskKanbanView from './components/ServiceDeskKanbanView';
 import ServiceDeskDetailsModal from './components/ServiceDeskDetailsModal';
 import { addUserPointsAPI } from '../../../services/userService';
 
 const ServiceDeskPage: React.FC = () => {
   const [status, setStatus] = useState('new');
   const [search, setSearch] = useState('');
-  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'list' | 'kanban'>('kanban');
   const { types, loading: typesLoading, error: typesError } = useServiceDeskTypes();
-  const { requests, loading, error, refresh } = useServiceDeskRequests(status, search);
+  const effectiveStatus = viewMode === 'kanban' ? 'all' : status;
+  const { requests, loading, error, refresh } = useServiceDeskRequests(effectiveStatus, search);
   const isPageVisible = usePageVisibility();
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
   const { users } = useServiceDeskUsers();
@@ -138,7 +140,7 @@ const ServiceDeskPage: React.FC = () => {
 
   const handleTabChange = (_: any, value: string) => setStatus(value);
 
-  const handleViewModeChange = (_: React.MouseEvent<HTMLElement>, newMode: 'cards' | 'list') => {
+  const handleViewModeChange = (_: React.MouseEvent<HTMLElement>, newMode: 'cards' | 'list' | 'kanban') => {
     if (newMode !== null) {
       setViewMode(newMode);
     }
@@ -183,7 +185,7 @@ const ServiceDeskPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: { xs: 0.5, sm: 1, md: 4 } }}>
+    <Box sx={{ maxWidth: viewMode === 'kanban' ? 'none' : 1200, mx: 'auto', p: { xs: 0.5, sm: 1, md: 4 } }}>
     <Box sx={{ 
         display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
@@ -261,7 +263,10 @@ const ServiceDeskPage: React.FC = () => {
             gap: 0,
           }}
         >
-          <ToggleButton value="cards" aria-label="widok kart" sx={{ borderRadius: '8px 0 0 8px', px: 1.5, py: 0.7 }}>
+          <ToggleButton value="kanban" aria-label="widok kanban" sx={{ borderRadius: '8px 0 0 8px', px: 1.5, py: 0.7 }}>
+            <ViewKanbanIcon />
+          </ToggleButton>
+          <ToggleButton value="cards" aria-label="widok kart" sx={{ borderRadius: 0, px: 1.5, py: 0.7 }}>
             <ViewModuleIcon />
           </ToggleButton>
           <ToggleButton value="list" aria-label="widok listy" sx={{ borderRadius: '0 8px 8px 0', px: 1.5, py: 0.7 }}>
@@ -269,14 +274,16 @@ const ServiceDeskPage: React.FC = () => {
           </ToggleButton>
         </ToggleButtonGroup>
       </Box>
-      <Tabs value={status} onChange={handleTabChange} sx={{ mb: 2 }} variant="scrollable" scrollButtons="auto">
-        <Tab label="Nowe" value="new" />
-        <Tab label="W trakcie" value="in_progress" />
-        <Tab label="Zablokowane" value="waiting" />
-        <Tab label="Ukończone" value="resolved" />
-        <Tab label="Anulowane" value="closed" />
-        <Tab label="Wszystkie" value="all" />
-      </Tabs>
+      {viewMode !== 'kanban' && (
+        <Tabs value={status} onChange={handleTabChange} sx={{ mb: 2 }} variant="scrollable" scrollButtons="auto">
+          <Tab label="Nowe" value="new" />
+          <Tab label="W trakcie" value="in_progress" />
+          <Tab label="Zablokowane" value="waiting" />
+          <Tab label="Ukończone" value="resolved" />
+          <Tab label="Anulowane" value="closed" />
+          <Tab label="Wszystkie" value="all" />
+        </Tabs>
+      )}
       <TextField
         fullWidth
         placeholder="Szukaj po tytule, opisie lub lokalizacji..."
@@ -289,52 +296,59 @@ const ServiceDeskPage: React.FC = () => {
       {error && <Alert severity="error">{error}</Alert>}
       {(loading || typesLoading) ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>
+      ) : viewMode === 'kanban' ? (
+        <ServiceDeskKanbanView
+          requests={requests}
+          types={types}
+          onOpenDetails={handleOpenDetails}
+          onStatusChange={handleStatusChange}
+          assignButtonRefs={assignButtonRefs}
+          handleAssignDropdownOpen={handleAssignDropdownOpen}
+        />
+      ) : viewMode === 'cards' ? (
+        <ServiceDeskCardsView
+          requests={requests}
+          types={types}
+          users={users}
+          isMobile={isMobile}
+          onOpenDetails={handleOpenDetails}
+          onAssign={async (requestId, user) => {
+            await assignUser(requestId, user.id, () => {
+              refresh();
+              if (selectedRequest && selectedRequest.id === requestId) {
+                setSelectedRequest((prev: any) => ({ ...prev, assigned_to_user: user }));
+              }
+            });
+          }}
+          assignDropdownOpenId={assignDropdownOpenId}
+          assignButtonRefs={assignButtonRefs}
+          menuWidth={menuWidth}
+          handleAssignDropdownOpen={handleAssignDropdownOpen}
+          handleAssignDropdownClose={handleAssignDropdownClose}
+          isEditable={isEditable}
+        />
       ) : (
-        viewMode === 'cards' ? (
-          <ServiceDeskCardsView
-            requests={requests}
-            types={types}
-            users={users}
-            isMobile={isMobile}
-            onOpenDetails={handleOpenDetails}
-            onAssign={async (requestId, user) => {
-              await assignUser(requestId, user.id, () => {
-                refresh();
-                if (selectedRequest && selectedRequest.id === requestId) {
-                  setSelectedRequest((prev: any) => ({ ...prev, assigned_to_user: user }));
-                }
-              });
-            }}
-            assignDropdownOpenId={assignDropdownOpenId}
-            assignButtonRefs={assignButtonRefs}
-            menuWidth={menuWidth}
-            handleAssignDropdownOpen={handleAssignDropdownOpen}
-            handleAssignDropdownClose={handleAssignDropdownClose}
-            isEditable={isEditable}
-          />
-        ) : (
-          <ServiceDeskListView
-            requests={requests}
-            types={types}
-            users={users}
-            isMobile={isMobile}
-            onOpenDetails={handleOpenDetails}
-            onAssign={async (requestId, user) => {
-              await assignUser(requestId, user.id, () => {
-                refresh();
-                if (selectedRequest && selectedRequest.id === requestId) {
-                  setSelectedRequest((prev: any) => ({ ...prev, assigned_to_user: user }));
-                }
-              });
-            }}
-            assignDropdownOpenId={assignDropdownOpenId}
-            assignButtonRefs={assignButtonRefs}
-            menuWidth={menuWidth}
-            handleAssignDropdownOpen={handleAssignDropdownOpen}
-            handleAssignDropdownClose={handleAssignDropdownClose}
-            isEditable={isEditable}
-          />
-        )
+        <ServiceDeskListView
+          requests={requests}
+          types={types}
+          users={users}
+          isMobile={isMobile}
+          onOpenDetails={handleOpenDetails}
+          onAssign={async (requestId, user) => {
+            await assignUser(requestId, user.id, () => {
+              refresh();
+              if (selectedRequest && selectedRequest.id === requestId) {
+                setSelectedRequest((prev: any) => ({ ...prev, assigned_to_user: user }));
+              }
+            });
+          }}
+          assignDropdownOpenId={assignDropdownOpenId}
+          assignButtonRefs={assignButtonRefs}
+          menuWidth={menuWidth}
+          handleAssignDropdownOpen={handleAssignDropdownOpen}
+          handleAssignDropdownClose={handleAssignDropdownClose}
+          isEditable={isEditable}
+        />
       )}
       <AppSnackbar
         open={snackbar.open}

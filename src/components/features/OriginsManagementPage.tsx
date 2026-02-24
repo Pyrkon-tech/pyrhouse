@@ -4,13 +4,10 @@ import {
   Button,
   Typography,
   CircularProgress,
-  Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TextField,
   Dialog,
   DialogTitle,
@@ -22,11 +19,14 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material';
+import { DataTable, DataTableLoadingRow, DataTableEmptyRow } from '../ui/DataTable';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useOrigins, notifyOriginsChanged } from '../../hooks/useOrigins';
-import { createOriginAPI, updateOriginAPI } from '../../services/originService';
+import { createOriginAPI, updateOriginAPI, deleteOriginAPI } from '../../services/originService';
+import { ApiError } from '../../services/apiClient';
 import type { Origin, CreateOriginPayload, UpdateOriginPayload } from '../../types/origin.types';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
@@ -46,6 +46,10 @@ const OriginsManagementPage: React.FC = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState<CreateOriginPayload>(emptyCreateForm());
   const [addSaving, setAddSaving] = useState(false);
+
+  // Delete confirmation dialog
+  const [deleteTarget, setDeleteTarget] = useState<Origin | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
@@ -119,6 +123,31 @@ const OriginsManagementPage: React.FC = () => {
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteOriginAPI(deleteTarget.id);
+      notifyOriginsChanged();
+      refresh();
+      setDeleteTarget(null);
+      showSnackbar('success', `Origin "${deleteTarget.label}" usunięty`);
+    } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) {
+        showSnackbar(
+          'error',
+          `Nie można usunąć "${deleteTarget.label}" — ma przypisany sprzęt`,
+          'Dezaktywuj origin zamiast go usuwać. Istniejący sprzęt zachowa swoje dane.'
+        );
+      } else {
+        showSnackbar('error', err.message || 'Błąd podczas usuwania originu');
+      }
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <AppSnackbar
@@ -152,69 +181,69 @@ const OriginsManagementPage: React.FC = () => {
         </Typography>
       )}
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Slug</TableCell>
-                <TableCell>Label</TableCell>
-                <TableCell align="center">Allow Suffix</TableCell>
-                <TableCell align="center">Status</TableCell>
-                <TableCell align="center">Sort Order</TableCell>
-                <TableCell align="right">Akcje</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {origins.map((origin) => (
-                <TableRow key={origin.id} sx={{ opacity: origin.active ? 1 : 0.5 }}>
-                  <TableCell>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {origin.slug}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{origin.label}</TableCell>
-                  <TableCell align="center">
-                    {origin.allow_suffix ? (
-                      <Chip label="Tak" size="small" color="info" />
-                    ) : (
-                      <Chip label="Nie" size="small" />
-                    )}
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={origin.active ? 'Aktywny' : 'Nieaktywny'}
+      <DataTable>
+        <TableHead>
+          <TableRow>
+            <TableCell>Slug</TableCell>
+            <TableCell>Label</TableCell>
+            <TableCell align="center">Allow Suffix</TableCell>
+            <TableCell align="center">Status</TableCell>
+            <TableCell align="center">Sort Order</TableCell>
+            <TableCell align="right">Akcje</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {loading ? (
+            <DataTableLoadingRow colSpan={6} />
+          ) : origins.length === 0 ? (
+            <DataTableEmptyRow colSpan={6} message="Brak originów" />
+          ) : (
+            origins.map((origin) => (
+              <TableRow key={origin.id} sx={{ opacity: origin.active ? 1 : 0.5 }}>
+                <TableCell>
+                  <Typography variant="body2" fontFamily="monospace">
+                    {origin.slug}
+                  </Typography>
+                </TableCell>
+                <TableCell>{origin.label}</TableCell>
+                <TableCell align="center">
+                  {origin.allow_suffix ? (
+                    <Chip label="Tak" size="small" color="info" />
+                  ) : (
+                    <Chip label="Nie" size="small" />
+                  )}
+                </TableCell>
+                <TableCell align="center">
+                  <Chip
+                    label={origin.active ? 'Aktywny' : 'Nieaktywny'}
+                    size="small"
+                    color={origin.active ? 'success' : 'default'}
+                    onClick={() => handleToggleActive(origin)}
+                    clickable
+                  />
+                </TableCell>
+                <TableCell align="center">{origin.sort_order}</TableCell>
+                <TableCell align="right">
+                  <Tooltip title="Edytuj">
+                    <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
+                    <IconButton
                       size="small"
-                      color={origin.active ? 'success' : 'default'}
-                      onClick={() => handleToggleActive(origin)}
-                      clickable
-                    />
-                  </TableCell>
-                  <TableCell align="center">{origin.sort_order}</TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Edytuj">
-                      <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {origins.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    Brak originów
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+                      color="error"
+                      onClick={() => setDeleteTarget(origin)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </DataTable>
 
       {/* Add Dialog */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
@@ -257,6 +286,31 @@ const OriginsManagementPage: React.FC = () => {
           <Button onClick={() => setAddOpen(false)}>Anuluj</Button>
           <Button variant="contained" onClick={handleCreate} disabled={addSaving}>
             {addSaving ? <CircularProgress size={20} /> : 'Dodaj'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Usuń origin</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Czy na pewno chcesz usunąć origin{' '}
+            <Typography component="span" fontFamily="monospace" fontWeight="bold">
+              {deleteTarget?.slug}
+            </Typography>
+            ?
+          </Typography>
+          <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+            Operacja jest nieodwracalna. Jeśli origin ma przypisany sprzęt, usunięcie zostanie zablokowane (409).
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)} disabled={deleting}>
+            Anuluj
+          </Button>
+          <Button variant="contained" color="error" onClick={handleDeleteConfirm} disabled={deleting}>
+            {deleting ? <CircularProgress size={20} /> : 'Usuń'}
           </Button>
         </DialogActions>
       </Dialog>

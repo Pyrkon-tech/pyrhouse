@@ -4,13 +4,10 @@ import {
   Button,
   Typography,
   CircularProgress,
-  Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TextField,
   Select,
   MenuItem,
@@ -29,6 +26,7 @@ import {
   Chip,
   IconButton,
 } from '@mui/material';
+import { DataTable } from '../ui/DataTable';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -268,73 +266,48 @@ const CategoryManagementPage: React.FC = () => {
   );
 
   const renderTable = () => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}
-    >
-      <Table>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: 'primary.light' }}>
-            {['ID', 'Label (Name)', 'PyrID', 'Typ', 'Akcje'].map((field) => (
-              <TableCell 
-                key={field} 
-                sx={{ 
-                  fontWeight: 600,
-                  color: 'primary.contrastText',
-                  py: 2
-                }}
-              >
-                {field}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredCategories.map((category) => (
-            <TableRow 
-              key={category.id}
-              sx={{ 
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-                transition: 'background-color 0.2s ease'
-              }}
-            >
-              <TableCell>
-                <Typography component="div" sx={{ fontWeight: 500 }}>
-                  {category.id}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div">
-                  {category.label} {category.name ? `(${category.name})` : ''}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography component="div" color="text.secondary">
-                  {category.pyr_id || '-'}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Chip 
-                  label={category.type === 'asset' ? 'Sprzęt' : 'Magazyn'} 
-                  color={category.type === 'asset' ? 'primary' : 'secondary'}
+    <DataTable>
+      <TableHead>
+        <TableRow>
+          {['ID', 'Label (Name)', 'PyrID', 'Typ', 'Akcje'].map((field) => (
+            <TableCell key={field}>{field}</TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {filteredCategories.map((category) => (
+          <TableRow key={category.id}>
+            <TableCell>
+              <Typography component="div" sx={{ fontWeight: 500 }}>
+                {category.id}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div">
+                {category.label} {category.name ? `(${category.name})` : ''}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography component="div" color="text.secondary">
+                {category.pyr_id || '-'}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Chip
+                label={category.type === 'asset' ? 'Sprzęt' : 'Magazyn'}
+                color={category.type === 'asset' ? 'primary' : 'secondary'}
+                size="small"
+              />
+            </TableCell>
+            <TableCell>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <IconButton
+                  color="primary"
+                  onClick={() => handleOpenEditModal(category)}
                   size="small"
-                />
-              </TableCell>
-              <TableCell>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleOpenEditModal(category)}
-                    size="small"
-                  >
-                    <EditIcon />
-                  </IconButton>
+                >
+                  <EditIcon />
+                </IconButton>
                 <IconButton
                   color="error"
                   onClick={() => handleOpenDeleteModal(category.id)}
@@ -342,13 +315,12 @@ const CategoryManagementPage: React.FC = () => {
                 >
                   <DeleteIcon />
                 </IconButton>
-                </Box>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+              </Box>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </DataTable>
   );
 
   const renderMobileCards = () => (
