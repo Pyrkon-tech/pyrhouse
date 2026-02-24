@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Box, Typography, FormControl, Select, MenuItem, Tooltip } from '@mui/material';
+import { Box, Typography, FormControl, Select, MenuItem, Tooltip, Button, useMediaQuery, useTheme } from '@mui/material';
+import MapIcon from '@mui/icons-material/Map';
+import { useNavigate } from 'react-router-dom';
 import { useQuests } from '../../hooks/useQuests';
 import { useQuestStream } from '../../hooks/useQuestStream';
 import { useServiceDeskStream } from '../../hooks/useServiceDeskStream';
@@ -19,6 +21,9 @@ const getInitialUrgencyHours = (): number => {
 };
 
 const DispatchPage: React.FC = () => {
+  const theme = useTheme();
+  const isMobileOrSmall = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
   const [urgencyHours, setUrgencyHours] = useState<number>(getInitialUrgencyHours);
   const [sdRequests, setSdRequests] = useState<ServiceDeskRequest[]>([]);
 
@@ -59,6 +64,28 @@ const DispatchPage: React.FC = () => {
   const handleQuestUpdated = useCallback(() => {
     fetchQuests({ limit: 500 });
   }, [fetchQuests]);
+
+  if (isMobileOrSmall) {
+    return (
+      <Box sx={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', height: 'calc(100vh - 64px)', gap: 3, p: 4,
+        textAlign: 'center',
+      }}>
+        <MapIcon sx={{ fontSize: 80, color: 'text.disabled' }} />
+        <Typography variant="h5" fontWeight={700}>
+          Mapa Dispatch
+        </Typography>
+        <Typography color="text.secondary" maxWidth={360}>
+          Ten widok jest przeznaczony dla ekranów o szerokości minimum 960px
+          (tablet poziomo, laptop, desktop).
+        </Typography>
+        <Button variant="outlined" onClick={() => navigate('/home')}>
+          Wróć do strony głównej
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ height: 'calc(100vh - 64px)', overflow: 'hidden', p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>

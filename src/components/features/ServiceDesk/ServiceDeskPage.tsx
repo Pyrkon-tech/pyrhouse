@@ -151,6 +151,12 @@ const ServiceDeskPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [assignDropdownOpenId]);
 
+  useEffect(() => {
+    if (isMobile && viewMode === 'kanban') {
+      setViewMode('cards');
+    }
+  }, [isMobile]);
+
   const handleTabChange = (_: any, value: string) => setStatus(value);
 
   const handleViewModeChange = (_: React.MouseEvent<HTMLElement>, newMode: 'cards' | 'list' | 'kanban') => {
@@ -290,10 +296,12 @@ const ServiceDeskPage: React.FC = () => {
             gap: 0,
           }}
         >
-          <ToggleButton value="kanban" aria-label="widok kanban" sx={{ borderRadius: '8px 0 0 8px', px: 1.5, py: 0.7 }}>
-            <ViewKanbanIcon />
-          </ToggleButton>
-          <ToggleButton value="cards" aria-label="widok kart" sx={{ borderRadius: 0, px: 1.5, py: 0.7 }}>
+          {!isMobile && (
+            <ToggleButton value="kanban" aria-label="widok kanban" sx={{ borderRadius: '8px 0 0 8px', px: 1.5, py: 0.7 }}>
+              <ViewKanbanIcon />
+            </ToggleButton>
+          )}
+          <ToggleButton value="cards" aria-label="widok kart" sx={{ borderRadius: isMobile ? '8px 0 0 8px' : 0, px: 1.5, py: 0.7 }}>
             <ViewModuleIcon />
           </ToggleButton>
           <ToggleButton value="list" aria-label="widok listy" sx={{ borderRadius: '0 8px 8px 0', px: 1.5, py: 0.7 }}>

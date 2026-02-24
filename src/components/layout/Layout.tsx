@@ -331,7 +331,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {item.label}
               </Typography>
             </Box>
-          ) : (
+          ) : isMobile && item.path === '/dispatch' ? null : (
             <ListItem key={item.path} disablePadding>
               <ListItemButton
                 component={RouterLink}
