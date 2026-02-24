@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { Box, Typography, MenuItem, Alert, CircularProgress, InputLabel, FormControl } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, MenuItem, Alert, CircularProgress, InputLabel } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
 import { useSendPublicServiceDeskRequest } from '../../../services/serviceDeskPublicService';
+import { useLocations } from '../../../hooks/useLocations';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { StyledPaper, StyledTextField, StyledSelect, StyledButton } from './ServiceDeskForm.styles';
+import { StyledPaper, StyledTextField, StyledSelect, StyledButton, StyledFormControl } from './ServiceDeskForm.styles';
+import type { Location } from '../../../types/location.types';
 
 const REQUEST_TYPES = [
   { id: 'hardware_issue', name: 'Awaria sprzętu' },
@@ -35,29 +38,43 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
   hidePriority = false
 }) => {
   const { send } = useSendPublicServiceDeskRequest();
+  const { locations, refetch: fetchLocations } = useLocations();
   const [form, setForm] = useState({
     title: '',
     description: '',
     type: '',
     priority: hidePriority ? 'high' : '',
-    location: '',
     created_by: '',
   });
+  const [locationInput, setLocationInput] = useState('');
+  const [locationId, setLocationId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchLocations();
+  }, [fetchLocations]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any) => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
   };
 
+  const isLocationValid = locationId !== null || locationInput.trim().length > 1;
+
   const isValid =
     form.title.length > 3 &&
     form.type &&
     (hidePriority || form.priority) &&
-    form.location.length > 1 &&
+    isLocationValid &&
     (!hidePriority || form.created_by.trim().length > 1);
+
+  const buildLocationPayload = () => {
+    if (locationId !== null) return { location_id: locationId };
+    if (locationInput.trim().length > 1) return { location: locationInput.trim() };
+    return {};
+  };
 
   return (
     <>
@@ -100,20 +117,20 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
             setError(null);
             setSuccess(false);
             try {
+              const base = {
+                title: form.title,
+                description: form.description.trim() ? form.description : 'brak opisu',
+                type: form.type,
+                ...buildLocationPayload(),
+              };
               const data = hidePriority
-                ? {
-                    ...form,
-                    description: form.description.trim() ? form.description : 'brak opisu',
-                    priority: 'high',
-                    created_by: form.created_by.trim(),
-                  }
-                : {
-                    ...form,
-                    description: form.description.trim() ? form.description : 'brak opisu',
-                  };
+                ? { ...base, priority: 'high', created_by: form.created_by.trim() }
+                : { ...base, priority: form.priority };
               await send(data);
               setSuccess(true);
-              setForm({ title: '', description: '', type: '', priority: hidePriority ? 'high' : '', location: '', created_by: '' });
+              setForm({ title: '', description: '', type: '', priority: hidePriority ? 'high' : '', created_by: '' });
+              setLocationInput('');
+              setLocationId(null);
               onSuccess?.();
             } catch (e: any) {
               const errorMessage = e.message || 'Wystąpił błąd';
@@ -161,7 +178,7 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
               inputProps={{ maxLength: 500 }}
               placeholder="np. co dokładnie nie działa, dodatkowe szczegóły..."
             />
-            <FormControl fullWidth margin="normal" required>
+            <StyledFormControl isPublic={hidePriority} fullWidth margin="normal" required>
               <InputLabel id="type-label">{'Typ zgłoszenia'}</InputLabel>
               <StyledSelect
                 isPublic={hidePriority}
@@ -173,9 +190,9 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
               >
                 {REQUEST_TYPES.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
               </StyledSelect>
-            </FormControl>
+            </StyledFormControl>
             {!hidePriority && (
-              <FormControl fullWidth margin="normal" required>
+              <StyledFormControl isPublic={false} fullWidth margin="normal" required>
                 <InputLabel id="priority-label">Priorytet</InputLabel>
                 <StyledSelect
                   isPublic={false}
@@ -187,18 +204,45 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
                 >
                   {PRIORITIES.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
                 </StyledSelect>
-              </FormControl>
+              </StyledFormControl>
             )}
-            <StyledTextField
-              isPublic={hidePriority}
-              label="Lokalizacja (np. sala, pawilon, miejsce)"
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              fullWidth
-              required
-              margin="normal"
-              inputProps={{ maxLength: 60, minLength: 2 }}
+            <Autocomplete
+              freeSolo
+              options={locations}
+              getOptionLabel={(option: Location | string) =>
+                typeof option === 'string' ? option : option.name
+              }
+              inputValue={locationInput}
+              onInputChange={(_, value, reason) => {
+                setLocationInput(value);
+                if (reason === 'input') setLocationId(null);
+              }}
+              onChange={(_, value) => {
+                if (value && typeof value === 'object') {
+                  setLocationId((value as Location).id);
+                  setLocationInput((value as Location).name);
+                } else {
+                  setLocationId(null);
+                }
+              }}
+              isOptionEqualToValue={(option, value) =>
+                typeof option !== 'string' && typeof value !== 'string' && option.id === value.id
+              }
+              renderInput={(params) => (
+                <StyledTextField
+                  {...params}
+                  isPublic={hidePriority}
+                  label="Lokalizacja"
+                  margin="normal"
+                  required
+                  placeholder="Wpisz lub wybierz z listy..."
+                  inputProps={{
+                    ...params.inputProps,
+                    maxLength: 60,
+                  }}
+                  helperText={locationId !== null ? '✓ Wybrano z listy' : undefined}
+                />
+              )}
             />
             {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
             {!hidePriority && success && <Alert severity="success" sx={{ mt: 2 }}>Zgłoszenie zostało wysłane!</Alert>}
@@ -219,4 +263,4 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
   );
 };
 
-export default ServiceDeskForm; 
+export default ServiceDeskForm;

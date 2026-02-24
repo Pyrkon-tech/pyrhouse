@@ -1,4 +1,5 @@
 import type { Quest } from '../../../../types/quest.types';
+import type { ServiceDeskRequest } from '../../../../types/servicedesk.types';
 import type { ZoneMetrics } from '../types';
 import { ZONES } from '../constants/zones';
 
@@ -28,13 +29,34 @@ export const formatDate = (d: string) => {
   try { return new Date(d).toLocaleDateString('pl-PL'); } catch { return d; }
 };
 
-export function getZoneMetrics(quests: Quest[]): ZoneMetrics {
+export function getZoneMetrics(quests: Quest[], urgencyHours = 8): ZoneMetrics {
+  const now = Date.now();
   return {
     total: quests.length,
     pending: quests.filter(q => q.status === 'pending').length,
     inProgress: quests.filter(q => q.status === 'in_progress').length,
     completed: quests.filter(q => q.status === 'completed').length,
+    urgent: quests.filter(q =>
+      q.status === 'pending' &&
+      new Date(q.delivery_date).getTime() - now <= urgencyHours * 3_600_000
+    ).length,
   };
+}
+
+/**
+ * Grupuje Service Desk requesty według stref na mapie.
+ * Używa matchZone(req.location) — client-side fuzzy match.
+ */
+export function groupServiceDeskByZone(
+  requests: ServiceDeskRequest[],
+): Record<string, ServiceDeskRequest[]> {
+  const result: Record<string, ServiceDeskRequest[]> = {};
+  for (const req of requests) {
+    const zoneId = req.location ? matchZone(req.location) : null;
+    const key = zoneId ?? '__unmatched';
+    (result[key] ??= []).push(req);
+  }
+  return result;
 }
 
 /**

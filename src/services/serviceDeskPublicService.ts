@@ -6,7 +6,9 @@ export interface PublicServiceDeskRequest {
   description: string;
   type: string;
   priority: string;
-  location: string;
+  created_by?: string;
+  location?: string;
+  location_id?: number;
 }
 
 export const sendPublicServiceDeskRequest = async (data: PublicServiceDeskRequest, token?: string) => {

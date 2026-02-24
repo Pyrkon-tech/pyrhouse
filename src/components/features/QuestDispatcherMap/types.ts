@@ -14,6 +14,7 @@ export interface ZoneMetrics {
   pending: number;
   inProgress: number;
   completed: number;
+  urgent: number;
 }
 
 // Dispatch Volunteer System

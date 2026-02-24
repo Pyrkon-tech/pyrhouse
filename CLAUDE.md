@@ -79,6 +79,7 @@ src/
 - `/locations/*` - Zarządzanie lokalizacjami
 - `/duty-schedule` - Harmonogram dyżurów
 - `/servicedesk` - Service desk
+- `/dispatch` - Mapa Dispatch (centrum dowodzenia dyżurnego — questy + SD per strefa, SSE, urgency)
 
 ### Admin routes
 - `/users/*` - Zarządzanie użytkownikami

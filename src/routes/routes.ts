@@ -21,6 +21,7 @@ const LocationDetailsPage = lazy(() => import('../components/features/LocationDe
 const TutorialPage = lazy(() => import('../components/features/TutorialPage'));
 const DutySchedulePage = lazy(() => import('../components/features/DutySchedulePage'));
 const ServiceDeskPage = lazy(() => import('../components/features/ServiceDesk/ServiceDeskPage'));
+const DispatchPage = lazy(() => import('../components/features/DispatchPage'));
 
 // Public routes (nie wymagają autoryzacji)
 export const publicRoutes: RouteConfig[] = [
@@ -144,6 +145,13 @@ export const protectedRoutes: RouteConfig[] = [
     component: ServiceDeskPage,
     title: 'Service Desk',
     icon: 'ServiceDesk',
+    showInNav: true,
+  },
+  {
+    path: '/dispatch',
+    component: DispatchPage,
+    title: 'Mapa Dispatch',
+    icon: 'Dispatch',
     showInNav: true,
   },
 ];

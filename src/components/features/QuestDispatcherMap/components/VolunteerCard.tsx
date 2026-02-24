@@ -26,7 +26,8 @@ const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onCl
   const displayName = volunteer.discord_username || volunteer.username;
   const isBusy = volunteer.status === 'on_mission';
   const avatarBg = AVATAR_PALETTE[volunteer.id % AVATAR_PALETTE.length];
-  const size = compact ? 64 : 80;
+  const cardW = compact ? 72 : 90;
+  const cardH = compact ? 108 : 130;
 
   const tooltipText = volunteer.status === 'on_mission' && volunteer.current_mission
     ? `Na misji: ${volunteer.current_mission}`
@@ -40,7 +41,7 @@ const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onCl
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          width: size,
+          width: cardW,
           flexShrink: 0,
           cursor: onClick ? 'pointer' : 'default',
           opacity: volunteer.status === 'offline' ? 0.5 : 1,
@@ -51,8 +52,8 @@ const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onCl
         <Box
           sx={{
             position: 'relative',
-            width: size,
-            height: size,
+            width: cardW,
+            height: cardH,
             borderRadius: 1.5,
             overflow: 'hidden',
             bgcolor: selected ? 'rgba(255,152,0,0.12)' : '#07111e',
@@ -73,7 +74,7 @@ const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onCl
               height: '100%',
               borderRadius: 0,
               bgcolor: volunteer.avatar_url ? 'transparent' : avatarBg,
-              fontSize: compact ? 20 : 26,
+              fontSize: compact ? 26 : 32,
               fontFamily: 'monospace',
               fontWeight: 700,
               filter: isBusy ? 'grayscale(0.7) brightness(0.5)' : 'none',

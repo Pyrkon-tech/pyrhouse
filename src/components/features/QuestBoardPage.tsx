@@ -20,11 +20,8 @@ import {
   FormControl,
   CircularProgress,
   Alert,
-  ToggleButtonGroup,
-  ToggleButton,
   Tooltip,
   Paper,
-  IconButton,
 } from '@mui/material';
 import { DataTable } from '../ui/DataTable';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -39,8 +36,6 @@ import debounce from 'lodash/debounce';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import type { QuestStatus, Quest, QuestEvent } from '../../types/quest.types';
 
-const QuestDispatcherMap = lazy(() => import('./QuestDispatcherMap'));
-
 const HourglassEmptyIcon = lazy(() => import('@mui/icons-material/HourglassEmpty'));
 const LocalShippingIcon = lazy(() => import('@mui/icons-material/LocalShipping'));
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
@@ -50,7 +45,6 @@ const SearchIcon = lazy(() => import('@mui/icons-material/Search'));
 const ClearAllIcon = lazy(() => import('@mui/icons-material/ClearAll'));
 const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
 const SendIcon = lazy(() => import('@mui/icons-material/Send'));
-import ViewListIcon from '@mui/icons-material/ViewList';
 import MapIcon from '@mui/icons-material/Map';
 
 const LIMIT = 100;
@@ -99,9 +93,6 @@ const QuestBoardPage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [viewMode, setViewMode] = useState<'list' | 'map'>(
-    searchParams.get('view') === 'map' ? 'map' : 'list'
-  );
   const [statusFilter, setStatusFilter] = useState<QuestStatus | ''>(
     (searchParams.get('status') as QuestStatus) || ''
   );
@@ -151,10 +142,9 @@ const QuestBoardPage: React.FC = () => {
     const params: Record<string, string> = {};
     if (statusFilter) params.status = statusFilter;
     if (searchQuery) params.q = searchQuery;
-    if (viewMode === 'map') params.view = 'map';
     setSearchParams(params, { replace: true });
     // eslint-disable-next-line
-  }, [statusFilter, searchQuery, viewMode]);
+  }, [statusFilter, searchQuery]);
 
   const debouncedSearch = useCallback(
     debounce((query: string) => {
@@ -540,180 +530,6 @@ const QuestBoardPage: React.FC = () => {
     );
   };
 
-  // ── Map view: fullscreen overlay (desktop/big tablet only) ──
-  if (viewMode === 'map') {
-    return (
-      <>
-        {/* Desktop / big tablet: fixed fullscreen overlay */}
-        <Box
-          sx={{
-            display: { xs: 'none', md: 'flex' },
-            position: 'fixed',
-            top: '64px',
-            left: 'var(--sidebar-width, 0px)',
-            right: 0,
-            bottom: 0,
-            zIndex: 100,
-            bgcolor: 'background.default',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            transition: 'left 0.3s ease-in-out',
-          }}
-        >
-          {/* Compact toolbar */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              px: 2,
-              py: 0.75,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-              flexShrink: 0,
-              minHeight: 48,
-            }}
-          >
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle1" fontWeight={700} color="primary.main">
-                Zapotrzebowanie — Dispatch
-              </Typography>
-              <Box
-                title={sseConnected ? 'Aktualizacje real-time aktywne' : 'Łączenie z real-time...'}
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  bgcolor: sseConnected ? 'success.main' : 'warning.main',
-                  flexShrink: 0,
-                  transition: 'background-color 0.3s ease',
-                }}
-              />
-            </Box>
-            {hasAdminAccess && !syncLog && (
-              <Tooltip title={syncing ? 'Synchronizuję...' : 'Synchronizuj z Sheets'}>
-                <span>
-                  <IconButton size="small" onClick={handleSync} disabled={syncing} color="primary">
-                    {syncing
-                      ? <CircularProgress size={18} color="inherit" />
-                      : <Suspense fallback={null}><SyncIcon /></Suspense>
-                    }
-                  </IconButton>
-                </span>
-              </Tooltip>
-            )}
-            <Box sx={{ flex: 1 }} />
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_e, val) => { if (val) setViewMode(val); }}
-              size="small"
-              sx={{
-                '& .MuiToggleButton-root': {
-                  px: 1.5, py: 0.5, fontSize: 12,
-                  '&.Mui-selected': { bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } },
-                },
-              }}
-            >
-              <ToggleButton value="list" aria-label="widok listy">
-                <ViewListIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Lista
-              </ToggleButton>
-              <ToggleButton value="map" aria-label="widok mapy">
-                <MapIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Dispatch
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          {/* Map fills remaining space */}
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <Suspense fallback={<LoadingSkeleton />}>
-                <QuestDispatcherMap
-                  quests={quests}
-                  onQuestUpdated={() => fetchQuests({ limit: LIMIT, offset: page * LIMIT, status: statusFilter || undefined })}
-                />
-              </Suspense>
-            )}
-          </Box>
-        </Box>
-
-        {/* Mobile / small tablet: fallback */}
-        <Box
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            margin: '0 auto',
-            padding: { xs: 2 },
-            maxWidth: '1400px',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              mb: 3,
-              pb: 2,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: 'primary.main', flex: 1 }}>
-              Zapotrzebowanie
-            </Typography>
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_e, val) => { if (val) setViewMode(val); }}
-              size="small"
-              sx={{
-                '& .MuiToggleButton-root': {
-                  px: 1.5, py: 0.5, fontSize: 12,
-                  '&.Mui-selected': { bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } },
-                },
-              }}
-            >
-              <ToggleButton value="list" aria-label="widok listy">
-                <ViewListIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Lista
-              </ToggleButton>
-              <ToggleButton value="map" aria-label="widok mapy">
-                <MapIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Dispatch
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-          <Box
-            sx={{
-              textAlign: 'center',
-              p: 5,
-              bgcolor: 'background.default',
-              borderRadius: 2,
-              border: '1px dashed',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              Widok mapy niedostępny
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Dispatch dostępny tylko na desktopie i tabletach
-            </Typography>
-            <Button variant="outlined" onClick={() => setViewMode('list')} startIcon={<ViewListIcon />}>
-              Przejdź do listy
-            </Button>
-          </Box>
-        </Box>
-      </>
-    );
-  }
-
   return (
     <Box
       sx={{
@@ -772,28 +588,16 @@ const QuestBoardPage: React.FC = () => {
               />
             </Tooltip>
           )}
-          <Tooltip title="Przełącz na widok mapy (Dispatch)">
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_e, val) => { if (val) setViewMode(val); }}
+          <Tooltip title="Mapa Dispatch — zarządzanie strefami MTP">
+            <Button
+              variant="outlined"
               size="small"
-              sx={{
-                '& .MuiToggleButton-root': {
-                  px: 1.5, py: 0.5, fontSize: 12,
-                  '&.Mui-selected': { bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } },
-                },
-              }}
+              startIcon={<MapIcon fontSize="small" />}
+              onClick={() => navigate('/dispatch')}
+              sx={{ fontSize: 12, px: 1.5, py: 0.5 }}
             >
-              <ToggleButton value="list" aria-label="widok listy">
-                <ViewListIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Lista
-              </ToggleButton>
-              <ToggleButton value="map" aria-label="widok mapy">
-                <MapIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Dispatch
-              </ToggleButton>
-            </ToggleButtonGroup>
+              Dispatch
+            </Button>
           </Tooltip>
         </Box>
         {hasAdminAccess && !syncLog && (

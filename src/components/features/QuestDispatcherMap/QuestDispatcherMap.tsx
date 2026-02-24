@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Box } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Quest } from '../../../types/quest.types';
+import type { ServiceDeskRequest } from '../../../types/servicedesk.types';
 import type { Volunteer, DispatchAssignment, DispatchModalState } from './types';
-import { groupQuestsByZone } from './utils/matching';
+import { groupQuestsByZone, groupServiceDeskByZone } from './utils/matching';
 import { MOCK_VOLUNTEERS } from './constants/mockVolunteers';
 import { ZONES } from './constants/zones';
 import { useLocations } from '../../../hooks/useLocations';
@@ -16,11 +17,21 @@ import DispatchModal from './components/DispatchModal';
 interface QuestDispatcherMapProps {
   quests: Quest[];
   onQuestUpdated?: () => void;
+  serviceDeskRequests?: ServiceDeskRequest[];
+  urgencyHours?: number;
+  showVolunteerPanel?: boolean;
 }
 
-const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({ quests, onQuestUpdated }) => {
+const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
+  quests,
+  onQuestUpdated,
+  serviceDeskRequests = [],
+  urgencyHours = 8,
+  showVolunteerPanel = true,
+}) => {
   const navigate = useNavigate();
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { locations, refetch: fetchLocations } = useLocations();
 
   useEffect(() => { fetchLocations(); }, [fetchLocations]);
@@ -35,6 +46,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({ quests, onQuest
   }, [locations]);
 
   const questsByZone = useMemo(() => groupQuestsByZone(quests, locationPavilionMap), [quests, locationPavilionMap]);
+  const sdByZone = useMemo(() => groupServiceDeskByZone(serviceDeskRequests), [serviceDeskRequests]);
   const [volunteers, setVolunteers] = useState<Volunteer[]>(MOCK_VOLUNTEERS);
 
   // Dispatch modal state
@@ -93,26 +105,48 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({ quests, onQuest
   }, [handleCloseDispatch, navigate]);
 
   return (
-    <Box sx={{ display: 'flex', gap: 2, height: '100%', minHeight: 520 }}>
-      {/* Left column: map + volunteer panel */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box sx={{ display: 'flex', gap: sidebarOpen ? 2 : 1, height: '100%', minHeight: 520 }}>
+      {/* Left column: map + optional volunteer panel */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1, minHeight: 0 }}>
         <MapCanvas
           questsByZone={questsByZone}
           selectedZoneId={selectedZoneId}
           onZoneSelect={setSelectedZoneId}
           onZoneDispatch={handleZoneDispatch}
+          urgencyHours={urgencyHours}
         />
-        <VolunteerPanel volunteers={volunteers} />
+        {showVolunteerPanel && <VolunteerPanel volunteers={volunteers} />}
       </Box>
-      {/* Right column: sidebar */}
-      <DispatchSidebar
-        selectedZoneId={selectedZoneId}
-        questsByZone={questsByZone}
-        onZoneSelect={setSelectedZoneId}
-        onDispatchQuest={handleDispatchQuest}
-        locations={locations}
-        onAssignQuestLocation={handleAssignQuestLocation}
-      />
+      {/* Right column: sidebar or thin expand strip */}
+      {sidebarOpen ? (
+        <DispatchSidebar
+          selectedZoneId={selectedZoneId}
+          questsByZone={questsByZone}
+          sdByZone={sdByZone}
+          onZoneSelect={setSelectedZoneId}
+          onDispatchQuest={handleDispatchQuest}
+          locations={locations}
+          onAssignQuestLocation={handleAssignQuestLocation}
+          onCollapse={() => setSidebarOpen(false)}
+        />
+      ) : (
+        <Tooltip title="Otwórz panel" placement="left">
+          <Box
+            onClick={() => setSidebarOpen(true)}
+            sx={{
+              width: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              bgcolor: '#060e1a', border: '1px solid #152535', borderRadius: 2,
+              cursor: 'pointer', color: '#3a7a8a',
+              '&:hover': { bgcolor: '#0a1929', color: '#ff9800', borderColor: '#ff980044' },
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <svg width={12} height={12} viewBox="0 0 12 12">
+              <path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
+          </Box>
+        </Tooltip>
+      )}
       {/* Dispatch modal */}
       <DispatchModal
         open={dispatchModal.open}

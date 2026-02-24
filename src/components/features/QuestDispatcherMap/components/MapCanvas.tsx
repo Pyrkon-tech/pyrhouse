@@ -13,9 +13,10 @@ interface MapCanvasProps {
   onZoneSelect: (id: string | null) => void;
   onZoneDispatch?: (zoneId: string) => void;
   debugMode?: boolean;
+  urgencyHours?: number;
 }
 
-const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZoneSelect, onZoneDispatch, debugMode = false }) => {
+const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZoneSelect, onZoneDispatch, debugMode = false, urgencyHours = 8 }) => {
   const unmatchedQuests = questsByZone['__unmatched'] ?? [];
 
   // Debug state
@@ -24,7 +25,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
   const debugCountRef = useRef(0);
 
   return (
-    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: debugMode ? 1 : 0 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: debugMode ? 1 : 0 }}>
       {/* Debug toolbar */}
       {debugMode && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, py: 0.5, bgcolor: '#0a0a0a', border: '1px solid #333', borderRadius: 1, flexWrap: 'wrap' }}>
@@ -52,9 +53,11 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
         </Box>
       )}
 
-      {/* SVG Map */}
+      {/* SVG Map — sizes by width via aspectRatio, no flex stretching */}
       <Box sx={{
-        flex: 1, bgcolor: '#040a14', borderRadius: 2,
+        width: '100%',
+        aspectRatio: '2130 / 1035',
+        bgcolor: '#040a14', borderRadius: 2,
         border: '1px solid #152535', overflow: 'hidden', position: 'relative',
       }}>
         <svg
@@ -97,7 +100,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
             <ZoneOverlay
               key={zone.id}
               zone={zone}
-              metrics={getZoneMetrics(questsByZone[zone.id] ?? [])}
+              metrics={getZoneMetrics(questsByZone[zone.id] ?? [], urgencyHours)}
               isSelected={selectedZoneId === zone.id}
               onSelect={(id) => onZoneSelect(selectedZoneId === id ? null : id)}
               onDispatch={onZoneDispatch}

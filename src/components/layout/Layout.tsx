@@ -14,7 +14,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useTheme, useMediaQuery } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import styles from './Layout.styles';
 import pyrkonLogo from '../../assets/images/p-logo.svg';
 import { useThemeMode } from '../../theme/ThemeContext';
@@ -57,6 +57,7 @@ const Help = lazy(() => import('@mui/icons-material/Help'));
 const Event = lazy(() => import('@mui/icons-material/Event'));
 const Source = lazy(() => import('@mui/icons-material/Source'));
 const SettingsIcon = lazy(() => import('@mui/icons-material/Settings'));
+const MapIcon = lazy(() => import('@mui/icons-material/Map'));
 interface JwtPayload {
   role: string;
   userID: number;
@@ -106,6 +107,7 @@ const Icons = {
   Event,
   Source,
   Settings: SettingsIcon,
+  Map: MapIcon,
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -261,10 +263,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const handleMenuItemClick = (path: string): void => {
-    navigate(path);
     setActiveItem(path);
-
-    // Zamykamy sidebar na urządzeniach mobilnych po kliknięciu w element menu
     if (isMobile) {
       setMobileOpen(false);
     }
@@ -277,6 +276,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: 'Questy',
       icon: <Icons.AutoAwesome sx={{ fontSize: '0.9rem' }} />
     },
+    { path: '/dispatch', label: 'Mapa Dispatch', icon: <Icons.Map /> },
     { path: '/transfers/create', label: 'Nowe wydanie', icon: <Icons.RocketLaunch /> },
     { path: '/transfers', label: 'Wydania', icon: <Icons.Quiz /> },
     { path: '/quests', label: 'Zapotrzebowanie', icon: <Icons.Castle /> },
@@ -299,11 +299,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ].filter(item => !item.adminOnly || userRole === 'admin');
 
   const drawer = (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
       height: '100%',
-      pt: 1
+      pt: isMobile ? '64px' : 1,
     }}>      
       <List sx={{ flexGrow: 1 }}>
         {menuItems.map((item, index) => (
@@ -334,6 +334,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           ) : (
             <ListItem key={item.path} disablePadding>
               <ListItemButton
+                component={RouterLink}
+                to={item.path!}
                 onClick={() => item.path && handleMenuItemClick(item.path)}
                 sx={{
                   borderRadius: '8px',
@@ -438,6 +440,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {adminMenuItems.map((item) => (
               <ListItem key={item.path} disablePadding>
                 <ListItemButton
+                  component={RouterLink}
+                  to={item.path}
                   onClick={() => handleMenuItemClick(item.path)}
                   sx={{
                     borderRadius: '8px',

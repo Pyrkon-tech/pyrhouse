@@ -12,7 +12,7 @@ interface ZoneOverlayProps {
 
 const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, onSelect, onDispatch }) => {
   const hasQuests = metrics.total > 0;
-  const isUrgent = metrics.pending > 0;
+  const isUrgent = metrics.urgent > 0;
   const isActive = metrics.inProgress > 0;
 
   const [cx, cy] = zone.lx != null && zone.ly != null ? [zone.lx, zone.ly] : centroid(zone.points);

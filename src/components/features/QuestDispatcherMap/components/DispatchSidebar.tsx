@@ -2,20 +2,59 @@ import React, { useState } from 'react';
 import { Box, Typography, Chip, Divider, IconButton, Tooltip, Select, MenuItem, FormControl, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Quest, QuestStatus } from '../../../../types/quest.types';
+import type { ServiceDeskRequest } from '../../../../types/servicedesk.types';
 import type { Location } from '../../../../types/location.types';
 import type { Zone } from '../types';
 import { STATUS_COLORS, STATUS_LABELS } from '../constants/statusConfig';
 import { getZoneMetrics, formatDate } from '../utils/matching';
 import { ZONES } from '../constants/zones';
 
+const SD_PRIORITY_COLORS: Record<string, string> = {
+  high: '#ef5350',
+  medium: '#ffd54f',
+  low: '#66bb6a',
+};
+
+const SD_STATUS_LABELS: Record<string, string> = {
+  new: 'NOWE',
+  in_progress: 'W TRAKCIE',
+  waiting: 'CZEKA',
+  resolved: 'OK',
+  closed: 'ZAMKNIĘTE',
+};
+
+const ServiceDeskItem: React.FC<{ request: ServiceDeskRequest }> = ({ request }) => (
+  <Box sx={{
+    px: 1, py: 0.75, borderRadius: 1,
+    bgcolor: '#050d18', border: '1px solid #1a3548',
+    borderLeft: `3px solid ${SD_PRIORITY_COLORS[request.priority] ?? '#aaa'}`,
+  }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 0.5 }}>
+      <Typography variant="caption" sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontWeight: 700, fontSize: 11, lineHeight: 1.3, flex: 1 }}>
+        {request.title}
+      </Typography>
+      <Typography variant="caption" sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 9, flexShrink: 0 }}>
+        {SD_STATUS_LABELS[request.status] ?? request.status}
+      </Typography>
+    </Box>
+    {request.created_by && (
+      <Typography variant="caption" sx={{ color: '#2a5a6a', fontFamily: 'monospace', fontSize: 10, display: 'block' }}>
+        {request.created_by}
+      </Typography>
+    )}
+  </Box>
+);
+
 interface DispatchSidebarProps {
   selectedZoneId: string | null;
   questsByZone: Record<string, Quest[]>;
+  sdByZone?: Record<string, ServiceDeskRequest[]>;
   onZoneSelect: (id: string | null) => void;
   onDispatchQuest?: (quest: Quest) => void;
   bottomPanel?: React.ReactNode;
   locations?: Location[];
   onAssignQuestLocation?: (questId: string, locationId: number) => Promise<void>;
+  onCollapse?: () => void;
 }
 
 const QuestItem: React.FC<{
@@ -140,12 +179,13 @@ const ZoneDetail: React.FC<{
   zone: Zone | null;
   isUnmatched: boolean;
   quests: Quest[];
+  sdRequests: ServiceDeskRequest[];
   onClose: () => void;
   onNavigate: (id: string) => void;
   onDispatchQuest?: (quest: Quest) => void;
   locations?: Location[];
   onAssignQuestLocation?: (questId: string, locationId: number) => Promise<void>;
-}> = ({ zone, isUnmatched, quests, onClose, onNavigate, onDispatchQuest, locations, onAssignQuestLocation }) => (
+}> = ({ zone, isUnmatched, quests, sdRequests, onClose, onNavigate, onDispatchQuest, locations, onAssignQuestLocation }) => (
   <>
     <Box sx={{ p: 1.5, borderBottom: '1px solid #1a3548', bgcolor: '#050d18', flexShrink: 0 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -187,6 +227,15 @@ const ZoneDetail: React.FC<{
             )}
           </Box>
         ))}
+      {sdRequests.length > 0 && (
+        <>
+          <Divider sx={{ borderColor: '#1a3548', my: 0.5 }} />
+          <Typography sx={{ color: '#00acc1', fontFamily: 'monospace', fontSize: 10, px: 0.5, letterSpacing: 1 }}>
+            SERVICE DESK · {sdRequests.length}
+          </Typography>
+          {sdRequests.map(req => <ServiceDeskItem key={req.id} request={req} />)}
+        </>
+      )}
     </Box>
   </>
 );
@@ -243,11 +292,12 @@ const ZoneSummary: React.FC<{
   );
 };
 
-const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, onZoneSelect, onDispatchQuest, bottomPanel, locations, onAssignQuestLocation }) => {
+const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, sdByZone = {}, onZoneSelect, onDispatchQuest, bottomPanel, locations, onAssignQuestLocation, onCollapse }) => {
   const navigate = useNavigate();
   const isUnmatched = selectedZoneId === '__unmatched';
   const selectedZone = ZONES.find(z => z.id === selectedZoneId) ?? null;
   const selectedQuests = selectedZoneId ? (questsByZone[selectedZoneId] ?? []) : [];
+  const selectedSdRequests = selectedZoneId ? (sdByZone[selectedZoneId] ?? []) : [];
   const unmatchedQuests = questsByZone['__unmatched'] ?? [];
   const showDetail = selectedZoneId && (selectedZone || isUnmatched);
 
@@ -257,10 +307,19 @@ const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, quest
       border: '1px solid #152535', display: 'flex', flexDirection: 'column',
       overflow: 'hidden', boxShadow: 'inset 0 0 30px rgba(0,0,0,0.5)',
     }}>
-      <Box sx={{ px: 2, py: 1, bgcolor: '#050d18', borderBottom: '1px solid #1a3548', flexShrink: 0 }}>
-        <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 2 }}>
+      <Box sx={{ px: 1.5, py: 0.75, bgcolor: '#050d18', borderBottom: '1px solid #1a3548', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 2, flex: 1 }}>
           DISPATCH · CENTRUM DOWODZENIA
         </Typography>
+        {onCollapse && (
+          <Tooltip title="Zwiń panel">
+            <IconButton size="small" onClick={onCollapse} sx={{ color: '#3a7a8a', p: 0.25, '&:hover': { color: '#ff9800' } }}>
+              <svg width={12} height={12} viewBox="0 0 12 12">
+                <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {showDetail ? (
@@ -268,6 +327,7 @@ const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, quest
             zone={selectedZone}
             isUnmatched={isUnmatched}
             quests={selectedQuests}
+            sdRequests={selectedSdRequests}
             onClose={() => onZoneSelect(null)}
             onNavigate={(id) => navigate(`/quests/${id}`)}
             onDispatchQuest={onDispatchQuest}

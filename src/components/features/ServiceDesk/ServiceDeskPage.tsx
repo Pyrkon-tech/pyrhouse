@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Box, Typography, Button, TextField, InputAdornment, Tabs, Tab, CircularProgress, Alert, Dialog, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Box, Typography, Button, TextField, InputAdornment, Tabs, Tab, CircularProgress, Alert, Dialog, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 import { Search as SearchIcon, Refresh as RefreshIcon, OpenInNew as OpenInNewIcon, Task as TaskIcon, ViewModule as ViewModuleIcon, ViewList as ViewListIcon, ViewKanban as ViewKanbanIcon } from '@mui/icons-material';
 import { getApiUrl } from '../../../config/api';
 import ServiceDeskForm from './ServiceDeskForm';
@@ -16,6 +16,8 @@ import ServiceDeskListView from './components/ServiceDeskListView';
 import ServiceDeskKanbanView from './components/ServiceDeskKanbanView';
 import ServiceDeskDetailsModal from './components/ServiceDeskDetailsModal';
 import { addUserPointsAPI } from '../../../services/userService';
+import { useServiceDeskStream } from '../../../hooks/useServiceDeskStream';
+import type { ServiceDeskSSEEvent } from '../../../hooks/useServiceDeskStream';
 
 const ServiceDeskPage: React.FC = () => {
   const [status, setStatus] = useState('new');
@@ -26,6 +28,17 @@ const ServiceDeskPage: React.FC = () => {
   const { requests, loading, error, refresh } = useServiceDeskRequests(effectiveStatus, search);
   const isPageVisible = usePageVisibility();
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
+
+  const onSseEvent = useCallback((event: ServiceDeskSSEEvent) => {
+    if (event.type === 'request_created' || event.type === 'request_updated') {
+      refresh();
+    }
+  }, [refresh]);
+
+  const { connected: sseConnected } = useServiceDeskStream({
+    onEvent: onSseEvent,
+    enabled: isPageVisible,
+  });
   const { users } = useServiceDeskUsers();
 
   const [openForm, setOpenForm] = useState(false);
@@ -195,9 +208,23 @@ const ServiceDeskPage: React.FC = () => {
         gap: { xs: 1, sm: 2 },
       }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography variant="h4" fontWeight={700} color="primary.main" sx={{ fontSize: { xs: 26, sm: 32 } }}>
-            Service Desk
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h4" fontWeight={700} color="primary.main" sx={{ fontSize: { xs: 26, sm: 32 } }}>
+              Service Desk
+            </Typography>
+            <Tooltip title={sseConnected ? 'Aktualizacje real-time aktywne' : 'Łączenie z real-time...'}>
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  bgcolor: sseConnected ? 'success.main' : 'warning.main',
+                  flexShrink: 0,
+                  transition: 'background-color 0.3s ease',
+                }}
+              />
+            </Tooltip>
+          </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
             <OpenInNewIcon sx={{ color: theme => theme.palette.primary.main, fontSize: 20 }} />
             <a
