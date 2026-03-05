@@ -97,6 +97,7 @@ const QuestBoardPage: React.FC = () => {
     (searchParams.get('status') as QuestStatus) || ''
   );
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [showUnresolvedOnly, setShowUnresolvedOnly] = useState(false);
   const [page, setPage] = useState(0);
 
   // Sync status (scheduler info)
@@ -153,18 +154,24 @@ const QuestBoardPage: React.FC = () => {
     []
   );
 
-  // Client-side text search
+  // Client-side filtering: text search + unresolved location
   const filteredQuests = useMemo(() => {
-    if (!searchQuery) return quests;
-    const q = searchQuery.toLowerCase();
-    return quests.filter(
-      (quest) =>
-        quest.recipient.toLowerCase().includes(q) ||
-        quest.destination.location.toLowerCase().includes(q) ||
-        quest.destination.pavilion.toLowerCase().includes(q) ||
-        quest.id.toLowerCase().includes(q)
-    );
-  }, [quests, searchQuery]);
+    let result = quests;
+    if (showUnresolvedOnly) {
+      result = result.filter((quest) => !quest.location_resolved);
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (quest) =>
+          quest.recipient.toLowerCase().includes(q) ||
+          quest.destination.location.toLowerCase().includes(q) ||
+          quest.destination.pavilion.toLowerCase().includes(q) ||
+          quest.id.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [quests, searchQuery, showUnresolvedOnly]);
 
   const unresolvedLocationCount = useMemo(
     () => quests.filter(q => !q.location_resolved).length,
@@ -187,10 +194,11 @@ const QuestBoardPage: React.FC = () => {
   const clearFilters = () => {
     setStatusFilter('');
     setSearchQuery('');
+    setShowUnresolvedOnly(false);
     setPage(0);
   };
 
-  const hasActiveFilters = statusFilter || searchQuery;
+  const hasActiveFilters = statusFilter || searchQuery || showUnresolvedOnly;
 
   const renderStatsBar = () => (
     <Grid container spacing={1.5} sx={{ mb: 2 }}>
@@ -577,13 +585,13 @@ const QuestBoardPage: React.FC = () => {
             />
           </Box>
           {unresolvedLocationCount > 0 && (
-            <Tooltip title="Questy wymagające ręcznego przypisania lokalizacji">
+            <Tooltip title={showUnresolvedOnly ? 'Kliknij aby anulować filtr' : 'Pokaż tylko questy bez przypisanej lokalizacji'}>
               <Chip
                 label={`⚠ ${unresolvedLocationCount} bez lokalizacji`}
                 size="small"
                 color="warning"
-                variant="outlined"
-                onClick={() => setStatusFilter('pending')}
+                variant={showUnresolvedOnly ? 'filled' : 'outlined'}
+                onClick={() => setShowUnresolvedOnly((prev) => !prev)}
                 sx={{ cursor: 'pointer' }}
               />
             </Tooltip>

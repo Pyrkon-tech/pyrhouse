@@ -171,8 +171,13 @@ const LocationsPage: React.FC = () => {
     }
   };
 
+  const q = searchQuery.toLowerCase();
   const filteredLocations = locations
-    .filter(location => location.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(location =>
+      location.name.toLowerCase().includes(q) ||
+      (location.pavilion ?? '').toLowerCase().includes(q) ||
+      (location.details ?? '').toLowerCase().includes(q)
+    )
     // .sort((a, b) => a.id - b.id);
 
   const renderTable = () => (
