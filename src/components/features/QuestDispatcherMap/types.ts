@@ -19,6 +19,7 @@ export interface ZoneMetrics {
 
 // Dispatch Volunteer System
 
+/** API zwraca tylko 'available' | 'on_mission'. 'offline' jest używany wyłącznie w mockach / stanie klienta. */
 export type VolunteerStatus = 'available' | 'on_mission' | 'offline';
 
 export interface Volunteer {
@@ -28,7 +29,7 @@ export interface Volunteer {
   avatar_url: string | null;
   fullname: string | null;
   status: VolunteerStatus;
-  current_mission?: string;
+  current_mission: string | null;
 }
 
 export interface DispatchAssignment {

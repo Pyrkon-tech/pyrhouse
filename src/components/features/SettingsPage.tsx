@@ -11,6 +11,18 @@ import {
   IconButton,
   Tooltip,
   Chip,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Card,
+  CardContent,
+  Grid,
+  Divider,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { DataTable, DataTableLoadingRow, DataTableEmptyRow } from '../ui/DataTable';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -39,7 +51,11 @@ const SettingsPage: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   /** Stan edycji per klucz */
   const [rowStates, setRowStates] = useState<Record<string, SettingRowState>>({});
+  /** Klucz ustawienia oczekujący na potwierdzenie zapisu */
+  const [confirmSaveKey, setConfirmSaveKey] = useState<string | null>(null);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
@@ -104,7 +120,16 @@ const SettingsPage: React.FC = () => {
     updateRow(key, { editing: false, editValue: '' });
   };
 
-  const handleSave = async (key: string) => {
+  /** Otwarcie dialogu potwierdzenia — wywoływane przez przycisk zapisu lub Enter */
+  const handleRequestSave = (key: string) => {
+    setConfirmSaveKey(key);
+  };
+
+  /** Faktyczny zapis po potwierdzeniu w dialogu */
+  const handleConfirmSave = async () => {
+    if (!confirmSaveKey) return;
+    const key = confirmSaveKey;
+    setConfirmSaveKey(null);
     const row = getRow(key);
     updateRow(key, { saving: true });
     try {
@@ -129,8 +154,40 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const renderMobileReadOnly = () => (
+    <Grid container spacing={2}>
+      {settings.map((setting) => (
+        <Grid item xs={12} key={setting.key}>
+          <Card sx={{ borderRadius: 2 }}>
+            <CardContent>
+              <Typography
+                variant="body2"
+                fontFamily="monospace"
+                fontWeight="bold"
+                sx={{ mb: 0.5 }}
+              >
+                {setting.key}
+              </Typography>
+              <Divider sx={{ my: 1 }} />
+              {setting.description && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  {setting.description}
+                </Typography>
+              )}
+              <Typography variant="caption" color="text.disabled">
+                Ostatnia zmiana: {new Date(setting.updated_at).toLocaleString('pl-PL')}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
+  const confirmingRow = confirmSaveKey ? getRow(confirmSaveKey) : null;
+
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <AppSnackbar
         open={snackbar.open}
         type={snackbar.type}
@@ -140,131 +197,205 @@ const SettingsPage: React.FC = () => {
         autoHideDuration={snackbar.autoHideDuration}
       />
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 0 },
+          mb: 3,
+        }}
+      >
         <Typography variant="h5" fontWeight="bold">
           Ustawienia aplikacji
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Sync teraz">
-            <span>
-              <IconButton onClick={handleSync} disabled={syncing}>
-                {syncing ? <CircularProgress size={20} /> : <SyncIcon />}
+        {!isMobile && (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Sync teraz">
+              <span>
+                <IconButton onClick={handleSync} disabled={syncing}>
+                  {syncing ? <CircularProgress size={20} /> : <SyncIcon />}
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Odśwież listę">
+              <IconButton onClick={fetchSettings} disabled={loading}>
+                <RefreshIcon />
               </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Odśwież listę">
-            <IconButton onClick={fetchSettings} disabled={loading}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
+            </Tooltip>
+          </Box>
+        )}
+        {isMobile && (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Odśwież listę">
+              <IconButton onClick={fetchSettings} disabled={loading} size="small">
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
       </Box>
 
-      <DataTable>
-        <TableHead>
-          <TableRow>
-            <TableCell>Klucz</TableCell>
-            <TableCell>Opis</TableCell>
-            <TableCell>Ostatnia zmiana</TableCell>
-            <TableCell>Wartość / Akcja</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {loading ? (
-            <DataTableLoadingRow colSpan={4} />
-          ) : settings.length === 0 ? (
-            <DataTableEmptyRow colSpan={4} message="Brak ustawień" />
-          ) : (
-            settings.map((setting) => {
-              const row = getRow(setting.key);
-              return (
-                <TableRow key={setting.key}>
-                  <TableCell>
-                    <Typography variant="body2" fontFamily="monospace" fontSize="0.8rem">
-                      {setting.key}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {setting.description}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
-                      {new Date(setting.updated_at).toLocaleString('pl-PL')}
-                    </Typography>
-                  </TableCell>
-                  <TableCell sx={{ minWidth: 280 }}>
-                    {row.editing ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <TextField
-                          value={row.editValue}
-                          onChange={(e) => updateRow(setting.key, { editValue: e.target.value })}
-                          size="small"
-                          fullWidth
-                          disabled={row.saving}
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSave(setting.key);
-                            if (e.key === 'Escape') handleCancel(setting.key);
-                          }}
-                        />
-                        <Tooltip title="Zapisz (Enter)">
-                          <span>
+      {isMobile ? (
+        loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : settings.length === 0 ? (
+          <Typography color="text.secondary" textAlign="center" sx={{ mt: 4 }}>
+            Brak ustawień
+          </Typography>
+        ) : (
+          renderMobileReadOnly()
+        )
+      ) : (
+        <DataTable>
+          <TableHead>
+            <TableRow>
+              <TableCell>Klucz</TableCell>
+              <TableCell>Opis</TableCell>
+              <TableCell>Ostatnia zmiana</TableCell>
+              <TableCell>Wartość / Akcja</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              <DataTableLoadingRow colSpan={4} />
+            ) : settings.length === 0 ? (
+              <DataTableEmptyRow colSpan={4} message="Brak ustawień" />
+            ) : (
+              settings.map((setting) => {
+                const row = getRow(setting.key);
+                return (
+                  <TableRow key={setting.key}>
+                    <TableCell>
+                      <Typography variant="body2" fontFamily="monospace" fontSize="0.8rem">
+                        {setting.key}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {setting.description}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
+                        {new Date(setting.updated_at).toLocaleString('pl-PL')}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 280 }}>
+                      {row.editing ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <TextField
+                            value={row.editValue}
+                            onChange={(e) => updateRow(setting.key, { editValue: e.target.value })}
+                            size="small"
+                            fullWidth
+                            disabled={row.saving}
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleRequestSave(setting.key);
+                              if (e.key === 'Escape') handleCancel(setting.key);
+                            }}
+                          />
+                          <Tooltip title="Zapisz">
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleRequestSave(setting.key)}
+                                disabled={row.saving}
+                              >
+                                {row.saving ? <CircularProgress size={16} /> : <CheckIcon fontSize="small" />}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          <Tooltip title="Anuluj (Esc)">
                             <IconButton
                               size="small"
-                              color="primary"
-                              onClick={() => handleSave(setting.key)}
+                              onClick={() => handleCancel(setting.key)}
                               disabled={row.saving}
                             >
-                              {row.saving ? <CircularProgress size={16} /> : <CheckIcon fontSize="small" />}
+                              <CloseIcon fontSize="small" />
                             </IconButton>
-                          </span>
-                        </Tooltip>
-                        <Tooltip title="Anuluj (Esc)">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleCancel(setting.key)}
-                            disabled={row.saving}
-                          >
-                            <CloseIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    ) : (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {row.revealedValue !== null && (
-                          <Chip
-                            label={row.revealedValue || '(puste)'}
-                            size="small"
-                            variant="outlined"
-                            sx={{ fontFamily: 'monospace', fontSize: '0.75rem', maxWidth: 200 }}
-                          />
-                        )}
-                        <Tooltip title={row.revealedValue !== null ? 'Edytuj wartość' : 'Pokaż i edytuj wartość'}>
-                          <span>
-                            <IconButton
+                          </Tooltip>
+                        </Box>
+                      ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {row.revealedValue !== null && (
+                            <Chip
+                              label={row.revealedValue || '(puste)'}
                               size="small"
-                              onClick={() => handleEdit(setting.key)}
-                              disabled={row.loadingValue}
-                            >
-                              {row.loadingValue ? (
-                                <CircularProgress size={16} />
-                              ) : (
-                                <EditIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      </Box>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })
+                              variant="outlined"
+                              sx={{ fontFamily: 'monospace', fontSize: '0.75rem', maxWidth: 200 }}
+                            />
+                          )}
+                          <Tooltip title={row.revealedValue !== null ? 'Edytuj wartość' : 'Pokaż i edytuj wartość'}>
+                            <span>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEdit(setting.key)}
+                                disabled={row.loadingValue}
+                              >
+                                {row.loadingValue ? (
+                                  <CircularProgress size={16} />
+                                ) : (
+                                  <EditIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </Box>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </DataTable>
+      )}
+
+      {/* Dialog potwierdzenia zapisu ustawienia */}
+      <Dialog
+        open={!!confirmSaveKey}
+        onClose={() => setConfirmSaveKey(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Potwierdź zmianę ustawienia</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Czy na pewno chcesz zmienić wartość ustawienia{' '}
+            <Typography component="span" fontFamily="monospace" fontWeight="bold">
+              {confirmSaveKey}
+            </Typography>
+            ?
+          </DialogContentText>
+          {confirmingRow && (
+            <Box
+              sx={{
+                mt: 2,
+                p: 1.5,
+                bgcolor: 'action.hover',
+                borderRadius: 1,
+                fontFamily: 'monospace',
+                fontSize: '0.85rem',
+                wordBreak: 'break-all',
+              }}
+            >
+              Nowa wartość: <strong>{confirmingRow.editValue || '(puste)'}</strong>
+            </Box>
           )}
-        </TableBody>
-      </DataTable>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmSaveKey(null)}>Anuluj</Button>
+          <Button variant="contained" color="primary" onClick={handleConfirmSave}>
+            Potwierdź zapis
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

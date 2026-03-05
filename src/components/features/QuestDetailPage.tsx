@@ -25,7 +25,7 @@ import {
   Autocomplete,
   TextField,
 } from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useQuestDetail } from '../../hooks/useQuestDetail';
 import { useQuestStream } from '../../hooks/useQuestStream';
 import { useLocations } from '../../hooks/useLocations';
@@ -127,11 +127,22 @@ const QuestDetailPage: React.FC = () => {
   const { userRole } = useAuth();
   const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
+  const location = useLocation();
+  const dispatchState = location.state as { autoOpenTransfer?: boolean; volunteerIds?: number[] } | null;
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
   const [stocksRefreshTrigger, setStocksRefreshTrigger] = useState(0);
+
+  // Auto-open formularza transferu po dispatchu z mapy — tylko gdy brak istniejącego transferu
+  useEffect(() => {
+    if (dispatchState?.autoOpenTransfer && quest && !quest.transfer_id && quest.status !== 'completed') {
+      setShowTransferForm(true);
+      // Wyczyść route state by nie re-triggerować po odświeżeniu
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [dispatchState?.autoOpenTransfer, quest?.id]);
 
   // Location resolution
   const { locations, refetch: fetchLocations } = useLocations();
@@ -521,6 +532,10 @@ const QuestDetailPage: React.FC = () => {
             questId={quest.id}
             questLocationId={quest.location_id}
             stocksRefreshTrigger={stocksRefreshTrigger}
+            initialVolunteerIds={
+              dispatchState?.volunteerIds ??
+              (quest.assigned_volunteers?.map((v) => v.id) ?? [])
+            }
             questData={{
               recipient: quest.recipient,
               deliveryDate: quest.delivery_date,

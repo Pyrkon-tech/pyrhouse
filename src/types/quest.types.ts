@@ -17,6 +17,12 @@ export interface QuestItem {
   notes?: string;
 }
 
+export interface QuestVolunteer {
+  id: number;
+  username: string;
+  fullname: string | null;
+}
+
 export interface Quest {
   id: string;
   destination: QuestDestination;
@@ -33,6 +39,8 @@ export interface Quest {
   location_resolved: boolean;
   source_rows: number[];
   last_synced: string;
+  /** Wolontariusze przypisani do transferu questa. Pustа tablica gdy brak transferu. */
+  assigned_volunteers: QuestVolunteer[];
 }
 
 export interface QuestsListResponse {

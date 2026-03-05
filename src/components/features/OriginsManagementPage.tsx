@@ -18,6 +18,12 @@ import {
   Tooltip,
   FormControlLabel,
   Switch,
+  Card,
+  CardContent,
+  Grid,
+  Divider,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { DataTable, DataTableLoadingRow, DataTableEmptyRow } from '../ui/DataTable';
 import EditIcon from '@mui/icons-material/Edit';
@@ -41,6 +47,8 @@ const emptyCreateForm = (): CreateOriginPayload => ({
 const OriginsManagementPage: React.FC = () => {
   const { origins, loading, error, refresh } = useOrigins(true);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Add dialog
   const [addOpen, setAddOpen] = useState(false);
@@ -148,8 +156,133 @@ const OriginsManagementPage: React.FC = () => {
     }
   };
 
+  const renderMobileCards = () => (
+    <Grid container spacing={2}>
+      {origins.map((origin) => (
+        <Grid item xs={12} key={origin.id}>
+          <Card sx={{ opacity: origin.active ? 1 : 0.6, borderRadius: 2 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="body1" fontFamily="monospace" fontWeight="bold">
+                  {origin.slug}
+                </Typography>
+                <Chip
+                  label={origin.active ? 'Aktywny' : 'Nieaktywny'}
+                  size="small"
+                  color={origin.active ? 'success' : 'default'}
+                  onClick={() => handleToggleActive(origin)}
+                  clickable
+                />
+              </Box>
+
+              <Divider sx={{ my: 1 }} />
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">Label:</Typography>
+                  <Typography variant="body2">{origin.label}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">Sort Order:</Typography>
+                  <Typography variant="body2">{origin.sort_order}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">Allow Suffix:</Typography>
+                  <Chip
+                    label={origin.allow_suffix ? 'Tak' : 'Nie'}
+                    size="small"
+                    color={origin.allow_suffix ? 'info' : 'default'}
+                  />
+                </Box>
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+                <Tooltip title="Edytuj">
+                  <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
+                  <IconButton size="small" color="error" onClick={() => setDeleteTarget(origin)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
+  const renderTable = () => (
+    <DataTable>
+      <TableHead>
+        <TableRow>
+          <TableCell>Slug</TableCell>
+          <TableCell>Label</TableCell>
+          <TableCell align="center">Allow Suffix</TableCell>
+          <TableCell align="center">Status</TableCell>
+          <TableCell align="center">Sort Order</TableCell>
+          <TableCell align="right">Akcje</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {loading ? (
+          <DataTableLoadingRow colSpan={6} />
+        ) : origins.length === 0 ? (
+          <DataTableEmptyRow colSpan={6} message="Brak originów" />
+        ) : (
+          origins.map((origin) => (
+            <TableRow key={origin.id} sx={{ opacity: origin.active ? 1 : 0.5 }}>
+              <TableCell>
+                <Typography variant="body2" fontFamily="monospace">
+                  {origin.slug}
+                </Typography>
+              </TableCell>
+              <TableCell>{origin.label}</TableCell>
+              <TableCell align="center">
+                {origin.allow_suffix ? (
+                  <Chip label="Tak" size="small" color="info" />
+                ) : (
+                  <Chip label="Nie" size="small" />
+                )}
+              </TableCell>
+              <TableCell align="center">
+                <Chip
+                  label={origin.active ? 'Aktywny' : 'Nieaktywny'}
+                  size="small"
+                  color={origin.active ? 'success' : 'default'}
+                  onClick={() => handleToggleActive(origin)}
+                  clickable
+                />
+              </TableCell>
+              <TableCell align="center">{origin.sort_order}</TableCell>
+              <TableCell align="right">
+                <Tooltip title="Edytuj">
+                  <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => setDeleteTarget(origin)}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </DataTable>
+  );
+
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <AppSnackbar
         open={snackbar.open}
         type={snackbar.type}
@@ -159,7 +292,16 @@ const OriginsManagementPage: React.FC = () => {
         autoHideDuration={snackbar.autoHideDuration}
       />
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 0 },
+          mb: 3,
+        }}
+      >
         <Typography variant="h5" fontWeight="bold">
           Zarządzanie Originami
         </Typography>
@@ -181,69 +323,21 @@ const OriginsManagementPage: React.FC = () => {
         </Typography>
       )}
 
-      <DataTable>
-        <TableHead>
-          <TableRow>
-            <TableCell>Slug</TableCell>
-            <TableCell>Label</TableCell>
-            <TableCell align="center">Allow Suffix</TableCell>
-            <TableCell align="center">Status</TableCell>
-            <TableCell align="center">Sort Order</TableCell>
-            <TableCell align="right">Akcje</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {loading ? (
-            <DataTableLoadingRow colSpan={6} />
-          ) : origins.length === 0 ? (
-            <DataTableEmptyRow colSpan={6} message="Brak originów" />
-          ) : (
-            origins.map((origin) => (
-              <TableRow key={origin.id} sx={{ opacity: origin.active ? 1 : 0.5 }}>
-                <TableCell>
-                  <Typography variant="body2" fontFamily="monospace">
-                    {origin.slug}
-                  </Typography>
-                </TableCell>
-                <TableCell>{origin.label}</TableCell>
-                <TableCell align="center">
-                  {origin.allow_suffix ? (
-                    <Chip label="Tak" size="small" color="info" />
-                  ) : (
-                    <Chip label="Nie" size="small" />
-                  )}
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={origin.active ? 'Aktywny' : 'Nieaktywny'}
-                    size="small"
-                    color={origin.active ? 'success' : 'default'}
-                    onClick={() => handleToggleActive(origin)}
-                    clickable
-                  />
-                </TableCell>
-                <TableCell align="center">{origin.sort_order}</TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Edytuj">
-                    <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => setDeleteTarget(origin)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </DataTable>
+      {isMobile ? (
+        loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : origins.length === 0 ? (
+          <Typography color="text.secondary" textAlign="center" sx={{ mt: 4 }}>
+            Brak originów
+          </Typography>
+        ) : (
+          renderMobileCards()
+        )
+      ) : (
+        renderTable()
+      )}
 
       {/* Add Dialog */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>

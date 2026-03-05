@@ -17,51 +17,30 @@ const DiscordCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { isProcessing, error, processTokenFromUrl } = useDiscordAuth();
+  const { isProcessing, error, processCodeCallback } = useDiscordAuth();
   const hasProcessed = useRef(false);
 
-  // Backend przekierowuje z ?token=xxx lub ?error=xxx
-  const token = searchParams.get('token');
+  // Discord przekierowuje z ?code=...&state=... (lub ?error=... gdy użytkownik odmówił)
+  const code = searchParams.get('code');
+  const state = searchParams.get('state');
   const urlError = searchParams.get('error');
 
-  console.log('[DiscordCallback] URL params:', {
-    token: token ? token.substring(0, 30) + '...' : null,
-    error: urlError,
-    fullUrl: window.location.href
-  });
-
   useEffect(() => {
-    console.log('[DiscordCallback] useEffect triggered, hasProcessed:', hasProcessed.current);
-
     // Zapobiegaj podwójnemu wywołaniu (StrictMode)
     if (hasProcessed.current) return;
     hasProcessed.current = true;
 
-    // Obsługa błędu z backendu
-    if (urlError) {
-      console.log('[DiscordCallback] Error in URL:', urlError);
-      return;
+    if (urlError) return; // błąd Discord — wyświetlany poniżej
+
+    if (code && state) {
+      processCodeCallback(code, state);
     }
+  }, [code, state, urlError, processCodeCallback]);
 
-    // Obsługa tokena z backendu
-    if (token) {
-      console.log('[DiscordCallback] Token found, calling processTokenFromUrl');
-      processTokenFromUrl(token);
-      return;
-    }
+  const handleBackToLogin = () => navigate('/login');
 
-    console.log('[DiscordCallback] No token or error in URL');
-    // Brak token i error - coś poszło nie tak
-  }, [token, urlError, processTokenFromUrl]);
-
-  const handleBackToLogin = () => {
-    navigate('/login');
-  };
-
-  // Wyświetl błąd z URL
-  const displayError = urlError
-    ? decodeURIComponent(urlError)
-    : error;
+  const displayError = urlError ? decodeURIComponent(urlError) : error;
+  const missingParams = !code && !urlError && !isProcessing;
 
   return (
     <Box
@@ -102,10 +81,7 @@ const DiscordCallback: React.FC = () => {
               height: '60px',
               width: 'auto',
               mb: 2,
-              filter:
-                theme.palette.mode === 'light'
-                  ? 'invert(1) brightness(1.2)'
-                  : 'none',
+              filter: theme.palette.mode === 'light' ? 'invert(1) brightness(1.2)' : 'none',
             }}
           />
 
@@ -141,27 +117,19 @@ const DiscordCallback: React.FC = () => {
                 variant="contained"
                 color="primary"
                 onClick={handleBackToLogin}
-                sx={{
-                  py: 1.5,
-                  px: 4,
-                  fontWeight: 600,
-                }}
+                sx={{ py: 1.5, px: 4, fontWeight: 600 }}
               >
                 Powrót do logowania
               </Button>
             </Box>
           )}
 
-          {!token && !urlError && !isProcessing && (
+          {missingParams && (
             <Box sx={{ mt: 3 }}>
               <Alert severity="warning" sx={{ mb: 3, textAlign: 'left' }}>
                 Brak wymaganych parametrów autoryzacji.
               </Alert>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleBackToLogin}
-              >
+              <Button variant="contained" color="primary" onClick={handleBackToLogin}>
                 Powrót do logowania
               </Button>
             </Box>

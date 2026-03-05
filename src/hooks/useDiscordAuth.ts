@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { useStorage } from './useStorage';
 import { discordAuthService } from '../services/discordAuthService';
+import { apiClient } from '../services/apiClient';
 
 interface DiscordAuthState {
   isProcessing: boolean;
@@ -69,10 +70,53 @@ export const useDiscordAuth = () => {
     [setToken, setUsername]
   );
 
+  /**
+   * Obsługuje callback z Discorda — nowy flow bez pośrednictwa backendu.
+   * 1. Sprawdza CSRF state
+   * 2. Wymienia code na JWT przez POST /auth/discord/exchange
+   * 3. Zapisuje token i przekierowuje na /home
+   */
+  const processCodeCallback = useCallback(
+    async (code: string, receivedState: string) => {
+      setState({ isProcessing: true, error: null });
+
+      if (!discordAuthService.validateAndClearState(receivedState)) {
+        setState({ isProcessing: false, error: 'Nieprawidłowy state OAuth — możliwy atak CSRF. Spróbuj zalogować się ponownie.' });
+        return;
+      }
+
+      try {
+        const redirectUri = `${window.location.origin}/auth/discord/callback`;
+        const data = await apiClient.post<{ token: string }>('/auth/discord/exchange', {
+          code,
+          redirect_uri: redirectUri,
+        });
+
+        setToken(data.token);
+
+        try {
+          const decoded: { username?: string } = jwtDecode(data.token);
+          if (decoded?.username) setUsername(decoded.username);
+        } catch {
+          // JWT decode failure nie blokuje logowania
+        }
+
+        window.location.href = '/home';
+      } catch (error: any) {
+        setState({
+          isProcessing: false,
+          error: error.message || 'Błąd podczas wymiany kodu autoryzacyjnego',
+        });
+      }
+    },
+    [setToken, setUsername],
+  );
+
   return {
     isProcessing: state.isProcessing,
     error: state.error,
     initiateDiscordLogin,
     processTokenFromUrl,
+    processCodeCallback,
   };
 };

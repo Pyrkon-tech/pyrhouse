@@ -125,9 +125,11 @@ export interface TransferFormCoreProps {
   onCancel?: () => void;
   /** Inkrementowany gdy SSE wykryje stocks_changed — triggery re-fetch stocków */
   stocksRefreshTrigger?: number;
+  /** IDs wolontariuszy wybranych w DispatchModal — pre-fill pola "Uczestnicy transferu" */
+  initialVolunteerIds?: number[];
 }
 
-const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocationId, onSuccess, onCancel, stocksRefreshTrigger }) => {
+const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocationId, onSuccess, onCancel, stocksRefreshTrigger, initialVolunteerIds }) => {
   const { control, handleSubmit, setValue, watch, reset } = useForm<FormData>({
     defaultValues: {
       fromLocation: 1,
@@ -168,6 +170,10 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
       try {
         const data = await getUsersAPI();
         setUsers(data);
+        if (initialVolunteerIds?.length) {
+          const preselected = data.filter((u) => initialVolunteerIds.includes(u.id));
+          if (preselected.length) setValue('users', preselected);
+        }
       } catch (error: any) {
         showSnackbar('error', error.message || 'Wystąpił błąd podczas pobierania użytkowników');
       } finally {

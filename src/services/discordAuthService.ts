@@ -43,18 +43,49 @@ export const discordAuthService = {
   },
 
   /**
-   * Inicjuje logowanie przez Discord
-   * Generuje state, zapisuje go i przekierowuje do backendu
-   * Backend następnie przekieruje do Discord, a po autoryzacji
-   * wróci na frontend z tokenem w query params
+   * Inicjuje logowanie przez Discord.
+   * Frontend buduje URL do Discorda bezpośrednio (bez przekierowania przez backend).
+   * Po autoryzacji Discord wraca na /auth/discord/callback?code=...&state=...
    */
   initiateLogin(): void {
+    if (!env.DISCORD_CLIENT_ID) {
+      throw new Error('VITE_DISCORD_CLIENT_ID nie jest skonfigurowany');
+    }
+
     const state = this.generateState();
     this.saveState(state);
 
-    // Backend zwraca 307 redirect do Discord OAuth
-    const url = `${env.API_BASE_URL}/auth/discord?state=${encodeURIComponent(state)}`;
-    window.location.href = url;
+    const redirectUri = `${window.location.origin}/auth/discord/callback`;
+    const params = new URLSearchParams({
+      client_id: env.DISCORD_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'identify email',
+      state,
+    });
+
+    window.location.href = `https://discord.com/oauth2/authorize?${params.toString()}`;
+  },
+
+  /**
+   * Waliduje state z callbacka OAuth (CSRF protection).
+   * Sprawdza zgodność z zapisanym state i czy nie wygasł (15 min).
+   * Usuwa state z sessionStorage po walidacji.
+   */
+  validateAndClearState(receivedState: string): boolean {
+    const raw = sessionStorage.getItem(DISCORD_STATE_KEY);
+    if (!raw) return false;
+
+    try {
+      const saved: OAuthState = JSON.parse(raw);
+      const MAX_AGE_MS = 15 * 60 * 1000;
+      const isValid = saved.value === receivedState && Date.now() - saved.timestamp <= MAX_AGE_MS;
+      this.clearState();
+      return isValid;
+    } catch {
+      this.clearState();
+      return false;
+    }
   },
 
   // =========================================================================

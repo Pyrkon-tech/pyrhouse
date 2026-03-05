@@ -160,6 +160,38 @@ Istniejący endpoint — przyjmuje `users[]` z ID:
 
 ---
 
+## Service Desk — oznaczenie jako w trakcie z wolontariuszami (opcjonalne)
+
+```
+PATCH /service-desk/requests/{id}
+```
+
+Użycie przy dispatchu wolontariuszy do zgłoszenia SD (jeśli ta funkcja zostanie dodana).
+
+**Body:**
+```json
+{
+  "status": "in_progress",
+  "assignee_ids": [1, 4]
+}
+```
+
+**Response 200:**
+```json
+{
+  "id": 42,
+  "status": "in_progress",
+  "assignees": [
+    { "id": 1, "username": "mnowak" },
+    { "id": 4, "username": "kkowalczyk" }
+  ]
+}
+```
+
+**Uwaga:** SD nie generuje transferu — wolontariusze są tylko przypisani do zgłoszenia, nie do transferu sprzętu.
+
+---
+
 ## Kolejność implementacji backend
 
 Priorytet | Endpoint | Dlaczego

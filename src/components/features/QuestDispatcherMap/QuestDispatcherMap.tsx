@@ -3,10 +3,10 @@ import { Box, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Quest } from '../../../types/quest.types';
 import type { ServiceDeskRequest } from '../../../types/servicedesk.types';
-import type { Volunteer, DispatchAssignment, DispatchModalState } from './types';
+import type { DispatchAssignment, DispatchModalState } from './types';
 import { groupQuestsByZone, groupServiceDeskByZone } from './utils/matching';
-import { MOCK_VOLUNTEERS } from './constants/mockVolunteers';
 import { ZONES } from './constants/zones';
+import { useVolunteers } from '../../../hooks/useVolunteers';
 import { useLocations } from '../../../hooks/useLocations';
 import { updateQuestLocationAPI } from '../../../services/questService';
 import MapCanvas from './components/MapCanvas';
@@ -47,7 +47,8 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
 
   const questsByZone = useMemo(() => groupQuestsByZone(quests, locationPavilionMap), [quests, locationPavilionMap]);
   const sdByZone = useMemo(() => groupServiceDeskByZone(serviceDeskRequests), [serviceDeskRequests]);
-  const [volunteers, setVolunteers] = useState<Volunteer[]>(MOCK_VOLUNTEERS);
+  const { volunteers, setVolunteers, fetchVolunteers } = useVolunteers();
+  useEffect(() => { fetchVolunteers(); }, [fetchVolunteers]);
 
   // Dispatch modal state
   const [dispatchModal, setDispatchModal] = useState<DispatchModalState>({
@@ -93,16 +94,20 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
   }, [onQuestUpdated]);
 
   const handleDispatch = useCallback((assignment: DispatchAssignment) => {
-    // Update volunteer statuses locally
     const zone = ZONES.find(z => z.id === assignment.zone_id);
     setVolunteers(prev => prev.map(v =>
       assignment.volunteer_ids.includes(v.id)
-        ? { ...v, status: 'on_mission' as const, current_mission: zone ? `Pawilon ${zone.label.replace('\n', ' ')}` : undefined }
+        ? { ...v, status: 'on_mission' as const, current_mission: zone ? `Pawilon ${zone.label.replace('\n', ' ')}` : null }
         : v,
     ));
     handleCloseDispatch();
-    navigate(`/quests/${assignment.quest_id}`);
-  }, [handleCloseDispatch, navigate]);
+    navigate(`/quests/${assignment.quest_id}`, {
+      state: {
+        autoOpenTransfer: true,
+        volunteerIds: assignment.volunteer_ids,
+      },
+    });
+  }, [handleCloseDispatch, navigate, setVolunteers]);
 
   return (
     <Box sx={{ display: 'flex', gap: sidebarOpen ? 2 : 1, height: '100%', minHeight: 520 }}>
