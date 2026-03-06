@@ -30,6 +30,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { AppSnackbar } from '../ui/AppSnackbar';
+import { getAssetDisplayStatus } from '../../utils/assetStatus';
 
 // Lokalne typy dla UI komponentu
 interface Asset {
@@ -43,7 +44,7 @@ interface Asset {
     pyr_id: string;
     type: string;
   };
-  status: 'in_stock' | 'in_transit';
+  status: 'available' | 'unavailable' | 'in_transit';
   pyrcode: string;
   accessories: null | unknown[];
 }
@@ -166,33 +167,6 @@ const LocationDetailsPage: React.FC = () => {
     setTimeout(() => navigate(`/transfers/${transferId}`), 500);
   };
 
-  // Dodajemy funkcję tłumaczącą statusy
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'in_stock':
-      case 'available':
-        return 'Na Stanie';
-      case 'in_transit':
-        return 'W trasie';
-      case 'located':
-        return 'W lokacji';
-      default:
-        return status;
-    }
-  };
-
-  // Dodajemy funkcję zwracającą kolor dla statusu
-  const getStatusColor = (status: string): 'success' | 'warning' | 'default' => {
-    switch (status) {
-      case 'in_stock':
-      case 'available':
-        return 'success';
-      case 'in_transit':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
 
   // Dodajemy nową funkcję do filtrowania elementów
   const filterItems = (items: any[], query: string) => {
@@ -318,9 +292,13 @@ const LocationDetailsPage: React.FC = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography component="div">
-                          {getStatusLabel((item as Asset).status)}
-                        </Typography>
+                        {(() => {
+                          const { label, color } = getAssetDisplayStatus(
+                            (item as Asset).status,
+                            { id: Number(id), name: locationName },
+                          );
+                          return <Chip size="small" label={label} color={color} />;
+                        })()}
                       </TableCell>
                       <TableCell>
                         <Typography component="div">
@@ -405,11 +383,13 @@ const LocationDetailsPage: React.FC = () => {
             {isAsset ? (
               <>
                 <Typography variant="body2" color="text.secondary">
-                  Status: <Chip 
-                    size="small" 
-                    label={getStatusLabel((item as Asset).status)}
-                    color={getStatusColor((item as Asset).status)}
-                  />
+                  Status: {(() => {
+                    const { label, color } = getAssetDisplayStatus(
+                      (item as Asset).status,
+                      { id: Number(id), name: locationName },
+                    );
+                    return <Chip size="small" label={label} color={color} />;
+                  })()}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   PYR Code: <Typography component="span" color="text.primary">{(item as Asset).pyrcode || '-'}</Typography>

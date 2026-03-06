@@ -87,7 +87,7 @@ export interface PyrCodeSuggestion {
     id: number;
     label: string;
   };
-  status: 'in_stock' | 'available' | 'unavailable';
+  status: 'available' | 'unavailable' | 'in_transit';
 }
 
 // Payload do tworzenia transferu (rzeczywisty format API)

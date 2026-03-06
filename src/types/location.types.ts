@@ -48,7 +48,7 @@ export interface LocationAsset {
     id: number;
     label: string;
   };
-  status: 'in_stock' | 'available' | 'unavailable';
+  status: 'available' | 'unavailable' | 'in_transit';
 }
 
 /**

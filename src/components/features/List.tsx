@@ -33,6 +33,7 @@ import { useCategories } from '../../hooks/useCategories';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { getApiUrl } from '../../config/api';
+import { getAssetDisplayStatus } from '../../utils/assetStatus';
 import { Category } from '@mui/icons-material';
 import WarningIcon from '@mui/icons-material/Warning';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -245,48 +246,25 @@ const EquipmentList: React.FC = () => {
       // setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc')
     // };
 
-  const getStatusIcon = (status: string, type: string, color?: 'primary' | 'inherit') => {
-    if (type === 'stock') return null;
-    switch (status) {
-      case 'in_stock':
-      case 'available':
-        return <Suspense fallback={null}><HomeIcon color={color} /></Suspense>;
-      case 'delivered':
-      case 'located':
-        return <Suspense fallback={null}><CheckCircleIcon color={'success'} /></Suspense>;
-      case 'in_transit':
-        return <Suspense fallback={null}><LocalShippingIcon color={color || 'primary'} /></Suspense>;
-      default:
-        return <Suspense fallback={null}><ErrorOutlineIcon color={'error'} /></Suspense>;
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'in_stock':
-      case 'available':
-        return 'Na Stanie';
-      case 'in_transit':
-        return 'W trasie';
-      case 'located':
-        return 'W lokacji';
-      default:
-        return '';
-    }
+  const getStatusIcon = (status: string, location: { id: number; name: string }) => {
+    if (status === 'in_transit') return <Suspense fallback={null}><LocalShippingIcon color="warning" /></Suspense>;
+    if (status === 'unavailable') return <Suspense fallback={null}><ErrorOutlineIcon color="error" /></Suspense>;
+    if (location.id === 1) return <Suspense fallback={null}><HomeIcon color="success" /></Suspense>;
+    return <Suspense fallback={null}><CheckCircleIcon color="info" /></Suspense>;
   };
 
   const renderStatusOrQuantity = (item: Equipment) => {
     if (item.type === 'stock') {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography 
-            component="div" 
+          <Typography
+            component="div"
             fontWeight="bold"
-            sx={{ 
+            sx={{
               color: item.state === 'in_transit' ? 'primary.main' : (item.quantity && item.quantity > 0 ? 'success.main' : 'text.secondary'),
               display: 'flex',
               alignItems: 'center',
-              gap: 1
+              gap: 1,
             }}
           >
             <Suspense fallback={null}><Inventory2Icon sx={{ color: item.state === 'in_transit' ? 'primary.main' : undefined }} /></Suspense>
@@ -295,13 +273,12 @@ const EquipmentList: React.FC = () => {
         </Box>
       );
     }
-    
+
+    const { label, color } = getAssetDisplayStatus(item.state, item.location);
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        {getStatusIcon(item.state, item.type, item.state === 'in_transit' ? 'primary' : 'inherit')}
-        <Typography component="div" sx={{ color: item.state === 'in_transit' ? 'primary.main' : 'inherit' }}>
-          {getStatusLabel(item.state)}
-        </Typography>
+        {getStatusIcon(item.state, item.location)}
+        <Chip label={label} color={color} size="small" />
       </Box>
     );
   };

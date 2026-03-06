@@ -7,7 +7,7 @@ import { Location } from './location.types';
 /**
  * Status zasobu
  */
-export type AssetStatus = 'in_stock' | 'available' | 'unavailable' | 'in_transit';
+export type AssetStatus = 'available' | 'unavailable' | 'in_transit';
 
 /**
  * Kategoria zasobu
