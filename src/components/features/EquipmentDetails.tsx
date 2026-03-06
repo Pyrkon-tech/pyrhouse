@@ -343,14 +343,12 @@ const EquipmentDetails: React.FC = () => {
 
   const getStatusChip = (status: string) => {
     switch (status) {
-      case 'in_stock':
       case 'available':
         return <Chip label="Na Stanie" color="success" sx={{ fontWeight: 600, fontSize: '1rem' }} />;
       case 'in_transit':
-        return <Chip label="W trasie" color="warning" sx={{ fontWeight: 600, fontSize: '1rem', animation: 'pulse 2s infinite' }} />;
-      case 'delivered':
-      case 'located':
-        return <Chip label="W lokacji" color="success" sx={{ fontWeight: 600, fontSize: '1rem' }} />;
+        return <Chip label="W transporcie" color="warning" sx={{ fontWeight: 600, fontSize: '1rem', animation: 'pulse 2s infinite' }} />;
+      case 'unavailable':
+        return <Chip label="Niedostępny" color="error" sx={{ fontWeight: 600, fontSize: '1rem' }} />;
       default:
         return <Chip label="Nieznany" color="default" sx={{ fontWeight: 600, fontSize: '1rem' }} />;
     }

@@ -47,7 +47,7 @@ const mockSearchResponse = [
     serial: 'SN001',
     location: { id: 1, name: 'Location 1' },
     category: { id: 1, label: 'Test Category' },
-    status: 'in_stock' as const
+    status: 'available' as const
   },
   {
     id: 2,
@@ -55,7 +55,7 @@ const mockSearchResponse = [
     serial: 'SN002',
     location: { id: 1, name: 'Location 1' },
     category: { id: 1, label: 'Test Category' },
-    status: 'in_stock' as const
+    status: 'available' as const
   },
 ];
 

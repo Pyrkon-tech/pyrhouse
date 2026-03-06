@@ -365,6 +365,7 @@ PROCES IMPLEMENTACJI:
 5. Zbuduj komponenty UI
 6. Dodaj routing
 7. Napisz testy
+8. Sprawdź npm build
 
 CHECKLIST NOWEGO FEATURE:
 - [ ] Typy w src/types/

@@ -51,7 +51,7 @@ interface PyrCodeSuggestion {
     id: number;
     label: string;
   };
-  status: 'in_stock' | 'available' | 'unavailable';
+  status: 'available' | 'unavailable' | 'in_transit';
 }
 
 // Dodaj nowy styled component dla quest item
