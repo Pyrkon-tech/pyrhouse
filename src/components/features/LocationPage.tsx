@@ -1,18 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
-  Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  CircularProgress,
   Button,
   Chip,
-  TextField,
   Card,
   CardContent,
   Grid,
@@ -25,19 +20,18 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
-import { getApiUrl } from '../../config/api';
+import { apiClient, ApiError } from '../../services/apiClient';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import WarehouseIcon from '@mui/icons-material/Warehouse';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { AppSnackbar } from '../ui/AppSnackbar';
+import { AppSnackbar, DataTable, DataTableLoadingRow, DataTableEmptyRow, SearchBar, PageLoader } from '../ui';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 
 interface Location {
@@ -65,101 +59,42 @@ const LocationPage: React.FC = () => {
   const [location, setLocation] = useState<Location | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [refreshKey, setRefreshKey] = useState(0);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  useEffect(() => {
-    fetchLocationData();
-  }, [id, refreshKey]);
-
-  const fetchLocationData = async () => {
+  const fetchLocationData = useCallback(async () => {
     setLoading(true);
-    setError('');
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Brak tokenu autoryzacji');
-      }
-      
-      // Pobieranie szczegółów lokalizacji
-      const locationResponse = await fetch(getApiUrl(`/locations/${id}`), {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
-
-      if (!locationResponse.ok) {
-        if (locationResponse.status === 404) {
-          throw new Error('Lokalizacja nie została znaleziona');
-        } else if (locationResponse.status === 401) {
-          throw new Error('Brak autoryzacji - zaloguj się ponownie');
-        } else if (locationResponse.status === 403) {
-          throw new Error('Brak uprawnień do wyświetlenia tej lokalizacji');
-        } else if (locationResponse.status === 500) {
-          throw new Error('Wystąpił błąd serwera - spróbuj ponownie później');
-        } else {
-          throw new Error(`Nieoczekiwany błąd: ${locationResponse.status}`);
-        }
-      }
-
-      const locationData = await locationResponse.json();
+      const locationData = await apiClient.get<Location>(`/locations/${id}`);
       setLocation(locationData);
-      showSnackbar('success', `Pobrano dane lokalizacji: ${locationData.name}`);
 
-      // Pobieranie assetów lokalizacji
-      const assetsResponse = await fetch(getApiUrl(`/locations/${id}/assets`), {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
-
-      if (!assetsResponse.ok) {
-        if (assetsResponse.status === 404) {
-          throw new Error('Nie znaleziono assetów dla tej lokalizacji');
-        } else if (assetsResponse.status === 401) {
-          throw new Error('Brak autoryzacji - zaloguj się ponownie');
-        } else if (assetsResponse.status === 403) {
-          throw new Error('Brak uprawnień do wyświetlenia assetów');
-        } else if (assetsResponse.status === 500) {
-          throw new Error('Wystąpił błąd serwera podczas pobierania assetów');
-        } else {
-          throw new Error(`Nieoczekiwany błąd podczas pobierania assetów: ${assetsResponse.status}`);
-        }
-      }
-
-      const assetsData = await assetsResponse.json();
+      const assetsData = await apiClient.get<Asset[]>(`/locations/${id}/assets`);
       setAssets(assetsData);
     } catch (err: any) {
-      setError(err.message || 'Wystąpił nieoczekiwany błąd');
-      showSnackbar('error', err.message || 'Wystąpił nieoczekiwany błąd');
+      showSnackbar('error', err instanceof ApiError ? err.message : 'Wystąpił nieoczekiwany błąd');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-    showSnackbar('success', 'Odświeżanie danych...');
-  };
+  useEffect(() => {
+    fetchLocationData();
+  }, [fetchLocationData]);
 
   const getStatusChip = (status: string) => {
     switch (status) {
       case 'in_transit':
-        return <Chip icon={<LocalShippingIcon />} label="W trasie" color="warning" />;
+        return <Chip icon={<LocalShippingIcon />} label="W trasie" color="warning" size="small" />;
       case 'completed':
-        return <Chip icon={<CheckCircleIcon />} label="Zakończony" color="success" />;
+        return <Chip icon={<CheckCircleIcon />} label="Zakończony" color="success" size="small" />;
       case 'created':
-        return <Chip icon={<HourglassEmptyIcon />} label="Utworzony" color="default" />;
+        return <Chip icon={<HourglassEmptyIcon />} label="Utworzony" color="default" size="small" />;
       case 'cancelled':
-        return <Chip icon={<CancelIcon />} label="Anulowany" color="error" />;
+        return <Chip icon={<CancelIcon />} label="Anulowany" color="error" size="small" />;
       default:
-        return <Chip label={status} />;
+        return <Chip label={status} size="small" />;
     }
   };
 
@@ -173,120 +108,56 @@ const LocationPage: React.FC = () => {
   );
 
   const renderTable = () => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden',
-        maxHeight: 'calc(100vh - 300px)',
-        overflowY: 'auto'
-      }}
-    >
-      <Table stickyHeader>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: 'primary.light' }}>
-            {['ID', 'Typ', 'Ilość', 'Lokalizacja', 'Status', 'PYR_CODE', 'Origin'].map((field) => (
-              <TableCell 
-                key={field} 
-                sx={{ 
-                  fontWeight: 600,
-                  color: 'primary.contrastText',
-                  py: 2
-                }}
-              >
-                {field}
+    <DataTable>
+      <TableHead>
+        <TableRow>
+          {['ID', 'Typ', 'Ilość', 'Lokalizacja', 'Status', 'PYR_CODE', 'Origin'].map((field) => (
+            <TableCell key={field}>{field}</TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {loading ? (
+          <DataTableLoadingRow colSpan={7} />
+        ) : filteredAssets.length === 0 ? (
+          <DataTableEmptyRow colSpan={7} message="Brak assetów spełniających kryteria wyszukiwania" />
+        ) : (
+          filteredAssets.map((asset) => (
+            <TableRow
+              key={asset.id}
+              onClick={() => navigate(`/assets/${asset.id}`)}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+            >
+              <TableCell>
+                <Typography component="div" sx={{ fontWeight: 500 }}>{asset.id}</Typography>
               </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredAssets.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                <Typography variant="body1" color="text.secondary">
-                  Brak assetów spełniających kryteria wyszukiwania
-                </Typography>
-              </TableCell>
+              <TableCell>{asset.type}</TableCell>
+              <TableCell>{asset.quantity}</TableCell>
+              <TableCell>{asset.location?.name || '-'}</TableCell>
+              <TableCell>{getStatusChip(asset.status)}</TableCell>
+              <TableCell>{asset.pyr_code || '-'}</TableCell>
+              <TableCell>{asset.origin || '-'}</TableCell>
             </TableRow>
-          ) : (
-            filteredAssets.map((asset) => (
-              <TableRow 
-                key={asset.id}
-                onClick={() => navigate(`/assets/${asset.id}`)}
-                sx={{ 
-                  cursor: 'pointer', 
-                  '&:hover': { 
-                    bgcolor: 'action.hover',
-                  },
-                  transition: 'background-color 0.2s ease'
-                }}
-              >
-                <TableCell>
-                  <Typography component="div" sx={{ fontWeight: 500 }}>
-                    {asset.id}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography component="div">
-                    {asset.type}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography component="div">
-                    {asset.quantity}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography component="div">
-                    {asset.location?.name || '-'}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  {getStatusChip(asset.status)}
-                </TableCell>
-                <TableCell>
-                  <Typography component="div">
-                    {asset.pyr_code || '-'}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography component="div">
-                    {asset.origin || '-'}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          ))
+        )}
+      </TableBody>
+    </DataTable>
   );
 
-  const renderMobileCards = () => (
-    <Grid container spacing={2}>
-      {filteredAssets.length === 0 ? (
-        <Grid item xs={12}>
-          <Card sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              Brak assetów spełniających kryteria wyszukiwania
-            </Typography>
-          </Card>
-        </Grid>
-      ) : (
-        filteredAssets.map((asset) => (
+  const renderMobileCards = () => {
+    if (loading) return <PageLoader message="Ładowanie assetów..." />;
+    if (filteredAssets.length === 0) return (
+      <Box sx={{ textAlign: 'center', p: 4, bgcolor: 'background.default', borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
+        <Typography color="text.secondary">Brak assetów spełniających kryteria wyszukiwania</Typography>
+      </Box>
+    );
+    return (
+      <Grid container spacing={2}>
+        {filteredAssets.map((asset) => (
           <Grid item xs={12} key={asset.id}>
-            <Card 
+            <Card
               onClick={() => navigate(`/assets/${asset.id}`)}
-              sx={{ 
-                borderRadius: 2,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                cursor: 'pointer',
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-                transition: 'background-color 0.2s ease'
-              }}
+              sx={{ borderRadius: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
             >
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -295,9 +166,7 @@ const LocationPage: React.FC = () => {
                   </Typography>
                   {getStatusChip(asset.status)}
                 </Box>
-                
                 <Divider sx={{ my: 1 }} />
-                
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
                     <Typography variant="body2" color="text.secondary">Typ:</Typography>
@@ -323,65 +192,21 @@ const LocationPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-        ))
-      )}
-    </Grid>
-  );
-
-  if (loading) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '50vh',
-        flexDirection: 'column',
-        gap: 2
-      }}>
-        <CircularProgress size={60} />
-        <Typography variant="body1" color="text.secondary">
-          Ładowanie danych lokalizacji...
-        </Typography>
-      </Box>
+        ))}
+      </Grid>
     );
-  }
+  };
 
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Box sx={{ mb: 3 }}>
-          <Button 
-            startIcon={<ArrowBackIcon />} 
-            onClick={() => navigate('/locations')}
-            sx={{ mb: 2 }}
-          >
-            Powrót do listy lokalizacji
-          </Button>
-        </Box>
-        <AppSnackbar
-          open={snackbar.open}
-          type={snackbar.type}
-          message={snackbar.message}
-          details={snackbar.details}
-          onClose={closeSnackbar}
-          autoHideDuration={snackbar.autoHideDuration}
-        />
-      </Box>
-    );
+  if (loading && !location) {
+    return <PageLoader message="Ładowanie danych lokalizacji..." />;
   }
 
   if (!location) {
     return (
       <Box sx={{ p: 2 }}>
-        <Box sx={{ mb: 3 }}>
-          <Button 
-            startIcon={<ArrowBackIcon />} 
-            onClick={() => navigate('/locations')}
-            sx={{ mb: 2 }}
-          >
-            Powrót do listy lokalizacji
-          </Button>
-        </Box>
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/locations')} sx={{ mb: 2 }}>
+          Powrót do listy lokalizacji
+        </Button>
         <AppSnackbar
           open={snackbar.open}
           type={snackbar.type}
@@ -395,8 +220,8 @@ const LocationPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ 
-      margin: '0 auto', 
+    <Box sx={{
+      margin: '0 auto',
       padding: { xs: 2, sm: 3, md: 3 },
       maxWidth: '1400px',
       backgroundColor: 'background.paper',
@@ -404,143 +229,82 @@ const LocationPage: React.FC = () => {
       boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
     }}>
       {/* Breadcrumbs */}
-      <Breadcrumbs 
-        aria-label="breadcrumb" 
-        sx={{ mb: 3 }}
-      >
-        <Link 
-          component={RouterLink} 
-          to="/home" 
-          color="inherit" 
-          sx={{ display: 'flex', alignItems: 'center' }}
-        >
+      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
+        <Link component={RouterLink} to="/home" color="inherit" sx={{ display: 'flex', alignItems: 'center' }}>
           <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           Strona główna
         </Link>
-        <Link 
-          component={RouterLink} 
-          to="/locations" 
-          color="inherit" 
-          sx={{ display: 'flex', alignItems: 'center' }}
-        >
+        <Link component={RouterLink} to="/locations" color="inherit" sx={{ display: 'flex', alignItems: 'center' }}>
           <WarehouseIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           Lokalizacje
         </Link>
-        <Typography 
-          sx={{ display: 'flex', alignItems: 'center' }} 
-          color="text.primary"
-        >
+        <Typography sx={{ display: 'flex', alignItems: 'center' }} color="text.primary">
           <InventoryIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           {location.name}
         </Typography>
       </Breadcrumbs>
 
-      {/* Header with location name */}
-      <Box sx={{ 
-        display: 'flex', 
+      {/* Header */}
+      <Box sx={{
+        display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        marginBottom: 3,
+        justifyContent: 'space-between',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        mb: 3,
+        pb: 2,
         gap: 2,
         borderBottom: '1px solid',
         borderColor: 'divider',
-        pb: 2
       }}>
         <Box>
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            gutterBottom
-            sx={{ 
-              fontWeight: 600,
-              color: 'primary.main',
-              mb: { xs: 1, sm: 0 }
-            }}
-          >
+          <Typography variant="h5" fontWeight={700} color="primary.main">
             {location.name}
           </Typography>
           {location.details && (
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
               {location.details}
             </Typography>
           )}
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
           <Tooltip title="Odśwież dane">
-            <IconButton 
-              color="primary" 
-              onClick={handleRefresh}
-              sx={{ 
-                backgroundColor: 'primary.light',
-                '&:hover': { backgroundColor: 'primary.main', color: 'white' }
-              }}
-            >
+            <IconButton color="primary" onClick={fetchLocationData}>
               <RefreshIcon />
             </IconButton>
           </Tooltip>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             startIcon={<EditIcon />}
             onClick={() => navigate(`/locations/${id}/edit`)}
-            sx={{
-              borderRadius: 1,
-              px: 3
-            }}
           >
-            Edytuj Lokalizację
+            Edytuj
           </Button>
         </Box>
       </Box>
 
       {/* Location details card */}
-      <Card sx={{ 
-        mb: 4, 
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}>
-        <Box sx={{ 
-          p: 2, 
-          backgroundColor: 'primary.light',
-          color: 'primary.contrastText'
-        }}>
-          <Typography variant="h6" sx={{ fontWeight: 500 }}>
-            Informacje o lokalizacji
-          </Typography>
+      <Card sx={{ mb: 4, borderRadius: 2 }}>
+        <Box sx={{ p: 2, backgroundColor: 'primary.light', color: 'primary.contrastText' }}>
+          <Typography variant="h6" sx={{ fontWeight: 500 }}>Informacje o lokalizacji</Typography>
         </Box>
         <CardContent sx={{ p: 3 }}>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
-              <Box sx={{ 
-                p: 2, 
-                backgroundColor: 'background.default',
-                borderRadius: 1,
-                height: '100%'
-              }}>
+              <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>ID:</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>{location.id}</Typography>
               </Box>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Box sx={{ 
-                p: 2, 
-                backgroundColor: 'background.default',
-                borderRadius: 1,
-                height: '100%'
-              }}>
+              <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>Nazwa:</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>{location.name}</Typography>
               </Box>
             </Grid>
             {location.details && (
               <Grid item xs={12}>
-                <Box sx={{ 
-                  p: 2, 
-                  backgroundColor: 'background.default',
-                  borderRadius: 1
-                }}>
+                <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>Szczegóły:</Typography>
                   <Typography variant="body1">{location.details}</Typography>
                 </Box>
@@ -550,64 +314,35 @@ const LocationPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Assets section header */}
-      <Box sx={{ 
-        display: 'flex', 
+      {/* Assets section */}
+      <Box sx={{
+        display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        marginBottom: 2,
-        gap: 2
+        justifyContent: 'space-between',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        mb: 2,
+        gap: 2,
       }}>
-        <Typography variant="h5" sx={{ fontWeight: 500 }}>
-          Assetów: {assets.length}
-        </Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', md: 'row' }, 
-          gap: 2, 
-          width: { xs: '100%', sm: 'auto' }
-        }}>
-          <TextField
-            label="Szukaj assetów"
-            variant="outlined"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ 
-              flex: 1,
-              minWidth: { xs: '100%', sm: '250px' }
-            }}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-              sx: { borderRadius: 1 }
-            }}
-          />
+        <Box>
+          <Typography variant="h6" fontWeight={600}>
+            Assety ({assets.length})
+          </Typography>
           {searchQuery && (
-            <Button 
-              variant="outlined" 
-              onClick={() => setSearchQuery('')}
-              sx={{ 
-                borderRadius: 1,
-                px: 3
-              }}
-            >
-              Wyczyść
-            </Button>
+            <Typography variant="body2" color="text.secondary">
+              Pokazano {filteredAssets.length} z {assets.length}
+            </Typography>
           )}
         </Box>
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Szukaj assetów..."
+          width={280}
+        />
       </Box>
 
-      {/* Assets count */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" color="text.secondary">
-          Znaleziono {filteredAssets.length} z {assets.length} assetów
-        </Typography>
-      </Box>
-
-      {/* Assets list */}
       {isMobile ? renderMobileCards() : renderTable()}
 
-      {/* Snackbar for notifications */}
       <AppSnackbar
         open={snackbar.open}
         type={snackbar.type}
@@ -620,4 +355,4 @@ const LocationPage: React.FC = () => {
   );
 };
 
-export default LocationPage; 
+export default LocationPage;

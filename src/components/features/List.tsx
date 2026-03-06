@@ -27,14 +27,13 @@ import {
   FormControl,
 } from '@mui/material';
 import { DataTable } from '../ui/DataTable';
+import { AppSnackbar, PageHeader, PageLoader, EmptyState } from '../ui';
 import { useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
 import { useCategories } from '../../hooks/useCategories';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
-import { AppSnackbar } from '../ui/AppSnackbar';
 import { getApiUrl } from '../../config/api';
 import { getAssetDisplayStatus } from '../../utils/assetStatus';
-import { Category } from '@mui/icons-material';
 import WarningIcon from '@mui/icons-material/Warning';
 import DownloadIcon from '@mui/icons-material/Download';
 import Menu from '@mui/material/Menu';
@@ -66,10 +65,7 @@ interface Equipment {
   serial?: string;
 }
 
-interface QuickFilter {
-  id: number;
-  name: string;
-}
+type SemanticFilter = 'in_transit' | 'no_serial';
 
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
 const ErrorOutlineIcon = lazy(() => import('@mui/icons-material/ErrorOutline'));
@@ -88,6 +84,7 @@ const EquipmentList: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [categoryType, setCategoryType] = useState<'asset' | 'stock' | ''>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<SemanticFilter>>(new Set());
   const navigate = useNavigate();
 
   const { locations, refetch: fetchLocations } = useLocations();
@@ -107,6 +104,27 @@ const EquipmentList: React.FC = () => {
   };
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const toggleQuickFilter = (key: SemanticFilter) => {
+    setActiveQuickFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleCategoryType = (type: 'asset' | 'stock') => {
+    setCategoryType(prev => prev === type ? '' : type);
+  };
+
+  const clearAllFilters = () => {
+    setFilter('');
+    setSelectedLocations([]);
+    setSelectedCategory(null);
+    setCategoryType('');
+    setActiveQuickFilters(new Set());
   };
 
   // Funkcja do pobierania raportu
@@ -226,8 +244,16 @@ const EquipmentList: React.FC = () => {
       );
     }
 
+    // Semantyczne szybkie filtry
+    if (activeQuickFilters.has('in_transit')) {
+      filtered = filtered.filter(item => item.state === 'in_transit');
+    }
+    if (activeQuickFilters.has('no_serial')) {
+      filtered = filtered.filter(item => item.serial === null);
+    }
+
     setFilteredEquipment(filtered);
-  }, [equipment, selectedLocations, selectedCategory, categoryType, filter]);
+  }, [equipment, selectedLocations, selectedCategory, categoryType, filter, activeQuickFilters]);
 
   useEffect(() => {
     fetchEquipment();
@@ -283,38 +309,6 @@ const EquipmentList: React.FC = () => {
     );
   };
 
-  const quickFilters: QuickFilter[] = [
-    { id: 1, name: 'Magazyn Techniczny'},
-    { id: 3, name: 'Brak lokalizacji'}
-  ];
-
-  const applyQuickFilter = (filter: QuickFilter) => {
-    switch (filter.id) {
-      case 1: { // Magazyn Techniczny
-        const techLocation = locations.find((loc) => loc.id === filter.id);
-        if (techLocation && !selectedLocations.some((selectedLoc) => selectedLoc.id === techLocation.id)) {
-          setSelectedLocations((prev) => [...prev, techLocation]);
-        }
-        break;
-      }
-      case 3: // Brak lokalizacji
-        setSelectedLocations([]);
-        break;
-    }
-  };
-
-  const removeQuickFilter = (filter: QuickFilter) => {
-    switch (filter.id) {
-      case 1: { // Magazyn Techniczny
-        setSelectedLocations((prev) => prev.filter((loc) => loc.id !== filter.id));
-        break;
-      }
-      case 3: // Brak lokalizacji
-        setSelectedLocations(locations);
-        break;
-    }
-  };
-
   // Renderowanie tabeli dla desktop
   const renderTable = () => (
     <DataTable>
@@ -360,7 +354,7 @@ const EquipmentList: React.FC = () => {
             </TableCell>
             <TableCell>
               <Typography component="div">
-                {item.location.name} {item.location.pavilion ? `(${item.location.pavilion})` : ''}
+                {item.location.pavilion ? `Paw ${item.location.pavilion} | ` : ''}{item.location.name} 
               </Typography>
             </TableCell>
             <TableCell>
@@ -491,59 +485,35 @@ const EquipmentList: React.FC = () => {
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        mb: 0,
-        gap: 2,
-        pb: 1
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            gutterBottom
-            sx={{ 
-              fontWeight: 600,
-              color: 'primary.main',
-              mb: { xs: 1, sm: 0 }
-            }}
-          >
-            Stan magazynowy
-          </Typography>
-          {userRole === 'admin' || userRole === 'moderator' ? (
-            <>
-              <IconButton onClick={handleMenuClick} aria-label="Pobierz raport" size="large">
-                <DownloadIcon />
-              </IconButton>
-              <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose}>
-                <MenuItem onClick={() => handleDownloadReport('assets')}>Raport sprzętu</MenuItem>
-                <MenuItem onClick={() => handleDownloadReport('stock')}>Raport zapasów</MenuItem>
-              </Menu>
-            </>
-          ) : null}
-        </Box>
-        
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<Suspense fallback={null}><ClearAllIcon /></Suspense>}
-          onClick={() => {
-            setFilter('');
-            setSelectedLocations([]);
-            setSelectedCategory(null);
-            setCategoryType('');
-          }}
-          sx={{ 
-            borderRadius: 1,
-            px: 2
-          }}
-        >
-          Wyczyść filtry
-        </Button>
-      </Box>
+      <PageHeader
+        title="Stan magazynowy"
+        subtitle={equipment.length > 0 ? `${filteredEquipment.length} z ${equipment.length} elementów` : undefined}
+        actions={
+          <>
+            {(userRole === 'admin' || userRole === 'moderator') && (
+              <>
+                <Tooltip title="Pobierz raport">
+                  <IconButton onClick={handleMenuClick} aria-label="Pobierz raport">
+                    <DownloadIcon />
+                  </IconButton>
+                </Tooltip>
+                <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose}>
+                  <MenuItem onClick={() => handleDownloadReport('assets')}>Raport sprzętu</MenuItem>
+                  <MenuItem onClick={() => handleDownloadReport('stock')}>Raport zapasów</MenuItem>
+                </Menu>
+              </>
+            )}
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Suspense fallback={null}><ClearAllIcon /></Suspense>}
+              onClick={clearAllFilters}
+            >
+              Wyczyść filtry
+            </Button>
+          </>
+        }
+      />
 
       {/* Sekcja filtrów */}
       <Box sx={{ 
@@ -572,45 +542,52 @@ const EquipmentList: React.FC = () => {
           </Typography>
         </Box>
         
-        {/* Szybkie filtry */}
+        {/* Szybkie filtry semantyczne */}
         <Box sx={{ pt: 1, pb: 1, pl: 1.5, pr: 1.5 }}>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
             Szybkie filtry
           </Typography>
-          <Box sx={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: 1,
-            '& > *': { 
-              flex: { xs: '1 1 100%', sm: '1 1 auto' },
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-              }
-            }
-          }}>
-            {quickFilters.map((filter) => (
-              <Chip
-                key={filter.id}
-                label={filter.name}
-                color={selectedLocations.some((loc) => loc.id === filter.id) ? 'primary' : 'default'}
-                onClick={() =>
-                  selectedLocations.some((loc) => loc.id === filter.id)
-                    ? removeQuickFilter(filter)
-                    : applyQuickFilter(filter)
-                }
-                size="small"
-                sx={{ 
-                  cursor: 'pointer',
-                  fontWeight: selectedLocations.some((loc) => loc.id === filter.id) ? 600 : 400,
-                  '& .MuiChip-icon': {
-                    color: selectedLocations.some((loc) => loc.id === filter.id) ? 'inherit' : 'action.active'
-                  }
-                }}
-                aria-label={`Filtr: ${filter.name}`}
-              />
-            ))}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            <Chip
+              label="W trasie"
+              icon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
+              size="small"
+              color={activeQuickFilters.has('in_transit') ? 'warning' : 'default'}
+              variant={activeQuickFilters.has('in_transit') ? 'filled' : 'outlined'}
+              onClick={() => toggleQuickFilter('in_transit')}
+              sx={{ cursor: 'pointer', fontWeight: activeQuickFilters.has('in_transit') ? 600 : 400 }}
+              aria-label="Filtr: W trasie"
+            />
+            <Chip
+              label="Sprzęt (assets)"
+              icon={<Suspense fallback={null}><CheckCircleIcon /></Suspense>}
+              size="small"
+              color={categoryType === 'asset' ? 'primary' : 'default'}
+              variant={categoryType === 'asset' ? 'filled' : 'outlined'}
+              onClick={() => toggleCategoryType('asset')}
+              sx={{ cursor: 'pointer', fontWeight: categoryType === 'asset' ? 600 : 400 }}
+              aria-label="Filtr: Tylko sprzęt"
+            />
+            <Chip
+              label="Zasoby (stock)"
+              icon={<Suspense fallback={null}><Inventory2Icon /></Suspense>}
+              size="small"
+              color={categoryType === 'stock' ? 'secondary' : 'default'}
+              variant={categoryType === 'stock' ? 'filled' : 'outlined'}
+              onClick={() => toggleCategoryType('stock')}
+              sx={{ cursor: 'pointer', fontWeight: categoryType === 'stock' ? 600 : 400 }}
+              aria-label="Filtr: Tylko zasoby"
+            />
+            <Chip
+              label="Brak seryjnego"
+              icon={<WarningIcon />}
+              size="small"
+              color={activeQuickFilters.has('no_serial') ? 'warning' : 'default'}
+              variant={activeQuickFilters.has('no_serial') ? 'filled' : 'outlined'}
+              onClick={() => toggleQuickFilter('no_serial')}
+              sx={{ cursor: 'pointer', fontWeight: activeQuickFilters.has('no_serial') ? 600 : 400 }}
+              aria-label="Filtr: Brak numeru seryjnego"
+            />
           </Box>
         </Box>
         
@@ -735,50 +712,13 @@ const EquipmentList: React.FC = () => {
       </Box>
 
       {loading ? (
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          p: 5,
-          flexDirection: 'column',
-          gap: 2
-        }}>
-          <CircularProgress size={40} />
-          <Typography variant="body1" color="text.secondary">
-            Ładowanie danych...
-          </Typography>
-        </Box>
+        <PageLoader message="Ładowanie danych..." />
       ) : filteredEquipment.length === 0 ? (
-        <Box sx={{ 
-          textAlign: 'center', 
-          p: 5,
-          backgroundColor: 'background.default',
-          borderRadius: 2,
-          border: '1px dashed',
-          borderColor: 'divider'
-        }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Brak sprzętu dla wybranych filtrów
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Spróbuj zmienić kryteria wyszukiwania lub wyczyść filtry
-          </Typography>
-          <Button 
-            variant="outlined" 
-            onClick={() => {
-              setFilter('');
-              setSelectedLocations([]);
-              setSelectedCategory(null);
-              setCategoryType('');
-            }}
-            sx={{ 
-              borderRadius: 1,
-              px: 3
-            }}
-          >
-            Wyczyść filtry
-          </Button>
-        </Box>
+        <EmptyState
+          message="Brak sprzętu dla wybranych filtrów"
+          description="Spróbuj zmienić kryteria wyszukiwania lub wyczyść filtry"
+          action={{ label: 'Wyczyść filtry', onClick: clearAllFilters }}
+        />
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}

@@ -6,7 +6,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Typography,
   CircularProgress,
   Dialog,
@@ -24,29 +23,29 @@ import {
   Chip,
   Switch,
   Tooltip,
+  TextField,
 } from '@mui/material';
 import { DataTable } from '../ui/DataTable';
 import { useNavigate } from 'react-router-dom';
-import { getApiUrl } from '../../config/api';
+import { apiClient, ApiError } from '../../services/apiClient';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
-import { AppSnackbar } from '../ui/AppSnackbar';
+import { AppSnackbar, PageHeader, SearchBar, PageLoader, EmptyState } from '../ui';
 import { jwtDecode } from 'jwt-decode';
 const AddIcon = lazy(() => import('@mui/icons-material/Add'));
 const PersonIcon = lazy(() => import('@mui/icons-material/Person'));
 const AdminPanelSettingsIcon = lazy(() => import('@mui/icons-material/AdminPanelSettings'));
 const SecurityIcon = lazy(() => import('@mui/icons-material/Security'));
-const SearchIcon = lazy(() => import('@mui/icons-material/Search'));
 
 const UserManagementPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [addUserModalOpen, setAddUserModalOpen] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
   const [newUser, setNewUser] = useState({
     username: '',
     password: '',
     fullname: '',
-    role: 'user', // Default role
+    role: 'user',
   });
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -62,18 +61,10 @@ const UserManagementPage: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/users'), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch users');
-
-      const data = await response.json();
+      const data = await apiClient.get<any[]>('/users');
       setUsers(data);
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
-      showSnackbar('error', 'Wystąpił błąd', err.message || 'An unexpected error occurred.');
+      showSnackbar('error', 'Błąd podczas pobierania użytkowników', err instanceof ApiError ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -90,37 +81,19 @@ const UserManagementPage: React.FC = () => {
 
   const handleAddUser = async () => {
     if (!newUser.username || !newUser.password || !newUser.fullname) {
-      setError('Wszystkie pola są wymagane do utworzenia użytkownika.');
+      showSnackbar('warning', 'Wszystkie pola są wymagane do utworzenia użytkownika.');
       return;
     }
 
-    setLoading(true);
-    setError('');
+    setAddLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/users'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newUser),
-      });
-
-      if (!response.ok) {
-        const errorResponse = await response.json();
-        throw new Error(JSON.stringify(errorResponse, null, 2));
-      }
-
-      const data = await response.json();
-      console.log(data.message); // Success message
+      await apiClient.post('/users', newUser);
       setAddUserModalOpen(false);
-      fetchUsers(); // Refresh the user list
+      fetchUsers();
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
-      showSnackbar('error', 'Wystąpił błąd', err.message || 'An unexpected error occurred.');
+      showSnackbar('error', 'Błąd podczas dodawania użytkownika', err instanceof ApiError ? err.message : String(err));
     } finally {
-      setLoading(false);
+      setAddLoading(false);
     }
   };
 
@@ -135,14 +108,11 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: string): 'error' | 'warning' | 'info' => {
     switch (role) {
-      case 'admin':
-        return 'error';
-      case 'moderator':
-        return 'warning';
-      default:
-        return 'info';
+      case 'admin': return 'error';
+      case 'moderator': return 'warning';
+      default: return 'info';
     }
   };
 
@@ -194,20 +164,11 @@ const UserManagementPage: React.FC = () => {
     }
     setLoadingIds(ids => [...ids, user.id]);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/users/${user.id}`), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ active: !user.active }),
-      });
-      if (!response.ok) throw new Error('Nie udało się zmienić statusu aktywności');
+      await apiClient.patch(`/users/${user.id}`, { active: !user.active });
       showSnackbar('success', `Użytkownik został ${user.active ? 'dezaktywowany' : 'aktywowany'}`);
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, active: !user.active } : u));
     } catch (err: any) {
-      showSnackbar('error', err.message || 'Błąd podczas zmiany aktywności');
+      showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd podczas zmiany aktywności');
     } finally {
       setLoadingIds(ids => ids.filter(id => id !== user.id));
     }
@@ -217,15 +178,12 @@ const UserManagementPage: React.FC = () => {
     <Grid container spacing={2}>
       {filteredUsers.map((user) => (
         <Grid item xs={12} key={user.id}>
-          <Card 
+          <Card
             onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
-            sx={{ 
+            sx={{
               borderRadius: 2,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
               cursor: 'pointer',
-              '&:hover': {
-                bgcolor: 'action.hover',
-              },
+              '&:hover': { bgcolor: 'action.hover' },
               transition: 'background-color 0.2s ease'
             }}
           >
@@ -234,9 +192,9 @@ const UserManagementPage: React.FC = () => {
                 <Typography variant="h6" component="div" sx={{ fontWeight: 500 }}>
                   ID: {user.id}
                 </Typography>
-                <Chip 
+                <Chip
                   icon={getRoleIcon(user.role)}
-                  label={user.role} 
+                  label={user.role}
                   color={getRoleColor(user.role)}
                   size="small"
                 />
@@ -257,7 +215,7 @@ const UserManagementPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">Discord:</Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                     {(user.discord_username || user.auth_provider === 'discord') ? (
-                      <Chip 
+                      <Chip
                         label={user.discord_username || 'Połączono'}
                         size="small"
                         sx={{ bgcolor: 'rgba(88, 101, 242, 0.12)', color: '#5865F2', fontWeight: 500 }}
@@ -276,7 +234,7 @@ const UserManagementPage: React.FC = () => {
                     <Switch
                       checked={user.active}
                       color={user.active ? 'primary' : 'default'}
-                      disabled={!isAdmin && !isModerator || user.id === currentUserId || loadingIds.includes(user.id)}
+                      disabled={user.id === currentUserId || loadingIds.includes(user.id)}
                       onClick={e => e.stopPropagation()}
                       onChange={() => handleToggleActive(user)}
                       inputProps={{ 'aria-label': 'toggle active' }}
@@ -315,15 +273,9 @@ const UserManagementPage: React.FC = () => {
             sx={{ cursor: 'pointer' }}
           >
             <TableCell>
-              <Typography component="div" sx={{ fontWeight: 500 }}>
-                {user.id}
-              </Typography>
+              <Typography component="div" sx={{ fontWeight: 500 }}>{user.id}</Typography>
             </TableCell>
-            <TableCell>
-              <Typography component="div">
-                {user.username}
-              </Typography>
-            </TableCell>
+            <TableCell>{user.username}</TableCell>
             <TableCell>
               <Typography component="div" sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
                 {user.fullname || '—'}
@@ -364,7 +316,7 @@ const UserManagementPage: React.FC = () => {
                     <Switch
                       checked={user.active}
                       color={user.active ? 'primary' : 'default'}
-                      disabled={!isAdmin && !isModerator || user.id === currentUserId || loadingIds.includes(user.id)}
+                      disabled={user.id === currentUserId || loadingIds.includes(user.id)}
                       onClick={e => e.stopPropagation()}
                       onChange={() => handleToggleActive(user)}
                       inputProps={{ 'aria-label': 'toggle active' }}
@@ -386,170 +338,58 @@ const UserManagementPage: React.FC = () => {
     </DataTable>
   );
 
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <AppSnackbar
-          open={snackbar.open}
-          type={snackbar.type}
-          message={snackbar.message}
-          details={snackbar.details}
-          onClose={closeSnackbar}
-          autoHideDuration={snackbar.autoHideDuration}
-        />
-      </Box>
-    );
-  }
-
   return (
-    <Box sx={{ 
-      margin: '0 auto', 
+    <Box sx={{
+      margin: '0 auto',
       padding: { xs: 2, sm: 3, md: 3 },
       maxWidth: '1400px',
       backgroundColor: 'background.paper',
       borderRadius: 2,
       boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
     }}>
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        marginBottom: 3,
-        gap: 2,
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        pb: 2
-      }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{ 
-            fontWeight: 600,
-            color: 'primary.main',
-            mb: { xs: 1, sm: 0 }
-          }}
-        >
-          Zarządzanie Użytkownikami
-        </Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<Suspense fallback={null}><AddIcon /></Suspense>}
-          onClick={handleOpenAddUserModal}
-          sx={{
-            borderRadius: 1,
-            px: 3
-          }}
-        >
-          Dodaj Użytkownika
-        </Button>
-      </Box>
+      <PageHeader
+        title="Zarządzanie Użytkownikami"
+        actions={
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Suspense fallback={null}><AddIcon /></Suspense>}
+            onClick={handleOpenAddUserModal}
+          >
+            Dodaj Użytkownika
+          </Button>
+        }
+      />
 
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' }, 
-        gap: 2, 
-        marginBottom: 3,
-        backgroundColor: 'background.default',
-        p: 2,
-        borderRadius: 1
-      }}>
-        <TextField
-          label="Szukaj użytkowników"
-          variant="outlined"
+      <Box sx={{ mb: 3 }}>
+        <SearchBar
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          size="small"
-          sx={{ flex: 1 }}
-          InputProps={{
-            sx: { 
-              borderRadius: 1,
-              height: '36px',
-              '& input': {
-                height: '36px',
-                padding: '0 12px',
-              }
-            },
-            startAdornment: (
-              <Suspense fallback={null}><SearchIcon sx={{ color: 'text.secondary', mr: 1 }} /></Suspense>
-            )
-          }}
+          onChange={setSearchQuery}
+          placeholder="Szukaj użytkowników..."
+          label="Szukaj użytkowników"
+          width="100%"
         />
       </Box>
 
       {loading ? (
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          p: 5,
-          flexDirection: 'column',
-          gap: 2
-        }}>
-          <CircularProgress size={40} />
-          <Typography variant="body1" color="text.secondary">
-            Ładowanie użytkowników...
-          </Typography>
-        </Box>
+        <PageLoader message="Ładowanie użytkowników..." />
       ) : filteredUsers.length === 0 ? (
-        <Box sx={{ 
-          textAlign: 'center', 
-          p: 5,
-          backgroundColor: 'background.default',
-          borderRadius: 2,
-          border: '1px dashed',
-          borderColor: 'divider'
-        }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Brak użytkowników
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Dodaj nowego użytkownika'}
-          </Typography>
-          {searchQuery && (
-            <Button 
-              variant="outlined" 
-              onClick={() => setSearchQuery('')}
-              sx={{ 
-                borderRadius: 1,
-                px: 3
-              }}
-            >
-              Wyczyść wyszukiwanie
-            </Button>
-          )}
-        </Box>
+        <EmptyState
+          message="Brak użytkowników"
+          description={searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Dodaj nowego użytkownika'}
+          action={searchQuery ? { label: 'Wyczyść wyszukiwanie', onClick: () => setSearchQuery('') } : undefined}
+        />
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}
 
-      <Dialog 
-        open={addUserModalOpen} 
+      <Dialog
+        open={addUserModalOpen}
         onClose={handleCloseAddUserModal}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            minWidth: { xs: '90%', sm: 400 }
-          }
-        }}
+        PaperProps={{ sx: { borderRadius: 2, minWidth: { xs: '90%', sm: 400 } } }}
       >
-        <DialogTitle>
-          Dodaj Nowego Użytkownika
-        </DialogTitle>
+        <DialogTitle>Dodaj Nowego Użytkownika</DialogTitle>
         <DialogContent>
-          {error && (
-            <AppSnackbar
-              open={snackbar.open}
-              type={snackbar.type}
-              message={snackbar.message}
-              details={snackbar.details}
-              onClose={closeSnackbar}
-              autoHideDuration={snackbar.autoHideDuration}
-            />
-          )}
-
           <TextField
             label="Username"
             value={newUser.username}
@@ -584,20 +424,14 @@ const UserManagementPage: React.FC = () => {
           </Select>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button 
-            onClick={handleCloseAddUserModal}
-            sx={{ borderRadius: 1 }}
-          >
-            Anuluj
-          </Button>
-          <Button 
-            onClick={handleAddUser} 
-            variant="contained" 
+          <Button onClick={handleCloseAddUserModal}>Anuluj</Button>
+          <Button
+            onClick={handleAddUser}
+            variant="contained"
             color="primary"
-            disabled={loading}
-            sx={{ borderRadius: 1 }}
+            disabled={addLoading}
           >
-            {loading ? <CircularProgress size={20} /> : 'Dodaj'}
+            {addLoading ? <CircularProgress size={20} /> : 'Dodaj'}
           </Button>
         </DialogActions>
       </Dialog>

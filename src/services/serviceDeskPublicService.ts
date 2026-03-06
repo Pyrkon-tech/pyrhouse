@@ -1,5 +1,4 @@
-import { getApiUrl } from '../config/api';
-import { useStorage } from '../hooks/useStorage';
+import { apiClient } from './apiClient';
 
 export interface PublicServiceDeskRequest {
   title: string;
@@ -11,27 +10,10 @@ export interface PublicServiceDeskRequest {
   location_id?: number;
 }
 
-export const sendPublicServiceDeskRequest = async (data: PublicServiceDeskRequest, token?: string) => {
-  const response = await fetch(getApiUrl('/service-desk/requests'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || 'Nie udało się wysłać zgłoszenia');
-  }
-  return response.json();
-};
+export const sendPublicServiceDeskRequest = (data: PublicServiceDeskRequest) =>
+  apiClient.post<unknown>('/service-desk/requests', data);
 
 export const useSendPublicServiceDeskRequest = () => {
-  const { getToken } = useStorage();
-  const send = async (data: PublicServiceDeskRequest) => {
-    const token = getToken();
-    return sendPublicServiceDeskRequest(data, token || undefined);
-  };
+  const send = (data: PublicServiceDeskRequest) => sendPublicServiceDeskRequest(data);
   return { send };
-}; 
+};

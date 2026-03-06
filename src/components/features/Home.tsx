@@ -54,14 +54,38 @@ interface PyrCodeSuggestion {
   status: 'available' | 'unavailable' | 'in_transit';
 }
 
-// Dodaj nowy styled component dla quest item
+// Intentional "medieval quest" color palette — NIE są to kolory brandingu Pyrkonu.
+// Tworzą estetykę pergaminu/karty zadań. Centralizacja tu zamiast rozproszenia w styled components.
+const QUEST_DARK = {
+  cardBg:   '#462f1d',
+  cardDeep: '#2d1810',
+  border:   '#8b6d4c',
+  gold:     '#ffd700',
+  goldDark: '#b8860b',
+  goldMid:  '#d4af37',
+  text:     '#ffd700',
+  statusBg: '#4a3f2c',
+} as const;
+
+const QUEST_LIGHT = {
+  cardBg:   '#f8e7cb',
+  cardDeep: '#ebd5b3',
+  border:   '#c4a980',
+  gold:     '#daa520',
+  goldDark: '#b8860b',
+  text:     '#8b4513',
+  textShadow: '#8b6d4c',
+  statusBg: '#daa520',
+} as const;
+
+// Quest item styled component
 const QuestItem = styled(Paper)(({ theme }) => ({
   position: 'relative',
   padding: theme.spacing(4),
   marginBottom: theme.spacing(2),
-  background: theme.palette.mode === 'dark' 
-    ? `linear-gradient(135deg, ${alpha('#462f1d', 0.98)}, ${alpha('#2d1810', 0.95)})`
-    : `linear-gradient(135deg, #f8e7cb, #ebd5b3)`,
+  background: theme.palette.mode === 'dark'
+    ? `linear-gradient(135deg, ${alpha(QUEST_DARK.cardBg, 0.98)}, ${alpha(QUEST_DARK.cardDeep, 0.95)})`
+    : `linear-gradient(135deg, ${QUEST_LIGHT.cardBg}, ${QUEST_LIGHT.cardDeep})`,
   borderRadius: '8px',
   cursor: 'pointer',
   boxShadow: theme.palette.mode === 'dark'
@@ -69,13 +93,13 @@ const QuestItem = styled(Paper)(({ theme }) => ({
     : '0 4px 12px rgba(139, 109, 76, 0.15), inset 0 0 30px rgba(139, 109, 76, 0.1)',
   transition: 'all 0.3s ease',
   border: theme.palette.mode === 'dark'
-    ? '2px solid #8b6d4c'
-    : '2px solid #c4a980',
+    ? `2px solid ${QUEST_DARK.border}`
+    : `2px solid ${QUEST_LIGHT.border}`,
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: theme.palette.mode === 'dark'
-      ? '0 6px 16px rgba(0,0,0,0.7), inset 0 0 30px rgba(0,0,0,0.4)'
-      : '0 6px 16px rgba(139, 109, 76, 0.25), inset 0 0 30px rgba(139, 109, 76, 0.1)',
+      ? `0 6px 16px rgba(0,0,0,0.7), inset 0 0 30px rgba(0,0,0,0.4)`
+      : `0 6px 16px rgba(139, 109, 76, 0.25), inset 0 0 30px rgba(139, 109, 76, 0.1)`,
     '&::before': {
       opacity: 0.5,
     },
@@ -93,8 +117,8 @@ const QuestItem = styled(Paper)(({ theme }) => ({
     right: -2,
     bottom: -2,
     background: theme.palette.mode === 'dark'
-      ? 'linear-gradient(45deg, #ffd700, #b8860b, #8b6d4c)'
-      : 'linear-gradient(45deg, #daa520, #cd853f, #b8860b)',
+      ? `linear-gradient(45deg, ${QUEST_DARK.gold}, ${QUEST_DARK.goldDark}, ${QUEST_DARK.border})`
+      : `linear-gradient(45deg, ${QUEST_LIGHT.gold}, #cd853f, ${QUEST_LIGHT.goldDark})`,
     borderRadius: '10px',
     opacity: 0.3,
     transition: 'opacity 0.3s ease',
@@ -121,17 +145,17 @@ const QuestTitle = styled(Typography)(({ theme }) => ({
   fontFamily: '"Cinzel", serif',
   fontWeight: 700,
   fontSize: '1.4rem',
-  color: theme.palette.mode === 'dark' ? '#ffd700' : '#8b4513',
+  color: theme.palette.mode === 'dark' ? QUEST_DARK.text : QUEST_LIGHT.text,
   marginBottom: theme.spacing(2),
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(1),
-  textShadow: theme.palette.mode === 'dark' 
-    ? '2px 2px 2px rgba(0,0,0,0.8), 0 0 5px rgba(255, 215, 0, 0.3)'
-    : '1px 1px 2px rgba(139, 69, 19, 0.3)',
+  textShadow: theme.palette.mode === 'dark'
+    ? `2px 2px 2px rgba(0,0,0,0.8), 0 0 5px rgba(255, 215, 0, 0.3)`
+    : `1px 1px 2px rgba(139, 69, 19, 0.3)`,
   '& .MuiSvgIcon-root': {
-    color: theme.palette.mode === 'dark' ? '#ffd700' : '#8b4513',
-    filter: theme.palette.mode === 'dark' 
+    color: theme.palette.mode === 'dark' ? QUEST_DARK.text : QUEST_LIGHT.text,
+    filter: theme.palette.mode === 'dark'
       ? 'drop-shadow(2px 2px 2px rgba(0,0,0,0.8))'
       : 'drop-shadow(1px 1px 1px rgba(139, 69, 19, 0.3))',
   }
@@ -141,27 +165,27 @@ const QuestLocation = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(1),
-  color: theme.palette.mode === 'dark' ? '#ffd700' : '#8b4513',
+  color: theme.palette.mode === 'dark' ? QUEST_DARK.text : QUEST_LIGHT.text,
   marginBottom: theme.spacing(1),
   fontSize: '1rem',
   fontWeight: 500,
-  textShadow: theme.palette.mode === 'dark' 
+  textShadow: theme.palette.mode === 'dark'
     ? '1px 1px 2px rgba(0,0,0,0.8)'
     : '1px 1px 1px rgba(139, 69, 19, 0.2)',
   '& .MuiSvgIcon-root': {
-    color: theme.palette.mode === 'dark' ? '#ffd700' : '#8b4513',
-    filter: theme.palette.mode === 'dark' 
+    color: theme.palette.mode === 'dark' ? QUEST_DARK.text : QUEST_LIGHT.text,
+    filter: theme.palette.mode === 'dark'
       ? 'drop-shadow(1px 1px 1px rgba(0,0,0,0.8))'
       : 'drop-shadow(1px 1px 1px rgba(139, 69, 19, 0.2))',
   }
 }));
 
 const QuestDate = styled(Typography)(({ theme }) => ({
-  color: theme.palette.mode === 'dark' ? '#d4af37' : '#8b4513',
+  color: theme.palette.mode === 'dark' ? QUEST_DARK.goldMid : QUEST_LIGHT.text,
   fontSize: '0.9rem',
   fontStyle: 'italic',
   fontWeight: 500,
-  textShadow: theme.palette.mode === 'dark' 
+  textShadow: theme.palette.mode === 'dark'
     ? '1px 1px 1px rgba(0,0,0,0.8)'
     : '1px 1px 1px rgba(139, 69, 19, 0.2)',
 }));
@@ -170,14 +194,14 @@ const QuestStatus = styled(Chip)(({ theme }) => ({
   position: 'absolute',
   top: theme.spacing(2),
   right: theme.spacing(2),
-  backgroundColor: theme.palette.mode === 'dark' ? '#4a3f2c' : '#daa520',
-  color: theme.palette.mode === 'dark' ? '#ffd700' : '#ffffff',
-  border: `1px solid ${theme.palette.mode === 'dark' ? '#ffd700' : '#b8860b'}`,
+  backgroundColor: theme.palette.mode === 'dark' ? QUEST_DARK.statusBg : QUEST_LIGHT.statusBg,
+  color: theme.palette.mode === 'dark' ? QUEST_DARK.gold : '#ffffff',
+  border: `1px solid ${theme.palette.mode === 'dark' ? QUEST_DARK.gold : QUEST_LIGHT.goldDark}`,
   fontWeight: 600,
   '& .MuiChip-label': {
     textShadow: theme.palette.mode === 'dark'
       ? '1px 1px 1px rgba(0,0,0,0.8)'
-      : '1px 1px 1px rgba(139, 69, 19, 0.3)',
+      : `1px 1px 1px rgba(139, 69, 19, 0.3)`,
   },
 }));
 

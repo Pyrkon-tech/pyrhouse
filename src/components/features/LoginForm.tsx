@@ -28,7 +28,7 @@ import { getApiUrl } from '../../config/api';
 import { useStorage } from '../../hooks/useStorage';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
 import pyrkonLogo from '../../assets/images/p-logo.svg';
-import { hyperJumpAnimation, starStreakAnimation } from '../animations/keyframes';
+import SystemInitAnimation from '../animations/SystemInitAnimation';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { jwtDecode } from 'jwt-decode';
@@ -128,9 +128,7 @@ const LoginForm: React.FC = () => {
         }
         if (prefersAnimations) {
           setIsHyperJumping(true);
-          setTimeout(() => {
-            navigate('/home');
-          }, 2000);
+          // navigate jest wołane przez SystemInitAnimation.onComplete
         } else {
           navigate('/home');
         }
@@ -186,48 +184,11 @@ const LoginForm: React.FC = () => {
         position: 'relative',
       }}
     >
-      {isHyperJumping && prefersAnimations && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 10,
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: '50%',
-              left: '-100px',
-              width: '10px',
-              height: '2px',
-              background: 'white',
-              boxShadow: '0 0 10px #fff, 0 0 20px #fff',
-              animation: `${starStreakAnimation} 0.5s linear infinite`,
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: '30%',
-              left: '-100px',
-              width: '8px',
-              height: '2px',
-              background: 'white',
-              boxShadow: '0 0 10px #fff, 0 0 20px #fff',
-              animation: `${starStreakAnimation} 0.7s linear infinite`,
-            }
-          }}
-        />
+      {isHyperJumping && (
+        <SystemInitAnimation onComplete={() => navigate('/home')} />
       )}
       <Fade in={true} timeout={800}>
-        <Container 
-          maxWidth="sm"
-          sx={{
-            animation: isHyperJumping && prefersAnimations ? `${hyperJumpAnimation} 2s ease-in forwards` : 'none',
-          }}
-        >
+        <Container maxWidth="sm">
           <Paper
             elevation={6}
             sx={{

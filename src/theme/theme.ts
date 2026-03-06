@@ -34,21 +34,9 @@ const createCriticalComponents = (mode: 'light' | 'dark'): Components<Omit<Theme
         '0%': { backgroundPosition: '-200% 0' },
         '100%': { backgroundPosition: '200% 0' },
       },
-      '@keyframes float': {
-        '0%, 100%': { transform: 'translateY(0)' },
-        '50%': { transform: 'translateY(-5px)' },
-      },
       '@keyframes fadeIn': {
         '0%': { opacity: 0, transform: 'translateY(10px)' },
         '100%': { opacity: 1, transform: 'translateY(0)' },
-      },
-      '@keyframes slideInRight': {
-        '0%': { opacity: 0, transform: 'translateX(20px)' },
-        '100%': { opacity: 1, transform: 'translateX(0)' },
-      },
-      '@keyframes scaleIn': {
-        '0%': { opacity: 0, transform: 'scale(0.95)' },
-        '100%': { opacity: 1, transform: 'scale(1)' },
       },
       // Scrollbar styling
       '::-webkit-scrollbar': {

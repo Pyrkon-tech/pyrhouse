@@ -1,5 +1,7 @@
 // Core
 export { useAuth } from './useAuth';
+export { useDialogState } from './useDialogState';
+export { useAsyncOperation } from './useAsyncOperation';
 export { useTokenValidation } from './useTokenValidation';
 export { useDiscordAuth } from './useDiscordAuth';
 export { useStyles } from './useStyles';
