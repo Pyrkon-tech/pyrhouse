@@ -22,6 +22,9 @@ const TutorialPage = lazy(() => import('../components/features/TutorialPage'));
 const DutySchedulePage = lazy(() => import('../components/features/DutySchedulePage'));
 const ServiceDeskPage = lazy(() => import('../components/features/ServiceDesk/ServiceDeskPage'));
 const DispatchPage = lazy(() => import('../components/features/DispatchPage'));
+const ReleasesListPage = lazy(() => import('../components/features/Releases/ReleasesListPage'));
+const ReleaseCreatePage = lazy(() => import('../components/features/Releases/ReleaseCreatePage'));
+const ReleaseDetailPage = lazy(() => import('../components/features/Releases/ReleaseDetailPage'));
 
 // Public routes (nie wymagają autoryzacji)
 export const publicRoutes: RouteConfig[] = [
@@ -153,6 +156,25 @@ export const protectedRoutes: RouteConfig[] = [
     title: 'Mapa Dispatch',
     icon: 'Dispatch',
     showInNav: true,
+  },
+  {
+    path: '/releases',
+    component: ReleasesListPage,
+    title: 'Demontażkon',
+    icon: 'Releases',
+    showInNav: true,
+  },
+  {
+    path: '/releases/create',
+    component: ReleaseCreatePage,
+    title: 'Nowe wydanie',
+    showInNav: false,
+  },
+  {
+    path: '/releases/:id',
+    component: ReleaseDetailPage,
+    title: 'Szczegóły wydania',
+    showInNav: false,
   },
 ];
 

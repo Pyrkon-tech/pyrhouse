@@ -58,6 +58,7 @@ const Event = lazy(() => import('@mui/icons-material/Event'));
 const Source = lazy(() => import('@mui/icons-material/Source'));
 const SettingsIcon = lazy(() => import('@mui/icons-material/Settings'));
 const MapIcon = lazy(() => import('@mui/icons-material/Map'));
+const Outbox = lazy(() => import('@mui/icons-material/Outbox'));
 interface JwtPayload {
   role: string;
   userID: number;
@@ -108,6 +109,7 @@ const Icons = {
   Source,
   Settings: SettingsIcon,
   Map: MapIcon,
+  Outbox,
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -289,6 +291,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/add-item', label: 'Dodaj sprzęt', icon: <Icons.AddTask /> },
     { path: '/list', label: 'Stan Magazynowy', icon: <Icons.Warehouse /> },
     { path: '/locations', label: 'Lokalizacje', icon: <Icons.EditLocationAlt /> },
+    {
+      type: 'divider',
+      label: 'Po Pyrkonie',
+      icon: <Icons.Outbox sx={{ fontSize: '0.9rem' }} />
+    },
+    { path: '/releases', label: 'Demontażkon', icon: <Icons.Outbox /> },
   ];
 
   const adminMenuItems = [
