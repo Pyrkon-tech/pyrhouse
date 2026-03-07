@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Container, Typography, Tabs, Tab, Box, Paper, ButtonGroup, Button, Tooltip, IconButton } from '@mui/material';
+import { Container, Typography, Tabs, Tab, Box, Paper, ToggleButtonGroup, ToggleButton, Tooltip, IconButton } from '@mui/material';
 import { AddAssetForm } from './AddAssetForm';
 import { AddStockForm } from './AddStockForm';
 import { BulkAddAssetForm } from './BulkAddAssetForm';
@@ -65,55 +65,25 @@ const AddItemPage: React.FC = () => {
       {currentTab === 0 && (
         <Paper sx={{ mt: 1, p: { xs: 2, sm: 2 } }}>
           <Box sx={{ mb: 3 }}>
-            <ButtonGroup
-              variant="contained"
-              aria-label="outlined primary button group"
-              orientation="vertical"
+            <ToggleButtonGroup
+              value={addMode}
+              exclusive
+              onChange={(_e, newMode) => { if (newMode !== null) setAddMode(newMode); }}
               sx={{
-                width: '100%',
-                '@media (min-width: 600px)': {
-                  width: 'auto',
-                  flexDirection: 'row',
-                }
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
-              <Button
-                onClick={() => setAddMode('single')}
-                variant={addMode === 'single' ? 'contained' : 'outlined'}
-                sx={{
-                  width: '100%',
-                  '@media (min-width: 600px)': {
-                    width: 'auto',
-                  }
-                }}
-              >
+              <ToggleButton value="single" sx={{ flex: { xs: 1, sm: 'unset' } }}>
                 Pojedynczy
-              </Button>
-              <Button
-                onClick={() => setAddMode('bulk')}
-                variant={addMode === 'bulk' ? 'contained' : 'outlined'}
-                sx={{
-                  width: '100%',
-                  '@media (min-width: 600px)': {
-                    width: 'auto',
-                  }
-                }}
-              >
+              </ToggleButton>
+              <ToggleButton value="bulk" sx={{ flex: { xs: 1, sm: 'unset' } }}>
                 Grupowy
-              </Button>
-              <Button
-                onClick={() => setAddMode('noSerial')}
-                variant={addMode === 'noSerial' ? 'contained' : 'outlined'}
-                sx={{
-                  width: '100%',
-                  '@media (min-width: 600px)': {
-                    width: 'auto',
-                  }
-                }}
-              >
+              </ToggleButton>
+              <ToggleButton value="noSerial" sx={{ flex: { xs: 1, sm: 'unset' } }}>
                 Wybuchło - bez numeru seryjnego
-              </Button>
-            </ButtonGroup>
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Box>
           {addMode === 'single' && <AddAssetForm categories={categories} loading={loading} />}
           {addMode === 'bulk' && <BulkAddAssetForm categories={categories} />}

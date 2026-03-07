@@ -11,7 +11,6 @@ import {
   IconButton,
   Tooltip,
   Chip,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -33,7 +32,8 @@ import SyncIcon from '@mui/icons-material/Sync';
 import { getSettingsAPI, getSettingAPI, updateSettingAPI } from '../../services/settingsService';
 import { apiClient, ApiError } from '../../services/apiClient';
 import type { Setting } from '../../types/settings.types';
-import { AppSnackbar } from '../ui/AppSnackbar';
+import { Button } from '../ui/Button';
+import { AppSnackbar } from '../ui';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 
 interface SettingRowState {
@@ -390,8 +390,8 @@ const SettingsPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmSaveKey(null)}>Anuluj</Button>
-          <Button variant="contained" color="primary" onClick={handleConfirmSave}>
+          <Button variant="ghost" onClick={() => setConfirmSaveKey(null)}>Anuluj</Button>
+          <Button variant="primary" onClick={handleConfirmSave}>
             Potwierdź zapis
           </Button>
         </DialogActions>

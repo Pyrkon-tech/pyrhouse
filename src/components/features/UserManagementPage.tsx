@@ -1,13 +1,11 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import {
   Box,
-  Button,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   Typography,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -28,7 +26,9 @@ import {
 import { DataTable } from '../ui/DataTable';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, ApiError } from '../../services/apiClient';
+import { useDialogState } from '../../hooks/useDialogState';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
+import { Button } from '../ui/Button';
 import { AppSnackbar, PageHeader, SearchBar, PageLoader, EmptyState } from '../ui';
 import { jwtDecode } from 'jwt-decode';
 const AddIcon = lazy(() => import('@mui/icons-material/Add'));
@@ -39,7 +39,7 @@ const SecurityIcon = lazy(() => import('@mui/icons-material/Security'));
 const UserManagementPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [addUserModalOpen, setAddUserModalOpen] = useState(false);
+  const dialogs = useDialogState<any>();
   const [addLoading, setAddLoading] = useState(false);
   const [newUser, setNewUser] = useState({
     username: '',
@@ -71,12 +71,12 @@ const UserManagementPage: React.FC = () => {
   };
 
   const handleOpenAddUserModal = () => {
-    setAddUserModalOpen(true);
+    dialogs.openAdd();
     setNewUser({ username: '', password: '', fullname: '', role: 'user' });
   };
 
   const handleCloseAddUserModal = () => {
-    setAddUserModalOpen(false);
+    dialogs.closeAdd();
   };
 
   const handleAddUser = async () => {
@@ -88,7 +88,7 @@ const UserManagementPage: React.FC = () => {
     setAddLoading(true);
     try {
       await apiClient.post('/users', newUser);
-      setAddUserModalOpen(false);
+      dialogs.closeAdd();
       fetchUsers();
     } catch (err: any) {
       showSnackbar('error', 'Błąd podczas dodawania użytkownika', err instanceof ApiError ? err.message : String(err));
@@ -257,7 +257,7 @@ const UserManagementPage: React.FC = () => {
   );
 
   const renderTable = () => (
-    <DataTable>
+    <DataTable  size="medium">
       <TableHead>
         <TableRow>
           {["ID", "Ksywa", "Imię i Nazwisko", "Rola", "Discord", "Aktywny"].map((field) => (
@@ -272,14 +272,10 @@ const UserManagementPage: React.FC = () => {
             onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
             sx={{ cursor: 'pointer' }}
           >
-            <TableCell>
-              <Typography component="div" sx={{ fontWeight: 500 }}>{user.id}</Typography>
-            </TableCell>
+            <TableCell sx={{ fontWeight: 500 }}>{user.id}</TableCell>
             <TableCell>{user.username}</TableCell>
-            <TableCell>
-              <Typography component="div" sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
-                {user.fullname || '—'}
-              </Typography>
+            <TableCell sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
+              {user.fullname || '—'}
             </TableCell>
             <TableCell>
               <Chip
@@ -351,9 +347,8 @@ const UserManagementPage: React.FC = () => {
         title="Zarządzanie Użytkownikami"
         actions={
           <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Suspense fallback={null}><AddIcon /></Suspense>}
+            variant="primary"
+            leftIcon={<Suspense fallback={null}><AddIcon /></Suspense>}
             onClick={handleOpenAddUserModal}
           >
             Dodaj Użytkownika
@@ -384,7 +379,7 @@ const UserManagementPage: React.FC = () => {
       )}
 
       <Dialog
-        open={addUserModalOpen}
+        open={dialogs.addOpen}
         onClose={handleCloseAddUserModal}
         PaperProps={{ sx: { borderRadius: 2, minWidth: { xs: '90%', sm: 400 } } }}
       >
@@ -424,14 +419,9 @@ const UserManagementPage: React.FC = () => {
           </Select>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseAddUserModal}>Anuluj</Button>
-          <Button
-            onClick={handleAddUser}
-            variant="contained"
-            color="primary"
-            disabled={addLoading}
-          >
-            {addLoading ? <CircularProgress size={20} /> : 'Dodaj'}
+          <Button variant="ghost" onClick={handleCloseAddUserModal}>Anuluj</Button>
+          <Button variant="primary" onClick={handleAddUser} loading={addLoading}>
+            Dodaj
           </Button>
         </DialogActions>
       </Dialog>

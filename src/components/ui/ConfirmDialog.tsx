@@ -15,7 +15,7 @@ interface ConfirmDialogProps {
   message: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmColor?: 'error' | 'primary' | 'warning';
+  confirmColor?: 'error' | 'primary' | 'warning' | 'success';
   loading?: boolean;
   onConfirm: () => void;
   onClose: () => void;

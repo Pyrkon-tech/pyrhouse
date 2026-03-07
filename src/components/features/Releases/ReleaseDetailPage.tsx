@@ -2,17 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
-  Button,
   Chip,
   Alert,
   CircularProgress,
   Paper,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Table,
   TableHead,
   TableRow,
   TableCell,
@@ -35,6 +29,9 @@ import {
 } from '../../../services/releaseService';
 import { useAuth } from '../../../hooks/useAuth';
 import { useNotification } from '../../../context/NotificationContext';
+import { Button } from '../../ui/Button';
+import { ConfirmDialog } from '../../ui/ConfirmDialog';
+import { DataTable } from '../../ui/DataTable';
 import type { ReleaseDetail, ReleaseAsset, ReleaseStock } from '../../../types/release.types';
 
 const formatDate = (dateStr: string | null) =>
@@ -307,7 +304,7 @@ const ReleaseDetailPage: React.FC = () => {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">{error ?? 'Nie znaleziono wydania'}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => navigate('/releases')}>
+        <Button variant="outline" sx={{ mt: 2 }} onClick={() => navigate('/releases')}>
           Wróć do listy
         </Button>
       </Box>
@@ -380,24 +377,18 @@ const ReleaseDetailPage: React.FC = () => {
           </Box>
 
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              startIcon={<PrintIcon />}
-              onClick={handlePrint}
-              size="small"
-            >
+            <Button variant="outline" size="sm" leftIcon={<PrintIcon />} onClick={handlePrint}>
               Drukuj / PDF
             </Button>
             {canEdit && !editMode && (
               <>
-                <Button variant="outlined" size="small" onClick={startEdit}>
+                <Button variant="outline" size="sm" onClick={startEdit}>
                   Edytuj
                 </Button>
                 <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  startIcon={<DeleteIcon />}
+                  variant="danger"
+                  size="sm"
+                  leftIcon={<DeleteIcon />}
                   onClick={() => setDeleteDialog(true)}
                 >
                   Usuń
@@ -406,26 +397,19 @@ const ReleaseDetailPage: React.FC = () => {
             )}
             {editMode && (
               <>
-                <Button variant="outlined" size="small" onClick={cancelEdit}>
+                <Button variant="ghost" size="sm" onClick={cancelEdit}>
                   Anuluj
                 </Button>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={saveEdit}
-                  disabled={saving}
-                  startIcon={saving ? <CircularProgress size={14} color="inherit" /> : undefined}
-                >
+                <Button variant="primary" size="sm" loading={saving} onClick={saveEdit}>
                   Zapisz zmiany
                 </Button>
               </>
             )}
             {isAdmin && release.status === 'draft' && !editMode && (
               <Button
-                variant="contained"
-                color="success"
-                size="small"
-                startIcon={<CheckCircleIcon />}
+                variant="primary"
+                size="sm"
+                leftIcon={<CheckCircleIcon />}
                 onClick={() => setConfirmDialog(true)}
               >
                 Potwierdź wydanie
@@ -482,7 +466,7 @@ const ReleaseDetailPage: React.FC = () => {
                 </Typography>
               )}
             </Typography>
-            <Table>
+            <DataTable size="medium">
               <TableHead>
                 <TableRow>
                   {editMode && <TableCell padding="checkbox" />}
@@ -523,7 +507,7 @@ const ReleaseDetailPage: React.FC = () => {
                   );
                 })}
               </TableBody>
-            </Table>
+            </DataTable>
           </Box>
         )}
 
@@ -540,7 +524,7 @@ const ReleaseDetailPage: React.FC = () => {
                 </Typography>
               )}
             </Typography>
-            <Table>
+            <DataTable size="medium">
               <TableHead>
                 <TableRow>
                   <TableCell>Kategoria</TableCell>
@@ -579,63 +563,49 @@ const ReleaseDetailPage: React.FC = () => {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </DataTable>
           </Box>
         )}
       </Box>
 
-      {/* Confirm dialog */}
-      <Dialog open={confirmDialog} onClose={() => !confirming && setConfirmDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Potwierdź wydanie sprzętu</DialogTitle>
-        <DialogContent>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            <strong>Uwaga:</strong> Po potwierdzeniu sprzęt zostanie trwale usunięty z magazynu. Operacji nie można cofnąć.
-          </Alert>
-          <Typography variant="body2">
-            Wydanie <strong>{release.reference}</strong> zostanie potwierdzone.
-            Łącznie: {release.summary.total_assets} szt. seryjnych +{' '}
-            {release.summary.total_stock_quantity} szt. nieseryjnych.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialog(false)} disabled={confirming}>
-            Anuluj
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={handleConfirm}
-            disabled={confirming}
-            startIcon={confirming ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
-          >
-            {confirming ? 'Potwierdzanie...' : 'Potwierdź i usuń z magazynu'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Confirm release dialog */}
+      <ConfirmDialog
+        open={confirmDialog}
+        onClose={() => setConfirmDialog(false)}
+        title="Potwierdź wydanie sprzętu"
+        message={
+          <>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <strong>Uwaga:</strong> Po potwierdzeniu sprzęt zostanie trwale usunięty z magazynu. Operacji nie można cofnąć.
+            </Alert>
+            <Typography variant="body2">
+              Wydanie <strong>{release.reference}</strong> zostanie potwierdzone.
+              Łącznie: {release.summary.total_assets} szt. seryjnych +{' '}
+              {release.summary.total_stock_quantity} szt. nieseryjnych.
+            </Typography>
+          </>
+        }
+        confirmLabel="Potwierdź i usuń z magazynu"
+        confirmColor="success"
+        loading={confirming}
+        onConfirm={handleConfirm}
+      />
 
       {/* Delete dialog */}
-      <Dialog open={deleteDialog} onClose={() => !deleting && setDeleteDialog(false)}>
-        <DialogTitle>Usuń wydanie</DialogTitle>
-        <DialogContent>
-          <Typography>
+      <ConfirmDialog
+        open={deleteDialog}
+        onClose={() => setDeleteDialog(false)}
+        title="Usuń wydanie"
+        message={
+          <>
             Czy na pewno chcesz usunąć wydanie <strong>{release.reference}</strong>? Sprzęt pozostanie w magazynie.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialog(false)} disabled={deleting}>
-            Anuluj
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDelete}
-            disabled={deleting}
-            startIcon={deleting ? <CircularProgress size={14} color="inherit" /> : <DeleteIcon />}
-          >
-            Usuń
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </>
+        }
+        confirmLabel="Usuń"
+        confirmColor="error"
+        loading={deleting}
+        onConfirm={handleDelete}
+      />
     </>
   );
 };

@@ -486,6 +486,33 @@ const createTableComponents = (mode: 'light' | 'dark'): Components<Omit<Theme, '
       },
     },
   },
+  MuiToggleButton: {
+    styleOverrides: {
+      root: {
+        textTransform: 'none' as const,
+        fontWeight: designTokens.typography.fontWeight.medium,
+        fontSize: '0.85rem',
+        borderColor: `rgba(${mode === 'dark' ? '255,152,0' : '255,152,0'},0.25)`,
+        color: mode === 'dark'
+          ? 'rgba(255,255,255,0.6)'
+          : 'rgba(0,0,0,0.55)',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          backgroundColor: 'rgba(255,152,0,0.08)',
+          borderColor: 'rgba(255,152,0,0.5)',
+          color: designTokens.colors.primary[500],
+        },
+        '&.Mui-selected': {
+          color: designTokens.colors.primary[500],
+          backgroundColor: 'rgba(255,152,0,0.12)',
+          borderColor: 'rgba(255,152,0,0.55)',
+          '&:hover': {
+            backgroundColor: 'rgba(255,152,0,0.2)',
+          },
+        },
+      },
+    },
+  },
 });
 
 // Podstawowy motyw

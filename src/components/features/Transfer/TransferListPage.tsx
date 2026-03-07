@@ -6,7 +6,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Button,
   Chip,
   TextField,
   Card,
@@ -20,9 +19,10 @@ import {
   FormControl,
 } from '@mui/material';
 import { DataTable } from '../../ui/DataTable';
+import { Button } from '../../ui/Button';
+import { AppSnackbar, PageHeader, EmptyState } from '../../ui';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTransfers } from '../../../hooks/useTransfers';
-import { AppSnackbar } from '../../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../../hooks/useSnackbarMessage';
 import debounce from 'lodash/debounce';
 import LoadingSkeleton from '../../ui/LoadingSkeleton';
@@ -54,20 +54,18 @@ const TransfersListPage: React.FC = () => {
     const froms = transfers.map(t => t.from_location);
     const tos = transfers.map(t => t.to_location);
     const all = [...froms, ...tos];
-    // Unikalne lokalizacje po id
     return all.filter((loc, idx, arr) => arr.findIndex(l => l.id === loc.id) === idx);
   }, [transfers]);
 
-  // Pobierz dane tylko raz przy montowaniu komponentu
   useEffect(() => {
     refreshTransfers();
-  }, []); // Usunięto zależność od refreshTransfers
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (error) {
       showSnackbar('error', error);
     }
-  }, [error]);
+  }, [error]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Przy starcie: ustaw filtry na podstawie query params
   useEffect(() => {
@@ -79,25 +77,16 @@ const TransfersListPage: React.FC = () => {
 
     if (fromId && allLocations.length) {
       const found = allLocations.find(l => String(l.id) === fromId);
-      if (
-        found
-      ) {
-        setFromLocationFilter(found as Location);
-      }
+      if (found) setFromLocationFilter(found as Location);
     }
     if (toId && allLocations.length) {
       const found = allLocations.find(l => String(l.id) === toId);
-      if (
-        found
-      ) {
-        setToLocationFilter(found as Location);
-      }
+      if (found) setToLocationFilter(found as Location);
     }
     setDateFilter(date);
     setStatusFilter(status);
     setSearchQuery(q);
-    // eslint-disable-next-line
-  }, [allLocations]);
+  }, [allLocations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Aktualizuj query params przy każdej zmianie filtrów
   useEffect(() => {
@@ -108,10 +97,8 @@ const TransfersListPage: React.FC = () => {
     if (statusFilter) params.status = statusFilter;
     if (searchQuery) params.q = searchQuery;
     setSearchParams(params, { replace: true });
-    // eslint-disable-next-line
-  }, [fromLocationFilter, toLocationFilter, dateFilter, statusFilter, searchQuery]);
+  }, [fromLocationFilter, toLocationFilter, dateFilter, statusFilter, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Zoptymalizowane wyszukiwanie z debounce
   const debouncedSearch = useCallback(
     debounce((query: string) => {
       setSearchQuery(query);
@@ -123,7 +110,6 @@ const TransfersListPage: React.FC = () => {
     return Array.from(new Set(transfers.map(t => new Date(t.transfer_date).toLocaleDateString('pl-PL'))));
   }, [transfers]);
 
-  // Sort transfers by date (newest first) and then by status
   const sortedTransfers = React.useMemo(() => {
     return [...transfers]
       .sort((a, b) => {
@@ -139,47 +125,61 @@ const TransfersListPage: React.FC = () => {
         transfer.to_location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         transfer.status.toLowerCase().includes(searchQuery.toLowerCase())
       )
-      .filter(transfer => {
-        if (fromLocationFilter) {
-          return transfer.from_location.id === fromLocationFilter.id;
-        }
-        return true;
-      })
-      .filter(transfer => {
-        if (toLocationFilter) {
-          return transfer.to_location.id === toLocationFilter.id;
-        }
-        return true;
-      })
-      .filter(transfer => {
-        if (dateFilter) {
-          const transferDate = new Date(transfer.transfer_date).toLocaleDateString('pl-PL');
-          return transferDate === dateFilter;
-        }
-        return true;
-      })
-      .filter(transfer => {
-        if (statusFilter) {
-          return transfer.status === statusFilter;
-        }
-        return true;
-      });
+      .filter(transfer => !fromLocationFilter || transfer.from_location.id === fromLocationFilter.id)
+      .filter(transfer => !toLocationFilter || transfer.to_location.id === toLocationFilter.id)
+      .filter(transfer => !dateFilter || new Date(transfer.transfer_date).toLocaleDateString('pl-PL') === dateFilter)
+      .filter(transfer => !statusFilter || transfer.status === statusFilter);
   }, [transfers, searchQuery, fromLocationFilter, toLocationFilter, dateFilter, statusFilter]);
 
   const getStatusChip = (status: string) => {
     switch (status) {
       case 'in_transit':
-        return <Chip icon={<LocalShippingIcon />} label="W trasie" color="warning" sx={{ animation: 'pulse 2s infinite' }} />;
+        return (
+          <Chip
+            icon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
+            label="W trasie"
+            color="warning"
+            sx={{ animation: 'pulse 2s infinite' }}
+          />
+        );
       case 'completed':
-        return <Chip icon={<CheckCircleIcon />} label="Dostarczony" color="success" />;
+        return (
+          <Chip
+            icon={<Suspense fallback={null}><CheckCircleIcon /></Suspense>}
+            label="Dostarczony"
+            color="success"
+          />
+        );
       case 'created':
-        return <Chip icon={<HourglassEmptyIcon />} label="Utworzony" color="default" />;
+        return (
+          <Chip
+            icon={<Suspense fallback={null}><HourglassEmptyIcon /></Suspense>}
+            label="Utworzony"
+            color="default"
+          />
+        );
       case 'cancelled':
-        return <Chip icon={<CancelIcon />} label="Anulowany" color="error" />;
+        return (
+          <Chip
+            icon={<Suspense fallback={null}><CancelIcon /></Suspense>}
+            label="Anulowany"
+            color="error"
+          />
+        );
       default:
         return <Chip label="Unknown" />;
     }
   };
+
+  const clearFilters = () => {
+    setFromLocationFilter(null);
+    setToLocationFilter(null);
+    setDateFilter('');
+    setStatusFilter('');
+    setSearchQuery('');
+  };
+
+  const hasActiveFilters = !!(fromLocationFilter || toLocationFilter || dateFilter || statusFilter || searchQuery);
 
   const renderTable = () => (
     <DataTable>
@@ -190,7 +190,6 @@ const TransfersListPage: React.FC = () => {
           <TableCell>Do lokalizacji</TableCell>
           <TableCell>Data transferu</TableCell>
           <TableCell>Status</TableCell>
-          <TableCell align="center">Akcje</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -214,18 +213,6 @@ const TransfersListPage: React.FC = () => {
               {new Date(transfer.transfer_date).toLocaleString('pl-PL')}
             </TableCell>
             <TableCell>{getStatusChip(transfer.status)}</TableCell>
-            <TableCell align="center">
-              <Button
-                variant="text"
-                color="primary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/transfers/${transfer.id}`);
-                }}
-              >
-                Szczegóły
-              </Button>
-            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -236,16 +223,13 @@ const TransfersListPage: React.FC = () => {
     <Grid container spacing={2}>
       {sortedTransfers.map((transfer) => (
         <Grid item xs={12} key={transfer.id}>
-          <Card 
-            sx={{ 
+          <Card
+            sx={{
               borderRadius: 2,
               boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
               bgcolor: transfer.status === 'in_transit' ? 'rgba(237, 108, 2, 0.1)' : 'inherit',
-              '&:hover': {
-                bgcolor: 'action.hover',
-                cursor: 'pointer',
-              },
-              transition: 'background-color 0.2s ease'
+              '&:hover': { bgcolor: 'action.hover', cursor: 'pointer' },
+              transition: 'background-color 0.2s ease',
             }}
             onClick={() => navigate(`/transfers/${transfer.id}`)}
           >
@@ -256,20 +240,18 @@ const TransfersListPage: React.FC = () => {
                 </Typography>
                 {getStatusChip(transfer.status)}
               </Box>
-              
+
               <Divider sx={{ my: 1 }} />
-              
+
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Z lokalizacji:</Typography>
                   <Typography variant="body2" fontWeight="bold">{transfer.from_location.name}</Typography>
                 </Box>
-                
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Do lokalizacji:</Typography>
                   <Typography variant="body2" fontWeight="bold">{transfer.to_location.name}</Typography>
                 </Box>
-                
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Data:</Typography>
                   <Typography variant="body2">
@@ -285,13 +267,13 @@ const TransfersListPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ 
-      margin: '0 auto', 
+    <Box sx={{
+      margin: '0 auto',
       padding: { xs: 2, sm: 3, md: 3 },
       maxWidth: '1400px',
       backgroundColor: 'background.paper',
       borderRadius: 2,
-      boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
     }}>
       <AppSnackbar
         open={snackbar.open}
@@ -301,43 +283,21 @@ const TransfersListPage: React.FC = () => {
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        marginBottom: 3,
-        gap: 2,
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        pb: 2
-      }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{ 
-            fontWeight: 600,
-            color: 'primary.main',
-            mb: { xs: 1, sm: 0 }
-          }}
-        >
-          Questy transportowe
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Suspense fallback={null}><AddIcon /></Suspense>}
-          onClick={() => navigate('/transfers/create')}
-          sx={{
-            borderRadius: 1,
-            px: 3
-          }}
-        >
-          Utwórz Nowy Quest
-        </Button>
-      </Box>
 
+      <PageHeader
+        title="Questy transportowe"
+        actions={
+          <Button
+            variant="primary"
+            leftIcon={<Suspense fallback={null}><AddIcon /></Suspense>}
+            onClick={() => navigate('/transfers/create')}
+          >
+            Utwórz Nowy Quest
+          </Button>
+        }
+      />
+
+      {/* Filtry */}
       <Box
         sx={{
           display: 'flex',
@@ -348,7 +308,7 @@ const TransfersListPage: React.FC = () => {
           backgroundColor: 'background.default',
           borderRadius: 1,
           p: { xs: 1, sm: 1.5 },
-          boxShadow: '0 1px 4px rgba(0,0,0,0.03)'
+          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
         }}
       >
         <TextField
@@ -360,7 +320,7 @@ const TransfersListPage: React.FC = () => {
             startAdornment: (
               <SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} />
             ),
-            sx: { borderRadius: 1 }
+            sx: { borderRadius: 1 },
           }}
           sx={{ minWidth: 150, maxWidth: 220, flex: 2 }}
         />
@@ -415,21 +375,15 @@ const TransfersListPage: React.FC = () => {
             <MenuItem value="cancelled">Anulowany</MenuItem>
           </Select>
         </FormControl>
-        {(fromLocationFilter || toLocationFilter || dateFilter || statusFilter || searchQuery) && (
+        {hasActiveFilters && (
           <Button
-            size="small"
-            variant="outlined"
-            color="secondary"
-            onClick={() => {
-              setFromLocationFilter(null);
-              setToLocationFilter(null);
-              setDateFilter('');
-              setStatusFilter('');
-              setSearchQuery('');
-            }}
-            sx={{ ml: 1, minWidth: 36, px: 1 }}
+            variant="outline"
+            size="sm"
+            leftIcon={<ClearAllIcon fontSize="small" />}
+            onClick={clearFilters}
+            sx={{ ml: 1 }}
           >
-            <ClearAllIcon fontSize="small" />
+            Wyczyść
           </Button>
         )}
       </Box>
@@ -437,33 +391,11 @@ const TransfersListPage: React.FC = () => {
       {loading ? (
         <LoadingSkeleton />
       ) : sortedTransfers.length === 0 ? (
-        <Box sx={{ 
-          textAlign: 'center', 
-          p: 5,
-          backgroundColor: 'background.default',
-          borderRadius: 2,
-          border: '1px dashed',
-          borderColor: 'divider'
-        }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Brak questów
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Utwórz nowy transfer, aby rozpocząć'}
-          </Typography>
-          {searchQuery && (
-            <Button 
-              variant="outlined" 
-              onClick={() => setSearchQuery('')}
-              sx={{ 
-                borderRadius: 1,
-                px: 3
-              }}
-            >
-              Wyczyść wyszukiwanie
-            </Button>
-          )}
-        </Box>
+        <EmptyState
+          message="Brak questów"
+          description={searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Utwórz nowy transfer, aby rozpocząć'}
+          action={hasActiveFilters ? { label: 'Wyczyść filtry', onClick: clearFilters } : undefined}
+        />
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}

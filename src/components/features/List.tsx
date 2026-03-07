@@ -11,7 +11,6 @@ import {
   Select,
   MenuItem,
   Chip,
-  Button,
   CircularProgress,
   Card,
   CardContent,
@@ -27,6 +26,7 @@ import {
   FormControl,
 } from '@mui/material';
 import { DataTable } from '../ui/DataTable';
+import { Button } from '../ui/Button';
 import { AppSnackbar, PageHeader, PageLoader, EmptyState } from '../ui';
 import { useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
@@ -74,7 +74,6 @@ const HomeIcon = lazy(() => import('@mui/icons-material/Home'));
 const Inventory2Icon = lazy(() => import('@mui/icons-material/Inventory2'));
 const ClearAllIcon = lazy(() => import('@mui/icons-material/ClearAll'));
 const SearchIcon = lazy(() => import('@mui/icons-material/Search'));
-const CategoryIcon = lazy(() => import('@mui/icons-material/Category'));
 
 const EquipmentList: React.FC = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -126,6 +125,14 @@ const EquipmentList: React.FC = () => {
     setCategoryType('');
     setActiveQuickFilters(new Set());
   };
+
+  const hasActiveFilters = !!(
+    filter ||
+    selectedLocations.length > 0 ||
+    selectedCategory ||
+    categoryType ||
+    activeQuickFilters.size > 0
+  );
 
   // Funkcja do pobierania raportu
   const handleDownloadReport = async (type: 'assets' | 'stock') => {
@@ -236,11 +243,13 @@ const EquipmentList: React.FC = () => {
       filtered = filtered.filter(item => item.type === categoryType);
     }
 
-    // Filtrowanie po PYR_CODE
+    // Filtrowanie po PYR_CODE, origin i serial
     if (filter.trim()) {
-      const lowercasedFilter = filter.toLowerCase();
+      const q = filter.toLowerCase();
       filtered = filtered.filter(item =>
-        item.pyr_code?.toLowerCase().includes(lowercasedFilter)
+        item.pyr_code?.toLowerCase().includes(q) ||
+        item.origin?.toLowerCase().includes(q) ||
+        item.serial?.toLowerCase().includes(q)
       );
     }
 
@@ -314,8 +323,8 @@ const EquipmentList: React.FC = () => {
     <DataTable>
       <TableHead>
         <TableRow>
-          {['ID', 'Typ', 'Lokalizacja', 'Status', 'Ilość/PYR_CODE', 'Pochodzenie'].map((field) => (
-            <TableCell key={field}>{field.toUpperCase()}</TableCell>
+          {['PYR CODE', 'KATEGORIA', 'LOKALIZACJA', 'STATUS / ILOŚĆ', 'POCHODZENIE'].map((field) => (
+            <TableCell key={field}>{field}</TableCell>
           ))}
         </TableRow>
       </TableHead>
@@ -328,21 +337,14 @@ const EquipmentList: React.FC = () => {
               bgcolor: item.state === 'in_transit' ? 'rgba(222, 198, 49, 0.1)' : undefined,
             }}
             onClick={() => navigate(`/equipment/${item.id}?type=${item.type}`)}
-            aria-label={`Szczegóły dla elementu ${item.id}`}
+            aria-label={`Szczegóły dla elementu ${item.pyr_code || item.id}`}
           >
             <TableCell>
-              <Typography component="div" sx={{ fontWeight: 500 }}>
-                {String(item.id)}
+              <Typography component="div" sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                {item.type === 'asset' ? (item.pyr_code || '—') : '—'}
                 {item.serial === null && (
                   <Tooltip title="Sprzęt wymaga aktualizacji numeru seryjnego">
-                    <WarningIcon
-                      sx={{
-                        ml: 1,
-                        color: 'warning.main',
-                        fontSize: '1rem',
-                        verticalAlign: 'middle'
-                      }}
-                    />
+                    <WarningIcon sx={{ color: 'warning.main', fontSize: '1rem', verticalAlign: 'middle' }} />
                   </Tooltip>
                 )}
               </Typography>
@@ -354,23 +356,14 @@ const EquipmentList: React.FC = () => {
             </TableCell>
             <TableCell>
               <Typography component="div">
-                {item.location.pavilion ? `Paw ${item.location.pavilion} | ` : ''}{item.location.name} 
+                {item.location.pavilion ? `Paw ${item.location.pavilion} | ` : ''}{item.location.name}
               </Typography>
             </TableCell>
             <TableCell>
-              {item.type === 'asset' ? renderStatusOrQuantity(item) : '-'}
+              {renderStatusOrQuantity(item)}
             </TableCell>
             <TableCell>
-              {item.type === 'stock' ? renderStatusOrQuantity(item) : (
-                <Typography component="div">
-                  {item.pyr_code || '-'}
-                </Typography>
-              )}
-            </TableCell>
-            <TableCell>
-              <Typography component="div">
-                {item.origin}
-              </Typography>
+              <Typography component="div">{item.origin}</Typography>
             </TableCell>
           </TableRow>
         ))}
@@ -403,59 +396,43 @@ const EquipmentList: React.FC = () => {
           >
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant="h6" component="div" sx={{ fontWeight: 500, display: 'flex', alignItems: 'center' }}>
+                <Typography variant="h6" component="div" sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   {item.serial === null && (
                     <Tooltip title="Sprzęt wymaga aktualizacji numeru seryjnego">
-                      <WarningIcon 
-                        sx={{ 
-                          ml: 1, 
-                          color: 'warning.main',
-                          fontSize: '1.1rem',
-                          verticalAlign: 'middle'
-                        }} 
-                      />
+                      <WarningIcon sx={{ color: 'warning.main', fontSize: '1.1rem' }} />
                     </Tooltip>
                   )}
-                  ID: {String(item.id)}
+                  {item.type === 'asset' && item.pyr_code ? item.pyr_code : `#${item.id}`}
                 </Typography>
-                <Chip 
-                  label={item.type === 'asset' ? 'Sprzęt' : 'Materiały'} 
-                  size="small" 
+                <Chip
+                  label={item.type === 'asset' ? 'Sprzęt' : 'Materiały'}
+                  size="small"
                   color={item.type === 'asset' ? 'primary' : 'secondary'}
                 />
               </Box>
-              
+
               <Divider sx={{ my: 1 }} />
-              
+
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Typ:</Typography>
+                  <Typography variant="body2" color="text.secondary">Kategoria:</Typography>
                   <Typography variant="body2">
                     {typeof item.category === 'string' ? item.category : (item.category as any).label}
                   </Typography>
                 </Box>
-                
+
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Lokalizacja:</Typography>
                   <Typography variant="body2">{item.location.name} {item.location.pavilion ? `(${item.location.pavilion})` : ''}</Typography>
                 </Box>
-                
-                {item.type === 'asset' && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Status:</Typography>
-                    {renderStatusOrQuantity(item)}
-                  </Box>
-                )}
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="body2" color="text.secondary">
-                    {item.type === 'stock' ? 'Ilość:' : 'PYR_CODE:'}
+                    {item.type === 'stock' ? 'Ilość:' : 'Status:'}
                   </Typography>
-                  {item.type === 'stock' ? renderStatusOrQuantity(item) : (
-                    <Typography variant="body2">{item.pyr_code || '-'}</Typography>
-                  )}
+                  {renderStatusOrQuantity(item)}
                 </Box>
-                
+
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Pochodzenie:</Typography>
                   <Typography variant="body2">{item.origin}</Typography>
@@ -504,9 +481,9 @@ const EquipmentList: React.FC = () => {
               </>
             )}
             <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Suspense fallback={null}><ClearAllIcon /></Suspense>}
+              variant="outline"
+              size="sm"
+              leftIcon={<Suspense fallback={null}><ClearAllIcon /></Suspense>}
               onClick={clearAllFilters}
             >
               Wyczyść filtry
@@ -515,200 +492,146 @@ const EquipmentList: React.FC = () => {
         }
       />
 
-      {/* Sekcja filtrów */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        gap: 2,
-        marginBottom: 3,
-        backgroundColor: 'background.default',
-        borderRadius: 2,
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden'
-      }}>
-        {/* Nagłówek sekcji filtrów */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+      {/* Filtry — wiersz 1: szukajka + lokalizacja + kategoria + wyczyść */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1.5,
           alignItems: 'center',
-          p: 1.5,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-            Filtry
-          </Typography>
-        </Box>
-        
-        {/* Szybkie filtry semantyczne */}
-        <Box sx={{ pt: 1, pb: 1, pl: 1.5, pr: 1.5 }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-            Szybkie filtry
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            <Chip
-              label="W trasie"
-              icon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
-              size="small"
-              color={activeQuickFilters.has('in_transit') ? 'warning' : 'default'}
-              variant={activeQuickFilters.has('in_transit') ? 'filled' : 'outlined'}
-              onClick={() => toggleQuickFilter('in_transit')}
-              sx={{ cursor: 'pointer', fontWeight: activeQuickFilters.has('in_transit') ? 600 : 400 }}
-              aria-label="Filtr: W trasie"
-            />
-            <Chip
-              label="Sprzęt (assets)"
-              icon={<Suspense fallback={null}><CheckCircleIcon /></Suspense>}
-              size="small"
-              color={categoryType === 'asset' ? 'primary' : 'default'}
-              variant={categoryType === 'asset' ? 'filled' : 'outlined'}
-              onClick={() => toggleCategoryType('asset')}
-              sx={{ cursor: 'pointer', fontWeight: categoryType === 'asset' ? 600 : 400 }}
-              aria-label="Filtr: Tylko sprzęt"
-            />
-            <Chip
-              label="Zasoby (stock)"
-              icon={<Suspense fallback={null}><Inventory2Icon /></Suspense>}
-              size="small"
-              color={categoryType === 'stock' ? 'secondary' : 'default'}
-              variant={categoryType === 'stock' ? 'filled' : 'outlined'}
-              onClick={() => toggleCategoryType('stock')}
-              sx={{ cursor: 'pointer', fontWeight: categoryType === 'stock' ? 600 : 400 }}
-              aria-label="Filtr: Tylko zasoby"
-            />
-            <Chip
-              label="Brak seryjnego"
-              icon={<WarningIcon />}
-              size="small"
-              color={activeQuickFilters.has('no_serial') ? 'warning' : 'default'}
-              variant={activeQuickFilters.has('no_serial') ? 'filled' : 'outlined'}
-              onClick={() => toggleQuickFilter('no_serial')}
-              sx={{ cursor: 'pointer', fontWeight: activeQuickFilters.has('no_serial') ? 600 : 400 }}
-              aria-label="Filtr: Brak numeru seryjnego"
-            />
-          </Box>
-        </Box>
-        
-        {/* Zaawansowane filtry */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', md: 'row' }, 
-          gap: 2, 
-          p: 1.5,
-          borderTop: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper',
-          alignItems: { xs: 'stretch', md: 'flex-end' },
-        }}>
-          <TextField
-            label="Filtruj po PYR_CODE"
-            variant="outlined"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            size="small"
-            sx={{ 
-              minWidth: { xs: '100%', md: 220 },
-              maxWidth: 300,
-              flexBasis: 0,
-              flexGrow: 1,
-            }}
-            aria-label="Filtruj po kodzie PYR"
-            InputProps={{
-              sx: { 
-                borderRadius: 1,
-                height: '36px',
-                '& input': {
-                  height: '36px',
-                  padding: '0 12px',
-                }
-              },
-              startAdornment: (
-                <Suspense fallback={null}><SearchIcon /></Suspense>
-              )
-            }}
-          />
-          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 }, maxWidth: 300, flexBasis: 0, flexGrow: 1 }}>
-            <InputLabel id="location-select-label">Filtruj po lokalizacjach</InputLabel>
-            <Select
-              labelId="location-select-label"
-              multiple
-              value={selectedLocations.map(l => l.id)}
-              onChange={e => {
-                const ids = e.target.value as number[];
-                setSelectedLocations(locations.filter(loc => ids.includes(loc.id)));
-              }}
-              label="Filtruj po lokalizacjach"
-              renderValue={(selected) => {
-                const ids = selected as number[];
-                const names = locations.filter(loc => ids.includes(loc.id)).map(loc => loc.name);
-                return names.join(', ');
-              }}
-              sx={{ minWidth: { xs: '100%', md: 220 }, maxWidth: 300, flexBasis: 0, flexGrow: 1, borderRadius: 0 }}
-              aria-label="Wybierz lokalizacje"
-            >
-              {locations.map((loc) => (
-                <MenuItem key={loc.id} value={loc.id}>
-                  <Checkbox checked={selectedLocations.some(l => l.id === loc.id)} />
-                  <ListItemText primary={loc.name} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Autocomplete<Category, false, false, false>
-            options={categories}
-            getOptionLabel={(option: Category) => option.label}
-            value={selectedCategory}
-            loading={categoriesLoading}
-            onChange={(_, value) => setSelectedCategory(value)}
-            size="small"
-            renderInput={(params) => (
-              <TextField 
-                {...params} 
-                label="Filtruj po kategorii" 
-                variant="outlined"
-                InputProps={{
-                  ...params.InputProps,
-                  sx: { borderRadius: 1 },
-                  startAdornment: (
-                    <Suspense fallback={null}><CategoryIcon /></Suspense>
-                  ),
-                  endAdornment: (
-                    <>
-                      {categoriesLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            renderOption={(props, option: Category) => (
-              <li {...props}>
-                <Typography component="span">{option.label}</Typography>
-              </li>
-            )}
-            isOptionEqualToValue={(option: Category | null, value: Category | null) => option?.id === value?.id}
-            sx={{ flex: 1, minWidth: { xs: '100%', md: 220 }, maxWidth: 300, flexBasis: 0, flexGrow: 1 }}
-            
-            aria-label="Wybierz kategorię"
-          />
+          mb: 1.5,
+          backgroundColor: 'background.default',
+          borderRadius: 1,
+          p: { xs: 1, sm: 1.5 },
+          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+        }}
+      >
+        <TextField
+          size="small"
+          placeholder="Szukaj po PYR code, kodzie lub pochodzeniu..."
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <Suspense fallback={null}><SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} /></Suspense>
+            ),
+            sx: { borderRadius: 1 },
+          }}
+          sx={{ flex: 2, minWidth: 200, maxWidth: 320 }}
+          aria-label="Wyszukaj sprzęt"
+        />
+        <FormControl size="small" sx={{ flex: 1, minWidth: 150, maxWidth: 260 }}>
+          <InputLabel id="location-select-label">Lokalizacja</InputLabel>
           <Select
-            value={categoryType}
-            onChange={(e) => setCategoryType(e.target.value as 'asset' | 'stock')}
-            displayEmpty
-            size="small"
-            sx={{ 
-              flex: { xs: 1, md: 0.5 },
-              borderRadius: 0
+            labelId="location-select-label"
+            multiple
+            value={selectedLocations.map(l => l.id)}
+            onChange={e => {
+              const ids = e.target.value as number[];
+              setSelectedLocations(locations.filter(loc => ids.includes(loc.id)));
             }}
-            aria-label="Wybierz typ kategorii"
+            label="Lokalizacja"
+            renderValue={(selected) => {
+              const ids = selected as number[];
+              const names = locations.filter(loc => ids.includes(loc.id)).map(loc => loc.name);
+              return names.length === 1 ? names[0] : `${names.length} lokalizacje`;
+            }}
           >
-            <MenuItem value="">Wszystkie typy</MenuItem>
-            <MenuItem value="asset">Sprzęt (z pyr_code)</MenuItem>
-            <MenuItem value="stock">Zasoby (ilościowe)</MenuItem>
+            {locations.map((loc) => (
+              <MenuItem key={loc.id} value={loc.id}>
+                <Checkbox checked={selectedLocations.some(l => l.id === loc.id)} />
+                <ListItemText primary={loc.name} />
+              </MenuItem>
+            ))}
           </Select>
-        </Box>
+        </FormControl>
+        <Autocomplete<Category, false, false, false>
+          options={categories}
+          getOptionLabel={(option: Category) => option.label}
+          value={selectedCategory}
+          loading={categoriesLoading}
+          onChange={(_, value) => setSelectedCategory(value)}
+          size="small"
+          isOptionEqualToValue={(option: Category | null, value: Category | null) => option?.id === value?.id}
+          sx={{ flex: 1, minWidth: 150, maxWidth: 260 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Kategoria"
+              variant="outlined"
+              InputProps={{
+                ...params.InputProps,
+                sx: { borderRadius: 1 },
+                endAdornment: (
+                  <>
+                    {categoriesLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          renderOption={(props, option: Category) => (
+            <li {...props}>
+              <Typography component="span">{option.label}</Typography>
+            </li>
+          )}
+          aria-label="Wybierz kategorię"
+        />
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Suspense fallback={null}><ClearAllIcon fontSize="small" /></Suspense>}
+            onClick={clearAllFilters}
+          >
+            Wyczyść
+          </Button>
+        )}
+      </Box>
+
+      {/* Filtry — wiersz 2: szybkie filtry */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+        <Chip
+          label="Sprzęt"
+          icon={<Suspense fallback={null}><CheckCircleIcon /></Suspense>}
+          size="small"
+          color={categoryType === 'asset' ? 'primary' : 'default'}
+          variant={categoryType === 'asset' ? 'filled' : 'outlined'}
+          onClick={() => toggleCategoryType('asset')}
+          sx={{ cursor: 'pointer', fontWeight: categoryType === 'asset' ? 600 : 400 }}
+          aria-label="Filtr: Tylko sprzęt"
+        />
+        <Chip
+          label="Zasoby"
+          icon={<Suspense fallback={null}><Inventory2Icon /></Suspense>}
+          size="small"
+          color={categoryType === 'stock' ? 'secondary' : 'default'}
+          variant={categoryType === 'stock' ? 'filled' : 'outlined'}
+          onClick={() => toggleCategoryType('stock')}
+          sx={{ cursor: 'pointer', fontWeight: categoryType === 'stock' ? 600 : 400 }}
+          aria-label="Filtr: Tylko zasoby"
+        />
+        <Chip
+          label="W trasie"
+          icon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
+          size="small"
+          color={activeQuickFilters.has('in_transit') ? 'warning' : 'default'}
+          variant={activeQuickFilters.has('in_transit') ? 'filled' : 'outlined'}
+          onClick={() => toggleQuickFilter('in_transit')}
+          sx={{ cursor: 'pointer', fontWeight: activeQuickFilters.has('in_transit') ? 600 : 400 }}
+          aria-label="Filtr: W trasie"
+        />
+        <Chip
+          label="Brak seryjnego"
+          icon={<WarningIcon />}
+          size="small"
+          color={activeQuickFilters.has('no_serial') ? 'warning' : 'default'}
+          variant={activeQuickFilters.has('no_serial') ? 'filled' : 'outlined'}
+          onClick={() => toggleQuickFilter('no_serial')}
+          sx={{ cursor: 'pointer', fontWeight: activeQuickFilters.has('no_serial') ? 600 : 400 }}
+          aria-label="Filtr: Brak numeru seryjnego"
+        />
       </Box>
 
       {loading ? (

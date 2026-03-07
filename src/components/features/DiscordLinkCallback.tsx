@@ -1,26 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  Paper,
-  Button,
-  Alert,
-  Container,
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Box, Typography, CircularProgress, Alert } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { discordAuthService } from '../../services/discordAuthService';
 import { linkDiscordAPI } from '../../services/userService';
 import { ApiError } from '../../services/apiClient';
-import pyrkonLogo from '../../assets/images/p-logo.svg';
+import { Button } from '../ui/Button';
+import SystemInitAnimation from '../animations/SystemInitAnimation';
 
 const DiscordLinkCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const theme = useTheme();
   const hasProcessed = useRef(false);
+  const [animDone, setAnimDone] = useState(false);
 
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,131 +87,85 @@ const DiscordLinkCallback: React.FC = () => {
   }, [code, state, urlError]);
 
   const handleGoToProfile = () => {
-    if (targetUserId) {
-      navigate(`/users/${targetUserId}`);
-    } else {
-      navigate('/users');
-    }
+    if (targetUserId) navigate(`/users/${targetUserId}`);
+    else navigate('/users');
   };
 
-  const handleGoBack = () => {
-    navigate(-1);
-  };
+  const handleGoBack = () => navigate(-1);
+
+  // Always show animation first — same experience as regular login
+  if (!animDone) {
+    return <SystemInitAnimation onComplete={() => setAnimDone(true)} />;
+  }
+
+  // Still waiting for backend after animation finished
+  if (isProcessing && !error && !success) {
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          bgcolor: '#0f0f23',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <CircularProgress sx={{ color: '#ff9800' }} />
+        <Typography
+          sx={{
+            color: 'rgba(255,152,0,0.6)',
+            fontFamily: 'monospace',
+            letterSpacing: '0.1em',
+            fontSize: '0.7rem',
+          }}
+        >
+          ŁĄCZENIE DISCORD...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
       sx={{
+        position: 'fixed',
+        inset: 0,
+        bgcolor: '#0f0f23',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
-        backgroundColor: theme.palette.background.default,
-        backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.background.default} 100%)`,
       }}
     >
-      <Container maxWidth="sm">
-        <Paper
-          elevation={6}
-          sx={{
-            p: 4,
-            borderRadius: 1,
-            textAlign: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, #5865F2, ${theme.palette.primary.main})`,
-            },
-          }}
-        >
-          <Box
-            component="img"
-            src={pyrkonLogo}
-            alt="Pyrkon Logo"
-            sx={{
-              height: '60px',
-              width: 'auto',
-              mb: 2,
-              filter:
-                theme.palette.mode === 'light'
-                  ? 'invert(1) brightness(1.2)'
-                  : 'none',
-            }}
-          />
+      <Box sx={{ p: 4, maxWidth: 440, textAlign: 'center' }}>
+        {success && (
+          <>
+            <CheckCircleOutlineIcon sx={{ fontSize: 64, color: 'success.main', mb: 1 }} />
+            <Alert severity="success" sx={{ mb: 3, textAlign: 'left' }}>
+              Konto Discord zostało pomyślnie połączone!
+            </Alert>
+            <Button variant="primary" onClick={handleGoToProfile}>
+              Przejdź do profilu
+            </Button>
+          </>
+        )}
 
-          <Typography
-            variant="h5"
-            component="h1"
-            gutterBottom
-            sx={{
-              fontWeight: 700,
-              background: `linear-gradient(90deg, #5865F2, ${theme.palette.primary.main})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Łączenie konta z Discord
-          </Typography>
-
-          {isProcessing && (
-            <Box sx={{ mt: 3 }}>
-              <CircularProgress sx={{ color: '#5865F2' }} size={48} />
-              <Typography variant="body1" sx={{ mt: 2 }} color="text.secondary">
-                Trwa łączenie kont...
-              </Typography>
+        {error && (
+          <>
+            <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
+              {error}
+            </Alert>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button variant="outline" onClick={handleGoBack}>Wróć</Button>
+              {targetUserId && (
+                <Button variant="primary" onClick={handleGoToProfile}>Profil użytkownika</Button>
+              )}
             </Box>
-          )}
-
-          {success && (
-            <Box sx={{ mt: 3 }}>
-              <CheckCircleOutlineIcon sx={{ fontSize: 64, color: 'success.main', mb: 1 }} />
-              <Alert severity="success" sx={{ mb: 3, textAlign: 'left' }}>
-                Konto Discord zostało pomyślnie połączone!
-              </Alert>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleGoToProfile}
-                sx={{ py: 1.5, px: 4, fontWeight: 600 }}
-              >
-                Przejdź do profilu
-              </Button>
-            </Box>
-          )}
-
-          {error && (
-            <Box sx={{ mt: 3 }}>
-              <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
-                {error}
-              </Alert>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-                <Button
-                  variant="outlined"
-                  onClick={handleGoBack}
-                  sx={{ py: 1.5, px: 3, fontWeight: 600 }}
-                >
-                  Wróć
-                </Button>
-                {targetUserId && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleGoToProfile}
-                    sx={{ py: 1.5, px: 3, fontWeight: 600 }}
-                  >
-                    Profil użytkownika
-                  </Button>
-                )}
-              </Box>
-            </Box>
-          )}
-        </Paper>
-      </Container>
+          </>
+        )}
+      </Box>
     </Box>
   );
 };

@@ -6,7 +6,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Button,
   IconButton,
   Dialog,
   DialogTitle,
@@ -14,7 +13,6 @@ import {
   DialogActions,
   TextField,
   Alert,
-  CircularProgress,
   Card,
   CardContent,
   Grid,
@@ -24,14 +22,16 @@ import {
   Chip,
 } from '@mui/material';
 import { DataTable } from '../ui/DataTable';
+import { Button } from '../ui/Button';
+import { PageHeader, SearchBar, PageLoader, EmptyState, ConfirmDialog } from '../ui';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
+import { useDialogState } from '../../hooks/useDialogState';
 import { deleteLocation, updateLocation, createLocation } from '../../services/locationService';
 import { Location } from '../../types/location.types';
-import * as Icons from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
@@ -40,22 +40,18 @@ const LocationsPage: React.FC = () => {
   const { locations, error, refetch, loading } = useLocations();
   const { userRole } = useAuth();
   const navigate = useNavigate();
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  const dialogs = useDialogState<Location>();
   const [formData, setFormData] = useState({ name: '', details: '', pavilion: '' });
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [pavilionError, setPavilionError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [locationToDelete, setLocationToDelete] = useState<number | null>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const hasAdminAccess = () => {
-    return userRole === 'admin' || userRole === 'moderator';
-  };
+  const hasAdminAccess = () => userRole === 'admin' || userRole === 'moderator';
 
   useEffect(() => {
     refetch();
@@ -69,24 +65,29 @@ const LocationsPage: React.FC = () => {
 
   const handleOpenDialog = (location?: Location) => {
     if (location) {
-      setEditingLocation(location);
-      setFormData({ 
+      dialogs.openEdit(location);
+      setFormData({
         name: location.name,
         details: location.details || '',
-        pavilion: location.pavilion || ''
+        pavilion: location.pavilion || '',
       });
     } else {
-      setEditingLocation(null);
+      dialogs.openAdd();
       setFormData({ name: '', details: '', pavilion: '' });
     }
-    setOpenDialog(true);
+    setDialogError(null);
+    setPavilionError(null);
   };
 
   const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingLocation(null);
+    if (dialogs.isEditOpen) {
+      dialogs.closeEdit();
+    } else {
+      dialogs.closeAdd();
+    }
     setFormData({ name: '', details: '', pavilion: '' });
     setDialogError(null);
+    setPavilionError(null);
   };
 
   const handlePavilionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,30 +103,27 @@ const LocationsPage: React.FC = () => {
   const handleSubmit = async () => {
     try {
       setDialogError(null);
-      if (editingLocation) {
+      if (dialogs.editItem) {
         const updateData: Partial<Location> = {};
-        
-        // Dodaj do updateData tylko te pola, które się zmieniły
-        if (formData.name !== editingLocation.name) {
+
+        if (formData.name !== dialogs.editItem.name) {
           updateData.name = formData.name;
         }
-        
-        // Porównaj details z uwzględnieniem null i pustego stringa
+
         const currentDetails = formData.details.trim() || null;
-        const originalDetails = editingLocation.details || null;
+        const originalDetails = dialogs.editItem.details || null;
         if (currentDetails !== originalDetails) {
           updateData.details = currentDetails;
         }
 
         const currentPavilion = formData.pavilion || null;
-        const originalPavilion = editingLocation.pavilion || null;
+        const originalPavilion = dialogs.editItem.pavilion || null;
         if (currentPavilion !== originalPavilion) {
           updateData.pavilion = currentPavilion;
         }
 
-        // Wykonaj aktualizację tylko jeśli są jakieś zmiany
         if (Object.keys(updateData).length > 0) {
-          await updateLocation(editingLocation.id, updateData);
+          await updateLocation(dialogs.editItem.id, updateData);
         }
       } else {
         await createLocation({
@@ -143,42 +141,32 @@ const LocationsPage: React.FC = () => {
     }
   };
 
-  const handleOpenDeleteModal = (id: number) => {
-    setLocationToDelete(id);
-    setDeleteModalOpen(true);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setDeleteModalOpen(false);
-    setLocationToDelete(null);
-  };
-
   const handleConfirmDelete = async () => {
-    if (locationToDelete) {
-      try {
-        await deleteLocation(locationToDelete);
-        showSnackbar('success', 'Lokalizacja została usunięta pomyślnie!', undefined, 3000);
-        refetch();
-      } catch (err: any) {
-        if (err && typeof err === 'object' && 'message' in err) {
-          showSnackbar('error', err.message, err.details, null);
-        } else {
-          showSnackbar('error', err.message || 'Wystąpił nieoczekiwany błąd podczas usuwania lokalizacji.', undefined, null);
-        }
-      } finally {
-        handleCloseDeleteModal();
+    if (!dialogs.deleteItem) return;
+    setDeleteLoading(true);
+    try {
+      await deleteLocation(dialogs.deleteItem.id);
+      showSnackbar('success', 'Lokalizacja została usunięta pomyślnie!', undefined, 3000);
+      dialogs.closeDelete();
+      refetch();
+    } catch (err: any) {
+      if (err && typeof err === 'object' && 'message' in err) {
+        showSnackbar('error', err.message, err.details, null);
+      } else {
+        showSnackbar('error', err.message || 'Wystąpił nieoczekiwany błąd podczas usuwania lokalizacji.', undefined, null);
       }
+      dialogs.closeDelete();
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
   const q = searchQuery.toLowerCase();
-  const filteredLocations = locations
-    .filter(location =>
-      location.name.toLowerCase().includes(q) ||
-      (location.pavilion ?? '').toLowerCase().includes(q) ||
-      (location.details ?? '').toLowerCase().includes(q)
-    )
-    // .sort((a, b) => a.id - b.id);
+  const filteredLocations = locations.filter(location =>
+    location.name.toLowerCase().includes(q) ||
+    (location.pavilion ?? '').toLowerCase().includes(q) ||
+    (location.details ?? '').toLowerCase().includes(q)
+  );
 
   const renderTable = () => (
     <DataTable>
@@ -202,9 +190,7 @@ const LocationsPage: React.FC = () => {
               </Typography>
             </TableCell>
             <TableCell>
-              <Typography component="div">
-                {location.name}
-              </Typography>
+              <Typography component="div">{location.name}</Typography>
             </TableCell>
             <TableCell>
               <Typography component="div">
@@ -235,7 +221,7 @@ const LocationsPage: React.FC = () => {
                   </IconButton>
                   <IconButton
                     color="error"
-                    onClick={() => handleOpenDeleteModal(location.id)}
+                    onClick={() => dialogs.openDelete(location)}
                     size="small"
                   >
                     <DeleteIcon />
@@ -253,15 +239,12 @@ const LocationsPage: React.FC = () => {
     <Grid container spacing={2}>
       {filteredLocations.map((location) => (
         <Grid item xs={12} key={location.id}>
-          <Card 
-            sx={{ 
+          <Card
+            sx={{
               borderRadius: 2,
               boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              '&:hover': {
-                bgcolor: 'action.hover',
-                cursor: 'pointer',
-              },
-              transition: 'background-color 0.2s ease'
+              '&:hover': { bgcolor: 'action.hover', cursor: 'pointer' },
+              transition: 'background-color 0.2s ease',
             }}
             onClick={() => navigate(`/locations/${location.id}`)}
           >
@@ -270,15 +253,11 @@ const LocationsPage: React.FC = () => {
                 <Typography variant="h6" component="div" sx={{ fontWeight: 500 }}>
                   ID: {location.id}
                 </Typography>
-                <Chip 
-                  label="Lokalizacja" 
-                  size="small" 
-                  color="primary"
-                />
+                <Chip label="Lokalizacja" size="small" color="primary" />
               </Box>
-              
+
               <Divider sx={{ my: 1 }} />
-              
+
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Nazwa:</Typography>
@@ -288,8 +267,8 @@ const LocationsPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">Szczegóły:</Typography>
                   <Typography variant="body2" color="text.secondary">
                     {location.details ? (
-                      location.details.length > 48 
-                        ? `${location.details.substring(0, 48)}...` 
+                      location.details.length > 48
+                        ? `${location.details.substring(0, 48)}...`
                         : location.details
                     ) : '-'}
                   </Typography>
@@ -297,13 +276,8 @@ const LocationsPage: React.FC = () => {
               </Box>
 
               {hasAdminAccess() && (
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    gap: 1,
-                    justifyContent: 'flex-end',
-                    mt: 2
-                  }}
+                <Box
+                  sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <IconButton
@@ -315,7 +289,7 @@ const LocationsPage: React.FC = () => {
                   </IconButton>
                   <IconButton
                     color="error"
-                    onClick={() => handleOpenDeleteModal(location.id)}
+                    onClick={() => dialogs.openDelete(location)}
                     size="small"
                   >
                     <DeleteIcon />
@@ -329,163 +303,67 @@ const LocationsPage: React.FC = () => {
     </Grid>
   );
 
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <AppSnackbar
-          open={snackbar.open}
-          type={snackbar.type}
-          message={snackbar.message}
-          details={snackbar.details}
-          onClose={closeSnackbar}
-          autoHideDuration={snackbar.autoHideDuration}
-        />
-      </Box>
-    );
-  }
-
   return (
-    <Box sx={{ 
-      margin: '0 auto', 
+    <Box sx={{
+      margin: '0 auto',
       padding: { xs: 2, sm: 3, md: 3 },
       maxWidth: '1400px',
       backgroundColor: 'background.paper',
       borderRadius: 2,
-      boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
     }}>
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        marginBottom: 3,
-        gap: 2,
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        pb: 2
-      }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{ 
-            fontWeight: 600,
-            color: 'primary.main',
-            mb: { xs: 1, sm: 0 }
-          }}
-        >
-          Lokalizacje
-        </Typography>
-        {hasAdminAccess() && (
-          <Button 
-            variant="contained" 
-            color="primary" 
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
-            sx={{
-              borderRadius: 1,
-              px: 3
-            }}
-          >
-            Dodaj lokalizację
-          </Button>
-        )}
-      </Box>
+      <AppSnackbar
+        open={snackbar.open}
+        type={snackbar.type}
+        message={snackbar.message}
+        details={snackbar.details}
+        onClose={closeSnackbar}
+        autoHideDuration={snackbar.autoHideDuration}
+      />
 
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' }, 
-        gap: 2, 
-        marginBottom: 3,
-        backgroundColor: 'background.default',
-        p: 2,
-        borderRadius: 1
-      }}>
-        <TextField
-          label="Szukaj lokalizacji"
-          variant="outlined"
+      <PageHeader
+        title="Lokalizacje"
+        actions={
+          hasAdminAccess() ? (
+            <Button variant="primary" leftIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
+              Dodaj lokalizację
+            </Button>
+          ) : undefined
+        }
+      />
+
+      <Box sx={{ mb: 3 }}>
+        <SearchBar
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          size="small"
-          sx={{ flex: 1 }}
-          InputProps={{
-            sx: { 
-              borderRadius: 1,
-              height: '36px',
-              '& input': {
-                height: '36px',
-                padding: '0 12px',
-              }
-            },
-            startAdornment: (
-              <Icons.Search sx={{ color: 'text.secondary', mr: 1 }} />
-            )
-          }}
+          onChange={setSearchQuery}
+          label="Szukaj lokalizacji"
+          width="100%"
         />
       </Box>
 
       {loading ? (
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          p: 5,
-          flexDirection: 'column',
-          gap: 2
-        }}>
-          <CircularProgress size={40} />
-          <Typography variant="body1" color="text.secondary">
-            Ładowanie lokalizacji...
-          </Typography>
-        </Box>
+        <PageLoader message="Ładowanie lokalizacji..." />
       ) : filteredLocations.length === 0 ? (
-        <Box sx={{ 
-          textAlign: 'center', 
-          p: 5,
-          backgroundColor: 'background.default',
-          borderRadius: 2,
-          border: '1px dashed',
-          borderColor: 'divider'
-        }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Brak lokalizacji
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Dodaj nową lokalizację'}
-          </Typography>
-          {searchQuery && (
-            <Button 
-              variant="outlined" 
-              onClick={() => setSearchQuery('')}
-              sx={{ 
-                borderRadius: 1,
-                px: 3
-              }}
-            >
-              Wyczyść wyszukiwanie
-            </Button>
-          )}
-        </Box>
+        <EmptyState
+          message="Brak lokalizacji"
+          description={searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Dodaj nową lokalizację'}
+          action={searchQuery ? { label: 'Wyczyść wyszukiwanie', onClick: () => setSearchQuery('') } : undefined}
+        />
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}
 
+      {/* Add / Edit Dialog */}
       <Dialog
-        open={openDialog}
+        open={dialogs.addOpen || dialogs.isEditOpen}
         onClose={handleCloseDialog}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            maxWidth: '500px',
-            width: '100%'
-          }
-        }}
+        PaperProps={{ sx: { borderRadius: 2, maxWidth: '500px', width: '100%' } }}
       >
         <DialogTitle>
-          {editingLocation ? 'Edytuj lokalizację' : 'Dodaj nową lokalizację'}
+          {dialogs.editItem ? 'Edytuj lokalizację' : 'Dodaj nową lokalizację'}
         </DialogTitle>
         <DialogContent>
-          <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt:2 }}>
+          <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <TextField
               autoFocus
               label="Nazwa lokalizacji"
@@ -523,59 +401,32 @@ const LocationsPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog} variant="outlined" size="small">
+          <Button variant="ghost" onClick={handleCloseDialog}>
             Anuluj
           </Button>
           <Button
+            variant="primary"
             onClick={handleSubmit}
-            variant="contained"
             disabled={!formData.name.trim() || !!pavilionError}
-            size="small"
           >
-            {editingLocation ? 'Zapisz' : 'Dodaj'}
+            {dialogs.editItem ? 'Zapisz' : 'Dodaj'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={isDeleteModalOpen}
-        onClose={handleCloseDeleteModal}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            maxWidth: '500px',
-            width: '100%'
-          }
-        }}
-      >
-        <DialogTitle>Potwierdź usunięcie</DialogTitle>
-        <DialogContent>
-          <Typography>Czy na pewno chcesz usunąć tę lokalizację?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteModal} variant="outlined">
-            Anuluj
-          </Button>
-          <Button 
-            onClick={handleConfirmDelete} 
-            variant="contained" 
-            color="error"
-          >
-            Usuń
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <AppSnackbar
-        open={snackbar.open}
-        type={snackbar.type}
-        message={snackbar.message}
-        details={snackbar.details}
-        onClose={closeSnackbar}
-        autoHideDuration={snackbar.autoHideDuration}
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={dialogs.isDeleteOpen}
+        title="Potwierdź usunięcie"
+        message="Czy na pewno chcesz usunąć tę lokalizację?"
+        confirmLabel="Usuń"
+        confirmColor="error"
+        loading={deleteLoading}
+        onConfirm={handleConfirmDelete}
+        onClose={dialogs.closeDelete}
       />
     </Box>
   );
 };
 
-export default LocationsPage; 
+export default LocationsPage;

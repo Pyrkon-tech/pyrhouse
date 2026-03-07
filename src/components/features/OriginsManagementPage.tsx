@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Button,
   Typography,
-  CircularProgress,
   TableBody,
   TableCell,
   TableHead,
@@ -24,13 +22,17 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  CircularProgress,
 } from '@mui/material';
 import { DataTable, DataTableLoadingRow, DataTableEmptyRow } from '../ui/DataTable';
+import { Button } from '../ui/Button';
+import { PageHeader, ConfirmDialog } from '../ui';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useOrigins, notifyOriginsChanged } from '../../hooks/useOrigins';
+import { useDialogState } from '../../hooks/useDialogState';
 import { createOriginAPI, updateOriginAPI, deleteOriginAPI } from '../../services/originService';
 import { ApiError } from '../../services/apiClient';
 import type { Origin, CreateOriginPayload, UpdateOriginPayload } from '../../types/origin.types';
@@ -50,24 +52,16 @@ const OriginsManagementPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Add dialog
-  const [addOpen, setAddOpen] = useState(false);
+  const dialogs = useDialogState<Origin>();
   const [addForm, setAddForm] = useState<CreateOriginPayload>(emptyCreateForm());
   const [addSaving, setAddSaving] = useState(false);
-
-  // Delete confirmation dialog
-  const [deleteTarget, setDeleteTarget] = useState<Origin | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  // Edit dialog
-  const [editOpen, setEditOpen] = useState(false);
-  const [editingOrigin, setEditingOrigin] = useState<Origin | null>(null);
   const [editForm, setEditForm] = useState<UpdateOriginPayload>({});
   const [editSaving, setEditSaving] = useState(false);
 
   const handleOpenAdd = () => {
     setAddForm(emptyCreateForm());
-    setAddOpen(true);
+    dialogs.openAdd();
   };
 
   const handleCreate = async () => {
@@ -80,7 +74,7 @@ const OriginsManagementPage: React.FC = () => {
       await createOriginAPI(addForm);
       notifyOriginsChanged();
       refresh();
-      setAddOpen(false);
+      dialogs.closeAdd();
       showSnackbar('success', 'Origin dodany');
     } catch (err: any) {
       showSnackbar('error', err.message || 'Błąd podczas dodawania originu');
@@ -90,28 +84,27 @@ const OriginsManagementPage: React.FC = () => {
   };
 
   const handleOpenEdit = (origin: Origin) => {
-    setEditingOrigin(origin);
+    dialogs.openEdit(origin);
     setEditForm({
       label: origin.label,
       allow_suffix: origin.allow_suffix,
       active: origin.active,
       sort_order: origin.sort_order,
     });
-    setEditOpen(true);
   };
 
   const handleUpdate = async () => {
-    if (!editingOrigin) return;
+    if (!dialogs.editItem) return;
     if (!editForm.label?.trim()) {
       showSnackbar('error', 'Label jest wymagany');
       return;
     }
     setEditSaving(true);
     try {
-      await updateOriginAPI(editingOrigin.id, editForm);
+      await updateOriginAPI(dialogs.editItem.id, editForm);
       notifyOriginsChanged();
       refresh();
-      setEditOpen(false);
+      dialogs.closeEdit();
       showSnackbar('success', 'Origin zaktualizowany');
     } catch (err: any) {
       showSnackbar('error', err.message || 'Błąd podczas aktualizacji originu');
@@ -132,25 +125,26 @@ const OriginsManagementPage: React.FC = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deleteTarget) return;
+    if (!dialogs.deleteItem) return;
+    const target = dialogs.deleteItem;
     setDeleting(true);
     try {
-      await deleteOriginAPI(deleteTarget.id);
+      await deleteOriginAPI(target.id);
       notifyOriginsChanged();
       refresh();
-      setDeleteTarget(null);
-      showSnackbar('success', `Origin "${deleteTarget.label}" usunięty`);
+      dialogs.closeDelete();
+      showSnackbar('success', `Origin "${target.label}" usunięty`);
     } catch (err: any) {
       if (err instanceof ApiError && err.status === 409) {
         showSnackbar(
           'error',
-          `Nie można usunąć "${deleteTarget.label}" — ma przypisany sprzęt`,
+          `Nie można usunąć "${target.label}" — ma przypisany sprzęt`,
           'Dezaktywuj origin zamiast go usuwać. Istniejący sprzęt zachowa swoje dane.'
         );
       } else {
         showSnackbar('error', err.message || 'Błąd podczas usuwania originu');
       }
-      setDeleteTarget(null);
+      dialogs.closeDelete();
     } finally {
       setDeleting(false);
     }
@@ -203,7 +197,7 @@ const OriginsManagementPage: React.FC = () => {
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
-                  <IconButton size="small" color="error" onClick={() => setDeleteTarget(origin)}>
+                  <IconButton size="small" color="error" onClick={() => dialogs.openDelete(origin)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
@@ -268,7 +262,7 @@ const OriginsManagementPage: React.FC = () => {
                   <IconButton
                     size="small"
                     color="error"
-                    onClick={() => setDeleteTarget(origin)}
+                    onClick={() => dialogs.openDelete(origin)}
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
@@ -292,30 +286,21 @@ const OriginsManagementPage: React.FC = () => {
         autoHideDuration={snackbar.autoHideDuration}
       />
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          justifyContent: 'space-between',
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: { xs: 2, sm: 0 },
-          mb: 3,
-        }}
-      >
-        <Typography variant="h5" fontWeight="bold">
-          Zarządzanie Originami
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Odśwież">
-            <IconButton onClick={refresh} disabled={loading}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAdd}>
-            Dodaj origin
-          </Button>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Zarządzanie Originami"
+        actions={
+          <>
+            <Tooltip title="Odśwież">
+              <IconButton onClick={refresh} disabled={loading}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+            <Button variant="primary" leftIcon={<AddIcon />} onClick={handleOpenAdd}>
+              Dodaj origin
+            </Button>
+          </>
+        }
+      />
 
       {error && (
         <Typography color="error" sx={{ mb: 2 }}>
@@ -340,7 +325,7 @@ const OriginsManagementPage: React.FC = () => {
       )}
 
       {/* Add Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={dialogs.addOpen} onClose={dialogs.closeAdd} maxWidth="sm" fullWidth>
         <DialogTitle>Dodaj origin</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
           <TextField
@@ -377,44 +362,42 @@ const OriginsManagementPage: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddOpen(false)}>Anuluj</Button>
-          <Button variant="contained" onClick={handleCreate} disabled={addSaving}>
-            {addSaving ? <CircularProgress size={20} /> : 'Dodaj'}
-          </Button>
+          <Button variant="ghost" onClick={dialogs.closeAdd}>Anuluj</Button>
+          <Button variant="primary" onClick={handleCreate} loading={addSaving}>Dodaj</Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Usuń origin</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Czy na pewno chcesz usunąć origin{' '}
-            <Typography component="span" fontFamily="monospace" fontWeight="bold">
-              {deleteTarget?.slug}
+      <ConfirmDialog
+        open={dialogs.isDeleteOpen}
+        title="Usuń origin"
+        message={
+          <>
+            <Typography>
+              Czy na pewno chcesz usunąć origin{' '}
+              <Typography component="span" fontFamily="monospace" fontWeight="bold">
+                {dialogs.deleteItem?.slug}
+              </Typography>
+              ?
             </Typography>
-            ?
-          </Typography>
-          <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-            Operacja jest nieodwracalna. Jeśli origin ma przypisany sprzęt, usunięcie zostanie zablokowane (409).
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)} disabled={deleting}>
-            Anuluj
-          </Button>
-          <Button variant="contained" color="error" onClick={handleDeleteConfirm} disabled={deleting}>
-            {deleting ? <CircularProgress size={20} /> : 'Usuń'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+              Operacja jest nieodwracalna. Jeśli origin ma przypisany sprzęt, usunięcie zostanie zablokowane (409).
+            </Typography>
+          </>
+        }
+        confirmLabel="Usuń"
+        confirmColor="error"
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+        onClose={dialogs.closeDelete}
+      />
 
       {/* Edit Dialog */}
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={dialogs.isEditOpen} onClose={dialogs.closeEdit} maxWidth="sm" fullWidth>
         <DialogTitle>
           Edytuj origin:{' '}
           <Typography component="span" fontFamily="monospace" color="text.secondary">
-            {editingOrigin?.slug}
+            {dialogs.editItem?.slug}
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
@@ -452,10 +435,8 @@ const OriginsManagementPage: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditOpen(false)}>Anuluj</Button>
-          <Button variant="contained" onClick={handleUpdate} disabled={editSaving}>
-            {editSaving ? <CircularProgress size={20} /> : 'Zapisz'}
-          </Button>
+          <Button variant="ghost" onClick={dialogs.closeEdit}>Anuluj</Button>
+          <Button variant="primary" onClick={handleUpdate} loading={editSaving}>Zapisz</Button>
         </DialogActions>
       </Dialog>
     </Box>

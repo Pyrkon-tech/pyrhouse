@@ -40,19 +40,19 @@ const StyledButton = styled(MuiButton, {
 
   const sizeStyles = {
     sm: {
-      padding: `${tokens.spacing.sm} ${tokens.spacing.md}`,
+      padding: '5px 12px',
       fontSize: tokens.typography.fontSize.sm,
-      minHeight: '32px',
+      minHeight: '30px',
     },
     md: {
-      padding: `${tokens.spacing.md} ${tokens.spacing.lg}`,
+      padding: '8px 18px',
       fontSize: tokens.typography.fontSize.base,
-      minHeight: '40px',
+      minHeight: '36px',
     },
     lg: {
-      padding: `${tokens.spacing.lg} ${tokens.spacing.xl}`,
+      padding: '11px 24px',
       fontSize: tokens.typography.fontSize.lg,
-      minHeight: '48px',
+      minHeight: '44px',
     },
   };
 
@@ -160,14 +160,15 @@ export const Button: React.FC<ButtonProps> = ({
         }} />
       )}
       <div style={{
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
         gap: designTokens.spacing.sm,
         opacity: loading ? 0 : 1,
+        lineHeight: 1,
       }}>
-        {leftIcon && <span>{leftIcon}</span>}
+        {leftIcon}
         {children}
-        {rightIcon && <span>{rightIcon}</span>}
+        {rightIcon}
       </div>
     </StyledButton>
   );

@@ -6,7 +6,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Button,
   Chip,
   Card,
   CardContent,
@@ -20,6 +19,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import { Button } from '../ui/Button';
 import { apiClient, ApiError } from '../../services/apiClient';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -204,7 +204,7 @@ const LocationPage: React.FC = () => {
   if (!location) {
     return (
       <Box sx={{ p: 2 }}>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/locations')} sx={{ mb: 2 }}>
+        <Button variant="ghost" leftIcon={<ArrowBackIcon />} onClick={() => navigate('/locations')} sx={{ mb: 2 }}>
           Powrót do listy lokalizacji
         </Button>
         <AppSnackbar
@@ -273,9 +273,8 @@ const LocationPage: React.FC = () => {
             </IconButton>
           </Tooltip>
           <Button
-            variant="contained"
-            color="primary"
-            startIcon={<EditIcon />}
+            variant="primary"
+            leftIcon={<EditIcon />}
             onClick={() => navigate(`/locations/${id}/edit`)}
           >
             Edytuj

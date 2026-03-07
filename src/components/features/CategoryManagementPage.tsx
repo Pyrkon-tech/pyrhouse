@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Button,
   Typography,
-  CircularProgress,
   TableBody,
   TableCell,
   TableHead,
@@ -15,7 +13,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogContentText,
   DialogActions,
   Card,
   CardContent,
@@ -27,13 +24,15 @@ import {
   IconButton,
 } from '@mui/material';
 import { DataTable } from '../ui/DataTable';
+import { Button } from '../ui/Button';
+import { PageHeader, SearchBar, PageLoader, EmptyState, ConfirmDialog } from '../ui';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import EditIcon from '@mui/icons-material/Edit';
 import { useCategories } from '../../hooks/useCategories';
-import * as Icons from '@mui/icons-material';
+import { useDialogState } from '../../hooks/useDialogState';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 
@@ -50,19 +49,11 @@ const CategoryManagementPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // State for managing add modal
-  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const dialogs = useDialogState<Category>();
+
   const [newCategory, setNewCategory] = useState({ name: '', label: '', type: '', pyr_id: '' });
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // State for delete confirmation modal
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
-
-  // State for edit modal
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editFormData, setEditFormData] = useState({ label: '', type: '', pyr_id: '', name: '' });
 
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
@@ -72,13 +63,13 @@ const CategoryManagementPage: React.FC = () => {
   const [editFormErrors, setEditFormErrors] = useState<{ pyr_id?: string }>({});
 
   const handleOpenAddModal = () => {
-    setAddModalOpen(true);
+    dialogs.openAdd();
     setNewCategory({ name: '', label: '', type: '', pyr_id: '' });
     setShowAdditionalOptions(false);
   };
 
   const handleCloseAddModal = () => {
-    setAddModalOpen(false);
+    dialogs.closeAdd();
   };
 
   // Walidacja PyrID przy zmianie w formularzu dodawania
@@ -119,7 +110,7 @@ const CategoryManagementPage: React.FC = () => {
 
     try {
       await addCategory(payload);
-      handleCloseAddModal();
+      dialogs.closeAdd();
     } catch (err: any) {
       // Obsługa walidacji PyrID z backendu
       if (err && typeof err === 'object') {
@@ -140,47 +131,38 @@ const CategoryManagementPage: React.FC = () => {
     }
   };
 
-  const handleOpenDeleteModal = (categoryId: number) => {
-    setCategoryToDelete(categoryId);
-    setDeleteModalOpen(true);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setDeleteModalOpen(false);
-    setCategoryToDelete(null);
+  const handleOpenDeleteModal = (category: Category) => {
+    dialogs.openDelete(category);
   };
 
   const handleConfirmDelete = async () => {
-    if (categoryToDelete) {
-      try {
-        await deleteCategory(categoryToDelete);
-        showSnackbar('success', 'Kategoria została usunięta pomyślnie!', undefined, 3000);
-        handleCloseDeleteModal();
-      } catch (err: any) {
-        if (err && typeof err === 'object' && 'message' in err) {
-          showSnackbar('error', err.message, err.details, null);
-        } else {
-          showSnackbar('error', err.message || 'Wystąpił nieoczekiwany błąd podczas usuwania kategorii.', undefined, null);
-        }
-        handleCloseDeleteModal();
+    if (!dialogs.deleteItem) return;
+    try {
+      await deleteCategory(dialogs.deleteItem.id);
+      showSnackbar('success', 'Kategoria została usunięta pomyślnie!', undefined, 3000);
+      dialogs.closeDelete();
+    } catch (err: any) {
+      if (err && typeof err === 'object' && 'message' in err) {
+        showSnackbar('error', err.message, err.details, null);
+      } else {
+        showSnackbar('error', err.message || 'Wystąpił nieoczekiwany błąd podczas usuwania kategorii.', undefined, null);
       }
+      dialogs.closeDelete();
     }
   };
 
   const handleOpenEditModal = (category: Category) => {
-    setEditingCategory(category);
+    dialogs.openEdit(category);
     setEditFormData({
       label: category.label,
       type: category.type,
       pyr_id: category.pyr_id || '',
       name: category.name || ''
     });
-    setEditModalOpen(true);
   };
 
   const handleCloseEditModal = () => {
-    setEditModalOpen(false);
-    setEditingCategory(null);
+    dialogs.closeEdit();
     setEditFormData({ label: '', type: '', pyr_id: '', name: '' });
   };
 
@@ -196,7 +178,7 @@ const CategoryManagementPage: React.FC = () => {
   };
 
   const handleEditCategory = async () => {
-    if (!editingCategory) return;
+    if (!dialogs.editItem) return;
 
     if (editFormData.pyr_id && !/^[a-zA-Z0-9]{1,3}$/.test(editFormData.pyr_id)) {
       setEditFormErrors({ ...editFormErrors, pyr_id: 'PyrID może mieć maksymalnie 3 znaki alfanumeryczne.' });
@@ -207,24 +189,24 @@ const CategoryManagementPage: React.FC = () => {
 
     try {
       const updateData: Partial<Category> = {};
-      
+
       // Dodaj do updateData tylko te pola, które się zmieniły
-      if (editFormData.label !== editingCategory.label) {
+      if (editFormData.label !== dialogs.editItem.label) {
         updateData.label = editFormData.label;
       }
-      if (editFormData.type !== editingCategory.type) {
+      if (editFormData.type !== dialogs.editItem.type) {
         updateData.type = editFormData.type as 'asset' | 'stock';
       }
-      if (editFormData.pyr_id !== editingCategory.pyr_id) {
+      if (editFormData.pyr_id !== dialogs.editItem.pyr_id) {
         updateData.pyr_id = editFormData.pyr_id;
       }
-      if (editFormData.name !== editingCategory.name) {
+      if (editFormData.name !== dialogs.editItem.name) {
         updateData.name = editFormData.name;
       }
 
       // Wykonaj aktualizację tylko jeśli są jakieś zmiany
       if (Object.keys(updateData).length > 0) {
-        await updateCategory(editingCategory.id, updateData);
+        await updateCategory(dialogs.editItem.id, updateData);
         await refreshCategories();
         showSnackbar('success', 'Kategoria została zaktualizowana pomyślnie!', undefined, 3000);
         handleCloseEditModal();
@@ -310,7 +292,7 @@ const CategoryManagementPage: React.FC = () => {
                 </IconButton>
                 <IconButton
                   color="error"
-                  onClick={() => handleOpenDeleteModal(category.id)}
+                  onClick={() => handleOpenDeleteModal(category)}
                   size="small"
                 >
                   <DeleteIcon />
@@ -327,8 +309,8 @@ const CategoryManagementPage: React.FC = () => {
     <Grid container spacing={2}>
       {filteredCategories.map((category) => (
         <Grid item xs={12} key={category.id}>
-          <Card 
-            sx={{ 
+          <Card
+            sx={{
               borderRadius: 2,
               boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
               '&:hover': {
@@ -342,15 +324,15 @@ const CategoryManagementPage: React.FC = () => {
                 <Typography variant="h6" component="div" sx={{ fontWeight: 500 }}>
                   ID: {category.id}
                 </Typography>
-                <Chip 
-                  label={category.type === 'asset' ? 'Sprzęt' : 'Magazyn'} 
+                <Chip
+                  label={category.type === 'asset' ? 'Sprzęt' : 'Magazyn'}
                   color={category.type === 'asset' ? 'primary' : 'secondary'}
                   size="small"
                 />
               </Box>
-              
+
               <Divider sx={{ my: 1 }} />
-              
+
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Label:</Typography>
@@ -370,9 +352,9 @@ const CategoryManagementPage: React.FC = () => {
                 )}
               </Box>
 
-              <Box 
-                sx={{ 
-                  display: 'flex', 
+              <Box
+                sx={{
+                  display: 'flex',
                   gap: 1,
                   justifyContent: 'flex-end',
                   mt: 2
@@ -387,7 +369,7 @@ const CategoryManagementPage: React.FC = () => {
                 </IconButton>
                 <IconButton
                   color="error"
-                  onClick={() => handleOpenDeleteModal(category.id)}
+                  onClick={() => handleOpenDeleteModal(category)}
                   size="small"
                 >
                   <DeleteIcon />
@@ -410,8 +392,8 @@ const CategoryManagementPage: React.FC = () => {
   }, [error, setError]);
 
   return (
-    <Box sx={{ 
-      margin: '0 auto', 
+    <Box sx={{
+      margin: '0 auto',
       padding: { xs: 2, sm: 3, md: 3 },
       maxWidth: '1400px',
       backgroundColor: 'background.paper',
@@ -427,123 +409,39 @@ const CategoryManagementPage: React.FC = () => {
         autoHideDuration={snackbar.autoHideDuration}
       />
 
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        marginBottom: 3,
-        gap: 2,
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        pb: 2
-      }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{ 
-            fontWeight: 600,
-            color: 'primary.main',
-            mb: { xs: 1, sm: 0 }
-          }}
-        >
-          Kategorie
-        </Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<AddIcon />}
-          onClick={handleOpenAddModal}
-          sx={{
-            borderRadius: 1,
-            px: 3
-          }}
-        >
-          Dodaj Kategorię
-        </Button>
-      </Box>
+      <PageHeader
+        title="Kategorie"
+        subtitle={`${filteredCategories.length} kategorii`}
+        actions={
+          <Button variant="primary" leftIcon={<AddIcon />} onClick={handleOpenAddModal}>
+            Dodaj Kategorię
+          </Button>
+        }
+      />
 
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' }, 
-        gap: 2, 
-        marginBottom: 3,
-        backgroundColor: 'background.default',
-        p: 2,
-        borderRadius: 1
-      }}>
-        <TextField
-          label="Szukaj kategorii"
-          variant="outlined"
+      <Box sx={{ mb: 3 }}>
+        <SearchBar
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          size="small"
-          sx={{ flex: 1 }}
-          InputProps={{
-            sx: { 
-              borderRadius: 1,
-              height: '36px',
-              '& input': {
-                height: '36px',
-                padding: '0 12px',
-              }
-            },
-            startAdornment: (
-              <Icons.Search sx={{ color: 'text.secondary', mr: 1 }} />
-            )
-          }}
+          onChange={setSearchQuery}
+          label="Szukaj kategorii"
+          width="100%"
         />
       </Box>
 
       {loading ? (
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          p: 5,
-          flexDirection: 'column',
-          gap: 2
-        }}>
-          <CircularProgress size={40} />
-          <Typography variant="body1" color="text.secondary">
-            Ładowanie kategorii...
-          </Typography>
-        </Box>
+        <PageLoader message="Ładowanie kategorii..." />
       ) : filteredCategories.length === 0 ? (
-        <Box sx={{ 
-          textAlign: 'center', 
-          p: 5,
-          backgroundColor: 'background.default',
-          borderRadius: 2,
-          border: '1px dashed',
-          borderColor: 'divider'
-        }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Brak kategorii
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Dodaj nową kategorię'}
-          </Typography>
-          {searchQuery && (
-            <Button 
-              variant="outlined" 
-              onClick={() => setSearchQuery('')}
-              sx={{ 
-                borderRadius: 1,
-                px: 3
-              }}
-            >
-              Wyczyść wyszukiwanie
-            </Button>
-          )}
-        </Box>
+        <EmptyState
+          message="Brak kategorii"
+          description={searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Dodaj nową kategorię'}
+          action={searchQuery ? { label: 'Wyczyść wyszukiwanie', onClick: () => setSearchQuery('') } : undefined}
+        />
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}
 
-      <Dialog 
-        open={isAddModalOpen} 
+      <Dialog
+        open={dialogs.addOpen}
         onClose={handleCloseAddModal}
         PaperProps={{
           sx: {
@@ -579,20 +477,12 @@ const CategoryManagementPage: React.FC = () => {
           </Select>
 
           <Button
-            variant="text"
-            color="primary"
+            variant="ghost"
+            leftIcon={showAdditionalOptions ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             onClick={() => setShowAdditionalOptions((prev) => !prev)}
             sx={{ mb: 2 }}
           >
-            {showAdditionalOptions ? (
-              <>
-                <ExpandLessIcon /> Ukryj dodatkowe opcje
-              </>
-            ) : (
-              <>
-                <ExpandMoreIcon /> Pokaż dodatkowe opcje
-              </>
-            )}
+            {showAdditionalOptions ? 'Ukryj dodatkowe opcje' : 'Pokaż dodatkowe opcje'}
           </Button>
 
           <Collapse in={showAdditionalOptions}>
@@ -616,58 +506,28 @@ const CategoryManagementPage: React.FC = () => {
           </Collapse>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button 
-            onClick={handleCloseAddModal}
-            sx={{ borderRadius: 1 }}
-          >
+          <Button variant="ghost" onClick={handleCloseAddModal}>
             Anuluj
           </Button>
-          <Button 
-            onClick={handleAddCategory} 
-            variant="contained" 
-            color="primary"
-            disabled={loading}
-            sx={{ borderRadius: 1 }}
-          >
-            {loading ? <CircularProgress size={20} /> : 'Dodaj'}
+          <Button variant="primary" onClick={handleAddCategory} loading={loading}>
+            Dodaj
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        open={dialogs.isDeleteOpen}
+        title="Potwierdź usunięcie"
+        message="Czy na pewno chcesz usunąć tę kategorię?"
+        confirmLabel="Usuń"
+        confirmColor="error"
+        loading={loading}
+        onConfirm={handleConfirmDelete}
+        onClose={dialogs.closeDelete}
+      />
 
       <Dialog
-        open={isDeleteModalOpen}
-        onClose={handleCloseDeleteModal}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            maxWidth: '500px',
-            width: '100%'
-          }
-        }}
-      >
-        <DialogTitle>Potwierdź usunięcie</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Czy na pewno chcesz usunąć tę kategorię?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteModal} variant="outlined">
-            Anuluj
-          </Button>
-          <Button 
-            onClick={handleConfirmDelete} 
-            variant="contained" 
-            color="error"
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={20} /> : 'Usuń'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog 
-        open={isEditModalOpen} 
+        open={dialogs.isEditOpen}
         onClose={handleCloseEditModal}
         PaperProps={{
           sx: {
@@ -714,28 +574,20 @@ const CategoryManagementPage: React.FC = () => {
           />
 
           <TextField
-            label="Name (Opcjonalne)"
+            label="Name"
             value={editFormData.name}
             onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
             fullWidth
+            disabled
             sx={{ mb: 2 }}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button 
-            onClick={handleCloseEditModal}
-            sx={{ borderRadius: 1 }}
-          >
+          <Button variant="ghost" onClick={handleCloseEditModal}>
             Anuluj
           </Button>
-          <Button 
-            onClick={handleEditCategory} 
-            variant="contained" 
-            color="primary"
-            disabled={loading}
-            sx={{ borderRadius: 1 }}
-          >
-            {loading ? <CircularProgress size={20} /> : 'Zapisz'}
+          <Button variant="primary" onClick={handleEditCategory} loading={loading}>
+            Zapisz
           </Button>
         </DialogActions>
       </Dialog>

@@ -14,6 +14,7 @@ vi.mock('../../hooks/useLocations', () => ({
       { id: 2, name: 'Location 2' },
     ],
     error: null,
+    refetch: vi.fn(),
   }),
 }));
 
