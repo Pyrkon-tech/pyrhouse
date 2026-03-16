@@ -576,7 +576,6 @@ const CategoryManagementPage: React.FC = () => {
           <TextField
             label="Name"
             value={editFormData.name}
-            onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
             fullWidth
             disabled
             sx={{ mb: 2 }}

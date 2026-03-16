@@ -1,59 +1,34 @@
-import { useState, useEffect } from 'react';
-import { getApiUrl } from '../config/api';
-
-export interface DutyScheduleData {
-  headers: string[];
-  rows: string[][];
-  uniquePeople: string[];
-}
+import { useState, useEffect, useCallback } from 'react';
+import { getScheduleDetailAPI } from '../services/scheduleService';
+import { ApiError } from '../services/apiClient';
+import type { ScheduleDetail } from '../types/schedule.types';
 
 export function useDutySchedule() {
-  const [data, setData] = useState<DutyScheduleData | null>(null);
+  const [schedule, setSchedule] = useState<ScheduleDetail | null>(null);
+  const [noActive, setNoActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(getApiUrl('/sheets/duty-schedule'), {
-          headers: { Authorization: token ? `Bearer ${token}` : '' }
-        });
-        
-        if (!res.ok) throw new Error('Błąd pobierania grafiku');
-        
-        const json = await res.json();
-        
-        // Przetwarzanie danych
-        const headers = json[0];
-        const rows = json.slice(1);
-        
-        // Zbieranie unikalnych osób
-        const people = new Set<string>();
-        rows.forEach((row: string[]) => {
-          row.slice(2).forEach((cell: string) => {
-            if (cell && cell.trim()) {
-              people.add(cell.trim());
-            }
-          });
-        });
-
-        setData({
-          headers,
-          rows,
-          uniquePeople: Array.from(people).sort()
-        });
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
+  const fetchSchedule = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setNoActive(false);
+    try {
+      const data = await getScheduleDetailAPI();
+      setSchedule(data);
+    } catch (e: unknown) {
+      if (e instanceof ApiError && e.status === 404) {
+        setNoActive(true);
+        setSchedule(null);
+      } else {
+        setError(e instanceof Error ? e.message : 'Błąd pobierania harmonogramu');
       }
-    };
-    
-    fetchData();
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { data, loading, error };
-} 
+  useEffect(() => { fetchSchedule(); }, [fetchSchedule]);
+
+  return { schedule, setSchedule, noActive, loading, error, refetch: fetchSchedule };
+}

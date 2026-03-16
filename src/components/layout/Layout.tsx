@@ -283,7 +283,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/transfers', label: 'Wydania', icon: <Icons.Quiz /> },
     { path: '/quests', label: 'Zapotrzebowanie', icon: <Icons.Castle /> },
     { path: '/servicedesk', label: 'Service Desk', icon: <Icons.MedicalServices /> },
-    { 
+    {
       type: 'divider',
       label: 'Magazyn',
       icon: <Icons.Inventory2 sx={{ fontSize: '0.9rem' }} />
@@ -300,6 +300,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const adminMenuItems = [
+    { path: '/duty-schedule', label: 'Grafik', icon: <Icons.Event />, adminOnly: false },
     { path: '/categories', label: 'Kategorie', icon: <Icons.Category />, adminOnly: false },
     { path: '/origins', label: 'Pochodzenie', icon: <Icons.Source />, adminOnly: false },
     { path: '/users', label: 'Użytkownicy', icon: <Icons.People />, adminOnly: false },

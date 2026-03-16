@@ -34,25 +34,16 @@ import {
 import { useTransfers } from '../../hooks/useTransfers';
 import { getApiUrl } from '../../config/api';
 import { jwtDecode } from 'jwt-decode';
+import { searchGlobalAPI } from '../../services/assetService';
+import type { GlobalSearchAsset, GlobalSearchStock } from '../../services/assetService';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import BarcodeScanner from '../common/BarcodeScanner';
 import { designTokens } from '../../theme/designTokens';
 
-interface PyrCodeSuggestion {
-  id: number;
-  pyrcode: string;
-  serial: string;
-  location: {
-    id: number;
-    name: string;
-  };
-  category: {
-    id: number;
-    label: string;
-  };
-  status: 'available' | 'unavailable' | 'in_transit';
-}
+type SearchItem =
+  | (GlobalSearchAsset & { _type: 'asset' })
+  | (GlobalSearchStock & { _type: 'stock' });
 
 // Intentional "medieval quest" color palette — NIE są to kolory brandingu Pyrkonu.
 // Tworzą estetykę pergaminu/karty zadań. Centralizacja tu zamiast rozproszenia w styled components.
@@ -323,7 +314,7 @@ const HomePage: React.FC = () => {
   const [userTransfers, setUserTransfers] = useState<any[]>([]);
   const [userTransfersLoading, setUserTransfersLoading] = useState(false);
   const [userTransfersError, setUserTransfersError] = useState<string | null>(null);
-  const [pyrCodeSuggestions, setPyrCodeSuggestions] = useState<PyrCodeSuggestion[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
   const handleBarcodeScan = async (scannedCode: string) => {
@@ -414,34 +405,22 @@ const HomePage: React.FC = () => {
   }, [searchError]);
 
   const handlePyrCodeSearch = async (value: string) => {
-    if (!/^[a-zA-Z0-9-]*$/.test(value)) {
-      return;
-    }
-
     if (value.length < 2) {
-      setPyrCodeSuggestions([]);
+      setSearchResults([]);
       return;
     }
 
     setSearchLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        getApiUrl(`/locations/1/search?q=${encodeURIComponent(value)}`),
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Nie udało się wyszukać kodów PYR');
-      }
-
-      const suggestions = await response.json();
-      setPyrCodeSuggestions(suggestions);
+      const result = await searchGlobalAPI(value);
+      const items: SearchItem[] = [
+        ...result.assets.map(a => ({ ...a, _type: 'asset' as const })),
+        ...result.stocks.map(s => ({ ...s, _type: 'stock' as const })),
+      ];
+      setSearchResults(items);
     } catch (error) {
       console.error('Błąd podczas wyszukiwania:', error);
-      setPyrCodeSuggestions([]);
+      setSearchResults([]);
     } finally {
       setSearchLoading(false);
     }
@@ -485,13 +464,11 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const handleOptionSelected = (_event: any, value: PyrCodeSuggestion | string | null) => {
+  const handleOptionSelected = (_event: any, value: SearchItem | string | null) => {
     if (!value || typeof value === 'string') {
       return;
     }
-
-    // Przekieruj bezpośrednio do szczegółów sprzętu
-    navigate(`/equipment/${value.id}?type=asset`);
+    navigate(`/equipment/${value.id}?type=${value._type}`);
   };
 
   return (
@@ -531,16 +508,22 @@ const HomePage: React.FC = () => {
             alignItems: 'stretch',
           }}>
             {/* Main Search Input */}
-            <Autocomplete
+            <Autocomplete<SearchItem, false, false, true>
               fullWidth
               freeSolo
-              options={pyrCodeSuggestions}
+              options={searchResults}
               getOptionLabel={(option) =>
-                typeof option === 'string' ? option : option.pyrcode
+                typeof option === 'string'
+                  ? option
+                  : option._type === 'asset'
+                    ? option.pyrcode
+                    : option.category.label
               }
               onChange={handleOptionSelected}
               renderOption={(props, option) => {
+                if (typeof option === 'string') return null;
                 const { key, ...otherProps } = props;
+                const isAsset = option._type === 'asset';
                 return (
                   <Box
                     key={key}
@@ -563,15 +546,17 @@ const HomePage: React.FC = () => {
                         variant="body1"
                         sx={{
                           fontWeight: 600,
-                          color: 'primary.main',
-                          fontFamily: 'monospace',
-                          letterSpacing: '0.05em',
+                          color: isAsset ? 'primary.main' : 'secondary.main',
+                          fontFamily: isAsset ? 'monospace' : 'inherit',
+                          letterSpacing: isAsset ? '0.05em' : 'normal',
                         }}
                       >
-                        {option.pyrcode}
+                        {isAsset ? option.pyrcode : option.category.label}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {option.category.label} • {option.location.name}
+                        {option.category.label}
+                        {isAsset ? ` • ${option.serial}` : ` • szt: ${option.quantity}`}
+                        {' • '}{option.location.name}
                       </Typography>
                     </Box>
                   </Box>

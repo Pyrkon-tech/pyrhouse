@@ -3,6 +3,37 @@
  */
 
 import { apiClient } from './apiClient';
+
+// ============================================================================
+// Globalne wyszukiwanie (GET /search?q=...)
+// ============================================================================
+
+export interface GlobalSearchAsset {
+  id: number;
+  pyrcode: string;
+  serial: string;
+  status: string;
+  origin: string;
+  location: { id: number; name: string };
+  category: { id: number; name: string; label: string };
+}
+
+export interface GlobalSearchStock {
+  id: number;
+  quantity: number;
+  origin: string;
+  location: { id: number; name: string };
+  category: { id: number; name: string; label: string };
+}
+
+export interface GlobalSearchResult {
+  assets: GlobalSearchAsset[];
+  stocks: GlobalSearchStock[];
+}
+
+/** Globalne wyszukiwanie po kodzie PYR, numerze seryjnym, kategorii, lokalizacji i pochodzeniu (min. 2 znaki) */
+export const searchGlobalAPI = (query: string) =>
+  apiClient.get<GlobalSearchResult>(`/search?q=${encodeURIComponent(query)}`);
 import type {
   Asset,
   AssetValidation,

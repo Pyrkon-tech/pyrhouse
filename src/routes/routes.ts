@@ -19,7 +19,7 @@ const EquipmentDetails = lazy(() => import('../components/features/EquipmentDeta
 const LocationsPage = lazy(() => import('../components/features/LocationsPage'));
 const LocationDetailsPage = lazy(() => import('../components/features/LocationDetailsPage'));
 const TutorialPage = lazy(() => import('../components/features/TutorialPage'));
-const DutySchedulePage = lazy(() => import('../components/features/DutySchedulePage'));
+const ScheduleDetailPage = lazy(() => import('../components/features/Schedule'));
 const ServiceDeskPage = lazy(() => import('../components/features/ServiceDesk/ServiceDeskPage'));
 const DispatchPage = lazy(() => import('../components/features/DispatchPage'));
 const ReleasesListPage = lazy(() => import('../components/features/Releases/ReleasesListPage'));
@@ -138,7 +138,7 @@ export const protectedRoutes: RouteConfig[] = [
   },
   {
     path: '/duty-schedule',
-    component: DutySchedulePage,
+    component: ScheduleDetailPage,
     title: 'Harmonogram dyżurów',
     icon: 'Schedule',
     showInNav: true,

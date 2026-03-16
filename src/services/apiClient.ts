@@ -17,7 +17,8 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public code?: string
+    public code?: string,
+    public details?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
@@ -131,7 +132,7 @@ class ApiClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        let errorData: { error?: string; message?: string; code?: string } = {};
+        let errorData: Record<string, unknown> = {};
         try {
           errorData = await response.json();
         } catch {
@@ -140,10 +141,13 @@ class ApiClient {
 
         const errorMessage = this.getErrorMessage(
           response.status,
-          errorData.error || errorData.message
+          (errorData.error ?? errorData.message) as string | undefined
         );
 
-        throw new ApiError(errorMessage, response.status, errorData.code);
+        const { error: _e, message: _m, code, ...rest } = errorData;
+        const details = Object.keys(rest).length > 0 ? rest : undefined;
+
+        throw new ApiError(errorMessage, response.status, code as string | undefined, details);
       }
 
       // Obsługa pustych odpowiedzi (np. 204 No Content)
