@@ -20,6 +20,7 @@ const TableChartIcon = lazy(() => import('@mui/icons-material/TableChart'));
 interface ScheduleHeaderProps {
   schedule: ScheduleDetail;
   validation: ValidationResult | null;
+  clientValidation?: ValidationResult | null;
   isModerator: boolean;
   isAdmin: boolean;
   canEdit: boolean;
@@ -55,7 +56,7 @@ const SYNC_STATUS_LABEL: Record<SyncStatus, string> = {
 
 const SYNC_STATUS_COLOR: Record<SyncStatus, string> = {
   saved: '#66bb6a',
-  saving: '#ff9800',
+  saving: '#ffb74d',
   dirty: '#ff9800',
   error: '#ef5350',
 };
@@ -63,6 +64,7 @@ const SYNC_STATUS_COLOR: Record<SyncStatus, string> = {
 const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   schedule,
   validation,
+  clientValidation,
   isModerator,
   isAdmin,
   canEdit,
@@ -89,6 +91,8 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   redoLabel,
 }) => {
   const isPublished = schedule.status === 'published';
+  // Use clientValidation (real-time) when available, fall back to server validation
+  const displayValidation = clientValidation ?? validation;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -127,16 +131,16 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
           color={isPublished ? 'success' : 'default'}
           size="small"
         />
-        {validation && (
-          <Tooltip title={validation.valid ? 'Brak błędów' : `${validation.issues.length} problemów`}>
+        {displayValidation && (
+          <Tooltip title={displayValidation.valid ? 'Brak błędów' : `${displayValidation.issues.length} problemów`}>
             <Chip
               icon={
                 <Suspense fallback={null}>
-                  {validation.valid ? <CheckCircleIcon /> : <WarningIcon />}
+                  {displayValidation.valid ? <CheckCircleIcon /> : <WarningIcon />}
                 </Suspense>
               }
-              label={validation.valid ? 'OK' : validation.issues.length}
-              color={validation.valid ? 'success' : 'warning'}
+              label={displayValidation.valid ? 'OK' : displayValidation.issues.length}
+              color={displayValidation.valid ? 'success' : 'warning'}
               size="small"
               onClick={onValidate}
             />
@@ -261,8 +265,22 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
         </ToggleButtonGroup>
 
         {/* Sync status */}
-        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: SYNC_STATUS_COLOR[syncStatus] }} />
+        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              bgcolor: SYNC_STATUS_COLOR[syncStatus],
+              ...(syncStatus === 'saving' && {
+                animation: 'pulse-sync 1.2s ease-in-out infinite',
+                '@keyframes pulse-sync': {
+                  '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                  '50%': { opacity: 0.4, transform: 'scale(0.75)' },
+                },
+              }),
+            }}
+          />
           <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>
             {SYNC_STATUS_LABEL[syncStatus]}
             {lastSavedAt && syncStatus === 'saved' && (

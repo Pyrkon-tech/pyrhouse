@@ -53,7 +53,7 @@ const ValidationPanel: React.FC<ValidationPanelProps> = ({ validation }) => {
         <Box sx={{ px: 1.5, pb: 1 }}>
           <Box component="ul" sx={{ m: 0, pl: 2 }}>
             {validation.issues.map((issue, i) => (
-              <li key={i}>
+              <li key={`${issue.type}-${issue.slot_id ?? issue.slot ?? ''}-${issue.volunteer_id ?? ''}-${i}`}>
                 <Typography variant="caption" sx={{ fontSize: '0.65rem' }}>
                   <strong>{ISSUE_TYPE_LABEL[issue.type] ?? issue.type}</strong>
                   {issue.volunteer ? ` — ${issue.volunteer}` : ''}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -12,6 +12,7 @@ import {
   DndContext,
   DragOverlay,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
   PointerSensor,
   useSensor,
@@ -29,18 +30,18 @@ import {
   exportSheetsAPI,
 } from '../../../services/scheduleService';
 import { ApiError } from '../../../services/apiClient';
-import type { SlotType, ScheduleSlot } from '../../../types/schedule.types';
+import type { ScheduleSlot } from '../../../types/schedule.types';
 
-import { SLOT_TYPE_CONFIG, ROSTER_WIDTH, VOLUNTEER_CHIP_H } from './constants';
+import { ROSTER_WIDTH, CELL_STATUS_COLORS } from './constants';
 import type { PhaseFilter } from './constants';
 import type { ApiErrorState } from './types';
-import { buildApiErrorState, computeHourRange, buildDayColumns, avatarColor } from './utils';
+import { buildApiErrorState, buildTimelineData, extractTimelineLaneMap, avatarColor } from './utils';
 import { useScheduleLocalState } from './useScheduleLocalState';
 import { useScheduleSync } from './useScheduleSync';
 import { useScheduleValidation } from './useScheduleValidation';
 
 import ApiErrorAlert from './components/ApiErrorAlert';
-import CalendarGrid from './components/CalendarGrid';
+import ScheduleGrid from './components/ScheduleGrid';
 import ScheduleHeader from './components/ScheduleHeader';
 import ValidationPanel from './components/ValidationPanel';
 import SlotEditor from './components/SlotEditor';
@@ -48,9 +49,11 @@ import RosterVolunteerCard from './components/RosterVolunteerCard';
 import RosterDropZone from './components/RosterDropZone';
 import ImportDialog from './components/ImportDialog';
 import NoScheduleView from './components/NoScheduleView';
+import QuickAssignPopover from './components/QuickAssignPopover';
+import { useChipResize, type ResizeEndInfo } from './hooks/useChipResize';
 
 // ============================================================================
-// Main page component — vertical calendar layout
+// Main page component — slot × day grid layout
 // ============================================================================
 
 const ScheduleDetailPage: React.FC = () => {
@@ -82,6 +85,9 @@ const ScheduleDetailPage: React.FC = () => {
   const [rosterSearch, setRosterSearch] = useState('');
   const [editingSlot, setEditingSlot] = useState<ScheduleSlot | null>(null);
   const [editAnchorEl, setEditAnchorEl] = useState<HTMLElement | null>(null);
+  const [quickAssignSlotId, setQuickAssignSlotId] = useState<number | null>(null);
+  const [quickAssignAnchor, setQuickAssignAnchor] = useState<HTMLElement | null>(null);
+  const [highlightedVolunteerId, setHighlightedVolunteerId] = useState<number | null>(null);
 
   const canEdit = isModerator && schedule?.status !== 'published';
   const { undo, redo, canUndo, canRedo, undoLabel, redoLabel } = localState;
@@ -102,11 +108,16 @@ const ScheduleDetailPage: React.FC = () => {
   // ---- Client-side validation (instant, runs on every state change) --------
   const clientValidation = useScheduleValidation(slots, volunteers);
 
-  // ---- Keyboard shortcuts: Ctrl+Z / Ctrl+Y --------------------------------
+  // ---- Keyboard shortcuts: Ctrl+Z / Ctrl+Y / Escape -------------------------
   useEffect(() => {
-    if (!canEdit) return;
-
     const handler = (e: KeyboardEvent) => {
+      // Escape → clear highlight + close popups
+      if (e.key === 'Escape') {
+        setHighlightedVolunteerId(null);
+        return;
+      }
+
+      if (!canEdit) return;
       const isMeta = e.ctrlKey || e.metaKey;
       if (!isMeta) return;
 
@@ -167,7 +178,6 @@ const ScheduleDetailPage: React.FC = () => {
   // ---- Sync layer (bulk save via PUT /schedule/draft) ----------------------
 
   const handleSaveSuccess = useCallback((response: import('../../../types/schedule.types').DraftResponse) => {
-    // Replace local state with server-confirmed state
     loadFromServer(response.schedule);
   }, [loadFromServer]);
 
@@ -186,7 +196,7 @@ const ScheduleDetailPage: React.FC = () => {
     setActiveId(String(event.active.id));
   };
 
-  const handleDragOver = (event: { over: { id: string | number } | null }) => {
+  const handleDragOver = (event: DragOverEvent) => {
     setOverDropId(event.over ? String(event.over.id) : null);
   };
 
@@ -293,34 +303,41 @@ const ScheduleDetailPage: React.FC = () => {
     localState.deleteSlot(slotId);
   }, [localState]);
 
-  /** Click on empty grid space → create a 4h slot at that position and open editor */
-  const handleGridClick = useCallback((dateKey: string, hour: number, anchorEl: HTMLElement) => {
-    // Infer slot type from existing slots on this date
-    const daySlotsForType = slots.filter((s) => s.start.slice(0, 10) === dateKey);
-    const dominantType = daySlotsForType.length > 0 ? daySlotsForType[0].type : 'festival';
-    const type: SlotType = (dominantType === 'montage' || dominantType === 'demontage')
-      ? dominantType
-      : 'festival';
+  // ---- Quick Assign handlers ------------------------------------------------
 
-    const startHour = Math.max(0, Math.min(hour, 23.5));
-    const endHour = Math.min(startHour + 4, 24);
-    const startHH = String(Math.floor(startHour)).padStart(2, '0');
-    const startMM = startHour % 1 === 0.5 ? '30' : '00';
-    const endHH = String(Math.floor(endHour)).padStart(2, '0');
-    const endMM = endHour % 1 === 0.5 ? '30' : '00';
+  const handleQuickAssign = useCallback((slotId: number, _posIndex: number, anchorEl: HTMLElement) => {
+    setQuickAssignSlotId(slotId);
+    setQuickAssignAnchor(anchorEl);
+  }, []);
 
-    const start = `${dateKey}T${startHH}:${startMM}:00`;
-    const end = `${dateKey}T${endHH}:${endMM}:00`;
+  const handleQuickAssignSelect = useCallback((volunteerId: number, nickname: string) => {
+    if (quickAssignSlotId != null) {
+      localState.assignVolunteer(volunteerId, nickname, quickAssignSlotId);
+    }
+  }, [localState, quickAssignSlotId]);
 
-    const slotId = localState.createSlot(type, start, end, 4);
-    // Find the newly created slot and open editor on it
-    const newSlot = localState.state.slots.find((s) => s.id === slotId)
-      ?? localState.state.schedule?.slots.find((s) => s.id === slotId);
-    if (newSlot) {
-      setEditingSlot(newSlot);
-      setEditAnchorEl(anchorEl);
+  const handleQuickAssignClose = useCallback(() => {
+    setQuickAssignSlotId(null);
+    setQuickAssignAnchor(null);
+  }, []);
+
+  // ---- Chip resize handlers --------------------------------------------------
+
+  const handleResizeEnd = useCallback((info: ResizeEndInfo) => {
+    const slot = slots.find((s) => s.id === info.slotId);
+    if (!slot) return;
+
+    if (slot.volunteers.length <= 1) {
+      // Solo volunteer (or empty slot) — resize the whole slot
+      localState.updateSlot(info.slotId, { start: info.newStart, end: info.newEnd });
+    } else {
+      // Multiple volunteers — split: create a new slot with new times, move this volunteer there
+      const newSlotId = localState.createSlot(slot.type, info.newStart, info.newEnd, 1, slot.label);
+      localState.moveVolunteer(info.assignmentId, info.volunteerId, info.nickname, info.slotId, newSlotId);
     }
   }, [localState, slots]);
+
+  const { resizePreview, handleResizeStart } = useChipResize(handleResizeEnd);
 
   // ---- Derived state (ALL before early returns) ---------------------------
 
@@ -332,8 +349,12 @@ const ScheduleDetailPage: React.FC = () => {
     return slots.filter((s) => s.type === phaseFilter);
   }, [slots, phaseFilter]);
 
-  const { minHour: globalMinHour, maxHour: globalMaxHour } = computeHourRange(filteredSlots);
-  const dayColumns = buildDayColumns(filteredSlots, globalMinHour, todayStr);
+  const prevLaneMapRef = useRef<Map<string, number> | undefined>(undefined);
+  const timelineData = useMemo(() => {
+    const result = buildTimelineData(filteredSlots, volunteers, validation ?? clientValidation, todayStr, undefined, prevLaneMapRef.current, slots);
+    prevLaneMapRef.current = extractTimelineLaneMap(result);
+    return result;
+  }, [filteredSlots, slots, volunteers, validation, clientValidation, todayStr]);
 
   // Filter roster by search
   const filteredVolunteers = useMemo(() => {
@@ -378,7 +399,7 @@ const ScheduleDetailPage: React.FC = () => {
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver as never}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <Box sx={{ p: { xs: 1, sm: 1.5 }, display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -386,7 +407,8 @@ const ScheduleDetailPage: React.FC = () => {
         {/* Header with phase tabs */}
         <ScheduleHeader
           schedule={schedule}
-          validation={validation ?? clientValidation}
+          validation={validation}
+          clientValidation={clientValidation}
           isModerator={isModerator}
           isAdmin={isAdmin}
           canEdit={canEdit}
@@ -438,8 +460,8 @@ const ScheduleDetailPage: React.FC = () => {
             borderColor: 'divider',
             borderRadius: 2,
             overflow: 'hidden',
-            height: 'calc(100vh - 200px)',
-            minHeight: 400,
+            height: 'calc(100vh - 280px)',
+            minHeight: 250,
           }}
         >
           {/* Left: Volunteer roster sidebar */}
@@ -475,15 +497,9 @@ const ScheduleDetailPage: React.FC = () => {
               />
             </Box>
 
-            {/* Roster drop zone (remove assignments) */}
-            {canEdit && (
-              <Box sx={{ px: 1, py: 0.5, borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
-                <RosterDropZone isOver={overDropId === 'roster'} />
-              </Box>
-            )}
-
-            {/* Volunteer list */}
-            <Box sx={{ flex: 1, overflowY: 'auto', p: 0.75 }}>
+            {/* Volunteer list + drop zone (sticky bottom) */}
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 0.75, display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ flex: 1 }}>
               {volunteers.length === 0 ? (
                 <Typography variant="caption" color="text.disabled" sx={{ fontSize: 10, p: 0.5 }}>
                   Brak wolontariuszy. Użyj "Wolontariusze" aby zaimportować z Google Sheets.
@@ -494,9 +510,18 @@ const ScheduleDetailPage: React.FC = () => {
                 </Typography>
               ) : (
                 sortedVolunteers.map((vol) => (
-                  <RosterVolunteerCard key={vol.id} volunteer={vol} canEdit={canEdit} />
+                  <RosterVolunteerCard
+                    key={vol.id}
+                    volunteer={vol}
+                    canEdit={canEdit}
+                    slots={slots}
+                    isHighlighted={highlightedVolunteerId === vol.id}
+                    onToggleHighlight={(id) => setHighlightedVolunteerId((prev) => prev === id ? null : id)}
+                  />
                 ))
               )}
+              </Box>
+              {canEdit && <RosterDropZone isOver={overDropId === 'roster'} />}
             </Box>
 
             {/* Roster footer stats */}
@@ -509,17 +534,18 @@ const ScheduleDetailPage: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Right: Vertical calendar grid */}
-          <CalendarGrid
-            columns={dayColumns}
-            globalMinHour={globalMinHour}
-            globalMaxHour={globalMaxHour}
+          {/* Right: Slot × Day grid */}
+          <ScheduleGrid
+            timeline={timelineData}
             canEdit={canEdit}
             overDropId={overDropId}
             now={now}
+            resizePreview={resizePreview}
+            highlightedVolunteerId={highlightedVolunteerId}
             onSlotEditClick={canEdit ? handleSlotEditClick : undefined}
-            onGridClick={canEdit ? handleGridClick : undefined}
+            onQuickAssign={canEdit ? handleQuickAssign : undefined}
             onRemoveAssignment={canEdit ? handleRemoveAssignment : undefined}
+            onResizeStart={canEdit ? handleResizeStart : undefined}
           />
         </Box>
       </Box>
@@ -536,41 +562,60 @@ const ScheduleDetailPage: React.FC = () => {
             return (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.5,
                 bgcolor: 'background.paper', border: '1.5px solid', borderColor: 'primary.main',
-                borderRadius: 1, boxShadow: 4, cursor: 'grabbing', width: ROSTER_WIDTH - 24 }}>
+                borderRadius: 1, boxShadow: 4, cursor: 'grabbing', maxWidth: ROSTER_WIDTH - 24 }}>
                 <Avatar sx={{ width: 18, height: 18, fontSize: 8, fontWeight: 700, bgcolor: avatarColor(vol.id) }}>
                   {vol.nickname.slice(0, 1)}
                 </Avatar>
-                <Typography variant="caption" fontWeight={700} sx={{ fontSize: '0.65rem', lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <Typography variant="caption" fontWeight={700} sx={{ fontSize: '0.65rem', lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
                   {vol.nickname}
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: '0.55rem', color: 'text.disabled', whiteSpace: 'nowrap' }}>
+                  {vol.assigned_hours}/{vol.target_hours}h
                 </Typography>
               </Box>
             );
           }
 
-          // Assignment chip → match VolunteerChip dimensions exactly
+          // Assignment chip → match GridCell appearance
           let nickname = '';
-          let slotType: SlotType = 'festival';
+          let slotLabel = '';
           for (const slot of slots) {
             const sv = slot.volunteers.find((x) => x.id === id);
-            if (sv) { nickname = sv.nickname; slotType = slot.type; break; }
+            if (sv) {
+              nickname = sv.nickname;
+              slotLabel = slot.label || slot.type;
+              break;
+            }
           }
           if (!nickname) return null;
-          const cfg = SLOT_TYPE_CONFIG[slotType];
+          const statusCfg = CELL_STATUS_COLORS.approved;
           return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5,
-              height: VOLUNTEER_CHIP_H, px: 0.5,
-              bgcolor: cfg.bg, border: '1.5px solid', borderColor: cfg.color,
-              borderRadius: 0.75, boxShadow: 4, cursor: 'grabbing', width: 140 }}>
-              <Avatar sx={{ width: 18, height: 18, fontSize: 8, bgcolor: avatarColor(id), flexShrink: 0 }}>
-                {nickname.slice(0, 1)}
-              </Avatar>
-              <Typography variant="caption" fontWeight={600} sx={{ fontSize: '0.65rem', lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.5,
+              bgcolor: statusCfg.bg, border: '1.5px solid', borderColor: statusCfg.border,
+              borderRadius: 1, boxShadow: 4, cursor: 'grabbing', maxWidth: 200 }}>
+              <Typography variant="caption" fontWeight={600} sx={{ fontSize: '0.7rem', color: statusCfg.color, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {nickname}
               </Typography>
+              {slotLabel && (
+                <Typography variant="caption" sx={{ fontSize: '0.55rem', color: 'text.disabled', whiteSpace: 'nowrap' }}>
+                  {slotLabel}
+                </Typography>
+              )}
             </Box>
           );
         })()}
       </DragOverlay>
+
+      {/* Quick Assign Popover */}
+      <QuickAssignPopover
+        anchorEl={quickAssignAnchor}
+        open={quickAssignSlotId != null}
+        volunteers={volunteers}
+        targetSlot={quickAssignSlotId != null ? slots.find((s) => s.id === quickAssignSlotId) ?? null : null}
+        allSlots={slots}
+        onSelect={handleQuickAssignSelect}
+        onClose={handleQuickAssignClose}
+      />
 
       <ImportDialog
         open={importOpen}

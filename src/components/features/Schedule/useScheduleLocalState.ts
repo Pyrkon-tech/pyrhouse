@@ -50,12 +50,6 @@ interface HistoryEntry {
 
 // ---- Hook ------------------------------------------------------------------
 
-let tempIdCounter = 0;
-function nextTempId(): number {
-  tempIdCounter -= 1;
-  return tempIdCounter;
-}
-
 export interface ScheduleLocalState {
   schedule: ScheduleDetail | null;
   volunteers: ScheduleVolunteer[];
@@ -138,6 +132,11 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
   const [schedule, setSchedule] = useState<ScheduleDetail | null>(null);
   const [validation, setValidationState] = useState<ValidationResult | null>(null);
   const pendingRef = useRef<ScheduleChange[]>([]);
+  const tempIdCounterRef = useRef(0);
+  const nextTempId = useCallback(() => {
+    tempIdCounterRef.current -= 1;
+    return tempIdCounterRef.current;
+  }, []);
   // Incremented on every pending change to trigger re-render for isDirty
   const [, setPendingVersion] = useState(0);
 
@@ -208,6 +207,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     pendingRef.current = [];
     undoStackRef.current = [];
     redoStackRef.current = [];
+    tempIdCounterRef.current = 0;
     setPendingVersion((v) => v + 1);
     setHistoryVersion((v) => v + 1);
   }, []);
@@ -218,6 +218,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     pendingRef.current = [];
     undoStackRef.current = [];
     redoStackRef.current = [];
+    tempIdCounterRef.current = 0;
     setPendingVersion((v) => v + 1);
     setHistoryVersion((v) => v + 1);
   }, []);
@@ -234,11 +235,13 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
       if (!prev) return prev;
       const updated = {
         ...prev,
-        slots: prev.slots.map((s) =>
-          s.id === slotId
-            ? { ...s, volunteers: [...s.volunteers, { id: tempId, nickname }] }
-            : s,
-        ),
+        slots: prev.slots.map((s) => {
+          if (s.id !== slotId) return s;
+          const newVols = [...s.volunteers, { id: tempId, nickname }];
+          // Auto-increase capacity if slot is full
+          const newCapacity = Math.max(s.capacity, newVols.length);
+          return { ...s, volunteers: newVols, capacity: newCapacity };
+        }),
       };
       return recomputeVolunteerHours(updated);
     });
@@ -246,7 +249,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     pendingRef.current.push({ type: 'assign', volunteerId, nickname, slotId, tempAssignmentId: tempId });
     setPendingVersion((v) => v + 1);
     return tempId;
-  }, [recomputeVolunteerHours]);
+  }, [recomputeVolunteerHours, nextTempId, pushHistory]);
 
   const unassignVolunteer = useCallback((assignmentId: number) => {
     pushHistory('Usuń przypisanie');
@@ -264,7 +267,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
 
     pendingRef.current.push({ type: 'unassign', assignmentId });
     setPendingVersion((v) => v + 1);
-  }, [recomputeVolunteerHours]);
+  }, [recomputeVolunteerHours, pushHistory]);
 
   const moveVolunteer = useCallback((
     assignmentId: number,
@@ -298,7 +301,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     });
     setPendingVersion((v) => v + 1);
     return tempId;
-  }, [recomputeVolunteerHours]);
+  }, [recomputeVolunteerHours, nextTempId, pushHistory]);
 
   const createSlot = useCallback((
     type: SlotType, start: string, end: string, capacity: number, label?: string,
@@ -325,7 +328,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
 
     setPendingVersion((v) => v + 1);
     return tempId;
-  }, []);
+  }, [nextTempId, pushHistory]);
 
   const updateSlot = useCallback((slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'capacity' | 'type' | 'label'>>) => {
     pushHistory('Edytuj slot');
@@ -346,7 +349,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
       return recomputeVolunteerHours(updated);
     });
     setPendingVersion((v) => v + 1);
-  }, [recomputeVolunteerHours]);
+  }, [recomputeVolunteerHours, pushHistory]);
 
   const deleteSlot = useCallback((slotId: number) => {
     pushHistory('Usuń slot');
@@ -359,7 +362,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
       return recomputeVolunteerHours(updated);
     });
     setPendingVersion((v) => v + 1);
-  }, [recomputeVolunteerHours]);
+  }, [recomputeVolunteerHours, pushHistory]);
 
   const consumeChanges = useCallback((): ScheduleChange[] => {
     const changes = [...pendingRef.current];

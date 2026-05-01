@@ -1,47 +1,47 @@
 import type { SlotType } from '../../../types/schedule.types';
 
-// ---- Legacy horizontal layout (kept for compatibility) ----------------------
-export const PX_PER_HOUR = 80;
-export const CARD_HEIGHT = 36;
-export const CARD_GAP = 4;
-export const HOUR_AXIS_H = 26;
-export const DAY_HEADER_H = 42;
-export const FULL_DAY_COL_WIDTH = 200;
-
-// ---- New vertical calendar layout -------------------------------------------
-
-/** Pixels per hour on vertical axis */
-export const PX_PER_HOUR_V = 60;
-
-/** Left-side hour axis width */
-export const HOUR_AXIS_WIDTH = 48;
-
-/** Day column header height (date + type label) */
-export const DAY_HEADER_HEIGHT = 52;
-
-/** Minimum day column width */
-export const DAY_COL_MIN_WIDTH = 160;
-
-/** Maximum day column width */
-export const DAY_COL_MAX_WIDTH = 280;
-
-/** Volunteer chip height inside slot block */
-export const VOLUNTEER_CHIP_H = 26;
-
-/** Gap between volunteer chips in slot */
-export const CHIP_GAP = 3;
-
-/** Minimum slot block height (regardless of short duration) */
-export const SLOT_MIN_HEIGHT = 50;
-
-/** Padding inside slot block */
-export const SLOT_PADDING = 6;
-
-/** Slot header height (label + capacity indicator) */
-export const SLOT_HEADER_H = 22;
-
 /** Roster sidebar width */
 export const ROSTER_WIDTH = 220;
+
+// ---- Grid layout (slot × day table) -----------------------------------------
+
+/** Row height in the grid layout */
+export const GRID_ROW_H = 68;
+
+/** Width of the left "Slot N" label column */
+export const SLOT_LABEL_W = 80;
+
+/** Resize handle visual width in pixels */
+export const RESIZE_HANDLE_W = 6;
+/** Resize handle hit area width (larger for touch/trackpad) */
+export const RESIZE_HANDLE_HIT_W = 14;
+
+/** Snap granularity in minutes (default 15, Shift+drag = 5) */
+export const SNAP_MINUTES = 15;
+export const SNAP_FINE_MINUTES = 5;
+
+/** Minimum slot duration (hours) — 30 minutes */
+export const MIN_SLOT_DURATION_H = 0.5;
+
+/** Maximum slot duration (hours) — limited only by column extent (full day/schedule) */
+export const MAX_SLOT_DURATION_H = 24;
+
+// ---- Timeline (Gantt) layout ------------------------------------------------
+
+/** Height of each lane row in the timeline */
+export const TIMELINE_LANE_H = 52;
+/** Width of the lane label column (#1, #2, ...) */
+export const TIMELINE_LANE_LABEL_W = 48;
+/** Pixels per hour on the timeline */
+export const TIMELINE_PX_PER_HOUR = 50;
+
+/** Grid cell status colors */
+export const CELL_STATUS_COLORS = {
+  approved: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.40)' },
+  warning:  { color: '#ff8c00', bg: 'rgba(255,140,0,0.15)',  border: 'rgba(255,140,0,0.40)'  },
+  error:    { color: '#ef4444', bg: 'rgba(239,68,68,0.18)',   border: 'rgba(239,68,68,0.50)'  },
+  pending:  { color: '#3b82f6', bg: 'rgba(59,130,246,0.15)', border: 'rgba(59,130,246,0.40)' },
+} as const;
 
 // ---- Shared visual config ---------------------------------------------------
 
@@ -70,7 +70,11 @@ export const ISSUE_TYPE_LABEL: Record<string, string> = {
   outside_availability: 'Poza oknem dostępności',
 };
 
-export const AVATAR_COLORS = ['#ff9800', '#00acc1', '#66bb6a', '#ab47bc', '#42a5f5', '#ef5350', '#ffd54f'];
+export const AVATAR_COLORS = [
+  '#ff9800', '#00acc1', '#66bb6a', '#ab47bc', '#42a5f5', '#ef5350', '#ffd54f',
+  '#26a69a', '#ec407a', '#7e57c2', '#8d6e63', '#78909c', '#d4e157', '#29b6f6',
+  '#ff7043', '#9ccc65',
+];
 
 export const SHEET_FORMAT_INFO = `Wymagany format arkusza (kolumny A–F):
 A: Pseudonim (wymagane)

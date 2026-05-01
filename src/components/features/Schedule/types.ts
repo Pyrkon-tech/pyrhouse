@@ -1,65 +1,86 @@
 import type { SlotType, ScheduleSlot } from '../../../types/schedule.types';
 
-// ---- Legacy horizontal types (kept for compatibility) -----------------------
+// ---- Grid layout types (slot × day table) -----------------------------------
 
-/** Per-person horizontal assignment card data */
-export interface AssignmentCardH {
-  assignmentId: number;
-  volunteerId: number;
-  slotId: number;
-  nickname: string;
-  slotType: SlotType;
-  slotLabel: string;
-  creditHours: number;
-  startTime: string;
-  endTime: string;
-  left: number;
-  width: number;
-  lane: number;
-}
+/** Cell status — derived from validation + save state */
+export type GridCellStatus = 'approved' | 'warning' | 'error' | 'pending';
 
-/** One day column in the old horizontal calendar grid */
-export interface DayGanttColumn {
-  dateKey: string;
-  label: string;
-  shortLabel: string;
-  dayType: SlotType | 'mixed';
-  isToday: boolean;
-  isFullDay: boolean;
-  slots: ScheduleSlot[];
-  cards: AssignmentCardH[];
-  emptySlots: ScheduleSlot[];
-  numLanes: number;
-  columnWidth: number;
-  contentHeight: number;
-}
-
-// ---- New vertical calendar types --------------------------------------------
-
-/** Vertical slot block positioning */
-export interface SlotBlockV {
+/** One cell in the position × day grid */
+export interface GridCell {
+  /** The backend slot this cell belongs to */
   slot: ScheduleSlot;
-  /** Top position in pixels (relative to grid area) */
-  top: number;
-  /** Height in pixels */
-  height: number;
+  /** Position index within the slot's capacity (0-based) */
+  positionIndex: number;
+  /** Assigned volunteer or null (shows "Quick Assign") */
+  volunteer: { assignmentId: number; volunteerId: number; nickname: string } | null;
+  /** Cell status derived from validation issues */
+  status: GridCellStatus;
+  /** For festival columns: horizontal start position as % of time range */
+  startPct?: number;
+  /** For festival columns: width as % of time range */
+  widthPct?: number;
+  /** Human-readable time label, e.g. "10:00 → 12:00" */
+  timeLabel?: string;
 }
 
-/** One day column in the new vertical calendar */
-export interface DayColumnData {
+/** One column (day) in the grid */
+export interface GridColumn {
   dateKey: string;
-  /** Full label e.g. "Poniedziałek, 7 kwietnia" */
-  label: string;
-  /** Short label e.g. "pon. 07.04" */
   shortLabel: string;
   dayType: SlotType | 'mixed';
   isToday: boolean;
-  /** True for montage/demontage-only days (compact layout, no time axis) */
+  /** True for montage/demontage-only days (simple cells, no time axis) */
   isFullDay: boolean;
-  /** Sorted slots for this day */
-  slots: ScheduleSlot[];
-  /** Positioned slot blocks (for time-based layout) */
-  slotBlocks: SlotBlockV[];
+  /** For time-based columns: hour range for axis labels */
+  minHour: number;
+  maxHour: number;
+  /**
+   * Rows for this column. Each row contains an array of GridCells.
+   * For full-day columns: each row has 0 or 1 cell.
+   * For time-based columns: non-overlapping slots are packed into the same row
+   * (each cell is absolutely positioned by startPct/widthPct).
+   */
+  cells: GridCell[][];
+}
+
+/** Full grid data for the scheduler table */
+export interface GridData {
+  columns: GridColumn[];
+  /** Total number of position rows */
+  rowCount: number;
+}
+
+// ---- Timeline (Gantt) layout types ------------------------------------------
+
+/** Day separator marker on the continuous timeline */
+export interface DayMarker {
+  dateKey: string;
+  label: string;
+  dayType: SlotType | 'mixed';
+  isToday: boolean;
+  /** Position % on the timeline where this day starts */
+  startPct: number;
+  /** Position % on the timeline where this day ends */
+  endPct: number;
+}
+
+/** One horizontal lane in the timeline (holds non-overlapping cells) */
+export interface TimelineLane {
+  cells: GridCell[];
+}
+
+/** Full timeline data for the Gantt scheduler */
+export interface TimelineData {
+  lanes: TimelineLane[];
+  dayMarkers: DayMarker[];
+  /** Earliest date in the schedule (reference point for absolute hours) */
+  firstDateKey: string;
+  /** Absolute hour where the timeline starts (e.g. 5 = first day 05:00) */
+  absoluteStartH: number;
+  /** Absolute hour where the timeline ends */
+  absoluteEndH: number;
+  /** Total hours spanned by the timeline */
+  totalHours: number;
 }
 
 // ---- Shared types -----------------------------------------------------------
