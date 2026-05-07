@@ -71,7 +71,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom'],
           'vendor-mui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
           'vendor-maps': ['@vis.gl/react-google-maps'],
-'vendor-utils': ['lodash', 'date-fns', 'jwt-decode']
+          'vendor-utils': ['date-fns', 'jwt-decode']
         }
       }
     },
