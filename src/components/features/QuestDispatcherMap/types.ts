@@ -30,6 +30,8 @@ export interface Volunteer {
   fullname: string | null;
   status: VolunteerStatus;
   current_mission: string | null;
+  /** True when the volunteer has no linked system account (user_id: null in on-duty roster) */
+  is_unlinked?: boolean;
 }
 
 export interface DispatchAssignment {

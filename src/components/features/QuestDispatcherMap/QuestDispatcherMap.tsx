@@ -3,16 +3,33 @@ import { Box, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Quest } from '../../../types/quest.types';
 import type { ServiceDeskRequest } from '../../../types/servicedesk.types';
-import type { DispatchAssignment, DispatchModalState } from './types';
+import type { DispatchAssignment, DispatchModalState, Volunteer } from './types';
+import type { OnDutyVolunteer } from '../../../types/schedule.types';
 import { groupQuestsByZone, groupServiceDeskByZone } from './utils/matching';
 import { ZONES } from './constants/zones';
-import { useVolunteers } from '../../../hooks/useVolunteers';
+import { useOnDutyRoster } from '../../../hooks/useOnDutyRoster';
 import { useLocations } from '../../../hooks/useLocations';
 import { updateQuestLocationAPI } from '../../../services/questService';
 import MapCanvas from './components/MapCanvas';
 import DispatchSidebar from './components/DispatchSidebar';
 import VolunteerPanel from './components/VolunteerPanel';
 import DispatchModal from './components/DispatchModal';
+import DevTimeSimulator from './components/DevTimeSimulator';
+
+const IS_DEV = import.meta.env.DEV && window.location.hostname === 'localhost';
+
+function mapOnDutyToVolunteer(entry: OnDutyVolunteer): Volunteer {
+  return {
+    id: entry.volunteer_id,
+    username: entry.user?.username ?? entry.nickname,
+    discord_username: entry.user?.discord_username ?? null,
+    avatar_url: entry.user?.avatar_url ?? null,
+    fullname: entry.user?.fullname ?? null,
+    status: entry.status,
+    current_mission: entry.current_mission,
+    is_unlinked: entry.user_id === null,
+  };
+}
 
 interface QuestDispatcherMapProps {
   quests: Quest[];
@@ -32,6 +49,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
   const navigate = useNavigate();
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [simulatedTime, setSimulatedTime] = useState<Date | undefined>(undefined);
   const { locations, refetch: fetchLocations } = useLocations();
 
   useEffect(() => { fetchLocations(); }, [fetchLocations]);
@@ -47,8 +65,11 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
 
   const questsByZone = useMemo(() => groupQuestsByZone(quests, locationPavilionMap), [quests, locationPavilionMap]);
   const sdByZone = useMemo(() => groupServiceDeskByZone(serviceDeskRequests), [serviceDeskRequests]);
-  const { volunteers, setVolunteers, fetchVolunteers } = useVolunteers();
-  useEffect(() => { fetchVolunteers(); }, [fetchVolunteers]);
+
+  const { roster, fetchRoster } = useOnDutyRoster(simulatedTime);
+  useEffect(() => { fetchRoster(); }, [fetchRoster]);
+
+  const volunteers = useMemo(() => roster.map(mapOnDutyToVolunteer), [roster]);
 
   // Dispatch modal state
   const [dispatchModal, setDispatchModal] = useState<DispatchModalState>({
@@ -94,12 +115,6 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
   }, [onQuestUpdated]);
 
   const handleDispatch = useCallback((assignment: DispatchAssignment) => {
-    const zone = ZONES.find(z => z.id === assignment.zone_id);
-    setVolunteers(prev => prev.map(v =>
-      assignment.volunteer_ids.includes(v.id)
-        ? { ...v, status: 'on_mission' as const, current_mission: zone ? `Pawilon ${zone.label.replace('\n', ' ')}` : null }
-        : v,
-    ));
     handleCloseDispatch();
     navigate(`/quests/${assignment.quest_id}`, {
       state: {
@@ -107,19 +122,30 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
         volunteerIds: assignment.volunteer_ids,
       },
     });
-  }, [handleCloseDispatch, navigate, setVolunteers]);
+  }, [handleCloseDispatch, navigate]);
 
   return (
     <Box sx={{ display: 'flex', gap: sidebarOpen ? 2 : 1, height: '100%', minHeight: 520 }}>
       {/* Left column: map + optional volunteer panel */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1, minHeight: 0 }}>
-        <MapCanvas
-          questsByZone={questsByZone}
-          selectedZoneId={selectedZoneId}
-          onZoneSelect={setSelectedZoneId}
-          onZoneDispatch={handleZoneDispatch}
-          urgencyHours={urgencyHours}
-        />
+        <Box sx={{ position: 'relative', flex: 1, minHeight: 0 }}>
+          <MapCanvas
+            questsByZone={questsByZone}
+            selectedZoneId={selectedZoneId}
+            onZoneSelect={setSelectedZoneId}
+            onZoneDispatch={handleZoneDispatch}
+            urgencyHours={urgencyHours}
+          />
+          {IS_DEV && (
+            <DevTimeSimulator
+              simulatedTime={simulatedTime}
+              onChange={(t) => {
+                setSimulatedTime(t);
+                fetchRoster(t);
+              }}
+            />
+          )}
+        </Box>
         {showVolunteerPanel && <VolunteerPanel volunteers={volunteers} />}
       </Box>
       {/* Right column: sidebar or thin expand strip */}

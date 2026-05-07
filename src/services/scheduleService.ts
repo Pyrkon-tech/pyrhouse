@@ -13,6 +13,7 @@ import type {
   UpdateSlotPayload,
   DraftPayload,
   DraftResponse,
+  OnDutyVolunteer,
 } from '../types/schedule.types';
 
 // ---- Active schedule (singular — only one active at a time) ----------------
@@ -159,3 +160,13 @@ export const importFromSheetAPI = (sheetId: string, sheetName: string) =>
     '/schedule/volunteers/import-sheet',
     { sheet_id: sheetId, sheet_name: sheetName },
   );
+
+// ---- Dispatch integration --------------------------------------------------
+
+/**
+ * GET /schedule/on-duty?at=<RFC3339>
+ * Returns volunteers currently on a duty slot at the given time.
+ * at is optional — omit for server-side "now".
+ */
+export const getOnDutyAPI = (at?: string): Promise<OnDutyVolunteer[]> =>
+  apiClient.get<OnDutyVolunteer[]>(`/schedule/on-duty${at ? `?at=${encodeURIComponent(at)}` : ''}`);

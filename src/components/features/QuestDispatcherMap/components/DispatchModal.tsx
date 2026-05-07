@@ -13,6 +13,7 @@ import {
 import type { Quest } from '../../../../types/quest.types';
 import type { Zone, Volunteer, DispatchAssignment } from '../types';
 import { formatDate } from '../utils/matching';
+import UnknownAgentAvatar from './UnknownAgentAvatar';
 
 const AVATAR_PALETTE = ['#ff9800', '#00acc1', '#66bb6a', '#ffd54f', '#ef5350', '#ab47bc', '#42a5f5'];
 
@@ -176,26 +177,36 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                     borderRadius: 1.5,
                     overflow: 'hidden',
                     cursor: isBusy ? 'not-allowed' : 'pointer',
-                    border: `2px solid ${isChecked ? '#ff9800' : '#1a3548'}`,
-                    boxShadow: isChecked ? '0 0 12px rgba(255,152,0,0.3)' : 'none',
+                    border: `2px solid ${isChecked ? '#00acc1' : '#1a3548'}`,
+                    boxShadow: isChecked ? '0 0 14px rgba(0,172,193,0.5)' : 'none',
                     transition: 'all 0.15s ease',
-                    '&:hover': !isBusy ? { borderColor: isChecked ? '#ff9800' : '#2a4a60' } : {},
+                    '&:hover': !isBusy ? { borderColor: isChecked ? '#00acc1' : '#2a4a60' } : {},
                   }}
                 >
                   {/* Avatar fills the card */}
-                  <Avatar
-                    variant="square"
-                    src={v.avatar_url || undefined}
-                    sx={{
-                      width: '100%', height: '100%', borderRadius: 0,
-                      bgcolor: v.avatar_url ? 'transparent' : avatarBg,
-                      fontSize: 22, fontFamily: 'monospace', fontWeight: 700,
-                      filter: isBusy ? 'grayscale(0.7) brightness(0.5)' : 'none',
+                  {v.is_unlinked ? (
+                    <Box sx={{
+                      width: '100%', height: '100%',
+                      filter: isBusy ? 'brightness(0.4)' : 'none',
                       transition: 'filter 0.15s ease',
-                    }}
-                  >
-                    {!v.avatar_url && getInitials(v.fullname, v.username)}
-                  </Avatar>
+                    }}>
+                      <UnknownAgentAvatar />
+                    </Box>
+                  ) : (
+                    <Avatar
+                      variant="square"
+                      src={v.avatar_url || undefined}
+                      sx={{
+                        width: '100%', height: '100%', borderRadius: 0,
+                        bgcolor: v.avatar_url ? 'transparent' : avatarBg,
+                        fontSize: 22, fontFamily: 'monospace', fontWeight: 700,
+                        filter: isBusy ? 'grayscale(0.7) brightness(0.5)' : 'none',
+                        transition: 'filter 0.15s ease',
+                      }}
+                    >
+                      {!v.avatar_url && getInitials(v.fullname, v.username)}
+                    </Avatar>
+                  )}
 
                   {/* BUSY banner */}
                   {isBusy && (
@@ -214,7 +225,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                     <Box sx={{
                       position: 'absolute', top: 2, right: 2,
                       width: 18, height: 18, borderRadius: '50%',
-                      bgcolor: '#ff9800', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      bgcolor: '#00acc1', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       <Typography sx={{ color: '#000', fontSize: 12, fontWeight: 900, lineHeight: 1 }}>
                         ✓
@@ -225,11 +236,12 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                   {/* Name overlay */}
                   <Box sx={{
                     position: 'absolute', bottom: 0, left: 0, right: 0,
-                    bgcolor: 'rgba(0,0,0,0.7)', px: 0.5, py: 0.25,
+                    bgcolor: isChecked ? 'rgba(0,20,40,0.88)' : 'rgba(0,0,0,0.75)',
+                    px: 0.5, py: 0.5,
                   }}>
                     <Typography sx={{
-                      color: isBusy ? '#607080' : '#c8e8f5',
-                      fontFamily: 'monospace', fontSize: 8, fontWeight: 600,
+                      color: isBusy ? '#607080' : isChecked ? '#fff' : '#e0f4ff',
+                      fontFamily: 'monospace', fontSize: 11, fontWeight: 700,
                       textAlign: 'center', lineHeight: 1.2,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>

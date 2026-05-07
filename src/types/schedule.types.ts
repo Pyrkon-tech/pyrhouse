@@ -214,6 +214,28 @@ export interface UpdateSlotPayload {
   label?: string;
 }
 
+// ---- On-duty roster (dispatch integration) --------------------------------
+
+export interface OnDutyUser {
+  id: number;
+  username: string;
+  fullname: string | null;
+  avatar_url: string | null;
+  discord_username: string | null;
+}
+
+export interface OnDutyVolunteer {
+  volunteer_id: number;
+  nickname: string;
+  slot_id: number;
+  slot_label: string | null;
+  slot_end: string;
+  status: 'available' | 'on_mission';
+  current_mission: string | null;
+  user_id: number | null;
+  user: OnDutyUser | null;
+}
+
 // ---- Draft (bulk save) payloads -------------------------------------------
 
 /** Slot item in PUT /schedule/draft body */

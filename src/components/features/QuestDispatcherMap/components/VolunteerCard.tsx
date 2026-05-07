@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, Avatar, Typography, Tooltip } from '@mui/material';
+import LinkOffIcon from '@mui/icons-material/LinkOff';
 import type { Volunteer, VolunteerStatus } from '../types';
+import UnknownAgentAvatar from './UnknownAgentAvatar';
 
 const STATUS_LABELS: Record<VolunteerStatus, string> = {
   available: 'Dostępny',
@@ -25,6 +27,7 @@ interface VolunteerCardProps {
 const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onClick, compact }) => {
   const displayName = volunteer.discord_username || volunteer.username;
   const isBusy = volunteer.status === 'on_mission';
+  const isUnlinked = volunteer.is_unlinked === true;
   const avatarBg = AVATAR_PALETTE[volunteer.id % AVATAR_PALETTE.length];
   const cardW = compact ? 72 : 90;
   const cardH = compact ? 108 : 130;
@@ -56,33 +59,43 @@ const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onCl
             height: cardH,
             borderRadius: 1.5,
             overflow: 'hidden',
-            bgcolor: selected ? 'rgba(255,152,0,0.12)' : '#07111e',
-            border: `2px solid ${selected ? '#ff9800' : '#1a3548'}`,
-            boxShadow: selected ? '0 0 10px rgba(255,152,0,0.25)' : 'none',
+            bgcolor: selected ? 'rgba(0,172,193,0.10)' : '#07111e',
+            border: `2px solid ${selected ? '#00acc1' : '#1a3548'}`,
+            boxShadow: selected ? '0 0 12px rgba(0,172,193,0.45)' : 'none',
             transition: 'all 0.2s ease',
             '&:hover': onClick ? {
-              borderColor: selected ? '#ff9800' : '#2a4a60',
+              borderColor: selected ? '#00acc1' : '#2a4a60',
             } : {},
           }}
         >
           {/* Avatar fills the card */}
-          <Avatar
-            variant="square"
-            src={volunteer.avatar_url || undefined}
-            sx={{
-              width: '100%',
-              height: '100%',
-              borderRadius: 0,
-              bgcolor: volunteer.avatar_url ? 'transparent' : avatarBg,
-              fontSize: compact ? 26 : 32,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              filter: isBusy ? 'grayscale(0.7) brightness(0.5)' : 'none',
+          {isUnlinked ? (
+            <Box sx={{
+              width: '100%', height: '100%',
+              filter: isBusy ? 'brightness(0.4)' : 'none',
               transition: 'filter 0.2s ease',
-            }}
-          >
-            {!volunteer.avatar_url && getInitials(volunteer.fullname, volunteer.username)}
-          </Avatar>
+            }}>
+              <UnknownAgentAvatar />
+            </Box>
+          ) : (
+            <Avatar
+              variant="square"
+              src={volunteer.avatar_url || undefined}
+              sx={{
+                width: '100%',
+                height: '100%',
+                borderRadius: 0,
+                bgcolor: volunteer.avatar_url ? 'transparent' : avatarBg,
+                fontSize: compact ? 26 : 32,
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                filter: isBusy ? 'grayscale(0.7) brightness(0.5)' : 'none',
+                transition: 'filter 0.2s ease',
+              }}
+            >
+              {!volunteer.avatar_url && getInitials(volunteer.fullname, volunteer.username)}
+            </Avatar>
+          )}
 
           {/* BUSY banner — top of card */}
           {isBusy && (
@@ -111,6 +124,29 @@ const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onCl
             </Box>
           )}
 
+          {/* Unlinked badge — top-right corner */}
+          {isUnlinked && (
+            <Tooltip title="Brak konta systemowego" placement="top">
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: isBusy ? 18 : 3,
+                  right: 3,
+                  bgcolor: 'rgba(6,14,26,0.85)',
+                  borderRadius: '50%',
+                  width: 16,
+                  height: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #3a5a6a',
+                }}
+              >
+                <LinkOffIcon sx={{ fontSize: 10, color: '#3a7a8a' }} />
+              </Box>
+            </Tooltip>
+          )}
+
           {/* Name overlay — bottom of card */}
           <Box
             sx={{
@@ -118,17 +154,17 @@ const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onCl
               bottom: 0,
               left: 0,
               right: 0,
-              bgcolor: 'rgba(0,0,0,0.7)',
+              bgcolor: selected ? 'rgba(0,20,40,0.88)' : 'rgba(0,0,0,0.75)',
               px: 0.5,
-              py: 0.25,
+              py: 0.5,
             }}
           >
             <Typography
               sx={{
-                color: isBusy ? '#607080' : '#c8e8f5',
+                color: isBusy ? '#607080' : selected ? '#fff' : '#e0f4ff',
                 fontFamily: 'monospace',
-                fontSize: compact ? 8 : 9,
-                fontWeight: 600,
+                fontSize: compact ? 10 : 11,
+                fontWeight: 700,
                 textAlign: 'center',
                 lineHeight: 1.2,
                 overflow: 'hidden',
