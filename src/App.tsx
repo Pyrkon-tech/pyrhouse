@@ -11,15 +11,6 @@ import { publicRoutes, protectedRoutes, adminRoutes } from './routes/routes';
 import RequireRole from './components/features/RequireRole';
 
 // Konfiguracja flag React Router v7
-const routerFutureConfig = {
-  v7_startTransition: true,
-  v7_relativeSplatPath: true,
-  v7_fetcherPersist: true,
-  v7_normalizeFormMethod: true,
-  v7_partialHydration: true,
-  v7_skipActionErrorRevalidation: true
-};
-
 // Komponent dla chronionych tras
 const ProtectedRouteWrapper = () => (
   <PrivateRoute>
@@ -60,7 +51,7 @@ function App() {
     <ThemeProvider>
       <CssBaseline />
       <NotificationProvider>
-      <Router future={routerFutureConfig}>
+      <Router>
         <Routes>
           {/* Publiczne trasy */}
           {publicRoutes.map((route) => (

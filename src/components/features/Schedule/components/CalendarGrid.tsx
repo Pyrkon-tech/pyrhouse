@@ -69,19 +69,38 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
 }) => {
   const { slot, left, width } = item;
   const typeCfg = SLOT_TYPE_CONFIG[slot.type];
+  const isFestival = slot.type === 'festival';
 
   const startH = slotStartH(slot);
   const endH = slotEndH(slot);
   const durationH = endH - startH;
-
   const top = (startH - minHour) * pxPerHour;
   const naturalH = durationH * pxPerHour;
   const height = Math.max(MIN_SLOT_H, naturalH);
-
   const isCrossMidnight = endH > 24;
-  const isAssignable = isAssignMode;
 
-  // Is the highlighted volunteer already assigned to this slot?
+  // Chip dimensions scale with zoom level
+  const chipH  = pxPerHour < 35 ? 13 : pxPerHour < 70 ? 15 : 17;
+  const chipFs = pxPerHour < 35 ? '0.5rem'  : pxPerHour < 70 ? '0.6rem'  : '0.65rem';
+  const chipPx = pxPerHour < 35 ? 0.35 : 0.45;
+  const rowGapPx = pxPerHour < 35 ? 2 : 3;
+  const colGap   = pxPerHour < 35 ? 0.25 : 0.35;
+  const rowPx = chipH + rowGapPx; // height consumed per chip row
+
+  // isLarge: enough room for label row (non-festival) + ≥2 chip rows
+  const labelRowPx = !isFestival ? 20 : 0;
+  const isLarge = height >= labelRowPx + rowPx * 2 + 4;
+
+  // Overflow: estimate 3 chips/row (suitable for 160-250px column widths)
+  const CHIPS_PER_ROW = 3;
+  const availH = Math.max(rowPx, height - labelRowPx - 6);
+  const maxRows = Math.max(1, Math.floor(availH / rowPx));
+  const maxVisible = isLarge ? maxRows * CHIPS_PER_ROW : slot.volunteers.length;
+  const visibleVols = slot.volunteers.length > maxVisible + 1
+    ? slot.volunteers.slice(0, maxVisible)
+    : slot.volunteers;
+  const overflowCount = slot.volunteers.length - visibleVols.length;
+
   const alreadyHere = isAssignMode && highlightedVolunteerId != null &&
     slot.volunteers.some(sv => nicknameToVolId.get(sv.nickname) === highlightedVolunteerId);
 
@@ -97,8 +116,6 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
     if (canEdit) onContextMenu(slot.id, e.clientX, e.clientY);
   };
 
-  const isLarge = height >= 52;
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -111,16 +128,143 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
     try {
       const data: DragPayload = JSON.parse(e.dataTransfer.getData('application/json'));
       if (data.assignmentId != null && data.fromSlotId != null) {
-        // chip move between slots
-        if (data.fromSlotId !== slot.id) {
+        if (data.fromSlotId !== slot.id)
           onMoveAssignment?.(data.assignmentId, data.volunteerId, data.nickname, data.fromSlotId, slot.id);
-        }
       } else {
-        // roster drag → assign
         onAssignVolunteer?.(data.volunteerId, data.nickname, slot.id);
       }
-    } catch { /* ignore malformed drag data */ }
+    } catch { /* ignore malformed */ }
   };
+
+  // ---- Shared chip styles ----
+  const baseChipSx = {
+    display: 'inline-flex' as const,
+    alignItems: 'center' as const,
+    px: chipPx,
+    py: 0,
+    borderRadius: 0.5,
+    border: '1px solid',
+    fontSize: chipFs,
+    fontWeight: 600,
+    lineHeight: `${chipH}px`,
+    whiteSpace: 'nowrap' as const,
+    userSelect: 'none' as const,
+    flexShrink: 0,
+  };
+
+  const chips = visibleVols.map(sv => {
+    const volId = nicknameToVolId.get(sv.nickname);
+    const isHl = highlightedVolunteerId != null && volId === highlightedVolunteerId;
+    const color = avatarColor(volId ?? 0);
+    return (
+      <Box
+        key={sv.id}
+        draggable={canEdit}
+        onDragStart={(e) => {
+          e.stopPropagation();
+          const payload: DragPayload = { assignmentId: sv.id, volunteerId: volId ?? 0, nickname: sv.nickname, fromSlotId: slot.id };
+          e.dataTransfer.setData('application/json', JSON.stringify(payload));
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        onClick={(e) => e.stopPropagation()}
+        sx={{
+          ...baseChipSx,
+          borderColor: `${color}55`,
+          bgcolor: `${color}16`,
+          color: 'text.primary',
+          cursor: canEdit ? 'grab' : 'default',
+          outline: isHl ? '2px solid' : 'none',
+          outlineColor: 'primary.main',
+          outlineOffset: 1,
+          opacity: highlightedVolunteerId != null && !isHl ? 0.3 : 1,
+          transition: 'opacity 0.15s, border-color 0.12s',
+          '&:hover': canEdit ? { borderColor: color, bgcolor: `${color}28` } : {},
+          '&:active': canEdit ? { cursor: 'grabbing' } : {},
+        }}
+      >
+        {sv.nickname}
+        {canEdit && (
+          <Box
+            component="span"
+            onClick={(e) => { e.stopPropagation(); onRemoveAssignment(sv.id); }}
+            sx={{ fontSize: '0.45rem', lineHeight: 1, opacity: 0.35, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', ml: 0.25, '&:hover': { opacity: 1, color: 'error.main' } }}
+          >
+            ✕
+          </Box>
+        )}
+      </Box>
+    );
+  });
+
+  const overflowBadge = overflowCount > 0 ? (
+    <Box sx={{ ...baseChipSx, borderColor: 'rgba(255,255,255,0.15)', bgcolor: 'rgba(255,255,255,0.06)', color: 'text.disabled', fontWeight: 700, cursor: 'default' }}>
+      +{overflowCount}
+    </Box>
+  ) : null;
+
+  const assignHint = isAssignMode && !alreadyHere
+    ? <Box sx={{ fontSize: chipFs, color: 'primary.main', fontWeight: 700, lineHeight: `${chipH}px`, flexShrink: 0 }}>＋</Box>
+    : isAssignMode && alreadyHere
+    ? <Box sx={{ fontSize: '0.52rem', color: 'rgba(255,210,0,0.9)', fontWeight: 700, lineHeight: `${chipH}px`, flexShrink: 0 }}>✓</Box>
+    : null;
+
+  // Festival understaffed dot
+  const understaffedDot = isFestival && slot.volunteers.length < 2 ? (
+    <Box sx={{
+      flexShrink: 0,
+      width: slot.volunteers.length === 0 ? 7 : 5,
+      height: slot.volunteers.length === 0 ? 7 : 5,
+      borderRadius: '50%',
+      bgcolor: slot.volunteers.length === 0 ? 'error.main' : 'warning.main',
+      opacity: slot.volunteers.length === 0 ? 0.65 : 0.85,
+    }} />
+  ) : null;
+
+  // Non-festival count badge
+  const countBadge = !isFestival ? (
+    <Box sx={{
+      flexShrink: 0,
+      fontSize: '0.5rem',
+      fontWeight: 700,
+      px: 0.4,
+      borderRadius: 0.5,
+      lineHeight: `${chipH}px`,
+      bgcolor: slot.volunteers.length === 0 ? 'rgba(239,68,68,0.22)' : slot.volunteers.length < 2 ? 'rgba(255,152,0,0.22)' : 'rgba(16,185,129,0.22)',
+      color: slot.volunteers.length === 0 ? 'error.main' : slot.volunteers.length < 2 ? 'warning.main' : 'success.main',
+    }}>
+      {slot.volunteers.length}
+    </Box>
+  ) : null;
+
+  // Chip area: wrap (large) vs single-row (compact)
+  const chipAreaWrap = (
+    <Box sx={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      rowGap: `${rowGapPx}px`,
+      columnGap: colGap,
+      alignContent: 'flex-start',
+      overflow: 'hidden',
+      flex: 1,
+      minHeight: 0,
+    }}>
+      {chips}{overflowBadge}{assignHint}
+    </Box>
+  );
+
+  const chipAreaRow = (
+    <Box sx={{
+      display: 'flex',
+      flexWrap: 'nowrap',
+      gap: colGap,
+      overflow: 'hidden',
+      flex: 1,
+      alignItems: 'center',
+      minWidth: 0,
+    }}>
+      {chips}{assignHint}
+    </Box>
+  );
 
   return (
     <Box
@@ -136,27 +280,21 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
         height,
         bgcolor: alreadyHere
           ? 'rgba(255,200,0,0.13)'
-          : isAssignMode
-          ? 'rgba(255,152,0,0.06)'
-          : isSelected
-          ? 'rgba(255,152,0,0.05)'
-          : slot.type !== 'festival'
-          ? `${typeCfg.color}0d`
-          : slot.volunteers.length === 0
-          ? 'rgba(239,68,68,0.04)'
+          : isAssignMode ? 'rgba(255,152,0,0.06)'
+          : isSelected  ? 'rgba(255,152,0,0.05)'
+          : !isFestival ? `${typeCfg.color}0d`
+          : slot.volunteers.length === 0 ? 'rgba(239,68,68,0.04)'
           : 'transparent',
         border: alreadyHere
           ? '1px solid rgba(255,200,0,0.55)'
-          : isSelected
-          ? '1px solid rgba(255,152,0,0.35)'
+          : isSelected ? '1px solid rgba(255,152,0,0.35)'
           : '1px solid transparent',
         borderLeft: alreadyHere
           ? '3px solid rgba(255,200,0,0.8)'
-          : slot.type !== 'festival'
-          ? `3px solid ${typeCfg.color}99`
+          : !isFestival ? `3px solid ${typeCfg.color}99`
           : `2px solid ${typeCfg.color}30`,
-        borderBottom: slot.type === 'festival' ? '1px solid rgba(255,255,255,0.04)' : '1px solid transparent',
-        borderRadius: slot.type !== 'festival' ? 1 : 0,
+        borderBottom: isFestival ? '1px solid rgba(255,255,255,0.04)' : '1px solid transparent',
+        borderRadius: !isFestival ? 1 : 0,
         overflow: 'hidden',
         cursor: alreadyHere ? 'not-allowed' : 'pointer',
         zIndex: isSelected ? 4 : alreadyHere ? 3 : 2,
@@ -165,160 +303,40 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
         display: 'flex',
         flexDirection: 'column',
         px: 0.5,
-        pt: 0.2,
-        pb: 0.2,
-        gap: 0,
+        pt: 0.3,
+        pb: 0.3,
       }}
     >
-      {(() => {
-        const isFestival = slot.type === 'festival';
-
-        /* Understaffed dot — only shown for festival slots with < 2 people */
-        const understaffedDot = isFestival && slot.volunteers.length < 2 ? (
-          <Box sx={{
-            flexShrink: 0,
-            width: slot.volunteers.length === 0 ? 8 : 6,
-            height: slot.volunteers.length === 0 ? 8 : 6,
-            borderRadius: '50%',
-            bgcolor: slot.volunteers.length === 0 ? 'error.main' : 'warning.main',
-            opacity: slot.volunteers.length === 0 ? 0.6 : 0.8,
-            alignSelf: 'center',
-          }} />
-        ) : null;
-
-        /* Full badge — only for montage/demontage */
-        const badge = !isFestival ? (
-          <Box
-            sx={{
-              flexShrink: 0,
-              fontSize: '0.52rem',
-              fontWeight: 700,
-              px: 0.45,
-              py: 0,
-              borderRadius: 0.5,
-              lineHeight: '15px',
-              bgcolor: slot.volunteers.length === 0 ? 'rgba(239,68,68,0.22)' : slot.volunteers.length < 2 ? 'rgba(255,152,0,0.22)' : 'rgba(16,185,129,0.22)',
-              color: slot.volunteers.length === 0 ? 'error.main' : slot.volunteers.length < 2 ? 'warning.main' : 'success.main',
-            }}
-          >
-            {slot.volunteers.length}
+      {isLarge && !isFestival ? (
+        // Large non-festival (montage/demontage): label row + wrapped chips
+        <>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, mb: `${rowGapPx}px` }}>
+            <Typography sx={{
+              fontSize: '0.63rem', fontWeight: 700, lineHeight: 1.3,
+              color: isAssignMode ? 'primary.light' : typeCfg.color,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              flex: 1, minWidth: 0,
+            }}>
+              {slot.label || typeCfg.label}
+              {isCrossMidnight && <Box component="span" sx={{ ml: 0.4, fontSize: '0.5rem', color: 'warning.main' }}>🌙</Box>}
+            </Typography>
+            {countBadge}
           </Box>
-        ) : null;
-
-        const chipRow = (wrap: boolean) => slot.volunteers.map(sv => {
-          const volId = nicknameToVolId.get(sv.nickname);
-          const isHl = highlightedVolunteerId != null && volId === highlightedVolunteerId;
-          const color = avatarColor(volId ?? 0);
-          return (
-            <Box
-              key={sv.id}
-              draggable={canEdit}
-              onDragStart={(e) => {
-                e.stopPropagation();
-                const payload: DragPayload = {
-                  assignmentId: sv.id,
-                  volunteerId: volId ?? 0,
-                  nickname: sv.nickname,
-                  fromSlotId: slot.id,
-                };
-                e.dataTransfer.setData('application/json', JSON.stringify(payload));
-                e.dataTransfer.effectAllowed = 'move';
-              }}
-              onClick={(e) => e.stopPropagation()}
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.2,
-                px: 0.45,
-                py: 0,
-                borderRadius: 0.5,
-                border: '1px solid',
-                borderColor: `${color}55`,
-                bgcolor: `${color}16`,
-                fontSize: '0.6rem',
-                fontWeight: 600,
-                lineHeight: '15px',
-                color: 'text.primary',
-                cursor: canEdit ? 'grab' : 'default',
-                whiteSpace: 'nowrap',
-                userSelect: 'none',
-                outline: isHl ? '2px solid' : 'none',
-                outlineColor: 'primary.main',
-                outlineOffset: 1,
-                opacity: highlightedVolunteerId != null && !isHl ? 0.3 : 1,
-                transition: 'opacity 0.15s, border-color 0.12s',
-                flexShrink: wrap ? undefined : 0,
-                '&:hover': canEdit ? { borderColor: color, bgcolor: `${color}28` } : {},
-                '&:active': canEdit ? { cursor: 'grabbing' } : {},
-              }}
-            >
-              {sv.nickname}
-              {canEdit && (
-                <Box
-                  component="span"
-                  onClick={(e) => { e.stopPropagation(); onRemoveAssignment(sv.id); }}
-                  sx={{
-                    fontSize: '0.48rem',
-                    lineHeight: 1,
-                    opacity: 0.35,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    '&:hover': { opacity: 1, color: 'error.main' },
-                  }}
-                >
-                  ✕
-                </Box>
-              )}
-            </Box>
-          );
-        });
-
-        if (isLarge && !isFestival) {
-          /* Large non-festival slot (montage/demontage): label + badge + chips */
-          return (
-            <>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minHeight: 0 }}>
-                <Typography sx={{
-                  fontSize: '0.65rem', fontWeight: 700, lineHeight: 1.25,
-                  color: isAssignable ? 'primary.light' : typeCfg.color,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  flex: 1, minWidth: 0,
-                }}>
-                  {slot.label || typeCfg.label}
-                  {isCrossMidnight && <Box component="span" sx={{ ml: 0.4, fontSize: '0.5rem', color: 'warning.main' }}>🌙</Box>}
-                </Typography>
-                {badge}
-              </Box>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.3, mt: 0.3, overflow: 'hidden' }}>
-                {chipRow(true)}
-                {isAssignable && !alreadyHere && (
-                  <Box sx={{ fontSize: '0.6rem', color: 'primary.main', fontWeight: 700, lineHeight: '15px', px: 0.5, alignSelf: 'center' }}>＋</Box>
-                )}
-                {alreadyHere && (
-                  <Box sx={{ fontSize: '0.55rem', color: 'rgba(255,210,0,0.9)', fontWeight: 700, lineHeight: '15px', px: 0.5, alignSelf: 'center' }}>✓ tu jest</Box>
-                )}
-              </Box>
-            </>
-          );
-        }
-
-        /* Festival slot (any size) or compact non-festival: chips only + understaffed dot */
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, overflow: 'hidden', flex: 1 }}>
-            <Box sx={{ display: 'flex', gap: 0.3, overflow: 'hidden', flex: 1, alignItems: 'center', flexWrap: isLarge ? 'wrap' : 'nowrap' }}>
-              {chipRow(!isLarge ? false : true)}
-              {isAssignable && !alreadyHere && (
-                <Box sx={{ fontSize: '0.6rem', color: 'primary.main', fontWeight: 700, lineHeight: '15px', flexShrink: 0 }}>＋</Box>
-              )}
-              {alreadyHere && (
-                <Box sx={{ fontSize: '0.55rem', color: 'rgba(255,210,0,0.9)', fontWeight: 700, lineHeight: '15px', flexShrink: 0 }}>✓</Box>
-              )}
-            </Box>
-            {isFestival ? understaffedDot : badge}
-          </Box>
-        );
-      })()}
+          {chipAreaWrap}
+        </>
+      ) : isLarge ? (
+        // Large festival: chips wrap top-left + understaffed dot at top-right
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', overflow: 'hidden', flex: 1, minHeight: 0, gap: 0.4 }}>
+          {chipAreaWrap}
+          {understaffedDot}
+        </Box>
+      ) : (
+        // Compact (all types): single chip row + indicator at right
+        <Box sx={{ display: 'flex', alignItems: 'center', overflow: 'hidden', flex: 1, minHeight: 0, gap: 0.4 }}>
+          {chipAreaRow}
+          {isFestival ? understaffedDot : countBadge}
+        </Box>
+      )}
     </Box>
   );
 };

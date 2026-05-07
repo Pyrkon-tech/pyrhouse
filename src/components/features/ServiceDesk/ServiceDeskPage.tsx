@@ -121,7 +121,7 @@ const ServiceDeskPage: React.FC = () => {
   };
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let intervalId: ReturnType<typeof setInterval>;
 
     if (isPageVisible) {
       intervalId = setInterval(() => {

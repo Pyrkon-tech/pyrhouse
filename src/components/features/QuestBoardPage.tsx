@@ -32,7 +32,6 @@ import { useSyncStatus } from '../../hooks/useSyncStatus';
 import { useQuestCounts } from '../../hooks/useQuestCounts';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../context/NotificationContext';
-import debounce from 'lodash/debounce';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import type { QuestStatus, Quest, QuestEvent } from '../../types/quest.types';
 
@@ -147,12 +146,11 @@ const QuestBoardPage: React.FC = () => {
     // eslint-disable-next-line
   }, [statusFilter, searchQuery]);
 
-  const debouncedSearch = useCallback(
-    debounce((query: string) => {
-      setSearchQuery(query);
-    }, 300),
-    []
-  );
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debouncedSearch = useCallback((query: string) => {
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => setSearchQuery(query), 300);
+  }, []);
 
   // Client-side filtering: text search + unresolved location
   const filteredQuests = useMemo(() => {

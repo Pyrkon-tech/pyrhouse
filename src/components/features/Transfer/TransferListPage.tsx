@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState, useCallback, lazy } from 'react';
+import React, { Suspense, useEffect, useState, useCallback, useRef, lazy } from 'react';
 import {
   Box,
   Typography,
@@ -24,7 +24,6 @@ import { AppSnackbar, PageHeader, EmptyState } from '../../ui';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTransfers } from '../../../hooks/useTransfers';
 import { useSnackbarMessage } from '../../../hooks/useSnackbarMessage';
-import debounce from 'lodash/debounce';
 import LoadingSkeleton from '../../ui/LoadingSkeleton';
 import Autocomplete from '@mui/material/Autocomplete';
 import { Location } from '../../../types/location.types';
@@ -99,12 +98,11 @@ const TransfersListPage: React.FC = () => {
     setSearchParams(params, { replace: true });
   }, [fromLocationFilter, toLocationFilter, dateFilter, statusFilter, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const debouncedSearch = useCallback(
-    debounce((query: string) => {
-      setSearchQuery(query);
-    }, 300),
-    []
-  );
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debouncedSearch = useCallback((query: string) => {
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => setSearchQuery(query), 300);
+  }, []);
 
   const allDates = React.useMemo(() => {
     return Array.from(new Set(transfers.map(t => new Date(t.transfer_date).toLocaleDateString('pl-PL'))));

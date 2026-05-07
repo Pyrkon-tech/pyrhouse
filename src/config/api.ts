@@ -51,7 +51,7 @@ export const getAuthHeaders = (): HeadersInit => {
  */
 export const createAbortController = (timeout = API_TIMEOUT): {
   controller: AbortController;
-  timeoutId: NodeJS.Timeout;
+  timeoutId: ReturnType<typeof setTimeout>;
   clear: () => void;
 } => {
   const controller = new AbortController();

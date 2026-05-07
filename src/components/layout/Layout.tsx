@@ -125,7 +125,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [activeItem, setActiveItem] = useState<string>('');
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up');
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [scrollTimer, setScrollTimer] = useState<NodeJS.Timeout | null>(null);
+  const [scrollTimer, setScrollTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const SCROLL_THRESHOLD = 50; // Minimalny próg przewijania w pikselach
   const SCROLL_DELAY = 150; // Opóźnienie w milisekundach (tylko dla chowania paska)
   const [userRole, setUserRole] = useState<string>('');

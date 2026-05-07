@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Box, Dialog, DialogTitle, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import Quagga from 'quagga';
+import Quagga from '@ericblade/quagga2';
 
 interface BarcodeScannerProps {
   onClose: () => void;
