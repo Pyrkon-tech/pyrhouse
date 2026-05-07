@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Box, LinearProgress, Typography } from '@mui/material';
 import { keyframes } from '@mui/system';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
@@ -73,7 +74,7 @@ const SystemInitAnimation: React.FC<SystemInitAnimationProps> = ({ onComplete })
 
   if (!prefersAnimations) return null;
 
-  return (
+  return createPortal(
     <Box
       sx={{
         position: 'fixed',
@@ -151,7 +152,8 @@ const SystemInitAnimation: React.FC<SystemInitAnimationProps> = ({ onComplete })
       >
         Inicjalizacja systemu...
       </Typography>
-    </Box>
+    </Box>,
+    document.body,
   );
 };
 

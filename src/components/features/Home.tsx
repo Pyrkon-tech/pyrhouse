@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import SystemInitAnimation from '../animations/SystemInitAnimation';
 import {
   Box,
   Typography,
@@ -306,6 +307,10 @@ const ActionIconWrapper = styled(Box)(({ theme }) => ({
 const HomePage: React.FC = () => {
   useTransfers();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [showAnimation, setShowAnimation] = useState(
+    () => !!(location.state as any)?.showInitAnimation,
+  );
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
   const [showScanner, setShowScanner] = useState(false);
 
@@ -473,6 +478,7 @@ const HomePage: React.FC = () => {
 
   return (
     <Box>
+      {showAnimation && <SystemInitAnimation onComplete={() => setShowAnimation(false)} />}
       <AppSnackbar
         open={snackbar.open}
         type={snackbar.type}

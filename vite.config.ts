@@ -70,7 +70,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom'],
           'vendor-mui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-          'vendor-maps': ['@react-google-maps/api', '@vis.gl/react-google-maps'],
+          'vendor-maps': ['@vis.gl/react-google-maps'],
 'vendor-utils': ['lodash', 'date-fns', 'jwt-decode']
         }
       }

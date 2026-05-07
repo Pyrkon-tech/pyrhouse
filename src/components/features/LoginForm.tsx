@@ -28,7 +28,6 @@ import { getApiUrl } from '../../config/api';
 import { useStorage } from '../../hooks/useStorage';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
 import pyrkonLogo from '../../assets/images/p-logo.svg';
-import SystemInitAnimation from '../animations/SystemInitAnimation';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { jwtDecode } from 'jwt-decode';
@@ -51,7 +50,6 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [isHyperJumping, setIsHyperJumping] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [fullname, setFullname] = useState('');
   const [registerLoading, setRegisterLoading] = useState(false);
@@ -126,12 +124,7 @@ const LoginForm: React.FC = () => {
           // Jeśli nie uda się zdekodować, nie zapisuj username
           console.error('Błąd dekodowania JWT:', err);
         }
-        if (prefersAnimations) {
-          setIsHyperJumping(true);
-          // navigate jest wołane przez SystemInitAnimation.onComplete
-        } else {
-          navigate('/home');
-        }
+        navigate('/home', { state: { showInitAnimation: prefersAnimations } });
       } else {
         const errorData = await response.json();
         const errorMessage = errorData.error || 'Unknown error';
@@ -184,10 +177,7 @@ const LoginForm: React.FC = () => {
         position: 'relative',
       }}
     >
-      {isHyperJumping && (
-        <SystemInitAnimation onComplete={() => navigate('/home')} />
-      )}
-      <Fade in={true} timeout={800}>
+<Fade in={true} timeout={800}>
         <Container maxWidth="sm">
           <Paper
             elevation={6}
