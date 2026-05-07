@@ -1,7 +1,7 @@
 import type { SlotType } from '../../../types/schedule.types';
 
 /** Roster sidebar width */
-export const ROSTER_WIDTH = 220;
+export const ROSTER_WIDTH = 172;
 
 // ---- Grid layout (slot × day table) -----------------------------------------
 
@@ -32,8 +32,22 @@ export const MAX_SLOT_DURATION_H = 24;
 export const TIMELINE_LANE_H = 52;
 /** Width of the lane label column (#1, #2, ...) */
 export const TIMELINE_LANE_LABEL_W = 48;
-/** Pixels per hour on the timeline */
-export const TIMELINE_PX_PER_HOUR = 50;
+/** Default pixels per hour on the timeline (overridable via zoom) */
+export const TIMELINE_PX_PER_HOUR = 60;
+
+// ---- Zoom control -----------------------------------------------------------
+
+export const ZOOM_MIN = 20;
+export const ZOOM_MAX = 240;
+export const ZOOM_DEFAULT = 60;
+export const ZOOM_STORAGE_KEY = 'pyrhouse_schedule_zoom';
+
+// ---- Sidebar ----------------------------------------------------------------
+
+/** Collapsed sidebar width (only icons visible) */
+export const SIDEBAR_COLLAPSED_W = 36;
+/** Sidebar collapse state storage key */
+export const SIDEBAR_COLLAPSED_KEY = 'pyrhouse_schedule_sidebar_collapsed';
 
 /** Grid cell status colors */
 export const CELL_STATUS_COLORS = {
@@ -76,16 +90,18 @@ export const AVATAR_COLORS = [
   '#ff7043', '#9ccc65',
 ];
 
-export const SHEET_FORMAT_INFO = `Wymagany format arkusza (kolumny A–F):
-A: Pseudonim (wymagane)
-B: Miasto (opcjonalne)
-C: Godziny (14 lub 18, domyślnie 14)
-D: Dostępny od (YYYY-MM-DD HH:MM, wymagane)
-E: Dostępny do (YYYY-MM-DD HH:MM, wymagane)
-F: Uwagi (opcjonalne)
+export const SHEET_FORMAT_INFO = `Wymagany format arkusza — nagłówki w wierszu 1:
 
-Wiersz 1 = nagłówki (pomijane).
-Import jest addytywny — nie kasuje istniejących wolontariuszy.`;
+Pseudonim        (wymagane) — dowolny tekst
+Deklaracja godzin dyżuru    (wymagane) — liczba całkowita, np. 14
+Przyjazd    (wymagane) — format: wtorek, 08:00
+Wyjazd    (wymagane) — format: piątek, 22:00
+Miasto           (opcjonalne)
+Uwagi            (opcjonalne)
+
+Kolumna "Tagi": wiersz z wartością "Przegżdacz" jest pomijany.
+Dostępność: nazwa dnia po polsku + godzina, np. "środa, 10:00".
+Import jest addytywny — wolontariusze o tym samym nicku są aktualizowani.`;
 
 /** Phase filter options */
 export type PhaseFilter = SlotType | 'all';

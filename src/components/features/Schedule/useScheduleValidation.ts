@@ -5,7 +5,7 @@
  * without waiting for a server round-trip. The backend remains authoritative.
  *
  * Checks:
- * - slot_understaffed / slot_overstaffed (capacity vs actual)
+ * - slot_too_long (slot duration > 8h)
  * - under_hours / over_hours (volunteer target vs assigned)
  * - double_booked (volunteer in overlapping time slots)
  * - outside_availability (assignment outside volunteer's available_from/to window)
@@ -38,26 +38,18 @@ export function useScheduleValidation(
   return useMemo(() => {
     const issues: ValidationIssue[] = [];
 
-    // 1. Slot capacity checks
+    // 1. Slot duration check (max 8h)
     for (const slot of slots) {
-      const count = slot.volunteers.length;
-      if (count < slot.capacity) {
+      const startMs = new Date(slot.start).getTime();
+      const endMs = new Date(slot.end).getTime();
+      const durationH = (endMs - startMs) / 3_600_000;
+      if (durationH > 8) {
         issues.push({
-          type: 'slot_understaffed',
-          severity: 'warning',
+          type: 'slot_too_long',
+          severity: 'error',
           slot_id: slot.id,
           slot: slot.id,
-          capacity: slot.capacity,
-          message: `${slot.label}: ${count}/${slot.capacity} wolontariuszy`,
-        });
-      } else if (count > slot.capacity) {
-        issues.push({
-          type: 'slot_overstaffed',
-          severity: 'warning',
-          slot_id: slot.id,
-          slot: slot.id,
-          capacity: slot.capacity,
-          message: `${slot.label}: ${count}/${slot.capacity} wolontariuszy`,
+          message: `${slot.label}: slot trwa ${durationH}h (max 8h)`,
         });
       }
     }

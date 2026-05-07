@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MIN_SLOT_DURATION_H, MAX_SLOT_DURATION_H, SNAP_MINUTES, SNAP_FINE_MINUTES } from '../constants';
 
 export interface ResizePreview {

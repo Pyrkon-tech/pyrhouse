@@ -85,10 +85,10 @@ export interface UseScheduleLocalStateReturn {
   // ---- Slot operations (local, instant) -----------------------------------
 
   /** Create a new slot. Returns temp slot ID. */
-  createSlot: (type: SlotType, start: string, end: string, capacity: number, label?: string) => number;
+  createSlot: (type: SlotType, start: string, end: string, label?: string) => number;
 
   /** Update slot properties. */
-  updateSlot: (slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'capacity' | 'type' | 'label'>>) => void;
+  updateSlot: (slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'type' | 'label'>>) => void;
 
   /** Delete slot and all its assignments. */
   deleteSlot: (slotId: number) => void;
@@ -100,6 +100,9 @@ export interface UseScheduleLocalStateReturn {
 
   /** Replace a temp assignment ID with the real server ID (after API call succeeds) */
   replaceAssignmentId: (tempId: number, realId: number) => void;
+
+  /** Replace a temp slot (id < 0) with the real slot returned by POST /schedule/slots */
+  replaceSlot: (tempId: number, realSlot: ScheduleSlot) => void;
 
   /** Update schedule metadata (e.g. status after publish) */
   updateScheduleMeta: (updates: Partial<Pick<ScheduleDetail, 'status' | 'name'>>) => void;
@@ -304,7 +307,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
   }, [recomputeVolunteerHours, nextTempId, pushHistory]);
 
   const createSlot = useCallback((
-    type: SlotType, start: string, end: string, capacity: number, label?: string,
+    type: SlotType, start: string, end: string, label?: string,
   ): number => {
     pushHistory('Utwórz slot');
     const tempId = nextTempId();
@@ -320,7 +323,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
         start,
         end,
         credit_hours: creditHours,
-        capacity,
+        capacity: 0,
         volunteers: [],
       };
       return { ...prev, slots: [...prev.slots, newSlot] };
@@ -330,7 +333,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     return tempId;
   }, [nextTempId, pushHistory]);
 
-  const updateSlot = useCallback((slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'capacity' | 'type' | 'label'>>) => {
+  const updateSlot = useCallback((slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'type' | 'label'>>) => {
     pushHistory('Edytuj slot');
     setSchedule((prev) => {
       if (!prev) return prev;
@@ -386,6 +389,13 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     });
   }, []);
 
+  const replaceSlot = useCallback((tempId: number, realSlot: ScheduleSlot) => {
+    setSchedule((prev) => {
+      if (!prev) return prev;
+      return { ...prev, slots: prev.slots.map((s) => s.id === tempId ? realSlot : s) };
+    });
+  }, []);
+
   const updateScheduleMeta = useCallback((updates: Partial<Pick<ScheduleDetail, 'status' | 'name'>>) => {
     setSchedule((prev) => prev ? { ...prev, ...updates } : prev);
   }, []);
@@ -426,7 +436,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
       }
     }
 
-    return { slots, assignments };
+    return { version: schedule.version ?? 0, slots, assignments };
   }, [schedule]);
 
   // ---- Undo / Redo ---------------------------------------------------------
@@ -495,6 +505,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     deleteSlot,
     consumeChanges,
     replaceAssignmentId,
+    replaceSlot,
     updateScheduleMeta,
     toDraftPayload,
     undo,

@@ -8,18 +8,15 @@ import {
   MenuItem,
   Box,
   Button,
-  IconButton,
   Typography,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import type { SlotType } from '../../../../types/schedule.types';
 import { SLOT_TYPE_CONFIG } from '../constants';
 
 interface CreateSlotDialogProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (type: SlotType, start: string, end: string, capacity: number, label?: string) => void;
+  onCreate: (type: SlotType, start: string, end: string, label?: string) => void;
   /** Default date (YYYY-MM-DD) for prefilling */
   defaultDate?: string;
 }
@@ -30,24 +27,32 @@ const CreateSlotDialog: React.FC<CreateSlotDialogProps> = ({ open, onClose, onCr
   const [slotType, setSlotType] = useState<SlotType>('festival');
   const [date, setDate] = useState(today);
   const [startTime, setStartTime] = useState('10:00');
-  const [endTime, setEndTime] = useState('14:00');
-  const [capacity, setCapacity] = useState(4);
+  const [endTime, setEndTime] = useState('12:00');
   const [label, setLabel] = useState('');
+
+  const durationMinutes = (() => {
+    if (!startTime || !endTime) return 0;
+    const [sh, sm] = startTime.split(':').map(Number);
+    const [eh, em] = endTime.split(':').map(Number);
+    const start = sh * 60 + sm;
+    let end = eh * 60 + em;
+    if (end <= start) end += 24 * 60;
+    return end - start;
+  })();
+  const isTooLong = durationMinutes > 8 * 60;
 
   const handleCreate = () => {
     const start = `${date}T${startTime}:00`;
     const end = `${date}T${endTime}:00`;
-    onCreate(slotType, start, end, capacity, label || undefined);
+    onCreate(slotType, start, end, label || undefined);
     onClose();
-    // Reset form
     setSlotType('festival');
     setStartTime('10:00');
-    setEndTime('14:00');
-    setCapacity(4);
+    setEndTime('12:00');
     setLabel('');
   };
 
-  const isValid = date && startTime && endTime && startTime < endTime && capacity > 0;
+  const isValid = date && startTime && endTime && startTime < endTime && !isTooLong;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -109,34 +114,11 @@ const CreateSlotDialog: React.FC<CreateSlotDialogProps> = ({ open, onClose, onCr
           />
         </Box>
 
-        {/* Capacity */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Pojemność:
+        {isTooLong && (
+          <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 600, fontSize: '0.75rem' }}>
+            ⚠ Slot nie może być dłuższy niż 8h
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto' }}>
-            <IconButton
-              size="small"
-              onClick={() => setCapacity((c) => Math.max(1, c - 1))}
-              sx={{ p: 0.25, border: '1px solid', borderColor: 'divider' }}
-            >
-              <RemoveIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-            <Typography
-              variant="body2"
-              sx={{ fontWeight: 700, minWidth: 32, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
-            >
-              {capacity}
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setCapacity((c) => c + 1)}
-              sx={{ p: 0.25, border: '1px solid', borderColor: 'divider' }}
-            >
-              <AddIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Box>
-        </Box>
+        )}
 
         {/* Label (optional) */}
         <TextField

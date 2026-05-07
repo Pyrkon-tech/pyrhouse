@@ -13,7 +13,6 @@ const AutoFixHighIcon = lazy(() => import('@mui/icons-material/AutoFixHigh'));
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
 const WarningIcon = lazy(() => import('@mui/icons-material/Warning'));
 const DownloadIcon = lazy(() => import('@mui/icons-material/Download'));
-const PublishIcon = lazy(() => import('@mui/icons-material/Publish'));
 const PersonAddIcon = lazy(() => import('@mui/icons-material/PersonAdd'));
 const TableChartIcon = lazy(() => import('@mui/icons-material/TableChart'));
 
@@ -22,10 +21,8 @@ interface ScheduleHeaderProps {
   validation: ValidationResult | null;
   clientValidation?: ValidationResult | null;
   isModerator: boolean;
-  isAdmin: boolean;
   canEdit: boolean;
   generating: boolean;
-  publishing: boolean;
   exportingSheets: boolean;
   phaseFilter: PhaseFilter;
   syncStatus: SyncStatus;
@@ -35,7 +32,6 @@ interface ScheduleHeaderProps {
   onValidate: () => void;
   onImportOpen: () => void;
   onGenerate: () => void;
-  onPublish: () => void;
   onExportCSV: () => void;
   onExportSheets: () => void;
   onPhaseFilterChange: (filter: PhaseFilter) => void;
@@ -66,10 +62,8 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   validation,
   clientValidation,
   isModerator,
-  isAdmin,
   canEdit,
   generating,
-  publishing,
   exportingSheets,
   phaseFilter,
   syncStatus,
@@ -79,7 +73,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   onValidate,
   onImportOpen,
   onGenerate,
-  onPublish,
   onExportCSV,
   onExportSheets,
   onPhaseFilterChange,
@@ -90,7 +83,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   undoLabel,
   redoLabel,
 }) => {
-  const isPublished = schedule.status === 'published';
   // Use clientValidation (real-time) when available, fall back to server validation
   const displayValidation = clientValidation ?? validation;
 
@@ -126,11 +118,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
         <Typography variant="h5" fontWeight={700} sx={{ flex: 1, minWidth: 0 }}>
           {schedule.name}
         </Typography>
-        <Chip
-          label={isPublished ? 'Opublikowany' : 'Roboczy'}
-          color={isPublished ? 'success' : 'default'}
-          size="small"
-        />
         {displayValidation && (
           <Tooltip title={displayValidation.valid ? 'Brak błędów' : `${displayValidation.issues.length} problemów`}>
             <Chip
@@ -187,22 +174,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
             }
           >
             {generating ? 'Generuję…' : 'Auto-generuj'}
-          </Button>
-        )}
-        {isAdmin && !isPublished && (
-          <Button
-            size="small"
-            variant="contained"
-            color="success"
-            onClick={onPublish}
-            disabled={publishing}
-            startIcon={
-              publishing
-                ? <CircularProgress size={14} color="inherit" />
-                : <Suspense fallback={null}><PublishIcon /></Suspense>
-            }
-          >
-            Opublikuj
           </Button>
         )}
         {isModerator && (

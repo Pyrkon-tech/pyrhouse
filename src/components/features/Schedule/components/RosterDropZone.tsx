@@ -1,35 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import { useDroppable } from '@dnd-kit/core';
 
-const RosterDropZone: React.FC<{ isOver: boolean }> = ({ isOver }) => {
-  const { setNodeRef } = useDroppable({ id: 'roster', data: { type: 'roster' } });
+interface DragPayload {
+  assignmentId: number;
+}
+
+interface RosterDropZoneProps {
+  onUnassignDrop?: (assignmentId: number) => void;
+}
+
+const RosterDropZone: React.FC<RosterDropZoneProps> = ({ onUnassignDrop }) => {
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!onUnassignDrop) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => setDragOver(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (!onUnassignDrop) return;
+    try {
+      const data: DragPayload = JSON.parse(e.dataTransfer.getData('application/json'));
+      onUnassignDrop(data.assignmentId);
+    } catch { /* ignore malformed data */ }
+  };
 
   return (
     <Box
-      ref={setNodeRef}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       sx={{
         p: '8px 10px',
         borderRadius: 1.5,
         border: '1.5px dashed',
-        borderColor: isOver ? 'error.main' : 'action.disabled',
-        bgcolor: isOver ? 'rgba(239,83,80,0.10)' : 'rgba(239,83,80,0.03)',
+        borderColor: dragOver ? 'error.main' : 'action.disabled',
+        bgcolor: dragOver ? 'rgba(239,68,68,0.1)' : 'rgba(239,83,80,0.03)',
         textAlign: 'center',
-        transition: 'all 0.2s',
         fontSize: 11,
         fontWeight: 600,
-        color: isOver ? 'error.main' : 'text.secondary',
+        color: dragOver ? 'error.main' : 'text.secondary',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 0.75,
-        position: 'sticky',
-        bottom: 0,
         flexShrink: 0,
+        transition: 'border-color 0.15s, background-color 0.15s, color 0.15s',
       }}
     >
-      <span style={{ fontSize: 14 }}>🗑</span>
-      {isOver ? 'Usuń z harmonogramu' : 'Przeciągnij aby usunąć'}
+      <span style={{ fontSize: 12 }}>✕</span>
+      {dragOver ? 'Upuść aby odpisać' : 'Przeciągnij tutaj aby odpisać'}
     </Box>
   );
 };

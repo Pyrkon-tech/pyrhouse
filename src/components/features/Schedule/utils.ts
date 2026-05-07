@@ -1,7 +1,7 @@
 import type { ScheduleSlot, ScheduleVolunteer, SlotType } from '../../../types/schedule.types';
 import { ApiError } from '../../../services/apiClient';
 import { AVATAR_COLORS } from './constants';
-import type { ApiErrorState, DetailItem, GridData, GridColumn, GridCell, GridCellStatus, TimelineData, TimelineLane, DayMarker } from './types';
+import type { ApiErrorState, DetailItem, GridData, GridColumn, GridCell, GridCellStatus, TimelineData, TimelineLane, DayMarker, CalendarData, CalendarDay, CalendarSlotItem, CalendarCellStatus } from './types';
 
 // ---- Avatar ----------------------------------------------------------------
 
@@ -725,4 +725,172 @@ export function buildApiErrorState(e: unknown, operation: string): ApiErrorState
 export function extractSheetId(url: string): string | null {
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   return match?.[1] ?? null;
+}
+
+// ---- Calendar layout helpers ------------------------------------------------
+
+function calendarSlotStartH(slot: ScheduleSlot): number {
+  const d = parseAsLocal(slot.start);
+  return d.getHours() + d.getMinutes() / 60;
+}
+
+function calendarSlotEndH(slot: ScheduleSlot): number {
+  const startDay = slot.start.slice(0, 10);
+  const endDay = slot.end.slice(0, 10);
+  const d = parseAsLocal(slot.end);
+  const h = d.getHours() + d.getMinutes() / 60;
+  if (endDay !== startDay) return 24 + (h > 0 ? h : 0);
+  return h === 0 ? 24 : h;
+}
+
+function computeCalendarOverlapLayout(slots: ScheduleSlot[]): Map<number, { left: number; width: number }> {
+  if (slots.length === 0) return new Map();
+  if (slots.length === 1) return new Map([[slots[0].id, { left: 0, width: 1 }]]);
+
+  type Interval = { id: number; startH: number; endH: number };
+  const intervals: Interval[] = slots.map(s => ({
+    id: s.id,
+    startH: calendarSlotStartH(s),
+    endH: calendarSlotEndH(s),
+  }));
+
+  const sorted = [...intervals].sort((a, b) => a.startH - b.startH || a.id - b.id);
+  const columns: Interval[][] = [];
+  const colAssignment = new Map<number, number>();
+
+  for (const interval of sorted) {
+    let assigned = false;
+    for (let col = 0; col < columns.length; col++) {
+      const conflict = columns[col].some(o => interval.startH < o.endH && interval.endH > o.startH);
+      if (!conflict) {
+        columns[col].push(interval);
+        colAssignment.set(interval.id, col);
+        assigned = true;
+        break;
+      }
+    }
+    if (!assigned) {
+      columns.push([interval]);
+      colAssignment.set(interval.id, columns.length - 1);
+    }
+  }
+
+  const numCols = columns.length;
+  const result = new Map<number, { left: number; width: number }>();
+  for (const [id, col] of colAssignment) {
+    result.set(id, { left: col / numCols, width: 1 / numCols });
+  }
+  return result;
+}
+
+const DAY_NAMES_SHORT = ['Nie', 'Pon', 'Wt', 'Śr', 'Czw', 'Pią', 'Sob'];
+const DAY_NAMES_FULL = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
+
+/** Generate all date keys between two ISO date strings (inclusive). */
+function dateRange(startDateKey: string, endDateKey: string): string[] {
+  const result: string[] = [];
+  const cur = new Date(startDateKey + 'T12:00:00');
+  const end = new Date(endDateKey + 'T12:00:00');
+  while (cur <= end) {
+    result.push(cur.toISOString().slice(0, 10));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return result;
+}
+
+export function buildCalendarData(
+  slots: ScheduleSlot[],
+  _volunteers: ScheduleVolunteer[],
+  validation: import('../../../types/schedule.types').ValidationResult | null,
+  todayStr: string,
+  eventRange?: { eventStart: string; eventEnd: string; festivalStart?: string; festivalEnd?: string },
+): CalendarData {
+  const errorSlotIds = new Set<number>();
+  const warningSlotIds = new Set<number>();
+  if (validation) {
+    for (const issue of validation.issues) {
+      const slotId = issue.slot_id ?? issue.slot;
+      if (slotId != null) {
+        (issue.severity === 'error' ? errorSlotIds : warningSlotIds).add(slotId);
+      }
+    }
+  }
+
+  const byDate = new Map<string, ScheduleSlot[]>();
+  for (const slot of slots) {
+    const key = slot.start.slice(0, 10);
+    if (!byDate.has(key)) byDate.set(key, []);
+    byDate.get(key)!.push(slot);
+  }
+
+  const { minHour, maxHour } = computeGlobalHourRange(slots);
+
+  // Merge dates from slots with all event dates (so empty days appear in calendar)
+  const slotDates = new Set(byDate.keys());
+  if (eventRange) {
+    const eventStartKey = eventRange.eventStart.slice(0, 10);
+    const eventEndKey = eventRange.eventEnd.slice(0, 10);
+    for (const dk of dateRange(eventStartKey, eventEndKey)) {
+      if (!slotDates.has(dk)) {
+        byDate.set(dk, []); // empty column
+      }
+    }
+  }
+  const sortedDates = [...byDate.keys()].sort();
+
+  const days: CalendarDay[] = sortedDates.map(dateKey => {
+    const daySlots = byDate.get(dateKey)!.slice().sort(
+      (a, b) => parseAsLocal(a.start).getTime() - parseAsLocal(b.start).getTime(),
+    );
+
+    let dayType: SlotType | 'mixed';
+    if (daySlots.length === 0) {
+      // Empty day — infer type from position relative to festival
+      const festStart = eventRange?.festivalStart?.slice(0, 10);
+      const festEnd = eventRange?.festivalEnd?.slice(0, 10);
+      if (festStart && festEnd) {
+        dayType = dateKey < festStart ? 'montage' : dateKey > festEnd ? 'demontage' : 'festival';
+      } else {
+        dayType = 'montage';
+      }
+    } else {
+      const typeCounts: Record<SlotType, number> = { montage: 0, festival: 0, demontage: 0 };
+      for (const s of daySlots) typeCounts[s.type]++;
+      const typeEntries = Object.entries(typeCounts) as [SlotType, number][];
+      const dominant = [...typeEntries].sort((a, b) => b[1] - a[1])[0][0];
+      const uniqueTypes = typeEntries.filter(([, c]) => c > 0).length;
+      dayType = uniqueTypes > 1 ? 'mixed' : dominant;
+    }
+
+    const layout = computeCalendarOverlapLayout(daySlots);
+
+    const slotItems: CalendarSlotItem[] = daySlots.map(slot => {
+      const status: CalendarCellStatus = errorSlotIds.has(slot.id)
+        ? 'error'
+        : warningSlotIds.has(slot.id)
+        ? 'warning'
+        : 'approved';
+      const issueCount = validation
+        ? validation.issues.filter(i => (i.slot_id ?? i.slot) === slot.id).length
+        : 0;
+      const ll = layout.get(slot.id) ?? { left: 0, width: 1 };
+      return { slot, left: ll.left, width: ll.width, status, issueCount };
+    });
+
+    const d = new Date(dateKey + 'T12:00:00');
+    const dow = d.getDay();
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+
+    return {
+      dateKey,
+      label: `${DAY_NAMES_FULL[dow]}, ${dd}.${mm}`,
+      shortLabel: `${DAY_NAMES_SHORT[dow]} ${dd}.${mm}`,
+      dayType,
+      isToday: dateKey === todayStr,
+      slotItems,
+    };
+  });
+
+  return { days, minHour, maxHour };
 }

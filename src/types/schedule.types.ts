@@ -4,13 +4,15 @@
 // ============================================================================
 
 export type SlotType = 'montage' | 'festival' | 'demontage';
-export type ScheduleStatus = 'draft' | 'published';
+/** 'active' is the backend value for what the spec calls 'draft' — treat identically */
+export type ScheduleStatus = 'draft' | 'active' | 'published';
 export type ValidationIssueType =
   | 'under_hours'
   | 'over_hours'
   | 'no_festival_shifts'
   | 'slot_understaffed'
   | 'slot_overstaffed'
+  | 'slot_too_long'
   | 'consecutive_over_6h'
   | 'insufficient_break'
   | 'double_booked'
@@ -78,7 +80,17 @@ export interface Schedule {
   id: number;
   name: string;
   status: ScheduleStatus;
+  /** Incremented on every save. Send back in PUT /schedule/draft for optimistic locking. 0 = skip check. */
+  version: number;
   created_at: string;
+  /** ISO datetime — overall event start (includes pre-festival montage period) */
+  event_start: string;
+  /** ISO datetime — overall event end (includes post-festival demontage period) */
+  event_end: string;
+  /** ISO datetime — festival phase start */
+  festival_start: string;
+  /** ISO datetime — festival phase end */
+  festival_end: string;
 }
 
 // ---- Validation ------------------------------------------------------------
@@ -228,6 +240,8 @@ export interface DraftAssignmentItem {
 
 /** Body for PUT /schedule/draft */
 export interface DraftPayload {
+  /** Send the version from last GET/PUT response. 0 or omitted = skip conflict check (compat mode). */
+  version: number;
   slots: DraftSlotItem[];
   assignments: DraftAssignmentItem[];
 }

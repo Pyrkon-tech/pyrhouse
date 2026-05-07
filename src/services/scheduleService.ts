@@ -144,7 +144,7 @@ export const exportScheduleCSV = async (): Promise<void> => {
  * Requires backend settings: scheduling.sheet_id, scheduling.sheet_name.
  */
 export const exportSheetsAPI = () =>
-  apiClient.post<{ rows_written: number }>('/schedule/export/sheets', {});
+  apiClient.post<{ rows_written: number; sheet_url?: string }>('/schedule/export/sheets', {});
 
 /**
  * POST /schedule/volunteers/import-sheet — import volunteers from Google Sheets.
@@ -155,7 +155,7 @@ export const exportSheetsAPI = () =>
  * Requires active schedule (POST /schedule first).
  */
 export const importFromSheetAPI = (sheetId: string, sheetName: string) =>
-  apiClient.post<{ imported: number }>('/schedule/volunteers/import-sheet', {
-    sheet_id: sheetId,
-    sheet_name: sheetName,
-  });
+  apiClient.post<{ imported: number; updated: number; skipped: number; errors: string[] }>(
+    '/schedule/volunteers/import-sheet',
+    { sheet_id: sheetId, sheet_name: sheetName },
+  );

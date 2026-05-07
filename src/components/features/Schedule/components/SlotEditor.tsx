@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Popover,
   Box,
   Typography,
   TextField,
-  IconButton,
   Button,
   MenuItem,
   Divider,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { ScheduleSlot, SlotType } from '../../../../types/schedule.types';
 import { SLOT_TYPE_CONFIG } from '../constants';
@@ -20,8 +17,8 @@ interface SlotEditorProps {
   slot: ScheduleSlot;
   anchorEl: HTMLElement | null;
   onClose: () => void;
-  onUpdate: (slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'capacity' | 'type' | 'label'>>) => void;
-  onDelete: (slotId: number) => void;
+  onUpdate: (slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'type' | 'label'>>) => Promise<void> | void;
+  onDelete: (slotId: number) => Promise<void> | void;
 }
 
 /** Extract "HH:MM" from ISO datetime string (treats as local time) */
@@ -58,46 +55,64 @@ function durationLabel(startTime: string, endTime: string): string {
 const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpdate, onDelete }) => {
   const [startTime, setStartTime] = useState(() => toTimeStr(slot.start));
   const [endTime, setEndTime] = useState(() => toTimeStr(slot.end));
-  const [capacity, setCapacity] = useState(slot.capacity);
   const [slotType, setSlotType] = useState<SlotType>(slot.type);
   const [label, setLabel] = useState(slot.label);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Reset when slot changes
   useEffect(() => {
     setStartTime(toTimeStr(slot.start));
     setEndTime(toTimeStr(slot.end));
-    setCapacity(slot.capacity);
     setSlotType(slot.type);
     setLabel(slot.label);
   }, [slot]);
 
   // Cross-midnight: end time is before start time (e.g., start=22:00, end=02:00)
   const isCrossMidnight = endTime < startTime;
+  const durationMinutes = (() => {
+    const [sh, sm] = startTime.split(':').map(Number);
+    const [eh, em] = endTime.split(':').map(Number);
+    let end = eh * 60 + em;
+    const start = sh * 60 + sm;
+    if (end <= start) end += 24 * 60;
+    return end - start;
+  })();
+  const isTooLong = durationMinutes > 8 * 60;
 
-  const handleSave = () => {
-    const changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'capacity' | 'type' | 'label'>> = {};
+  const handleSave = useCallback(async () => {
+    const changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'type' | 'label'>> = {};
 
     const newStart = withTime(slot.start, startTime);
-    // For cross-midnight: end date = start date + 1 day
     const newEnd = withTime(slot.start, endTime, isCrossMidnight);
 
     if (newStart !== slot.start) changes.start = newStart;
     if (newEnd !== slot.end) changes.end = newEnd;
-    if (capacity !== slot.capacity) changes.capacity = capacity;
     if (slotType !== slot.type) changes.type = slotType;
     if (label !== slot.label) changes.label = label;
 
-    if (Object.keys(changes).length > 0) {
-      onUpdate(slot.id, changes);
+    setSaving(true);
+    try {
+      await onUpdate(slot.id, changes);
+      onClose();
+    } catch {
+      // error handled by parent — keep editor open
+    } finally {
+      setSaving(false);
     }
-    onClose();
-  };
+  }, [slot, startTime, endTime, slotType, label, isCrossMidnight, onUpdate, onClose]);
 
-  const handleDelete = () => {
-    onDelete(slot.id);
-    onClose();
-  };
+  const handleDelete = useCallback(async () => {
+    setSaving(true);
+    try {
+      await onDelete(slot.id);
+      onClose();
+    } catch {
+      // error handled by parent
+    } finally {
+      setSaving(false);
+    }
+  }, [slot.id, onDelete, onClose]);
 
   const cfg = SLOT_TYPE_CONFIG[slotType];
   const filled = slot.volunteers.length;
@@ -178,44 +193,17 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
       </Box>
       <Typography
         variant="caption"
-        sx={{ display: 'block', fontSize: '0.6rem', color: isCrossMidnight ? 'warning.main' : 'text.disabled', mb: 1.5, fontWeight: isCrossMidnight ? 600 : 400 }}
+        sx={{
+          display: 'block', fontSize: '0.6rem', mb: 1.5, fontWeight: (isCrossMidnight || isTooLong) ? 600 : 400,
+          color: isTooLong ? 'error.main' : isCrossMidnight ? 'warning.main' : 'text.disabled',
+        }}
       >
-        {isCrossMidnight ? `⏱ ${durationLabel(startTime, endTime)} · przekracza północ` : `⏱ ${durationLabel(startTime, endTime)}`}
+        {isTooLong
+          ? `⚠ ${durationLabel(startTime, endTime)} — max 8h!`
+          : isCrossMidnight
+          ? `⏱ ${durationLabel(startTime, endTime)} · przekracza północ`
+          : `⏱ ${durationLabel(startTime, endTime)}`}
       </Typography>
-
-      {/* Capacity with +/- buttons */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-        <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-          Pojemność:
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto' }}>
-          <IconButton
-            size="small"
-            onClick={() => setCapacity((c) => Math.max(1, c - 1))}
-            sx={{ p: 0.25, border: '1px solid', borderColor: 'divider' }}
-          >
-            <RemoveIcon sx={{ fontSize: 14 }} />
-          </IconButton>
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 700,
-              minWidth: 32,
-              textAlign: 'center',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {capacity}
-          </Typography>
-          <IconButton
-            size="small"
-            onClick={() => setCapacity((c) => c + 1)}
-            sx={{ p: 0.25, border: '1px solid', borderColor: 'divider' }}
-          >
-            <AddIcon sx={{ fontSize: 14 }} />
-          </IconButton>
-        </Box>
-      </Box>
 
       {/* Info: assigned volunteers */}
       {filled > 0 && (
@@ -238,9 +226,10 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
               variant="contained"
               color="error"
               onClick={handleDelete}
+              disabled={saving}
               sx={{ flex: 1, fontSize: '0.75rem', textTransform: 'none' }}
             >
-              Potwierdź usunięcie
+              {saving ? '…' : 'Potwierdź usunięcie'}
             </Button>
             <Button
               size="small"
@@ -257,14 +246,16 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
             size="small"
             variant="contained"
             onClick={handleSave}
+            disabled={saving}
             sx={{ flex: 1, fontSize: '0.75rem', textTransform: 'none' }}
           >
-            Zapisz
+            {saving ? '…' : 'Zapisz'}
           </Button>
           <Button
             size="small"
             color="error"
             onClick={() => setConfirmDelete(true)}
+            disabled={saving}
             startIcon={<DeleteOutlineIcon sx={{ fontSize: 14 }} />}
             sx={{ fontSize: '0.75rem', textTransform: 'none' }}
           >

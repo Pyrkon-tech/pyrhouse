@@ -1,53 +1,39 @@
 import React from 'react';
-import { Box, Typography, Avatar, LinearProgress, Tooltip } from '@mui/material';
-import { useDraggable } from '@dnd-kit/core';
+import { Box, Typography, Tooltip } from '@mui/material';
 import type { ScheduleVolunteer, ScheduleSlot } from '../../../../types/schedule.types';
-import { avatarColor } from '../utils';
 import { SLOT_TYPE_CONFIG } from '../constants';
 
-/** Status color based on hours ratio */
-function statusRingColor(vol: ScheduleVolunteer): string {
-  if (vol.assigned_hours === 0) return '#616161'; // grey — no assignments
-  if (vol.assigned_hours > vol.target_hours) return '#ef4444'; // red — over target
-  if (vol.assigned_hours >= vol.target_hours) return '#10b981'; // green — target met
-  return '#ff9800'; // orange — partial
+function hoursColor(vol: ScheduleVolunteer): string {
+  if (vol.assigned_hours === 0) return '#616161';
+  if (vol.assigned_hours > vol.target_hours) return '#ef4444';
+  if (vol.assigned_hours >= vol.target_hours) return '#10b981';
+  return '#ff9800';
 }
 
 interface RosterVolunteerCardProps {
   volunteer: ScheduleVolunteer;
   canEdit: boolean;
-  /** All schedule slots — used to build assignment tooltip */
   slots?: ScheduleSlot[];
-  /** Whether this volunteer is highlighted (clicked in roster) */
   isHighlighted?: boolean;
-  /** Toggle highlight callback */
   onToggleHighlight?: (volunteerId: number) => void;
 }
 
 const RosterVolunteerCard: React.FC<RosterVolunteerCardProps> = ({ volunteer, canEdit, slots, isHighlighted, onToggleHighlight }) => {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `volunteer:${volunteer.id}`,
-    data: { type: 'volunteer', volunteerId: volunteer.id, nickname: volunteer.nickname },
-    disabled: !canEdit,
-  });
+  const remaining = volunteer.target_hours - volunteer.assigned_hours;
+  const color = hoursColor(volunteer);
 
-  const ratio = volunteer.target_hours > 0
-    ? Math.min(1, volunteer.assigned_hours / volunteer.target_hours)
-    : 0;
-  const overTarget = volunteer.assigned_hours > volunteer.target_hours;
-  const ringColor = statusRingColor(volunteer);
+  const handleDragStart = (e: React.DragEvent) => {
+    const payload = { volunteerId: volunteer.id, nickname: volunteer.nickname };
+    e.dataTransfer.setData('application/json', JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = 'move';
+  };
 
-  // Build tooltip with slot assignment details
   const assignedSlots = slots?.filter((s) => volunteer.slots.includes(s.id)) ?? [];
   const slotSummary = assignedSlots.length > 0
-    ? assignedSlots
-        .map((s) => {
-          const cfg = SLOT_TYPE_CONFIG[s.type];
-          const start = s.start.slice(11, 16);
-          const end = s.end.slice(11, 16);
-          return `${cfg.label} ${start}–${end}`;
-        })
-        .join('\n')
+    ? assignedSlots.map((s) => {
+        const cfg = SLOT_TYPE_CONFIG[s.type];
+        return `${cfg.label} ${s.start.slice(11, 16)}–${s.end.slice(11, 16)}`;
+      }).join('\n')
     : 'Brak przypisań';
   const tooltipText = `${volunteer.nickname}\n${volunteer.assigned_hours}h / ${volunteer.target_hours}h\n\n${slotSummary}`;
 
@@ -57,67 +43,61 @@ const RosterVolunteerCard: React.FC<RosterVolunteerCardProps> = ({ volunteer, ca
       arrow
       placement="left"
       enterDelay={300}
-      slotProps={{ tooltip: { sx: { fontSize: '0.7rem', fontWeight: 500, maxWidth: 240 } } }}
+      slotProps={{ tooltip: { sx: { fontSize: '0.7rem', maxWidth: 240 } } }}
     >
       <Box
-        ref={setNodeRef}
-        {...listeners}
-        {...attributes}
+        draggable={canEdit}
+        onDragStart={canEdit ? handleDragStart : undefined}
         onClick={() => onToggleHighlight?.(volunteer.id)}
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
-          p: '6px 8px',
-          mb: 0.5,
-          borderRadius: 1.5,
+          justifyContent: 'space-between',
+          gap: 0.75,
+          px: 0.75,
+          py: '3px',
+          mb: '2px',
+          borderRadius: 1,
           border: '1px solid',
-          borderColor: isHighlighted ? 'primary.main' : 'divider',
-          bgcolor: isHighlighted ? 'rgba(255,152,0,0.10)' : 'background.paper',
-          opacity: isDragging ? 0.25 : 1,
+          borderColor: isHighlighted ? 'primary.main' : 'transparent',
+          bgcolor: isHighlighted ? 'rgba(255,152,0,0.10)' : 'transparent',
           cursor: canEdit ? 'grab' : 'pointer',
-          '&:active': { cursor: canEdit ? 'grabbing' : 'default' },
-          transition: 'opacity 0.15s, border-color 0.2s, background-color 0.2s',
+          transition: 'border-color 0.15s, background-color 0.15s',
+          '&:hover': { bgcolor: isHighlighted ? 'rgba(255,152,0,0.12)' : 'action.hover' },
+          '&:active': canEdit ? { cursor: 'grabbing' } : {},
         }}
       >
-        <Avatar
+        <Typography
           sx={{
-            width: 26,
-            height: 26,
-            fontSize: 10,
-            fontWeight: 700,
-            bgcolor: avatarColor(volunteer.id),
-            flexShrink: 0,
-            outline: `2px solid ${ringColor}`,
-            outlineOffset: 1,
+            fontSize: '0.72rem',
+            fontWeight: isHighlighted ? 700 : 500,
+            color: isHighlighted ? 'primary.light' : 'text.primary',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            flex: 1,
+            minWidth: 0,
           }}
         >
-          {volunteer.nickname.slice(0, 2).toUpperCase()}
-        </Avatar>
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography
-            variant="caption"
-            sx={{ display: 'block', fontWeight: 600, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.72rem' }}
-          >
-            {volunteer.nickname}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-            <LinearProgress
-              variant="determinate"
-              value={ratio * 100}
-              sx={{
-                flex: 1,
-                height: 5,
-                borderRadius: 2,
-                bgcolor: 'action.hover',
-                '& .MuiLinearProgress-bar': { bgcolor: overTarget ? 'error.main' : 'primary.main' },
-              }}
-            />
-            <Typography variant="caption" sx={{ fontSize: 9, color: overTarget ? 'error.main' : 'text.disabled', whiteSpace: 'nowrap' }}>
-              {volunteer.assigned_hours}/{volunteer.target_hours}h
-            </Typography>
-          </Box>
-        </Box>
+          {volunteer.nickname}
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: '0.65rem',
+            fontWeight: 600,
+            color,
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
+          {volunteer.assigned_hours}
+          <Box component="span" sx={{ opacity: 0.5, fontWeight: 400 }}>/{volunteer.target_hours}h</Box>
+          {remaining > 0 && (
+            <Box component="span" sx={{ ml: 0.4, opacity: 0.55, fontWeight: 400 }}>
+              −{remaining}
+            </Box>
+          )}
+        </Typography>
       </Box>
     </Tooltip>
   );

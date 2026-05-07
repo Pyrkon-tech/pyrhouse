@@ -83,6 +83,57 @@ export interface TimelineData {
   totalHours: number;
 }
 
+// ---- Slot creation (click+drag on empty timeline area) ----------------------
+
+export interface SlotCreationPreview {
+  /** Lane index where the ghost is rendered */
+  laneIndex: number;
+  startPct: number;
+  widthPct: number;
+  timeLabel: string;
+}
+
+// ---- Context menu -----------------------------------------------------------
+
+export interface SlotContextMenuState {
+  slotId: number;
+  slotType: import('../../../types/schedule.types').SlotType;
+  assignmentId?: number;
+  x: number;
+  y: number;
+}
+
+// ---- Calendar (vertical day-column) layout types ----------------------------
+
+export type CalendarCellStatus = 'approved' | 'warning' | 'error' | 'pending';
+
+export interface CalendarSlotItem {
+  slot: ScheduleSlot;
+  /** Left offset as fraction 0–1 (for overlapping slots in same column) */
+  left: number;
+  /** Width as fraction 0–1 */
+  width: number;
+  status: CalendarCellStatus;
+  issueCount: number;
+}
+
+export interface CalendarDay {
+  dateKey: string;
+  label: string;       // "Czwartek, 01.05"
+  shortLabel: string;  // "Czw 01.05"
+  dayType: SlotType | 'mixed';
+  isToday: boolean;
+  slotItems: CalendarSlotItem[];
+}
+
+export interface CalendarData {
+  days: CalendarDay[];
+  /** Earliest slot start hour (e.g. 8 for 08:00) */
+  minHour: number;
+  /** Latest slot end hour; may exceed 24 for cross-midnight slots */
+  maxHour: number;
+}
+
 // ---- Shared types -----------------------------------------------------------
 
 /** Structured API error for display */
