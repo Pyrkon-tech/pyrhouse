@@ -1,6 +1,7 @@
-import React, { lazy, Suspense, useState } from 'react';
-import { Box, Typography, Chip, Button, CircularProgress, Tooltip, IconButton, ToggleButtonGroup, ToggleButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from '@mui/material';
+import React, { lazy, Suspense, useState, useRef, useCallback } from 'react';
+import { Box, Typography, Chip, Button, CircularProgress, Tooltip, IconButton, ToggleButtonGroup, ToggleButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Dialog, DialogTitle, DialogContent, DialogActions, LinearProgress } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { ScheduleDetail, ValidationResult } from '../../../../types/schedule.types';
 import type { PhaseFilter } from '../constants';
@@ -44,6 +45,8 @@ interface ScheduleHeaderProps {
   canRedo: boolean;
   undoLabel: string | null;
   redoLabel: string | null;
+  isAdmin?: boolean;
+  onDeleteSchedule?: () => Promise<void>;
 }
 
 const SYNC_STATUS_LABEL: Record<SyncStatus, string> = {
@@ -86,9 +89,52 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   canRedo,
   undoLabel,
   redoLabel,
+  isAdmin,
+  onDeleteSchedule,
 }) => {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const closeMenu = () => setMenuAnchor(null);
+
+  // ---- Delete schedule dialog (hold-to-confirm) ----------------------------
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const eventEnded = new Date(schedule.event_end) < new Date();
+  const canDeleteSchedule = isAdmin && !!onDeleteSchedule && eventEnded;
+
+  const startHold = useCallback(() => {
+    if (deleting) return;
+    holdInterval.current = setInterval(() => {
+      setHoldProgress((p) => {
+        if (p >= 100) {
+          clearInterval(holdInterval.current!);
+          return 100;
+        }
+        return p + 4; // ~2.5s to fill
+      });
+    }, 100);
+  }, [deleting]);
+
+  const cancelHold = useCallback(() => {
+    if (holdInterval.current) clearInterval(holdInterval.current);
+    setHoldProgress(0);
+  }, []);
+
+  const handleHoldComplete = useCallback(async () => {
+    if (holdProgress < 100 || deleting) return;
+    setDeleting(true);
+    await onDeleteSchedule?.();
+    setDeleting(false);
+    setDeleteOpen(false);
+    setHoldProgress(0);
+  }, [holdProgress, deleting, onDeleteSchedule]);
+
+  // Trigger delete when progress reaches 100
+  React.useEffect(() => {
+    if (holdProgress >= 100) handleHoldComplete();
+  }, [holdProgress, handleHoldComplete]);
 
   // Use clientValidation (real-time) when available, fall back to server validation
   const displayValidation = clientValidation ?? validation;
@@ -217,8 +263,59 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
               <ListItemText>Eksport Sheets</ListItemText>
             </MenuItem>
           )}
+          {canDeleteSchedule && <Divider />}
+          {canDeleteSchedule && (
+            <Tooltip title="Dostępne tylko po zakończeniu wydarzenia" placement="left">
+              <MenuItem onClick={() => { setDeleteOpen(true); closeMenu(); }} sx={{ color: 'error.main' }}>
+                <ListItemIcon><DeleteForeverIcon fontSize="small" color="error" /></ListItemIcon>
+                <ListItemText>Usuń harmonogram</ListItemText>
+              </MenuItem>
+            </Tooltip>
+          )}
         </Menu>
       </Box>
+
+      {/* Delete schedule dialog */}
+      <Dialog open={deleteOpen} onClose={() => { setDeleteOpen(false); cancelHold(); }} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700, color: 'error.main' }}>
+          Usuń harmonogram
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Usunięcie <strong>{schedule.name}</strong> skasuje wszystkie sloty, wolontariuszy i przypisania. Operacja jest nieodwracalna.
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            Przytrzymaj przycisk poniżej przez 2.5 sekundy, żeby potwierdzić:
+          </Typography>
+          <Box sx={{ position: 'relative' }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              color="error"
+              disabled={deleting}
+              onMouseDown={startHold}
+              onMouseUp={cancelHold}
+              onMouseLeave={cancelHold}
+              onTouchStart={startHold}
+              onTouchEnd={cancelHold}
+              sx={{ userSelect: 'none', position: 'relative', overflow: 'hidden', height: 40 }}
+            >
+              {deleting ? <CircularProgress size={16} color="inherit" /> : 'Przytrzymaj, aby usunąć'}
+              {holdProgress > 0 && (
+                <LinearProgress
+                  variant="determinate"
+                  value={holdProgress}
+                  color="error"
+                  sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3 }}
+                />
+              )}
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button size="small" onClick={() => { setDeleteOpen(false); cancelHold(); }}>Anuluj</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Phase filter tabs + sync status */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

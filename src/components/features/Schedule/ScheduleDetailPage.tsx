@@ -16,6 +16,7 @@ import {
   updateSlotAPI,
   deleteSlotAPI,
   deleteVolunteerAPI,
+  deleteScheduleAPI,
   exportScheduleCSV,
   exportSheetsAPI,
 } from '../../../services/scheduleService';
@@ -193,8 +194,35 @@ const ScheduleDetailPage: React.FC = () => {
     setGenerating(true);
     setApiError(null);
     try { const r = await generateScheduleAPI(); loadFromServer(r); showSuccess('Harmonogram wygenerowany'); }
-    catch (e) { captureApiError(e, 'Generowanie'); }
+    catch (e) {
+      if (e instanceof ApiError && e.status === 409) {
+        const volunteers = (e.details as Record<string, unknown> | undefined)?.volunteers;
+        const names = Array.isArray(volunteers) ? volunteers.join(', ') : null;
+        setApiError({
+          message: `Generowanie zablokowane — wolontariusze mają już ≥10h przypisanych${names ? `: ${names}` : ''}`,
+          status: 409,
+          details: undefined,
+          operation: 'Generowanie',
+        });
+      } else {
+        captureApiError(e, 'Generowanie');
+      }
+    }
     finally { setGenerating(false); }
+  };
+
+  const handleDeleteSchedule = async () => {
+    if (!schedule) return;
+    try {
+      await deleteScheduleAPI(schedule.id);
+      navigate(-1);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409) {
+        setApiError({ message: 'Nie można usunąć — wydarzenie jeszcze się nie skończyło', status: 409, details: undefined, operation: 'Usuwanie harmonogramu' });
+      } else {
+        captureApiError(e, 'Usuwanie harmonogramu');
+      }
+    }
   };
 
   // ---- Slot operations -----------------------------------------------------
@@ -447,6 +475,8 @@ const ScheduleDetailPage: React.FC = () => {
           canRedo={canRedo}
           undoLabel={undoLabel}
           redoLabel={redoLabel}
+          isAdmin={isAdmin}
+          onDeleteSchedule={isAdmin ? handleDeleteSchedule : undefined}
         />
 
         {/* API errors */}

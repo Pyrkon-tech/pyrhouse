@@ -86,6 +86,10 @@ export const updateSlotAPI = (slotId: number, payload: UpdateSlotPayload) =>
 export const deleteSlotAPI = (slotId: number) =>
   apiClient.delete<void>(`/schedule/slots/${slotId}`);
 
+/** DELETE /schedule/:id — permanently delete schedule with all slots, volunteers, assignments (admin only) */
+export const deleteScheduleAPI = (scheduleId: number) =>
+  apiClient.delete<void>(`/schedule/${scheduleId}`);
+
 // ---- Draft (bulk save) -----------------------------------------------------
 
 /**
