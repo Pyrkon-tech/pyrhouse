@@ -15,6 +15,10 @@ export interface ZoneMetrics {
   inProgress: number;
   completed: number;
   urgent: number;
+  /** Pending quests within 24h window (or same-day if no time specified) — show exclamation */
+  alertVisible: number;
+  /** Pending quests within 2h window (or same-day if no time specified) — pulse exclamation */
+  alertPulsing: number;
 }
 
 // Dispatch Volunteer System

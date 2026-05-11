@@ -21,14 +21,14 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
   const fill = isSelected
     ? 'rgba(255,152,0,0.40)'
     : isUrgent ? 'rgba(255,152,0,0.30)'
-    : isActive ? 'rgba(255,213,79,0.22)'
+    : isActive ? 'rgba(0,172,193,0.22)'
     : hasQuests ? 'rgba(102,187,106,0.20)'
     : 'rgba(255,255,255,0.03)';
 
   const stroke = isSelected
     ? '#ff9800'
     : isUrgent ? '#ff9800'
-    : isActive ? '#ffd54f'
+    : isActive ? '#00acc1'
     : hasQuests ? '#66bb6a'
     : 'rgba(255,255,255,0.08)';
 
@@ -110,7 +110,7 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
         <text
           x={cx} y={cy + (labelLines.length > 1 ? 28 : 16)}
           textAnchor="middle" dominantBaseline="central"
-          fill={isUrgent ? '#ff9800' : isActive ? '#ffd54f' : '#66bb6a'}
+          fill={isUrgent ? '#ff9800' : isActive ? '#00acc1' : '#66bb6a'}
           fontSize={18}
           fontFamily="'Courier New', monospace"
           fontWeight="700"
@@ -124,20 +124,31 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
         </text>
       )}
 
-      {/* Quest-ready icon — exclamation circle at top-left corner of building */}
-      {metrics.pending > 0 && (() => {
+      {/* Exclamation circle — visible 24h before delivery (or same day if no time) */}
+      {metrics.alertVisible > 0 && (() => {
         const r = 24;
-        // Use first polygon point as the corner anchor
         const [px, py] = zone.points[0];
+        const pulsing = metrics.alertPulsing > 0;
         return (
           <g style={{ pointerEvents: 'none' }}>
+            {/* Outer expanding ring */}
+            {pulsing && (
+              <circle cx={px} cy={py} r={r} fill="none" stroke="#ff9800" strokeWidth={3} opacity={0}>
+                <animate attributeName="r" values={`${r};${r + 22};${r + 22}`} dur="1.2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.9;0;0" dur="1.2s" repeatCount="indefinite" />
+              </circle>
+            )}
             {/* Glow */}
-            <circle cx={px} cy={py} r={r + 8} fill="#ff9800" opacity={0.15} style={{ filter: 'blur(10px)' }}>
-              <animate attributeName="opacity" values="0.15;0.35;0.15" dur="1.6s" repeatCount="indefinite" />
+            <circle cx={px} cy={py} r={r + 8} fill="#ff9800" style={{ filter: 'blur(10px)' }}>
+              {pulsing
+                ? <animate attributeName="opacity" values="0.6;0.05;0.6" dur="1.2s" repeatCount="indefinite" />
+                : <animate attributeName="opacity" values="0.2;0.35;0.2" dur="2.4s" repeatCount="indefinite" />}
             </circle>
             {/* Circle background */}
-            <circle cx={px} cy={py} r={r} fill="#ff9800" stroke="rgba(255,255,255,0.6)" strokeWidth={2.5}>
-              <animate attributeName="opacity" values="1;0.7;1" dur="1.6s" repeatCount="indefinite" />
+            <circle cx={px} cy={py} r={r} fill="#ff9800" stroke="rgba(255,255,255,0.8)" strokeWidth={2.5}>
+              {pulsing
+                ? <animate attributeName="opacity" values="1;0.4;1" dur="1.2s" repeatCount="indefinite" />
+                : <animate attributeName="opacity" values="1;0.8;1" dur="2.4s" repeatCount="indefinite" />}
             </circle>
             {/* Exclamation mark */}
             <text
@@ -146,21 +157,21 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
               fill="#fff" fontSize={r * 1.4} fontWeight="bold" fontFamily="monospace"
             >!</text>
             {/* Counter badge */}
-            {metrics.pending > 1 && (
+            {metrics.alertVisible > 1 && (
               <>
                 <circle cx={px + r - 2} cy={py - r + 2} r={9} fill="#d32f2f" stroke="rgba(255,255,255,0.5)" strokeWidth={1} />
                 <text
                   x={px + r - 2} y={py - r + 3}
                   textAnchor="middle" dominantBaseline="central"
                   fill="#fff" fontSize={11} fontWeight="bold" fontFamily="monospace"
-                >{metrics.pending}</text>
+                >{metrics.alertVisible}</text>
               </>
             )}
           </g>
         );
       })()}
       {metrics.inProgress > 0 && metrics.pending === 0 && (
-        <circle cx={bb.maxX - 18} cy={bb.minY + 18} r={8} fill="#ffd54f">
+        <circle cx={bb.maxX - 18} cy={bb.minY + 18} r={8} fill="#00acc1">
           <animate attributeName="opacity" values="1;0.4;1" dur="2.4s" repeatCount="indefinite" />
         </circle>
       )}

@@ -14,9 +14,11 @@ interface MapCanvasProps {
   onZoneDispatch?: (zoneId: string) => void;
   debugMode?: boolean;
   urgencyHours?: number;
+  simulatedTime?: Date;
+  children?: React.ReactNode;
 }
 
-const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZoneSelect, onZoneDispatch, debugMode = false, urgencyHours = 8 }) => {
+const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZoneSelect, onZoneDispatch, debugMode = false, urgencyHours = 8, simulatedTime, children }) => {
   const unmatchedQuests = questsByZone['__unmatched'] ?? [];
 
   // Debug state
@@ -59,7 +61,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
         aspectRatio: '2130 / 1035',
         bgcolor: '#040a14', borderRadius: 2,
         border: '1px solid #152535', overflow: 'hidden', position: 'relative',
-      }}>
+      }}
+      >
         <svg
           viewBox="0 0 2130 1035"
           style={{ width: '100%', height: '100%', display: 'block' }}
@@ -100,7 +103,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
             <ZoneOverlay
               key={zone.id}
               zone={zone}
-              metrics={getZoneMetrics(questsByZone[zone.id] ?? [], urgencyHours)}
+              metrics={getZoneMetrics(questsByZone[zone.id] ?? [], urgencyHours, simulatedTime)}
               isSelected={selectedZoneId === zone.id}
               onSelect={(id) => onZoneSelect(selectedZoneId === id ? null : id)}
               onDispatch={onZoneDispatch}
@@ -150,18 +153,19 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
           )}
 
           {/* Legend */}
-          <g transform="translate(700, 950)">
-            <circle cx={0} cy={10} r={8} fill="#ff9800">
-              <animate attributeName="r" values="6;10;6" dur="1.8s" repeatCount="indefinite" />
+          <g transform="translate(16, 16)">
+            <circle cx={8} cy={8}  r={7} fill="#ff9800">
+              <animate attributeName="r" values="5;9;5" dur="1.8s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="1;0.35;1" dur="1.8s" repeatCount="indefinite" />
             </circle>
-            <text x={16} y={15} fill="rgba(60,130,160,0.7)" fontSize={14} fontFamily="monospace">OCZEKUJĄCE</text>
-            <circle cx={190} cy={10} r={8} fill="#ffd54f" />
-            <text x={206} y={15} fill="rgba(60,130,160,0.7)" fontSize={14} fontFamily="monospace">W REALIZACJI</text>
-            <circle cx={410} cy={10} r={8} fill="#66bb6a" />
-            <text x={426} y={15} fill="rgba(60,130,160,0.7)" fontSize={14} fontFamily="monospace">ZREALIZOWANE</text>
+            <text x={22} y={13} fill="rgba(60,130,160,0.7)" fontSize={13} fontFamily="monospace">OCZEKUJĄCE</text>
+            <circle cx={8} cy={30} r={7} fill="#00acc1" />
+            <text x={22} y={35} fill="rgba(60,130,160,0.7)" fontSize={13} fontFamily="monospace">W REALIZACJI</text>
+            <circle cx={8} cy={52} r={7} fill="#66bb6a" />
+            <text x={22} y={57} fill="rgba(60,130,160,0.7)" fontSize={13} fontFamily="monospace">ZREALIZOWANE</text>
           </g>
         </svg>
+        {children}
       </Box>
     </Box>
   );

@@ -126,15 +126,16 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
 
   return (
     <Box sx={{ display: 'flex', gap: sidebarOpen ? 2 : 1, height: '100%', minHeight: 520 }}>
-      {/* Left column: map + optional volunteer panel */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1, minHeight: 0 }}>
-        <Box sx={{ position: 'relative', flex: 1, minHeight: 0 }}>
+      {/* Left column: map + volunteer panel, sized to content */}
+      <Box sx={{ flex: 1, alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ position: 'relative' }}>
           <MapCanvas
             questsByZone={questsByZone}
             selectedZoneId={selectedZoneId}
             onZoneSelect={setSelectedZoneId}
             onZoneDispatch={handleZoneDispatch}
             urgencyHours={urgencyHours}
+            simulatedTime={simulatedTime}
           />
           {IS_DEV && (
             <DevTimeSimulator

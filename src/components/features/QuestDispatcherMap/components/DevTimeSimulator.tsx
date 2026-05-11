@@ -39,7 +39,7 @@ const DevTimeSimulator: React.FC<DevTimeSimulatorProps> = ({ simulatedTime, onCh
     <Box
       sx={{
         position: 'absolute',
-        bottom: 8,
+        top: 8,
         right: 8,
         zIndex: 10,
         display: 'flex',
@@ -48,6 +48,24 @@ const DevTimeSimulator: React.FC<DevTimeSimulatorProps> = ({ simulatedTime, onCh
         gap: 0.5,
       }}
     >
+      <Tooltip title={expanded ? '' : 'Symulator czasu (dev)'} placement="left">
+        <IconButton
+          onClick={() => setExpanded(v => !v)}
+          size="small"
+          sx={{
+            bgcolor: simulatedTime ? '#ff980022' : '#0a1929',
+            border: `1px solid ${simulatedTime ? '#ff9800' : '#152535'}`,
+            color: simulatedTime ? '#ff9800' : '#3a7a8a',
+            borderRadius: 1,
+            p: 0.5,
+            '&:hover': { bgcolor: '#ff980022', borderColor: '#ff9800', color: '#ff9800' },
+            transition: 'all 0.15s',
+          }}
+        >
+          <AccessTimeIcon sx={{ fontSize: 14 }} />
+        </IconButton>
+      </Tooltip>
+
       <Collapse in={expanded} unmountOnExit>
         <Box
           sx={{
@@ -55,7 +73,7 @@ const DevTimeSimulator: React.FC<DevTimeSimulatorProps> = ({ simulatedTime, onCh
             border: '1px solid #ff980055',
             borderRadius: 1.5,
             p: 1,
-            mb: 0.5,
+            mt: 0.5,
             display: 'flex',
             flexDirection: 'column',
             gap: 0.75,
@@ -144,24 +162,6 @@ const DevTimeSimulator: React.FC<DevTimeSimulatorProps> = ({ simulatedTime, onCh
           </Box>
         </Box>
       </Collapse>
-
-      <Tooltip title={expanded ? '' : 'Symulator czasu (dev)'} placement="left">
-        <IconButton
-          onClick={() => setExpanded(v => !v)}
-          size="small"
-          sx={{
-            bgcolor: simulatedTime ? '#ff980022' : '#0a1929',
-            border: `1px solid ${simulatedTime ? '#ff9800' : '#152535'}`,
-            color: simulatedTime ? '#ff9800' : '#3a7a8a',
-            borderRadius: 1,
-            p: 0.5,
-            '&:hover': { bgcolor: '#ff980022', borderColor: '#ff9800', color: '#ff9800' },
-            transition: 'all 0.15s',
-          }}
-        >
-          <AccessTimeIcon sx={{ fontSize: 14 }} />
-        </IconButton>
-      </Tooltip>
     </Box>
   );
 };

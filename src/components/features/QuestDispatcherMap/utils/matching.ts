@@ -29,8 +29,21 @@ export const formatDate = (d: string) => {
   try { return new Date(d).toLocaleDateString('pl-PL'); } catch { return d; }
 };
 
-export function getZoneMetrics(quests: Quest[], urgencyHours = 8): ZoneMetrics {
-  const now = Date.now();
+function hasTimeComponent(dateStr: string): boolean {
+  return dateStr.length > 10 && dateStr.includes('T');
+}
+
+function isSameDay(dateStr: string, now: number): boolean {
+  const d = new Date(dateStr);
+  const today = new Date(now);
+  return d.getFullYear() === today.getFullYear()
+    && d.getMonth() === today.getMonth()
+    && d.getDate() === today.getDate();
+}
+
+export function getZoneMetrics(quests: Quest[], urgencyHours = 8, simulatedTime?: Date): ZoneMetrics {
+  const now = simulatedTime ? simulatedTime.getTime() : Date.now();
+  const H = 3_600_000;
   return {
     total: quests.length,
     pending: quests.filter(q => q.status === 'pending').length,
@@ -38,8 +51,22 @@ export function getZoneMetrics(quests: Quest[], urgencyHours = 8): ZoneMetrics {
     completed: quests.filter(q => q.status === 'completed').length,
     urgent: quests.filter(q =>
       q.status === 'pending' &&
-      new Date(q.delivery_date).getTime() - now <= urgencyHours * 3_600_000
+      new Date(q.delivery_date).getTime() - now <= urgencyHours * H
     ).length,
+    alertVisible: quests.filter(q => {
+      if (q.status !== 'pending') return false;
+      const d = q.delivery_date;
+      return hasTimeComponent(d)
+        ? new Date(d).getTime() - now <= 24 * H
+        : isSameDay(d, now);
+    }).length,
+    alertPulsing: quests.filter(q => {
+      if (q.status !== 'pending') return false;
+      const d = q.delivery_date;
+      return hasTimeComponent(d)
+        ? new Date(d).getTime() - now <= 2 * H
+        : isSameDay(d, now);
+    }).length,
   };
 }
 
