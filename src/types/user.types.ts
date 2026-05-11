@@ -5,7 +5,7 @@
 /**
  * Role użytkowników
  */
-export type UserRole = 'user' | 'admin' | 'moderator';
+export type UserRole = 'user' | 'dispatcher' | 'moderator' | 'admin';
 
 /**
  * Typ providera autoryzacji

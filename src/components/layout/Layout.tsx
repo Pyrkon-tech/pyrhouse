@@ -780,7 +780,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       {userId ? (username || 'Użytkownik') : ''}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {userRole === 'admin' ? 'Administrator' : userRole === 'moderator' ? 'Moderator' : 'Użytkownik'}
+                      {userRole === 'admin' ? 'Administrator' : userRole === 'moderator' ? 'Moderator' : userRole === 'dispatcher' ? 'Dyspozytor' : 'Użytkownik'}
                     </Typography>
                   </Box>
                 </Box>

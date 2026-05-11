@@ -1,6 +1,6 @@
 import { ComponentType, LazyExoticComponent } from 'react';
 
-export type UserRole = 'admin' | 'moderator';
+export type UserRole = 'admin' | 'moderator' | 'dispatcher';
 
 export interface RouteConfig {
   path: string;

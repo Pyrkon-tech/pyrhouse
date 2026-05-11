@@ -47,6 +47,10 @@ export const getVolunteersAPI = () =>
 export const updateVolunteerAPI = (vid: number, payload: UpdateVolunteerPayload) =>
   apiClient.patch<ScheduleVolunteer>(`/schedule/volunteers/${vid}`, payload);
 
+/** DELETE /schedule/volunteers/:vid — remove volunteer and cascade-delete their assignments */
+export const deleteVolunteerAPI = (vid: number) =>
+  apiClient.delete<void>(`/schedule/volunteers/${vid}`);
+
 // ---- Assignments -----------------------------------------------------------
 
 /**

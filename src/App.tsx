@@ -26,7 +26,7 @@ const RoleProtectedRoute = ({
   requiredRoles
 }: {
   children: React.ReactNode;
-  requiredRoles: ('admin' | 'moderator')[];
+  requiredRoles: ('admin' | 'moderator' | 'dispatcher')[];
 }) => (
   <RequireRole allowed={requiredRoles}>
     {children}

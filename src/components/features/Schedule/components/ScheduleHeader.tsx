@@ -1,6 +1,7 @@
-import React, { lazy, Suspense } from 'react';
-import { Box, Typography, Chip, Button, CircularProgress, Tooltip, IconButton, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import React, { lazy, Suspense, useState } from 'react';
+import { Box, Typography, Chip, Button, CircularProgress, Tooltip, IconButton, ToggleButtonGroup, ToggleButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { ScheduleDetail, ValidationResult } from '../../../../types/schedule.types';
 import type { PhaseFilter } from '../constants';
 import { DAY_TYPE_COLORS } from '../constants';
@@ -15,6 +16,7 @@ const WarningIcon = lazy(() => import('@mui/icons-material/Warning'));
 const DownloadIcon = lazy(() => import('@mui/icons-material/Download'));
 const PersonAddIcon = lazy(() => import('@mui/icons-material/PersonAdd'));
 const TableChartIcon = lazy(() => import('@mui/icons-material/TableChart'));
+const RuleIcon = lazy(() => import('@mui/icons-material/Rule'));
 
 interface ScheduleHeaderProps {
   schedule: ScheduleDetail;
@@ -24,6 +26,7 @@ interface ScheduleHeaderProps {
   canEdit: boolean;
   generating: boolean;
   exportingSheets: boolean;
+  slotCount: number;
   phaseFilter: PhaseFilter;
   syncStatus: SyncStatus;
   lastSavedAt: Date | null;
@@ -65,6 +68,7 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   canEdit,
   generating,
   exportingSheets,
+  slotCount,
   phaseFilter,
   syncStatus,
   lastSavedAt,
@@ -83,6 +87,9 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   undoLabel,
   redoLabel,
 }) => {
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const closeMenu = () => setMenuAnchor(null);
+
   // Use clientValidation (real-time) when available, fall back to server validation
   const displayValidation = clientValidation ?? validation;
 
@@ -133,7 +140,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
             />
           </Tooltip>
         )}
-        <Button size="small" variant="outlined" onClick={onValidate}>Waliduj</Button>
         {canEdit && (
           <Button
             size="small"
@@ -150,57 +156,68 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
             Zapisz
           </Button>
         )}
-        {canEdit && (
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={onImportOpen}
-            startIcon={<Suspense fallback={null}><PersonAddIcon /></Suspense>}
-          >
-            Wolontariusze
-          </Button>
-        )}
-        {canEdit && (
-          <Button
-            size="small"
-            variant="outlined"
-            color="secondary"
-            onClick={onGenerate}
-            disabled={generating}
-            startIcon={
-              generating
-                ? <CircularProgress size={14} color="inherit" />
-                : <Suspense fallback={null}><AutoFixHighIcon /></Suspense>
-            }
-          >
-            {generating ? 'Generuję…' : 'Auto-generuj'}
-          </Button>
-        )}
-        {isModerator && (
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={onExportCSV}
-            startIcon={<Suspense fallback={null}><DownloadIcon /></Suspense>}
-          >
-            CSV
-          </Button>
-        )}
-        {isModerator && (
-          <Button
-            size="small"
-            variant="outlined"
-            disabled={exportingSheets}
-            startIcon={
-              exportingSheets
-                ? <CircularProgress size={14} color="inherit" />
-                : <Suspense fallback={null}><TableChartIcon /></Suspense>
-            }
-            onClick={onExportSheets}
-          >
-            Sheets
-          </Button>
-        )}
+        <Tooltip title="Więcej opcji">
+          <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)} sx={{ p: 0.5 }}>
+            <MoreVertIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+        </Tooltip>
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={closeMenu}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <MenuItem onClick={() => { onValidate(); closeMenu(); }}>
+            <ListItemIcon><Suspense fallback={null}><RuleIcon fontSize="small" /></Suspense></ListItemIcon>
+            <ListItemText>Waliduj</ListItemText>
+          </MenuItem>
+          {canEdit && <Divider />}
+          {canEdit && (
+            <MenuItem onClick={() => { onImportOpen(); closeMenu(); }}>
+              <ListItemIcon><Suspense fallback={null}><PersonAddIcon fontSize="small" /></Suspense></ListItemIcon>
+              <ListItemText>Wolontariusze</ListItemText>
+            </MenuItem>
+          )}
+          {canEdit && <Divider />}
+          {canEdit && (
+            <Tooltip
+              title={slotCount > 0 ? 'Harmonogram już zawiera sloty — usuń je przed auto-generowaniem' : ''}
+              placement="left"
+            >
+              <span>
+                <MenuItem
+                  onClick={() => { onGenerate(); closeMenu(); }}
+                  disabled={generating || slotCount > 0}
+                >
+                  <ListItemIcon>
+                    {generating
+                      ? <CircularProgress size={16} color="inherit" />
+                      : <Suspense fallback={null}><AutoFixHighIcon fontSize="small" /></Suspense>}
+                  </ListItemIcon>
+                  <ListItemText>{generating ? 'Generuję…' : 'Auto-generuj'}</ListItemText>
+                </MenuItem>
+              </span>
+            </Tooltip>
+          )}
+          {isModerator && <Divider />}
+          {isModerator && (
+            <MenuItem onClick={() => { onExportCSV(); closeMenu(); }}>
+              <ListItemIcon><Suspense fallback={null}><DownloadIcon fontSize="small" /></Suspense></ListItemIcon>
+              <ListItemText>Eksport CSV</ListItemText>
+            </MenuItem>
+          )}
+          {isModerator && (
+            <MenuItem onClick={() => { onExportSheets(); closeMenu(); }} disabled={exportingSheets}>
+              <ListItemIcon>
+                {exportingSheets
+                  ? <CircularProgress size={16} color="inherit" />
+                  : <Suspense fallback={null}><TableChartIcon fontSize="small" /></Suspense>}
+              </ListItemIcon>
+              <ListItemText>Eksport Sheets</ListItemText>
+            </MenuItem>
+          )}
+        </Menu>
       </Box>
 
       {/* Phase filter tabs + sync status */}
@@ -224,14 +241,8 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
           }}
         >
           <ToggleButton value="all">Wszystko</ToggleButton>
-          <ToggleButton value="montage" sx={{ color: DAY_TYPE_COLORS.montage.color }}>
-            Montaż
-          </ToggleButton>
           <ToggleButton value="festival" sx={{ color: DAY_TYPE_COLORS.festival.color }}>
             Festiwal
-          </ToggleButton>
-          <ToggleButton value="demontage" sx={{ color: DAY_TYPE_COLORS.demontage.color }}>
-            Demontaż
           </ToggleButton>
         </ToggleButtonGroup>
 

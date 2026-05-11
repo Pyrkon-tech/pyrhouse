@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 interface RequireRoleProps {
-  allowed: ('admin' | 'moderator')[];
+  allowed: ('admin' | 'moderator' | 'dispatcher')[];
   children: React.ReactNode;
 }
 

@@ -45,8 +45,9 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, requiredRole }) =
 
       // Sprawdź, czy użytkownik ma wymagane uprawnienia
       const rolesHierarchy = {
-        'admin': 3,
-        'moderator': 2,
+        'admin': 4,
+        'moderator': 3,
+        'dispatcher': 2,
         'user': 1
       };
 

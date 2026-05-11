@@ -35,6 +35,7 @@ const AddIcon = lazy(() => import('@mui/icons-material/Add'));
 const PersonIcon = lazy(() => import('@mui/icons-material/Person'));
 const AdminPanelSettingsIcon = lazy(() => import('@mui/icons-material/AdminPanelSettings'));
 const SecurityIcon = lazy(() => import('@mui/icons-material/Security'));
+const SupportAgentIcon = lazy(() => import('@mui/icons-material/SupportAgent'));
 
 const UserManagementPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -103,6 +104,8 @@ const UserManagementPage: React.FC = () => {
         return <AdminPanelSettingsIcon fontSize="small" />;
       case 'moderator':
         return <SecurityIcon fontSize="small" />;
+      case 'dispatcher':
+        return <SupportAgentIcon fontSize="small" />;
       default:
         return <PersonIcon fontSize="small" />;
     }
@@ -112,6 +115,7 @@ const UserManagementPage: React.FC = () => {
     switch (role) {
       case 'admin': return 'error';
       case 'moderator': return 'warning';
+      case 'dispatcher': return 'info';
       default: return 'info';
     }
   };
@@ -414,6 +418,7 @@ const UserManagementPage: React.FC = () => {
             sx={{ mb: 2 }}
           >
             <MenuItem value="user">User</MenuItem>
+            <MenuItem value="dispatcher">Dispatcher</MenuItem>
             <MenuItem value="moderator">Moderator</MenuItem>
             <MenuItem value="admin">Admin</MenuItem>
           </Select>

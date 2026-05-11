@@ -13,7 +13,9 @@ import {
   generateScheduleAPI,
   validateScheduleAPI,
   createSlotAPI,
+  updateSlotAPI,
   deleteSlotAPI,
+  deleteVolunteerAPI,
   exportScheduleCSV,
   exportSheetsAPI,
 } from '../../../services/scheduleService';
@@ -50,6 +52,7 @@ const ScheduleDetailPage: React.FC = () => {
   const { showSuccess } = useNotification();
 
   const isModerator = userRole === 'admin' || userRole === 'moderator';
+  const isAdmin = userRole === 'admin';
 
   const localState = useScheduleLocalState();
   const { state, loadFromServer, clear, setValidation } = localState;
@@ -155,8 +158,12 @@ const ScheduleDetailPage: React.FC = () => {
   }, [loadFromServer]);
 
   const fetchValidation = useCallback(async () => {
-    try { const v = await validateScheduleAPI(); setValidation(v); } catch { /* silent */ }
-  }, [setValidation]);
+    try {
+      const v = await validateScheduleAPI();
+      setValidation(v);
+      if (v.valid) showSuccess('Harmonogram jest poprawny — brak problemów');
+    } catch (e) { captureApiError(e, 'Walidacja'); }
+  }, [setValidation, showSuccess, captureApiError]);
 
   // ---- Sync layer ----------------------------------------------------------
   const handleSaveSuccess = useCallback((response: import('../../../types/schedule.types').DraftResponse) => {
@@ -243,7 +250,14 @@ const ScheduleDetailPage: React.FC = () => {
         throw e;
       }
     } else {
-      localState.updateSlot(slotId, changes);
+      try {
+        await updateSlotAPI(slotId, changes);
+        localState.updateSlot(slotId, changes);
+        showSuccess('Slot zaktualizowany');
+      } catch (e) {
+        captureApiError(e, 'Aktualizacja slotu');
+        throw e;
+      }
     }
   }, [localState, slots, captureApiError, showSuccess]);
 
@@ -261,6 +275,16 @@ const ScheduleDetailPage: React.FC = () => {
     }
     if (selectedSlotId === slotId) { setSelectedSlotId(null); setBottomPanelOpen(false); }
   }, [localState, selectedSlotId, captureApiError]);
+
+  const handleDeleteVolunteer = useCallback(async (volunteerId: number) => {
+    try {
+      await deleteVolunteerAPI(volunteerId);
+      localState.deleteVolunteer(volunteerId);
+      showSuccess('Wolontariusz usunięty');
+    } catch (e) {
+      captureApiError(e, 'Usuwanie wolontariusza');
+    }
+  }, [localState, captureApiError, showSuccess]);
 
   const handleDuplicateSlot = useCallback(async (slotId: number) => {
     const slot = slots.find((s) => s.id === slotId);
@@ -292,8 +316,8 @@ const ScheduleDetailPage: React.FC = () => {
     const mm = h % 1 >= 0.5 ? '30' : '00';
     const ehh = hh + 1 >= 24 ? 0 : hh + 1;
     const pad = (n: number) => String(n).padStart(2, '0');
-    const startISO = `${dateKey}T${pad(hh)}:${mm}:00`;
-    const endISO = `${hh + 1 >= 24 ? dateKey : dateKey}T${pad(ehh)}:${mm}:00`;
+    const startISO = `${dateKey}T${pad(hh)}:${mm}:00Z`;
+    const endISO = `${hh + 1 >= 24 ? dateKey : dateKey}T${pad(ehh)}:${mm}:00Z`;
     const newId = localState.createSlot(type, startISO, endISO);
     const newSlot = { id: newId, type, label: '', start: startISO, end: endISO, capacity: 1, credit_hours: 0, volunteers: [] };
     setEditAnchorEl(null);
@@ -400,6 +424,7 @@ const ScheduleDetailPage: React.FC = () => {
           canEdit={canEdit}
           generating={generating}
           exportingSheets={exportingSheets}
+          slotCount={slots.length}
           phaseFilter={phaseFilter}
           syncStatus={syncStatus}
           lastSavedAt={lastSavedAt}
@@ -427,8 +452,10 @@ const ScheduleDetailPage: React.FC = () => {
         {/* API errors */}
         {apiError && <ApiErrorAlert error={apiError} onDismiss={() => setApiError(null)} />}
 
-        {/* Validation panel (collapsed by default when valid) */}
-        {!clientValidation.valid && <ValidationPanel validation={clientValidation} />}
+        {/* Validation panel: server results when available, otherwise real-time client */}
+        {validation != null
+          ? <ValidationPanel validation={validation} />
+          : !clientValidation.valid && <ValidationPanel validation={clientValidation} />}
 
         {/* Main content row: calendar + roster (right) */}
         <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
@@ -484,11 +511,13 @@ const ScheduleDetailPage: React.FC = () => {
             allVolunteers={volunteers}
             slots={slots}
             canEdit={canEdit}
+            isAdmin={isAdmin}
             rosterSearch={rosterSearch}
             onSearchChange={setRosterSearch}
             highlightedVolunteerId={highlightedVolunteerId}
             onToggleHighlight={(id) => setHighlightedVolunteerId((prev) => prev === id ? null : id)}
             onUnassignDrop={canEdit ? handleRemoveAssignment : undefined}
+            onDeleteVolunteer={isAdmin ? handleDeleteVolunteer : undefined}
           />
         </Box>
 

@@ -257,6 +257,7 @@ const UserDetailsPage: React.FC = () => {
     switch (role) {
       case 'admin': return 'error';
       case 'moderator': return 'warning';
+      case 'dispatcher': return 'info';
       default: return 'info';
     }
   };
@@ -653,6 +654,7 @@ const UserDetailsPage: React.FC = () => {
                       disabled={!canEditRole}
                     >
                       <MenuItem value="user">Użytkownik</MenuItem>
+                      <MenuItem value="dispatcher">Dyspozytor</MenuItem>
                       <MenuItem value="moderator">Moderator</MenuItem>
                       <MenuItem value="admin">Administrator</MenuItem>
                     </Select>

@@ -200,8 +200,9 @@ const ReleaseDetailPage: React.FC = () => {
   const [editedStockQty, setEditedStockQty] = useState<Map<number, number>>(new Map());
   const [saving, setSaving] = useState(false);
 
-  const isAdmin = userRole === 'admin';
-  const canEdit = (userRole === 'admin' || userRole === 'moderator') && release?.status === 'draft';
+  const canEdit = ['admin', 'moderator', 'dispatcher'].includes(userRole ?? '') && release?.status === 'draft';
+  const canDelete = (userRole === 'admin' || userRole === 'moderator') && release?.status === 'draft';
+  const canConfirm = userRole === 'admin' || userRole === 'moderator';
 
   const fetchRelease = useCallback(async () => {
     if (!id) return;
@@ -381,19 +382,19 @@ const ReleaseDetailPage: React.FC = () => {
               Drukuj / PDF
             </Button>
             {canEdit && !editMode && (
-              <>
-                <Button variant="outline" size="sm" onClick={startEdit}>
-                  Edytuj
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  leftIcon={<DeleteIcon />}
-                  onClick={() => setDeleteDialog(true)}
-                >
-                  Usuń
-                </Button>
-              </>
+              <Button variant="outline" size="sm" onClick={startEdit}>
+                Edytuj
+              </Button>
+            )}
+            {canDelete && !editMode && (
+              <Button
+                variant="danger"
+                size="sm"
+                leftIcon={<DeleteIcon />}
+                onClick={() => setDeleteDialog(true)}
+              >
+                Usuń
+              </Button>
             )}
             {editMode && (
               <>
@@ -405,7 +406,7 @@ const ReleaseDetailPage: React.FC = () => {
                 </Button>
               </>
             )}
-            {isAdmin && release.status === 'draft' && !editMode && (
+            {canConfirm && release.status === 'draft' && !editMode && (
               <Button
                 variant="primary"
                 size="sm"

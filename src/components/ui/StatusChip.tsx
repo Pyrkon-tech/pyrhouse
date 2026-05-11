@@ -21,6 +21,7 @@ export type StatusVariant =
   // Role użytkownika
   | 'admin'
   | 'moderator'
+  | 'dispatcher'
   | 'user'
   // Transfery / zgłoszenia
   | 'completed'
@@ -46,6 +47,7 @@ const STATUS_MAP: Record<StatusVariant, StatusConfig> = {
   inactive:     { label: 'Nieaktywny',     color: 'default' },
   admin:        { label: 'Admin',          color: 'error' },
   moderator:    { label: 'Moderator',      color: 'warning' },
+  dispatcher:   { label: 'Dyspozytor',     color: 'info' },
   user:         { label: 'Użytkownik',     color: 'default' },
   completed:    { label: 'Zakończony',     color: 'success' },
   pending:      { label: 'Oczekujący',     color: 'warning' },

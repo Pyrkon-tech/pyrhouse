@@ -79,6 +79,9 @@ export interface UseScheduleLocalStateReturn {
   /** Remove assignment from slot. */
   unassignVolunteer: (assignmentId: number) => void;
 
+  /** Remove volunteer from roster and their assignments from all slots. */
+  deleteVolunteer: (volunteerId: number) => void;
+
   /** Move assignment from one slot to another. Returns new temp assignment ID. */
   moveVolunteer: (assignmentId: number, volunteerId: number, nickname: string, fromSlotId: number, toSlotId: number) => number;
 
@@ -103,9 +106,6 @@ export interface UseScheduleLocalStateReturn {
 
   /** Replace a temp slot (id < 0) with the real slot returned by POST /schedule/slots */
   replaceSlot: (tempId: number, realSlot: ScheduleSlot) => void;
-
-  /** Update schedule metadata (e.g. status after publish) */
-  updateScheduleMeta: (updates: Partial<Pick<ScheduleDetail, 'status' | 'name'>>) => void;
 
   /** Build PUT /schedule/draft payload from current local state */
   toDraftPayload: () => DraftPayload | null;
@@ -254,6 +254,23 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     return tempId;
   }, [recomputeVolunteerHours, nextTempId, pushHistory]);
 
+  const deleteVolunteer = useCallback((volunteerId: number) => {
+    setSchedule((prev) => {
+      if (!prev) return prev;
+      return recomputeVolunteerHours({
+        ...prev,
+        volunteers: prev.volunteers.filter((v) => v.id !== volunteerId),
+        slots: prev.slots.map((s) => ({
+          ...s,
+          volunteers: s.volunteers.filter((sv) => {
+            const vol = prev.volunteers.find((v) => v.id === volunteerId);
+            return sv.nickname !== vol?.nickname;
+          }),
+        })),
+      });
+    });
+  }, [recomputeVolunteerHours]);
+
   const unassignVolunteer = useCallback((assignmentId: number) => {
     pushHistory('Usuń przypisanie');
     setSchedule((prev) => {
@@ -396,10 +413,6 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     });
   }, []);
 
-  const updateScheduleMeta = useCallback((updates: Partial<Pick<ScheduleDetail, 'status' | 'name'>>) => {
-    setSchedule((prev) => prev ? { ...prev, ...updates } : prev);
-  }, []);
-
   // ---- Build draft payload for PUT /schedule/draft --------------------------
 
   const toDraftPayload = useCallback((): DraftPayload | null => {
@@ -498,6 +511,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     clear,
     setValidation,
     assignVolunteer,
+    deleteVolunteer,
     unassignVolunteer,
     moveVolunteer,
     createSlot,
@@ -506,7 +520,6 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     consumeChanges,
     replaceAssignmentId,
     replaceSlot,
-    updateScheduleMeta,
     toDraftPayload,
     undo,
     redo,

@@ -34,9 +34,9 @@ function withTime(iso: string, time: string, nextDay = false): string {
     const d = new Date(datePart + 'T12:00:00');
     d.setDate(d.getDate() + 1);
     const nextDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return `${nextDate}T${time}:00`;
+    return `${nextDate}T${time}:00Z`;
   }
-  return `${datePart}T${time}:00`;
+  return `${datePart}T${time}:00Z`;
 }
 
 /** Compute duration string from two HH:MM times (handles cross-midnight) */

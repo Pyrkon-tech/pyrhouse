@@ -15,11 +15,13 @@ interface RosterSidebarProps {
   allVolunteers: ScheduleVolunteer[];
   slots: ScheduleSlot[];
   canEdit: boolean;
+  isAdmin?: boolean;
   rosterSearch: string;
   onSearchChange: (v: string) => void;
   highlightedVolunteerId: number | null;
   onToggleHighlight: (id: number) => void;
   onUnassignDrop?: (assignmentId: number) => void;
+  onDeleteVolunteer?: (volunteerId: number) => void;
 }
 
 const RosterSidebar: React.FC<RosterSidebarProps> = ({
@@ -29,11 +31,13 @@ const RosterSidebar: React.FC<RosterSidebarProps> = ({
   allVolunteers,
   slots,
   canEdit,
+  isAdmin,
   rosterSearch,
   onSearchChange,
   highlightedVolunteerId,
   onToggleHighlight,
   onUnassignDrop,
+  onDeleteVolunteer,
 }) => {
   const totalAssigned = slots.reduce((s, sl) => s + sl.volunteers.length, 0);
 
@@ -151,9 +155,11 @@ const RosterSidebar: React.FC<RosterSidebarProps> = ({
                   key={vol.id}
                   volunteer={vol}
                   canEdit={canEdit}
+                  isAdmin={isAdmin}
                   slots={slots}
                   isHighlighted={highlightedVolunteerId === vol.id}
                   onToggleHighlight={onToggleHighlight}
+                  onDelete={onDeleteVolunteer}
                 />
               ))
             )}

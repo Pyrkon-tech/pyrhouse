@@ -4,8 +4,7 @@
 // ============================================================================
 
 export type SlotType = 'montage' | 'festival' | 'demontage';
-/** 'active' is the backend value for what the spec calls 'draft' — treat identically */
-export type ScheduleStatus = 'draft' | 'active' | 'published';
+
 export type ValidationIssueType =
   | 'under_hours'
   | 'over_hours'
@@ -79,7 +78,6 @@ export interface ScheduleSlot {
 export interface Schedule {
   id: number;
   name: string;
-  status: ScheduleStatus;
   /** Incremented on every save. Send back in PUT /schedule/draft for optimistic locking. 0 = skip check. */
   version: number;
   created_at: string;

@@ -400,7 +400,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleEmptyClick = useCallback((e: React.MouseEvent) => {
+  const handleEmptyDblClick = useCallback((e: React.MouseEvent) => {
     if (!canEdit || !onEmptyClick || !containerRef.current || isAssignMode) return;
     const rect = containerRef.current.getBoundingClientRect();
     const relY = e.clientY - rect.top;
@@ -460,7 +460,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
   return (
     <Box
       ref={containerRef}
-      onClick={handleEmptyClick}
+      onDoubleClick={handleEmptyDblClick}
       onDragOver={canEdit ? handleColumnDragOver : undefined}
       onDrop={canEdit ? handleColumnDrop : undefined}
       sx={{

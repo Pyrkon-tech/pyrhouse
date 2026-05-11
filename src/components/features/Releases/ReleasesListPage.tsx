@@ -46,7 +46,7 @@ const ReleasesListPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
 
-  const canCreate = userRole === 'admin' || userRole === 'moderator';
+  const canCreate = userRole === 'admin' || userRole === 'moderator' || userRole === 'dispatcher';
 
   const fetchReleases = useCallback(async () => {
     setLoading(true);
