@@ -13,7 +13,6 @@ export { usePageVisibility } from './usePageVisibility';
 // Domain: Transfer
 export { useTransfers } from './useTransfers';
 export { useTransferDetails } from './useTransferDetails';
-export { useTransferFromQuest } from './useTransferFromQuest';
 
 // Domain: Quest
 export { useQuests } from './useQuests';

@@ -14,7 +14,6 @@ const RedoIcon = lazy(() => import('@mui/icons-material/Redo'));
 const AutoFixHighIcon = lazy(() => import('@mui/icons-material/AutoFixHigh'));
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
 const WarningIcon = lazy(() => import('@mui/icons-material/Warning'));
-const DownloadIcon = lazy(() => import('@mui/icons-material/Download'));
 const PersonAddIcon = lazy(() => import('@mui/icons-material/PersonAdd'));
 const TableChartIcon = lazy(() => import('@mui/icons-material/TableChart'));
 const RuleIcon = lazy(() => import('@mui/icons-material/Rule'));
@@ -36,7 +35,6 @@ interface ScheduleHeaderProps {
   onValidate: () => void;
   onImportOpen: () => void;
   onGenerate: () => void;
-  onExportCSV: () => void;
   onExportSheets: () => void;
   onPhaseFilterChange: (filter: PhaseFilter) => void;
   onUndo: () => void;
@@ -80,7 +78,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   onValidate,
   onImportOpen,
   onGenerate,
-  onExportCSV,
   onExportSheets,
   onPhaseFilterChange,
   onUndo,
@@ -247,12 +244,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
             </Tooltip>
           )}
           {isModerator && <Divider />}
-          {isModerator && (
-            <MenuItem onClick={() => { onExportCSV(); closeMenu(); }}>
-              <ListItemIcon><Suspense fallback={null}><DownloadIcon fontSize="small" /></Suspense></ListItemIcon>
-              <ListItemText>Eksport CSV</ListItemText>
-            </MenuItem>
-          )}
           {isModerator && (
             <MenuItem onClick={() => { onExportSheets(); closeMenu(); }} disabled={exportingSheets}>
               <ListItemIcon>

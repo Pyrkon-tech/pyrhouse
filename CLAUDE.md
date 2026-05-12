@@ -195,16 +195,47 @@ const response = await fetch(getApiUrl('/endpoint'), {
 - Wzorzec dla pola PYR code: `onKeyDown={(e) => { if (e.key==='Enter') { e.preventDefault(); validate(); } }}`
 - Po walidacji: auto-focus następnego rzędu przez `setTimeout(..., 100)`
 
-**Tworzenie transferu z kontekstem questa:**
-```typescript
-navigate('/transfers/create', {
-  state: {
-    questId: quest.id,           // → po submit: createTransferFromQuestAPI, redirect /quests/{id}
-    questData: { recipient, deliveryDate, location, pavilion, items },
-  },
-});
+**Tworzenie transferu z kontekstem questa — właściwy przepływ (dispatch):**
+
+Transfer z questa jest tworzony **inline** na `QuestDetailPage` (nie przez `/transfers/create`).
+
 ```
-TransferPage wykrywa `questId` w state i wywołuje quest-specific API zamiast zwykłego transfer API.
+DispatchPage → DispatchModal (wybór wolontariuszy z on-duty) → DISPATCH
+  → navigate(`/quests/:id`, { state: { autoOpenTransfer: true, volunteerIds: [user_id, ...] } })
+  → QuestDetailPage: auto-otwiera TransferFormCore inline
+  → POST /equipment-requests/quests/:id/transfer
+```
+
+Kluczowe szczegóły:
+- `volunteerIds` w route state to **system user IDs** (z `OnDutyVolunteer.user_id`), nie schedule volunteer IDs
+- Wolontariusze bez powiązanego konta (`user_id: null`, `is_unlinked: true`) nie są pre-selectowani w formularzu
+- Po submit: `setShowTransferForm(false)` + `refreshQuest()` — nie ma redirect
+- `/transfers/create` nadal obsługuje `questId` z route state (fallback), ale żadna nawigacja z quest flow tam nie prowadzi
+
+**Cykl życia statusu `on_mission` wolontariusza (backend, bez frontu):**
+
+`on_mission` jest **wyliczany at read time** przez SQL join, nigdy nie zapisywany do kolumny:
+
+```
+transfer_users → transfers → equipment_request_quests WHERE status = 'in_progress'
+```
+
+| Zdarzenie | Efekt na status |
+|---|---|
+| `POST /quests/:id/transfer` (tworzenie transferu) | quest.status = `in_progress` → wolontariusz = `on_mission` |
+| transfer.status = `completed` | quest.status = `completed` → wolontariusz = `available` |
+| transfer anulowany | quest odlinkowany od transferu, status cofnięty → `available` |
+
+`current_mission` = `destination_pavilion + ' - ' + destination_location` z questa.
+
+**Brak endpointu do ręcznego ustawiania `on_mission`** (`PATCH /schedule/volunteers/:vid` nie ma pola `status`).
+
+Wolontariusz staje się `on_mission` **dopiero po finalnym submit formularza transferu** — nie po kliknięciu DISPATCH w modalu.
+
+**Usunięty martwy kod (nie przywracać):**
+- `QuestData` interface i prop `questData` w `TransferFormCore` — dane questa nie były nigdy używane w ciele formularza
+- `useTransferFromQuest` hook — preview/create wrapper, zastąpiony bezpośrednim wywołaniem `createTransferFromQuestAPI` w `TransferFormCore`
+- `getTransferPreviewAPI` — endpoint preview nie jest używany w UI
 
 ### Cache invalidation pattern (useCategories)
 Hook `useCategories` używa event-based pattern do synchronizacji między komponentami:

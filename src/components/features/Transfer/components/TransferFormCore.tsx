@@ -104,21 +104,8 @@ interface FormData {
   users: User[];
 }
 
-export interface QuestData {
-  recipient: string;
-  deliveryDate: string;
-  location: string;
-  pavilion: string;
-  items: Array<{
-    item_name: string;
-    quantity: number;
-    notes?: string;
-  }>;
-}
-
 export interface TransferFormCoreProps {
   questId?: string;
-  questData?: QuestData;
   /** Pre-fills toLocation when quest has a resolved location_id */
   questLocationId?: number | null;
   onSuccess?: (transferId?: number) => void;

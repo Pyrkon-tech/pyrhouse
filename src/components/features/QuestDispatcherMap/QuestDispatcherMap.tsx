@@ -21,6 +21,7 @@ const IS_DEV = import.meta.env.DEV && window.location.hostname === 'localhost';
 function mapOnDutyToVolunteer(entry: OnDutyVolunteer): Volunteer {
   return {
     id: entry.volunteer_id,
+    user_id: entry.user_id,
     username: entry.user?.username ?? entry.nickname,
     discord_username: entry.user?.discord_username ?? null,
     avatar_url: entry.user?.avatar_url ?? null,
@@ -119,7 +120,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
     navigate(`/quests/${assignment.quest_id}`, {
       state: {
         autoOpenTransfer: true,
-        volunteerIds: assignment.volunteer_ids,
+        volunteerIds: assignment.user_ids,
       },
     });
   }, [handleCloseDispatch, navigate]);

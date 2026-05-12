@@ -53,10 +53,14 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
 
   const handleDispatch = () => {
     if (!quest || !zone) return;
+    // Map selected volunteer IDs → system user IDs (drop unlinked volunteers with user_id=null)
+    const userIds = selectedIds
+      .map(vid => volunteers.find(v => v.id === vid)?.user_id ?? null)
+      .filter((uid): uid is number => uid !== null);
     onDispatch({
       quest_id: quest.id,
       zone_id: zone.id,
-      volunteer_ids: selectedIds,
+      user_ids: userIds,
     });
   };
 

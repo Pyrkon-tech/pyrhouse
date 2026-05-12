@@ -272,3 +272,28 @@ export interface DraftResponse {
   created_slots: { temp_id: string; id: number }[];
   validation: ValidationResult;
 }
+
+// ---- My schedule (GET /schedule/volunteers/me) -----------------------------
+
+export interface MyScheduleSlot {
+  assignment_id: number;
+  slot_id: number;
+  slot_type: SlotType;
+  start_time: string;
+  end_time: string;
+  credit_hours: number;
+  label: string | null;
+}
+
+export interface MyScheduleVolunteer {
+  id: number;
+  nickname: string;
+  user_id: number | null;
+  assigned_hours: number;
+  target_hours: number;
+}
+
+export interface MyScheduleResponse {
+  volunteer: MyScheduleVolunteer;
+  slots: MyScheduleSlot[];
+}

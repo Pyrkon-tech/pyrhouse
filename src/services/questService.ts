@@ -16,7 +16,6 @@ import type {
   CreateCategoryMappingPayload,
   CategoryMapping,
   CategoryMappingsResponse,
-  TransferPreview,
   CreateTransferFromQuestRequest,
   CreateTransferFromQuestResponse,
   LocationMapping,
@@ -85,14 +84,6 @@ export const createCategoryMappingAPI = (payload: CreateCategoryMappingPayload) 
 // ============================================================================
 // Transfer Integration
 // ============================================================================
-
-/**
- * Podgląd transferu z questa (preview resolved/unresolved items)
- */
-export const getTransferPreviewAPI = (questId: string, fromLocationId: number) =>
-  apiClient.get<TransferPreview>(
-    `/equipment-requests/quests/${questId}/transfer-preview?from_location_id=${fromLocationId}`
-  );
 
 /**
  * Tworzy transfer magazynowy z questa

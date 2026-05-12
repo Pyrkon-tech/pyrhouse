@@ -82,6 +82,9 @@ export interface UseScheduleLocalStateReturn {
   /** Remove volunteer from roster and their assignments from all slots. */
   deleteVolunteer: (volunteerId: number) => void;
 
+  /** Update volunteer's linked system user_id locally (after PATCH /schedule/volunteers/:vid). */
+  linkVolunteerAccount: (volunteerId: number, userId: number | null) => void;
+
   /** Move assignment from one slot to another. Returns new temp assignment ID. */
   moveVolunteer: (assignmentId: number, volunteerId: number, nickname: string, fromSlotId: number, toSlotId: number) => number;
 
@@ -91,10 +94,10 @@ export interface UseScheduleLocalStateReturn {
   createSlot: (type: SlotType, start: string, end: string, label?: string) => number;
 
   /** Update slot properties. */
-  updateSlot: (slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'type' | 'label'>>) => void;
+  updateSlot: (slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'capacity' | 'type' | 'label'>>) => void;
 
-  /** Delete slot and all its assignments. */
-  deleteSlot: (slotId: number) => void;
+  /** Delete slot and all its assignments. Pass skipHistory=true for API-persisted slots to avoid stale undo state. */
+  deleteSlot: (slotId: number, skipHistory?: boolean) => void;
 
   // ---- Sync helpers -------------------------------------------------------
 
@@ -106,6 +109,9 @@ export interface UseScheduleLocalStateReturn {
 
   /** Replace a temp slot (id < 0) with the real slot returned by POST /schedule/slots */
   replaceSlot: (tempId: number, realSlot: ScheduleSlot) => void;
+
+  /** Add a real (already persisted) slot directly to local state — no temp ID, no pending changes */
+  addPersistedSlot: (slot: ScheduleSlot) => void;
 
   /** Build PUT /schedule/draft payload from current local state */
   toDraftPayload: () => DraftPayload | null;
@@ -254,6 +260,18 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     return tempId;
   }, [recomputeVolunteerHours, nextTempId, pushHistory]);
 
+  const linkVolunteerAccount = useCallback((volunteerId: number, userId: number | null) => {
+    setSchedule((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        volunteers: prev.volunteers.map((v) =>
+          v.id === volunteerId ? { ...v, user_id: userId } : v
+        ),
+      };
+    });
+  }, []);
+
   const deleteVolunteer = useCallback((volunteerId: number) => {
     setSchedule((prev) => {
       if (!prev) return prev;
@@ -350,7 +368,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     return tempId;
   }, [nextTempId, pushHistory]);
 
-  const updateSlot = useCallback((slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'type' | 'label'>>) => {
+  const updateSlot = useCallback((slotId: number, changes: Partial<Pick<ScheduleSlot, 'start' | 'end' | 'capacity' | 'type' | 'label'>>) => {
     pushHistory('Edytuj slot');
     setSchedule((prev) => {
       if (!prev) return prev;
@@ -371,8 +389,8 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     setPendingVersion((v) => v + 1);
   }, [recomputeVolunteerHours, pushHistory]);
 
-  const deleteSlot = useCallback((slotId: number) => {
-    pushHistory('Usuń slot');
+  const deleteSlot = useCallback((slotId: number, skipHistory = false) => {
+    if (!skipHistory) pushHistory('Usuń slot');
     setSchedule((prev) => {
       if (!prev) return prev;
       const updated = {
@@ -410,6 +428,13 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     setSchedule((prev) => {
       if (!prev) return prev;
       return { ...prev, slots: prev.slots.map((s) => s.id === tempId ? realSlot : s) };
+    });
+  }, []);
+
+  const addPersistedSlot = useCallback((slot: ScheduleSlot) => {
+    setSchedule((prev) => {
+      if (!prev) return prev;
+      return { ...prev, slots: [...prev.slots, slot] };
     });
   }, []);
 
@@ -457,11 +482,12 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
   const undo = useCallback(() => {
     const stack = undoStackRef.current;
     if (stack.length === 0) return;
+    // Mutate ref immediately so rapid successive calls each see the updated stack
+    const entry = stack[stack.length - 1];
+    undoStackRef.current = stack.slice(0, -1);
 
     setSchedule((current) => {
       if (!current) return current;
-      const entry = stack[stack.length - 1];
-      undoStackRef.current = stack.slice(0, -1);
       redoStackRef.current = [...redoStackRef.current, { schedule: current, label: entry.label }];
       restoringRef.current = true;
       setHistoryVersion((v) => v + 1);
@@ -475,11 +501,12 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
   const redo = useCallback(() => {
     const stack = redoStackRef.current;
     if (stack.length === 0) return;
+    // Mutate ref immediately so rapid successive calls each see the updated stack
+    const entry = stack[stack.length - 1];
+    redoStackRef.current = stack.slice(0, -1);
 
     setSchedule((current) => {
       if (!current) return current;
-      const entry = stack[stack.length - 1];
-      redoStackRef.current = stack.slice(0, -1);
       undoStackRef.current = [...undoStackRef.current, { schedule: current, label: entry.label }];
       restoringRef.current = true;
       setHistoryVersion((v) => v + 1);
@@ -512,6 +539,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     setValidation,
     assignVolunteer,
     deleteVolunteer,
+    linkVolunteerAccount,
     unassignVolunteer,
     moveVolunteer,
     createSlot,
@@ -520,6 +548,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
     consumeChanges,
     replaceAssignmentId,
     replaceSlot,
+    addPersistedSlot,
     toDraftPayload,
     undo,
     redo,

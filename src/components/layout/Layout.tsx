@@ -532,7 +532,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const generateBreadcrumbs = () => {
     const pathnames = window.location.pathname.split('/').filter((x) => x);
-    if (pathnames.length === 1 && pathnames[0] === 'home') return null;
+    if (pathnames.length === 1 && ['home', 'dispatch'].includes(pathnames[0])) return null;
     return <BreadcrumbsComponent pathnames={pathnames} />;
   };
 
@@ -833,22 +833,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }}
                   />
                 </MenuItem>
-                <MenuItem 
-                  onClick={() => navigate('/duty-schedule')} 
-                  sx={{ 
-                    borderRadius: 1,
-                    mb: 1,
-                    '&:hover': {
-                      bgcolor: 'action.hover',
-                    }
-                  }}
+                <MenuItem
+                  onClick={() => navigate('/my-schedule')}
+                  sx={{ borderRadius: 1, mb: 1, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <ListItemIcon>
                     <LazyIcon>
                       <Icons.Event sx={{ color: 'primary.main' }} />
                     </LazyIcon>
                   </ListItemIcon>
-                  <ListItemText primary="Grafik" />
+                  <ListItemText primary="Mój grafik" secondary="Twój harmonogram dyżurów" />
                 </MenuItem>
 
                 <Divider sx={{ my: 1 }} />

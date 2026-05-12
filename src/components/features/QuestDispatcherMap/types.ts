@@ -28,6 +28,8 @@ export type VolunteerStatus = 'available' | 'on_mission' | 'offline';
 
 export interface Volunteer {
   id: number;
+  /** System user ID — used to pre-fill transfer participants. Null for unlinked volunteers. */
+  user_id: number | null;
   username: string;
   discord_username: string | null;
   avatar_url: string | null;
@@ -41,7 +43,8 @@ export interface Volunteer {
 export interface DispatchAssignment {
   quest_id: string;
   zone_id: string;
-  volunteer_ids: number[];
+  /** System user IDs (from users table) — used to pre-fill TransferFormCore participants */
+  user_ids: number[];
 }
 
 export interface DispatchModalState {

@@ -536,17 +536,6 @@ const QuestDetailPage: React.FC = () => {
               dispatchState?.volunteerIds ??
               (quest.assigned_volunteers?.map((v) => v.id) ?? [])
             }
-            questData={{
-              recipient: quest.recipient,
-              deliveryDate: quest.delivery_date,
-              location: quest.destination.location,
-              pavilion: quest.destination.pavilion,
-              items: quest.items.map((i) => ({
-                item_name: i.name,
-                quantity: i.quantity,
-                notes: i.notes,
-              })),
-            }}
             onSuccess={async () => {
               setShowTransferForm(false);
               await refreshQuest();

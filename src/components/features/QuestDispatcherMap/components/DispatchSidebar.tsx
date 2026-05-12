@@ -249,13 +249,6 @@ const ZoneSummary: React.FC<{
 
   return (
     <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Typography sx={{ color: '#1a5a6a', fontFamily: 'monospace', textAlign: 'center', fontSize: 11, mt: 2, letterSpacing: 1 }}>
-        {'>>> WYBIERZ PAWILON <<<'}
-      </Typography>
-      <Typography sx={{ color: '#0f3040', fontFamily: 'monospace', textAlign: 'center', fontSize: 10 }}>
-        kliknij budynek na mapie
-      </Typography>
-      <Divider sx={{ borderColor: '#1a3548', my: 1 }} />
       {activeZones.length === 0 ? (
         <Typography sx={{ color: '#1a3a4a', fontFamily: 'monospace', textAlign: 'center', fontSize: 10 }}>Brak aktywnych zamówień</Typography>
       ) : (

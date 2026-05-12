@@ -1,12 +1,14 @@
-import React from 'react';
-import { Box, Typography, TextField, Tooltip } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, TextField, Tooltip, IconButton } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import type { ScheduleSlot, ScheduleVolunteer } from '../../../../types/schedule.types';
 import { ROSTER_WIDTH, SIDEBAR_COLLAPSED_W } from '../constants';
 import { avatarColor } from '../utils';
 import RosterVolunteerCard from './RosterVolunteerCard';
 import RosterDropZone from './RosterDropZone';
+import LinkAccountsDialog from './LinkAccountsDialog';
 
 interface RosterSidebarProps {
   collapsed: boolean;
@@ -22,6 +24,7 @@ interface RosterSidebarProps {
   onToggleHighlight: (id: number) => void;
   onUnassignDrop?: (assignmentId: number) => void;
   onDeleteVolunteer?: (volunteerId: number) => void;
+  onVolunteerLinked?: (volunteerId: number, userId: number | null) => void;
 }
 
 const RosterSidebar: React.FC<RosterSidebarProps> = ({
@@ -38,10 +41,13 @@ const RosterSidebar: React.FC<RosterSidebarProps> = ({
   onToggleHighlight,
   onUnassignDrop,
   onDeleteVolunteer,
+  onVolunteerLinked,
 }) => {
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const totalAssigned = slots.reduce((s, sl) => s + sl.volunteers.length, 0);
 
   return (
+    <>
     <Box
       sx={{
         width: collapsed ? SIDEBAR_COLLAPSED_W : ROSTER_WIDTH,
@@ -71,12 +77,21 @@ const RosterSidebar: React.FC<RosterSidebarProps> = ({
         }}
       >
         {!collapsed && (
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}
-          >
-            Wolontariusze ({allVolunteers.length})
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}
+            >
+              Wolontariusze ({allVolunteers.length})
+            </Typography>
+            {onVolunteerLinked && (
+              <Tooltip title="Powiąż z kontami systemowymi" placement="bottom">
+                <IconButton size="small" onClick={() => setLinkDialogOpen(true)} sx={{ p: 0.25, ml: 'auto' }}>
+                  <ManageAccountsIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
         )}
         <Tooltip title={collapsed ? 'Rozwiń panel' : 'Zwiń panel'} placement="right">
           <Box
@@ -181,6 +196,15 @@ const RosterSidebar: React.FC<RosterSidebarProps> = ({
         </>
       )}
     </Box>
+    {onVolunteerLinked && (
+      <LinkAccountsDialog
+        open={linkDialogOpen}
+        onClose={() => setLinkDialogOpen(false)}
+        volunteers={allVolunteers}
+        onVolunteerUpdated={onVolunteerLinked}
+      />
+    )}
+    </>
   );
 };
 

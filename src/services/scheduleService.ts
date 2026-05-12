@@ -14,6 +14,7 @@ import type {
   DraftPayload,
   DraftResponse,
   OnDutyVolunteer,
+  MyScheduleResponse,
 } from '../types/schedule.types';
 
 // ---- Active schedule (singular — only one active at a time) ----------------
@@ -50,6 +51,10 @@ export const updateVolunteerAPI = (vid: number, payload: UpdateVolunteerPayload)
 /** DELETE /schedule/volunteers/:vid — remove volunteer and cascade-delete their assignments */
 export const deleteVolunteerAPI = (vid: number) =>
   apiClient.delete<void>(`/schedule/volunteers/${vid}`);
+
+/** GET /schedule/volunteers/me — current user's volunteer record + assigned slots (JWT-based) */
+export const getMyVolunteerScheduleAPI = () =>
+  apiClient.get<MyScheduleResponse>('/schedule/volunteers/me');
 
 // ---- Assignments -----------------------------------------------------------
 
@@ -118,35 +123,11 @@ export const generateScheduleAPI = () =>
 export const validateScheduleAPI = () =>
   apiClient.get<ValidationResult>('/schedule/validate');
 
-/**
- * POST /schedule/validate — validate proposed state WITHOUT saving.
- * Body format same as PUT /schedule/draft.
- */
-export const validateDraftAPI = (payload: DraftPayload) =>
-  apiClient.post<ValidationResult>('/schedule/validate', payload);
-
 // ---- Publishing & export ---------------------------------------------------
 
 /** PATCH /schedule/publish — publish schedule (admin only) */
 export const publishScheduleAPI = () =>
   apiClient.patch<ScheduleDetail>('/schedule/publish', {});
-
-/** GET /schedule/export — download CSV */
-export const exportScheduleCSV = async (): Promise<void> => {
-  const token = localStorage.getItem('token');
-  const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
-  const res = await fetch(`${baseUrl}/schedule/export`, {
-    headers: { Authorization: token ? `Bearer ${token}` : '' },
-  });
-  if (!res.ok) throw new Error('Błąd eksportu CSV');
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'schedule.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-};
 
 /**
  * POST /schedule/export/sheets — push schedule to Google Sheets.

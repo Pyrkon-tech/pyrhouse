@@ -17,7 +17,6 @@ import {
   deleteSlotAPI,
   deleteVolunteerAPI,
   deleteScheduleAPI,
-  exportScheduleCSV,
   exportSheetsAPI,
 } from '../../../services/scheduleService';
 import { ApiError } from '../../../services/apiClient';
@@ -295,7 +294,8 @@ const ScheduleDetailPage: React.FC = () => {
     } else {
       try {
         await deleteSlotAPI(slotId);
-        localState.deleteSlot(slotId);
+        // skipHistory=true: slot already gone on server, undo would cause PUT /draft with stale id
+        localState.deleteSlot(slotId, true);
       } catch (e) {
         captureApiError(e, 'Usuwanie slotu');
         return;
@@ -319,7 +319,7 @@ const ScheduleDetailPage: React.FC = () => {
     if (!slot) return;
     try {
       const created = await createSlotAPI({ type: slot.type, start: slot.start, end: slot.end, capacity: slot.capacity ?? 0, label: `${slot.label} (kopia)` });
-      localState.replaceSlot(localState.createSlot(slot.type, slot.start, slot.end, created.label), created);
+      localState.addPersistedSlot(created);
       showSuccess('Slot zduplikowany');
     } catch (e) {
       captureApiError(e, 'Duplikowanie slotu');
@@ -342,10 +342,18 @@ const ScheduleDetailPage: React.FC = () => {
     const h = startHour ?? 10;
     const hh = Math.floor(h);
     const mm = h % 1 >= 0.5 ? '30' : '00';
-    const ehh = hh + 1 >= 24 ? 0 : hh + 1;
     const pad = (n: number) => String(n).padStart(2, '0');
     const startISO = `${dateKey}T${pad(hh)}:${mm}:00Z`;
-    const endISO = `${hh + 1 >= 24 ? dateKey : dateKey}T${pad(ehh)}:${mm}:00Z`;
+    // Cross-midnight: if start hour + 1 overflows past 24, end belongs on the next calendar day
+    let endDateKey = dateKey;
+    let ehh = hh + 1;
+    if (ehh >= 24) {
+      ehh = ehh - 24;
+      const nextDay = new Date(`${dateKey}T12:00:00Z`);
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      endDateKey = nextDay.toISOString().slice(0, 10);
+    }
+    const endISO = `${endDateKey}T${pad(ehh)}:${mm}:00Z`;
     const newId = localState.createSlot(type, startISO, endISO);
     const newSlot = { id: newId, type, label: '', start: startISO, end: endISO, capacity: 1, credit_hours: 0, volunteers: [] };
     setEditAnchorEl(null);
@@ -461,7 +469,6 @@ const ScheduleDetailPage: React.FC = () => {
           onValidate={fetchValidation}
           onImportOpen={() => setImportOpen(true)}
           onGenerate={handleGenerate}
-          onExportCSV={() => exportScheduleCSV().catch((e) => captureApiError(e, 'Eksport CSV'))}
           onExportSheets={async () => {
             setExportingSheets(true);
             try { const r = await exportSheetsAPI(); showSuccess(`Sheets: ${r.rows_written} wierszy`); }
@@ -548,6 +555,7 @@ const ScheduleDetailPage: React.FC = () => {
             onToggleHighlight={(id) => setHighlightedVolunteerId((prev) => prev === id ? null : id)}
             onUnassignDrop={canEdit ? handleRemoveAssignment : undefined}
             onDeleteVolunteer={isAdmin ? handleDeleteVolunteer : undefined}
+            onVolunteerLinked={isModerator ? (vid, uid) => localState.linkVolunteerAccount(vid, uid) : undefined}
           />
         </Box>
 

@@ -88,7 +88,7 @@ const DispatchPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 64px)', overflow: 'hidden', p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box sx={{ height: 'calc(100vh - 64px)', overflow: 'hidden', m: -3, p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
       {/* Dispatch toolbar */}
       <Box sx={{
         display: 'flex', alignItems: 'center', gap: 1.5,
