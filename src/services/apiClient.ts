@@ -144,8 +144,13 @@ class ApiClient {
           (errorData.error ?? errorData.message) as string | undefined
         );
 
-        const { error: _e, message: _m, code, ...rest } = errorData;
-        const details = Object.keys(rest).length > 0 ? rest : undefined;
+        const { error: _e, message: _m, code, details: detailsField, ...rest } = errorData;
+        const details: string | undefined =
+          typeof detailsField === 'string'
+            ? detailsField
+            : Object.keys(rest).length > 0
+              ? JSON.stringify(rest)
+              : undefined;
 
         throw new ApiError(errorMessage, response.status, code as string | undefined, details);
       }
