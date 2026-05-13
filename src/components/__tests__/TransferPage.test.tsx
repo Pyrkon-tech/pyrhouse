@@ -6,6 +6,14 @@ import { validatePyrCodeAPI, searchPyrCodesAPI } from '../../services/transferSe
 import { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+vi.mock('../../services/userService', () => ({
+  getUsersAPI: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('../../services/questService', () => ({
+  createTransferFromQuestAPI: vi.fn(),
+}));
+
 // Mock hooks
 vi.mock('../../hooks/useLocations', () => ({
   useLocations: () => ({
@@ -36,9 +44,14 @@ vi.mock('../../services/transferService', () => ({
   createTransferAPI: vi.fn(),
 }));
 
-const mockValidationResponse: Record<string, any> = {
-  'TEST123': { id: '1', category: { label: 'Test Category' } },
-  'INVALID123': new Error('Invalid PYR code'),
+const mockValidationOk = {
+  id: 1,
+  pyrcode: 'TEST123',
+  serial: 'SN001',
+  category: { id: 1, label: 'Test Category' },
+  location: { id: 1, name: 'Location 1', lat: 0, lng: 0, pavilion: null },
+  status: 'available' as const,
+  is_valid: true,
 };
 
 const mockSearchResponse = [
@@ -102,7 +115,7 @@ describe('TransferPage', () => {
   });
 
   it('powinien dodać nowy wiersz po poprawnej walidacji kodu PYR', async () => {
-    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce(mockValidationResponse['TEST123']);
+    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce(mockValidationOk);
     renderComponent();
 
     const input = getLastEmptyInput();
@@ -121,7 +134,7 @@ describe('TransferPage', () => {
   });
 
   it('nie powinien dodać nowego wiersza po nieudanej walidacji', async () => {
-    vi.mocked(validatePyrCodeAPI).mockRejectedValueOnce(mockValidationResponse['INVALID123']);
+    vi.mocked(validatePyrCodeAPI).mockRejectedValueOnce(new Error('Invalid PYR code'));
     renderComponent();
 
     const input = getLastEmptyInput();
@@ -138,7 +151,7 @@ describe('TransferPage', () => {
   });
 
   it('powinien obsługiwać usuwanie wierszy', async () => {
-    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce(mockValidationResponse['TEST123']);
+    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce(mockValidationOk);
     renderComponent();
 
     // Dodaj wiersz
@@ -168,7 +181,7 @@ describe('TransferPage', () => {
   });
 
   it('powinien walidować kod PYR po naciśnięciu Enter', async () => {
-    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce(mockValidationResponse['TEST123']);
+    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce(mockValidationOk);
     renderComponent();
 
     const input = getLastEmptyInput();
@@ -183,9 +196,108 @@ describe('TransferPage', () => {
     });
   });
 
+  it('skaner: Enter z krótkim kodem (< 2 znaki) nie wywołuje walidacji', async () => {
+    renderComponent();
+    const input = getLastEmptyInput();
+
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'P' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(validatePyrCodeAPI).not.toHaveBeenCalled();
+  });
+
+  it('skaner: Enter z pełnym kodem waliduje dokładnie ten kod (nie inny)', async () => {
+    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce({ ...mockValidationOk, pyrcode: 'PYR-LAP24' });
+    renderComponent();
+    const input = getLastEmptyInput();
+
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'PYR-LAP24' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+      vi.advanceTimersByTime(1000);
+    });
+
+    await waitFor(() => {
+      expect(validatePyrCodeAPI).toHaveBeenCalledTimes(1);
+      expect(validatePyrCodeAPI).toHaveBeenCalledWith('PYR-LAP24');
+    });
+  });
+
+  it('skaner: nie blokuje wiersza po nieudanej walidacji (row nadal edytowalny)', async () => {
+    vi.mocked(validatePyrCodeAPI).mockRejectedValueOnce(new Error('Not found'));
+    renderComponent();
+    const input = getLastEmptyInput();
+
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'PYR-INVALID' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+      vi.advanceTimersByTime(1000);
+    });
+
+    await waitFor(() => {
+      expect(validatePyrCodeAPI).toHaveBeenCalledWith('PYR-INVALID');
+    });
+
+    // Po nieudanej walidacji input nadal dostępny (nie disabled)
+    const inputAfter = getLastEmptyInput();
+    expect(inputAfter).not.toBeDisabled();
+  });
+
+  /**
+   * TEST REGRESJI: wybór z dropdownu strzałkami + Enter
+   *
+   * Bug: onKeyDown odpala się PO onChange w MUI Autocomplete.
+   * Kiedy użytkownik wybiera opcję strzałkami + Enter:
+   *   1. onChange odpala z { pyrcode: 'TEST123' }   ← poprawna wartość
+   *   2. onKeyDown odpala z e.target.value = 'TEST'  ← wpisany fragment
+   * Bez fixa: isValidationInProgress blokuje onChange, waliduje z 'TEST' → błąd.
+   * Z fixem: onKeyDown wykrywa że onChange już wybrał opcję i pomija walidację.
+   */
+  it('dropdown: Enter po zaznaczeniu opcji waliduje kod opcji, nie fragment tekstu', async () => {
+    vi.mocked(validatePyrCodeAPI).mockImplementation((code) => {
+      if (code === 'TEST123')
+        return Promise.resolve(mockValidationOk);
+      return Promise.reject(new Error('Not found'));
+    });
+
+    renderComponent();
+    const input = getLastEmptyInput();
+
+    // Wpisz fragment → wyzwól wyszukiwanie → dropdown się otworzy
+    await act(async () => {
+      fireEvent.mouseDown(input);
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: 'TEST' } });
+    });
+
+    // Poczekaj na dropdown (MUI Autocomplete renderuje listbox w portalu)
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).toBeInTheDocument();
+    });
+
+    // Zaznacz pierwszą opcję strzałką w dół
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    // Enter = wybór opcji (MUI woła onChange z opcją PRZED naszym onKeyDown)
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Enter' });
+      vi.advanceTimersByTime(1000);
+    });
+
+    await waitFor(() => {
+      // Musi walidować kodem wybranej opcji TEST123, nie fragmentem 'TEST'
+      expect(validatePyrCodeAPI).toHaveBeenCalledWith('TEST123');
+    });
+
+    expect(validatePyrCodeAPI).not.toHaveBeenCalledWith('TEST');
+  });
+
   it('powinien usunąć zwalidowany kod PYR z listy sugestii', async () => {
     // Przygotuj mocki
-    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce(mockValidationResponse['TEST123']);
+    vi.mocked(validatePyrCodeAPI).mockResolvedValueOnce(mockValidationOk);
     vi.mocked(searchPyrCodesAPI).mockResolvedValue(mockSearchResponse);
     
     renderComponent();

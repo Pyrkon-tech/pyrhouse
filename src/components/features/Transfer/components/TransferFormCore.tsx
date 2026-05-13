@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -37,16 +37,16 @@ import { getUsersAPI } from '../../../../services/userService';
 import { AppSnackbar } from '../../../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../../../hooks/useSnackbarMessage';
 
-const DeleteIcon = lazy(() => import('@mui/icons-material/Delete'));
-const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
-const ErrorIcon = lazy(() => import('@mui/icons-material/Error'));
-const AddIcon = lazy(() => import('@mui/icons-material/Add'));
-const LocationOn = lazy(() => import('@mui/icons-material/LocationOn'));
-const Person = lazy(() => import('@mui/icons-material/Person'));
-const Inventory = lazy(() => import('@mui/icons-material/Inventory'));
-const Close = lazy(() => import('@mui/icons-material/Close'));
-const Check = lazy(() => import('@mui/icons-material/Check'));
-const RefreshIcon = lazy(() => import('@mui/icons-material/Refresh'));
+import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import AddIcon from '@mui/icons-material/Add';
+import LocationOn from '@mui/icons-material/LocationOn';
+import Person from '@mui/icons-material/Person';
+import Inventory from '@mui/icons-material/Inventory';
+import Close from '@mui/icons-material/Close';
+import Check from '@mui/icons-material/Check';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 interface User {
   id: number;
@@ -516,7 +516,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                   onClick={() => fetchStocks(fromLocation.toString())}
                   sx={{ alignSelf: 'center', flexShrink: 0 }}
                 >
-                  <Suspense fallback={null}><RefreshIcon fontSize="small" /></Suspense>
+                  <RefreshIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
@@ -554,14 +554,18 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                     />
                   )}
                   renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip
-                        size="small"
-                        label={`${option.username}`}
-                        {...getTagProps({ index })}
-                        sx={{ maxWidth: { xs: '150px', sm: 'none' } }}
-                      />
-                    ))
+                    value.map((option, index) => {
+                      const { key, ...chipProps } = getTagProps({ index });
+                      return (
+                        <Chip
+                          key={key}
+                          size="small"
+                          label={`${option.username}`}
+                          {...chipProps}
+                          sx={{ maxWidth: { xs: '150px', sm: 'none' } }}
+                        />
+                      );
+                    })
                   }
                 />
               )}
@@ -697,9 +701,19 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
-                                  const inputValue = (e.target as HTMLInputElement).value;
-                                  if (inputValue && inputValue.length >= 2) {
-                                    handleValidatePyrCode(index, inputValue);
+                                  const input = e.target as HTMLInputElement;
+                                  // aria-activedescendant is set to a non-empty option ID only
+                                  // when the user highlighted an option via ArrowDown.
+                                  // In that case MUI's own handler (which runs after ours)
+                                  // will call onChange with the selected option — don't
+                                  // duplicate the validation here.
+                                  // Scanner flow: no arrow navigation → attribute is '' or null
+                                  // → validate the typed code directly.
+                                  if (!input.getAttribute('aria-activedescendant')) {
+                                    const inputValue = input.value;
+                                    if (inputValue && inputValue.length >= 2) {
+                                      handleValidatePyrCode(index, inputValue);
+                                    }
                                   }
                                 }
                               }}
@@ -837,20 +851,20 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                     <TableCell>
                       {items[index].status === 'success' && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Suspense fallback={null}><CheckCircleIcon color="success" /></Suspense>
+                          <CheckCircleIcon color="success" />
                           <Typography variant="body2" color="success.main">Dostępny</Typography>
                         </Box>
                       )}
                       {items[index].status === 'failure' && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Suspense fallback={null}><ErrorIcon color="error" /></Suspense>
+                          <ErrorIcon color="error" />
                           <Typography variant="body2" color="error">Nie znaleziono</Typography>
                         </Box>
                       )}
                     </TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleRemoveRow(index)}>
-                        <Suspense fallback={null}><DeleteIcon /></Suspense>
+                        <DeleteIcon />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -868,7 +882,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
             <Button
               variant="outlined"
               color="secondary"
-              startIcon={<Suspense fallback={null}><AddIcon /></Suspense>}
+              startIcon={<AddIcon />}
               onClick={handleAddRow}
               fullWidth={false}
               sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -944,7 +958,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                   }
                 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Suspense fallback={null}><LocationOn sx={{ mr: 1, color: 'primary.main' }} /></Suspense>
+                    <LocationOn sx={{ mr: 1, color: 'primary.main' }} />
                     <Typography variant="subtitle1">Lokalizacje</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 2 }}>
@@ -972,7 +986,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                     }
                   }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Suspense fallback={null}><Person sx={{ mr: 1, color: 'primary.main' }} /></Suspense>
+                      <Person sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="subtitle1">Uczestnicy questa</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -1000,7 +1014,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                   }
                 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Suspense fallback={null}><Inventory sx={{ mr: 1, color: 'primary.main' }} /></Suspense>
+                    <Inventory sx={{ mr: 1, color: 'primary.main' }} />
                     <Typography variant="subtitle1">Elementy do transferu</Typography>
                   </Box>
                   <List disablePadding>
@@ -1054,7 +1068,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
             <Button
               onClick={() => setShowConfirmation(false)}
               variant="outlined"
-              startIcon={<Suspense fallback={null}><Close /></Suspense>}
+              startIcon={<Close />}
             >
               Anuluj
             </Button>
@@ -1063,7 +1077,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
               variant="contained"
               color="primary"
               disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} /> : <Suspense fallback={null}><Check /></Suspense>}
+              startIcon={loading ? <CircularProgress size={20} /> : <Check />}
             >
               {loading ? 'Tworzenie...' : 'Rozpocznij quest'}
             </Button>
