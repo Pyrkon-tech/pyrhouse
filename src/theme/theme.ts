@@ -203,7 +203,15 @@ const createCriticalComponents = (mode: 'light' | 'dark'): Components<Omit<Theme
         borderRadius: designTokens.borderRadius.full,
         fontWeight: designTokens.typography.fontWeight.medium,
         transition: designTokens.transitions.base,
-      }
+      },
+      icon: {
+        marginLeft: '8px',
+        marginRight: '-4px',
+      },
+      iconSmall: {
+        marginLeft: '6px',
+        marginRight: '-4px',
+      },
     }
   },
   MuiListItem: {

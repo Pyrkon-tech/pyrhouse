@@ -1,38 +1,32 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import SystemInitAnimation from '../animations/SystemInitAnimation';
 import {
   Box,
   Typography,
-  Container,
+  Paper,
   Button,
   CircularProgress,
-  Paper,
-  TextField,
-  List,
   Autocomplete,
-  Grid,
-  Chip,
-  Alert,
-  styled,
-  alpha,
+  TextField,
   IconButton,
   InputAdornment,
-  Tooltip
+  Tooltip,
+  Grid,
+  Skeleton,
+  Chip,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
-  LocalShipping,
-  Search,
-  RocketLaunch,
-  LocationOn,
-  AccessTime,
-  Inventory,
-  ListAlt,
-  AddTask,
+  Search as SearchIcon,
   QrCodeScanner,
-  KeyboardReturn
+  LocalShipping,
+  HourglassEmpty,
+  MedicalServices,
+  ChevronRight,
+  CheckCircle,
 } from '@mui/icons-material';
-import { useTransfers } from '../../hooks/useTransfers';
 import { getApiUrl } from '../../config/api';
 import { jwtDecode } from 'jwt-decode';
 import { searchGlobalAPI } from '../../services/assetService';
@@ -41,972 +35,474 @@ import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import BarcodeScanner from '../common/BarcodeScanner';
 import { designTokens } from '../../theme/designTokens';
+import { useQuestCounts } from '../../hooks/useQuestCounts';
+import { useQuests } from '../../hooks/useQuests';
+import { useServiceDeskRequests } from '../../hooks/useServiceDeskRequests';
 
 type SearchItem =
   | (GlobalSearchAsset & { _type: 'asset' })
   | (GlobalSearchStock & { _type: 'stock' });
 
-// Intentional "medieval quest" color palette — NIE są to kolory brandingu Pyrkonu.
-// Tworzą estetykę pergaminu/karty zadań. Centralizacja tu zamiast rozproszenia w styled components.
-const QUEST_DARK = {
-  cardBg:   '#462f1d',
-  cardDeep: '#2d1810',
-  border:   '#8b6d4c',
-  gold:     '#ffd700',
-  goldDark: '#b8860b',
-  goldMid:  '#d4af37',
-  text:     '#ffd700',
-  statusBg: '#4a3f2c',
-} as const;
+interface UserTransfer {
+  ID?: number;
+  id?: number;
+  FromLocationName?: string;
+  from_location_name?: string;
+  ToLocationName?: string;
+  to_location_name?: string;
+  TransferDate?: string;
+}
 
-const QUEST_LIGHT = {
-  cardBg:   '#f8e7cb',
-  cardDeep: '#ebd5b3',
-  border:   '#c4a980',
-  gold:     '#daa520',
-  goldDark: '#b8860b',
-  text:     '#8b4513',
-  textShadow: '#8b6d4c',
-  statusBg: '#daa520',
-} as const;
-
-// Quest item styled component
-const QuestItem = styled(Paper)(({ theme }) => ({
-  position: 'relative',
-  padding: theme.spacing(4),
-  marginBottom: theme.spacing(2),
-  background: theme.palette.mode === 'dark'
-    ? `linear-gradient(135deg, ${alpha(QUEST_DARK.cardBg, 0.98)}, ${alpha(QUEST_DARK.cardDeep, 0.95)})`
-    : `linear-gradient(135deg, ${QUEST_LIGHT.cardBg}, ${QUEST_LIGHT.cardDeep})`,
-  borderRadius: '8px',
-  cursor: 'pointer',
-  boxShadow: theme.palette.mode === 'dark'
-    ? '0 4px 12px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.4)'
-    : '0 4px 12px rgba(139, 109, 76, 0.15), inset 0 0 30px rgba(139, 109, 76, 0.1)',
-  transition: 'all 0.3s ease',
-  border: theme.palette.mode === 'dark'
-    ? `2px solid ${QUEST_DARK.border}`
-    : `2px solid ${QUEST_LIGHT.border}`,
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? `0 6px 16px rgba(0,0,0,0.7), inset 0 0 30px rgba(0,0,0,0.4)`
-      : `0 6px 16px rgba(139, 109, 76, 0.25), inset 0 0 30px rgba(139, 109, 76, 0.1)`,
-    '&::before': {
-      opacity: 0.5,
-    },
-    '&::after': {
-      boxShadow: theme.palette.mode === 'dark'
-        ? 'inset 0 0 100px 100px rgba(255, 255, 255, 0.05)'
-        : 'inset 0 0 100px 100px rgba(255, 255, 255, 0.07)',
-    }
-  },
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    background: theme.palette.mode === 'dark'
-      ? `linear-gradient(45deg, ${QUEST_DARK.gold}, ${QUEST_DARK.goldDark}, ${QUEST_DARK.border})`
-      : `linear-gradient(45deg, ${QUEST_LIGHT.gold}, #cd853f, ${QUEST_LIGHT.goldDark})`,
-    borderRadius: '10px',
-    opacity: 0.3,
-    transition: 'opacity 0.3s ease',
-    zIndex: -1,
-  },
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: theme.palette.mode === 'dark'
-      ? `url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E")`
-      : `url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E")`,
-    borderRadius: '6px',
-    opacity: 0.5,
-    pointerEvents: 'none',
-    transition: 'box-shadow 0.3s ease',
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+  } catch {
+    return dateStr;
   }
-}));
+};
 
-const QuestTitle = styled(Typography)(({ theme }) => ({
-  fontFamily: '"Cinzel", serif',
-  fontWeight: 700,
-  fontSize: '1.4rem',
-  color: theme.palette.mode === 'dark' ? QUEST_DARK.text : QUEST_LIGHT.text,
-  marginBottom: theme.spacing(2),
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing(1),
-  textShadow: theme.palette.mode === 'dark'
-    ? `2px 2px 2px rgba(0,0,0,0.8), 0 0 5px rgba(255, 215, 0, 0.3)`
-    : `1px 1px 2px rgba(139, 69, 19, 0.3)`,
-  '& .MuiSvgIcon-root': {
-    color: theme.palette.mode === 'dark' ? QUEST_DARK.text : QUEST_LIGHT.text,
-    filter: theme.palette.mode === 'dark'
-      ? 'drop-shadow(2px 2px 2px rgba(0,0,0,0.8))'
-      : 'drop-shadow(1px 1px 1px rgba(139, 69, 19, 0.3))',
-  }
-}));
-
-const QuestLocation = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing(1),
-  color: theme.palette.mode === 'dark' ? QUEST_DARK.text : QUEST_LIGHT.text,
-  marginBottom: theme.spacing(1),
-  fontSize: '1rem',
-  fontWeight: 500,
-  textShadow: theme.palette.mode === 'dark'
-    ? '1px 1px 2px rgba(0,0,0,0.8)'
-    : '1px 1px 1px rgba(139, 69, 19, 0.2)',
-  '& .MuiSvgIcon-root': {
-    color: theme.palette.mode === 'dark' ? QUEST_DARK.text : QUEST_LIGHT.text,
-    filter: theme.palette.mode === 'dark'
-      ? 'drop-shadow(1px 1px 1px rgba(0,0,0,0.8))'
-      : 'drop-shadow(1px 1px 1px rgba(139, 69, 19, 0.2))',
-  }
-}));
-
-const QuestDate = styled(Typography)(({ theme }) => ({
-  color: theme.palette.mode === 'dark' ? QUEST_DARK.goldMid : QUEST_LIGHT.text,
-  fontSize: '0.9rem',
-  fontStyle: 'italic',
-  fontWeight: 500,
-  textShadow: theme.palette.mode === 'dark'
-    ? '1px 1px 1px rgba(0,0,0,0.8)'
-    : '1px 1px 1px rgba(139, 69, 19, 0.2)',
-}));
-
-const QuestStatus = styled(Chip)(({ theme }) => ({
-  position: 'absolute',
-  top: theme.spacing(2),
-  right: theme.spacing(2),
-  backgroundColor: theme.palette.mode === 'dark' ? QUEST_DARK.statusBg : QUEST_LIGHT.statusBg,
-  color: theme.palette.mode === 'dark' ? QUEST_DARK.gold : '#ffffff',
-  border: `1px solid ${theme.palette.mode === 'dark' ? QUEST_DARK.gold : QUEST_LIGHT.goldDark}`,
-  fontWeight: 600,
-  '& .MuiChip-label': {
-    textShadow: theme.palette.mode === 'dark'
-      ? '1px 1px 1px rgba(0,0,0,0.8)'
-      : `1px 1px 1px rgba(139, 69, 19, 0.3)`,
-  },
-}));
-
-// Modern Search Container with glassmorphism
-const SearchContainer = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  padding: theme.spacing(4),
-  marginBottom: theme.spacing(5),
-  background: theme.palette.mode === 'dark'
-    ? designTokens.glass.dark.background
-    : designTokens.glass.light.backgroundStrong,
-  backdropFilter: designTokens.glass.light.backdropBlur,
-  WebkitBackdropFilter: designTokens.glass.light.backdropBlur,
-  borderRadius: designTokens.borderRadius['2xl'],
-  border: theme.palette.mode === 'dark'
-    ? designTokens.glass.dark.border
-    : `1px solid rgba(255, 152, 0, 0.15)`,
-  boxShadow: theme.palette.mode === 'dark'
-    ? '0 8px 32px rgba(0, 0, 0, 0.3)'
-    : '0 8px 32px rgba(255, 152, 0, 0.1)',
-  overflow: 'hidden',
-  // Subtle orange gradient overlay
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '3px',
-    background: designTokens.gradients.primary,
-    opacity: 0.8,
-  },
-}));
-
-// Modern Action Card
-const ActionCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  background: theme.palette.mode === 'dark'
-    ? designTokens.darkPalette.background.elevated
-    : '#ffffff',
-  borderRadius: designTokens.borderRadius.xl,
-  border: theme.palette.mode === 'dark'
-    ? `1px solid ${designTokens.darkPalette.border.subtle}`
-    : '1px solid rgba(0, 0, 0, 0.06)',
-  position: 'relative',
-  overflow: 'hidden',
-  // Orange accent line at top
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '40%',
-    height: '3px',
-    background: designTokens.gradients.primary,
-    borderRadius: '0 0 4px 4px',
-    opacity: 0,
-    transition: 'all 0.3s ease',
-  },
-  '&:hover': {
-    transform: 'translateY(-6px)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? `0 12px 28px rgba(0, 0, 0, 0.4), ${designTokens.glow.orangeSubtle}`
-      : `0 12px 28px rgba(255, 152, 0, 0.15), ${designTokens.glow.orangeSubtle}`,
-    borderColor: theme.palette.mode === 'dark'
-      ? designTokens.colors.primary[700]
-      : designTokens.colors.primary[300],
-    '&::before': {
-      opacity: 1,
-      width: '80%',
-    },
-  },
-}));
-
-// Action Icon Container
-const ActionIconWrapper = styled(Box)(({ theme }) => ({
-  width: 64,
-  height: 64,
-  borderRadius: '16px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginBottom: theme.spacing(2),
-  background: theme.palette.mode === 'dark'
-    ? designTokens.gradients.primarySoft
-    : 'rgba(255, 152, 0, 0.08)',
-  transition: 'all 0.3s ease',
-  '.MuiSvgIcon-root': {
-    fontSize: 32,
-    color: designTokens.colors.primary[500],
-    transition: 'all 0.3s ease',
-  },
-  '&:hover': {
-    background: designTokens.gradients.primary,
-    boxShadow: designTokens.glow.orangeSubtle,
-    '.MuiSvgIcon-root': {
-      color: '#ffffff',
-      transform: 'scale(1.1)',
-    },
-  },
-}));
+const formatQuestItems = (items: Array<{ name: string; quantity: number }>) => {
+  if (!items?.length) return '—';
+  const first = items[0];
+  const rest = items.length - 1;
+  return rest > 0
+    ? `${first.name} (${first.quantity}) +${rest} więcej`
+    : `${first.name} (${first.quantity})`;
+};
 
 const HomePage: React.FC = () => {
-  useTransfers();
   const navigate = useNavigate();
   const location = useLocation();
+
   const [showAnimation, setShowAnimation] = useState(
-    () => !!(location.state as any)?.showInitAnimation,
+    () => !!(location.state as { showInitAnimation?: boolean })?.showInitAnimation,
   );
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
   const [showScanner, setShowScanner] = useState(false);
-
-  const [pyrcode, setPyrcode] = useState<string>('');
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [userTransfers, setUserTransfers] = useState<any[]>([]);
-  const [userTransfersLoading, setUserTransfersLoading] = useState(false);
-  const [userTransfersError, setUserTransfersError] = useState<string | null>(null);
+  const [pyrcode, setPyrcode] = useState('');
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [userTransfers, setUserTransfers] = useState<UserTransfer[]>([]);
+  const [userTransfersLoading, setUserTransfersLoading] = useState(false);
 
-  const handleBarcodeScan = async (scannedCode: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        getApiUrl(`/assets/pyrcode/${scannedCode.trim()}`),
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-      if (response.status === 404) {
-        showSnackbar('error', 'Nie znaleziono sprzętu o podanym kodzie.');
-        return;
-      }
+  const { counts } = useQuestCounts();
+  const { quests: pendingQuests, loading: pendingLoading, fetchQuests } = useQuests();
+  const { requests: sdRequests, loading: sdLoading } = useServiceDeskRequests('pending', '');
 
-      if (!response.ok) {
-        throw new Error('Nie udało się pobrać szczegółów sprzętu.');
-      }
-
-      const data = await response.json();
-      setShowScanner(false);
-      navigate(`/equipment/${data.id}?type=${data.category.type || 'asset'}`);
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Wystąpił nieoczekiwany błąd.');
-    }
-  };
-
-  const handleCloseScanner = useCallback(() => {
-    setShowScanner(false);
-  }, []);
-
-  const scannerComponent = useMemo(() => {
-    if (!showScanner) return null;
-    return (
-      <BarcodeScanner
-        onClose={handleCloseScanner}
-        onScan={handleBarcodeScan}
-      />
-    );
-  }, [showScanner, handleCloseScanner, handleBarcodeScan]);
-
-  // Fetch user transfers
   useEffect(() => {
-    const fetchUserTransfers = async () => {
+    if (!isMobile) {
+      fetchQuests({ status: 'pending', limit: 6 });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile]);
+
+  useEffect(() => {
+    const load = async () => {
       const token = localStorage.getItem('token');
       if (!token) return;
-
       try {
-        const decoded = jwtDecode(token) as any;
-        const userId = decoded.userID;
-
+        const decoded = jwtDecode(token) as { userID: number };
         setUserTransfersLoading(true);
-        setUserTransfersError(null);
-
-        const response = await fetch(
-          getApiUrl(`/transfers/users/${userId}?status=in_transit`),
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
+        const res = await fetch(
+          getApiUrl(`/transfers/users/${decoded.userID}?status=in_transit`),
+          { headers: { Authorization: `Bearer ${token}` } },
         );
-
-        if (!response.ok) {
-          throw new Error('Nie udało się pobrać transferów użytkownika');
-        }
-
-        const data = await response.json();
-        setUserTransfers(data);
-      } catch (err) {
-        setUserTransfersError(err instanceof Error ? err.message : 'Wystąpił nieznany błąd');
-        setUserTransfers([]);
+        if (res.ok) setUserTransfers(await res.json());
+      } catch {
+        // ignore
       } finally {
         setUserTransfersLoading(false);
       }
     };
-
-    fetchUserTransfers();
+    load();
   }, []);
 
-  useEffect(() => {
-    if (searchError) {
-      showSnackbar('error', searchError);
-    }
-  }, [searchError]);
-
   const handlePyrCodeSearch = async (value: string) => {
-    if (value.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
+    if (value.length < 2) { setSearchResults([]); return; }
     setSearchLoading(true);
     try {
       const result = await searchGlobalAPI(value);
-      const items: SearchItem[] = [
+      setSearchResults([
         ...result.assets.map(a => ({ ...a, _type: 'asset' as const })),
         ...result.stocks.map(s => ({ ...s, _type: 'stock' as const })),
-      ];
-      setSearchResults(items);
-    } catch (error) {
-      console.error('Błąd podczas wyszukiwania:', error);
+      ]);
+    } catch {
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
   const handleSearch = async () => {
-    if (!pyrcode.trim()) {
-      setSearchError('Proszę podać kod Pyrcode.');
-      return;
-    }
-
+    if (!pyrcode.trim()) return;
     try {
-      setSearchError(null);
       const token = localStorage.getItem('token');
-      const response = await fetch(
+      const res = await fetch(
         getApiUrl(`/assets/pyrcode/${pyrcode.trim()}`),
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-
-      if (response.status === 404) {
-        setSearchError('Nie znaleziono sprzętu o podanym kodzie Pyrcode.');
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error('Nie udało się pobrać szczegółów sprzętu.');
-      }
-
-      const data = await response.json();
+      if (res.status === 404) { showSnackbar('error', 'Nie znaleziono sprzętu o podanym kodzie Pyrcode.'); return; }
+      if (!res.ok) throw new Error('Nie udało się pobrać szczegółów sprzętu.');
+      const data = await res.json();
       navigate(`/equipment/${data.id}?type=${data.category.type || 'asset'}`);
-    } catch (err: any) {
-      setSearchError(err.message || 'Wystąpił nieoczekiwany błąd.');
+    } catch (err: unknown) {
+      showSnackbar('error', err instanceof Error ? err.message : 'Wystąpił nieoczekiwany błąd.');
     }
   };
 
-  const handleOptionSelected = (_event: any, value: SearchItem | string | null) => {
-    if (!value || typeof value === 'string') {
-      return;
+  const handleBarcodeScan = async (scannedCode: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(
+        getApiUrl(`/assets/pyrcode/${scannedCode.trim()}`),
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.status === 404) { showSnackbar('error', 'Nie znaleziono sprzętu o podanym kodzie.'); return; }
+      if (!res.ok) throw new Error('Nie udało się pobrać szczegółów sprzętu.');
+      const data = await res.json();
+      setShowScanner(false);
+      navigate(`/equipment/${data.id}?type=${data.category.type || 'asset'}`);
+    } catch (err: unknown) {
+      showSnackbar('error', err instanceof Error ? err.message : 'Wystąpił nieoczekiwany błąd.');
     }
+  };
+
+  const handleCloseScanner = useCallback(() => setShowScanner(false), []);
+
+  const scannerComponent = useMemo(
+    () => showScanner ? <BarcodeScanner onClose={handleCloseScanner} onScan={handleBarcodeScan} /> : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showScanner, handleCloseScanner],
+  );
+
+  const handleOptionSelected = (_event: React.SyntheticEvent, value: SearchItem | string | null) => {
+    if (!value || typeof value === 'string') return;
     navigate(`/equipment/${value.id}?type=${value._type}`);
   };
 
+  const stats = [
+    {
+      label: 'Oczekujące questy',
+      value: counts.pending,
+      icon: <HourglassEmpty fontSize="small" />,
+      color: designTokens.colors.primary[500],
+      bg: 'rgba(255,152,0,0.08)',
+      href: '/quests',
+    },
+    {
+      label: 'W realizacji',
+      value: counts.in_progress,
+      icon: <LocalShipping fontSize="small" />,
+      color: '#42a5f5',
+      bg: 'rgba(66,165,245,0.08)',
+      href: '/quests',
+    },
+    {
+      label: 'Service Desk',
+      value: sdLoading ? null : sdRequests.length,
+      icon: <MedicalServices fontSize="small" />,
+      color: designTokens.colors.accent[500],
+      bg: 'rgba(0,172,193,0.08)',
+      href: '/servicedesk',
+    },
+    {
+      label: 'Zrealizowane',
+      value: counts.completed,
+      icon: <CheckCircle fontSize="small" />,
+      color: '#66bb6a',
+      bg: 'rgba(102,187,106,0.08)',
+      href: '/quests',
+    },
+  ];
+
   return (
-    <Box>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       {showAnimation && <SystemInitAnimation onComplete={() => setShowAnimation(false)} />}
-      <AppSnackbar
-        open={snackbar.open}
-        type={snackbar.type}
-        message={snackbar.message}
-        details={snackbar.details}
-        onClose={closeSnackbar}
-        autoHideDuration={snackbar.autoHideDuration}
-      />
-      <Container maxWidth="xl" sx={{
-        py: { xs: 3, sm: 4 },
-        mt: { xs: 1, sm: 0 }
-      }}>
-        {/* Modern Search Section */}
-        <SearchContainer>
-          <Typography
-            variant="h5"
-            sx={{
-              mb: 2,
-              fontWeight: 600,
-              color: 'text.primary',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <Search sx={{ color: 'primary.main' }} />
+      <AppSnackbar open={snackbar.open} type={snackbar.type} message={snackbar.message} onClose={closeSnackbar} />
+      {scannerComponent}
+
+      {/* Search */}
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          mb: 3,
+          border: `1px solid ${designTokens.colors.primary[500]}30`,
+          borderTop: `3px solid ${designTokens.colors.primary[500]}`,
+          background: (theme) => theme.palette.mode === 'dark'
+            ? designTokens.glass.dark.background
+            : designTokens.glass.light.backgroundStrong,
+          backdropFilter: designTokens.glass.dark.backdropBlur,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+          <SearchIcon sx={{ color: 'primary.main', fontSize: '1.1rem' }} />
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             Wyszukaj sprzęt
           </Typography>
-
-          <Box sx={{
-            display: 'flex',
-            gap: 1.5,
-            alignItems: 'stretch',
-          }}>
-            {/* Main Search Input */}
-            <Autocomplete<SearchItem, false, false, true>
-              fullWidth
-              freeSolo
-              options={searchResults}
-              getOptionLabel={(option) =>
-                typeof option === 'string'
-                  ? option
-                  : option._type === 'asset'
-                    ? option.pyrcode
-                    : option.category.label
-              }
-              onChange={handleOptionSelected}
-              renderOption={(props, option) => {
-                if (typeof option === 'string') return null;
-                const { key, ...otherProps } = props;
-                const isAsset = option._type === 'asset';
-                return (
-                  <Box
-                    key={key}
-                    component="li"
-                    {...otherProps}
-                    sx={{
-                      py: 1.5,
-                      px: 2,
-                      borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                      '&:last-child': { borderBottom: 'none' },
-                      '&:hover': {
-                        background: (theme) => theme.palette.mode === 'dark'
-                          ? 'rgba(255, 152, 0, 0.12)'
-                          : 'rgba(255, 152, 0, 0.08)',
-                      },
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          fontWeight: 600,
-                          color: isAsset ? 'primary.main' : 'secondary.main',
-                          fontFamily: isAsset ? 'monospace' : 'inherit',
-                          letterSpacing: isAsset ? '0.05em' : 'normal',
-                        }}
-                      >
-                        {isAsset ? option.pyrcode : option.category.label}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {option.category.label}
-                        {isAsset ? ` • ${option.serial}` : ` • szt: ${option.quantity}`}
-                        {' • '}{option.location.name}
-                      </Typography>
-                    </Box>
-                  </Box>
-                );
-              }}
-              loading={searchLoading}
-              onInputChange={(_, newValue) => {
-                setPyrcode(newValue);
-                handlePyrCodeSearch(newValue);
-              }}
-              PaperComponent={({ children, ...props }) => (
-                <Paper
-                  {...props}
-                  sx={{
-                    mt: 1,
-                    borderRadius: designTokens.borderRadius.lg,
-                    border: (theme) => theme.palette.mode === 'dark'
-                      ? `1px solid ${designTokens.darkPalette.border.default}`
-                      : '1px solid rgba(255, 152, 0, 0.2)',
-                    boxShadow: designTokens.shadows.xl,
-                  }}
-                >
-                  {children}
-                </Paper>
-              )}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  fullWidth
-                  variant="outlined"
-                  placeholder="Wprowadź Pyrcode (np. PYR-001)..."
-                  onKeyDown={handleKeyDown}
-                  InputProps={{
-                    ...params.InputProps,
-                    sx: {
-                      height: '56px',
-                      pr: '14px !important',
-                      backgroundColor: (theme) => theme.palette.mode === 'dark'
-                        ? designTokens.darkPalette.background.paper
-                        : '#ffffff',
-                      borderRadius: designTokens.borderRadius.lg,
-                      fontSize: '1.1rem',
-                      fontFamily: 'monospace',
-                      letterSpacing: '0.03em',
-                      '& input': {
-                        height: '56px',
-                        padding: '0 14px !important',
-                      },
-                      '& input::placeholder': {
-                        fontFamily: '"Roboto", sans-serif',
-                        letterSpacing: 'normal',
-                        opacity: 0.7,
-                      },
-                    },
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search sx={{
-                          color: 'primary.main',
-                          fontSize: 28,
-                          ml: 0.5,
-                        }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {searchLoading && (
-                            <CircularProgress
-                              color="primary"
-                              size={24}
-                            />
-                          )}
-                          {pyrcode && (
-                            <Tooltip title="Szukaj (Enter)">
-                              <IconButton
-                                onClick={handleSearch}
-                                sx={{
-                                  color: 'primary.main',
-                                  '&:hover': {
-                                    background: 'rgba(255, 152, 0, 0.12)',
-                                  },
-                                }}
-                              >
-                                <KeyboardReturn />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: designTokens.borderRadius.lg,
-                      '& fieldset': {
-                        borderColor: (theme) => theme.palette.mode === 'dark'
-                          ? designTokens.darkPalette.border.default
-                          : 'rgba(255, 152, 0, 0.3)',
-                        borderWidth: '2px',
-                        borderRadius: designTokens.borderRadius.lg,
-                      },
-                      '&:hover fieldset': {
-                        borderColor: designTokens.colors.primary[400],
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: designTokens.colors.primary[500],
-                        boxShadow: '0 0 0 4px rgba(255, 152, 0, 0.15)',
-                      },
-                    },
-                  }}
-                />
-              )}
-            />
-
-            {/* QR Scanner Button */}
-            <Tooltip title="Skanuj kod QR">
-              <Button
-                variant="contained"
-                onClick={() => setShowScanner(true)}
-                sx={{
-                  minWidth: { xs: '56px', sm: '140px' },
-                  height: '56px',
-                  borderRadius: designTokens.borderRadius.lg,
-                  background: designTokens.gradients.primary,
-                  boxShadow: designTokens.shadows.primary,
-                  px: { xs: 0, sm: 3 },
-                  '&:hover': {
-                    background: designTokens.gradients.hero,
-                    boxShadow: designTokens.glow.orange,
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                <QrCodeScanner sx={{ fontSize: 28 }} />
-                <Typography
-                  sx={{
-                    ml: 1,
-                    display: { xs: 'none', sm: 'block' },
-                    fontWeight: 600,
-                  }}
-                >
-                  Skanuj
-                </Typography>
-              </Button>
-            </Tooltip>
-          </Box>
-
-          {/* Helper text */}
-          <Typography
-            variant="caption"
-            sx={{
-              mt: 1.5,
-              display: 'block',
-              color: 'text.secondary',
-              opacity: 0.8,
-            }}
-          >
-            Wpisz kod lub zeskanuj QR, aby szybko znaleźć sprzęt
-          </Typography>
-        </SearchContainer>
-
-        {scannerComponent}
-
-        {/* Szybkie akcje - Modern Design */}
-        <Box sx={{ mb: 6 }}>
-          <Typography
-            variant="h5"
-            gutterBottom
-            sx={{
-              mb: 3,
-              fontWeight: 600,
-              color: 'text.primary',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <RocketLaunch sx={{ color: 'primary.main' }} />
-            Szybkie akcje
-          </Typography>
-
-          <Grid container spacing={3}>
-            <Grid item xs={6} sm={6} md={3}>
-              <ActionCard elevation={0} onClick={() => navigate('/transfers/create')}>
-                <ActionIconWrapper>
-                  <RocketLaunch />
-                </ActionIconWrapper>
-                <Typography
-                  variant="h6"
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
-                    color: 'text.primary',
-                  }}
-                >
-                  Utwórz quest
-                </Typography>
-                <Typography
-                  variant="caption"
-                  align="center"
-                  sx={{
-                    color: 'text.secondary',
-                    mt: 0.5,
-                    display: { xs: 'none', sm: 'block' },
-                  }}
-                >
-                  Nowa dostawa
-                </Typography>
-              </ActionCard>
-            </Grid>
-
-            <Grid item xs={6} sm={6} md={3}>
-              <ActionCard elevation={0} onClick={() => navigate('/add-item')}>
-                <ActionIconWrapper>
-                  <AddTask />
-                </ActionIconWrapper>
-                <Typography
-                  variant="h6"
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
-                    color: 'text.primary',
-                  }}
-                >
-                  Dodaj sprzęt
-                </Typography>
-                <Typography
-                  variant="caption"
-                  align="center"
-                  sx={{
-                    color: 'text.secondary',
-                    mt: 0.5,
-                    display: { xs: 'none', sm: 'block' },
-                  }}
-                >
-                  Nowy przedmiot
-                </Typography>
-              </ActionCard>
-            </Grid>
-
-            <Grid item xs={6} sm={6} md={3}>
-              <ActionCard elevation={0} onClick={() => navigate('/list')}>
-                <ActionIconWrapper>
-                  <Inventory />
-                </ActionIconWrapper>
-                <Typography
-                  variant="h6"
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
-                    color: 'text.primary',
-                  }}
-                >
-                  Magazyn
-                </Typography>
-                <Typography
-                  variant="caption"
-                  align="center"
-                  sx={{
-                    color: 'text.secondary',
-                    mt: 0.5,
-                    display: { xs: 'none', sm: 'block' },
-                  }}
-                >
-                  Zarządzaj sprzętem
-                </Typography>
-              </ActionCard>
-            </Grid>
-
-            <Grid item xs={6} sm={6} md={3}>
-              <ActionCard elevation={0} onClick={() => navigate('/transfers')}>
-                <ActionIconWrapper>
-                  <ListAlt />
-                </ActionIconWrapper>
-                <Typography
-                  variant="h6"
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
-                    color: 'text.primary',
-                  }}
-                >
-                  Questy
-                </Typography>
-                <Typography
-                  variant="caption"
-                  align="center"
-                  sx={{
-                    color: 'text.secondary',
-                    mt: 0.5,
-                    display: { xs: 'none', sm: 'block' },
-                  }}
-                >
-                  Przeglądaj dostawy
-                </Typography>
-              </ActionCard>
-            </Grid>
-          </Grid>
         </Box>
-
-        {/* Moje Questy - Modern Section */}
-        <Box sx={{ mb: 6 }}>
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-            flexWrap: 'wrap',
-            gap: 2,
-          }}>
-            <Typography
-              variant="h5"
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Autocomplete
+            freeSolo
+            fullWidth
+            options={searchResults}
+            loading={searchLoading}
+            onInputChange={(_e, val) => { setPyrcode(val); handlePyrCodeSearch(val); }}
+            onChange={handleOptionSelected}
+            getOptionLabel={(opt) => {
+              if (typeof opt === 'string') return opt;
+              if (opt._type === 'asset') return `${opt.pyrcode} — ${opt.category?.label ?? ''}`;
+              return `${opt.category?.label ?? ''} (${opt.location?.name ?? ''})`;
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Wprowadź PYR code (np. PYR-001)..."
+                size="small"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary', fontSize: '1rem' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            )}
+          />
+          <Tooltip title="Skanuj kod QR / barcode">
+            <IconButton
+              onClick={() => setShowScanner(true)}
               sx={{
-                fontWeight: 600,
-                color: 'text.primary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
+                border: '1.5px solid',
+                borderColor: 'primary.main',
+                borderRadius: 2,
+                color: 'primary.main',
+                px: 1.5,
+                '&:hover': { background: 'rgba(255,152,0,0.1)' },
               }}
             >
-              <LocalShipping sx={{ color: 'primary.main' }} />
-              Moje Questy
-            </Typography>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => navigate('/quests')}
-              startIcon={<AccessTime />}
+              <QrCodeScanner />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </Paper>
+
+      {/* Stats strip */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {stats.map((stat) => (
+          <Grid item xs={6} sm={3} key={stat.label}>
+            <Paper
+              onClick={() => navigate(stat.href)}
               sx={{
-                borderRadius: designTokens.borderRadius.lg,
-                textTransform: 'none',
-                fontWeight: 600,
-                borderWidth: '2px',
+                p: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                cursor: 'pointer',
+                background: stat.bg,
+                border: `1px solid ${stat.color}25`,
+                borderLeft: `4px solid ${stat.color}`,
+                transition: 'all 0.2s ease',
                 '&:hover': {
-                  borderWidth: '2px',
-                  background: 'rgba(255, 152, 0, 0.08)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: `0 4px 16px ${stat.color}20`,
+                  borderColor: stat.color,
                 },
               }}
             >
-              Tablica zadań
-            </Button>
-          </Box>
-
-          {userTransfersLoading ? (
-            <Box
-              display="flex"
-              justifyContent="center"
-              p={4}
-              sx={{
-                background: (theme) => theme.palette.mode === 'dark'
-                  ? designTokens.darkPalette.background.elevated
-                  : 'rgba(255, 152, 0, 0.04)',
-                borderRadius: designTokens.borderRadius.xl,
-              }}
-            >
-              <CircularProgress color="primary" />
-            </Box>
-          ) : userTransfersError ? (
-            <Alert
-              severity="error"
-              sx={{ borderRadius: designTokens.borderRadius.lg }}
-            >
-              {userTransfersError}
-            </Alert>
-          ) : userTransfers.length === 0 ? (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                textAlign: 'center',
-                background: (theme) => theme.palette.mode === 'dark'
-                  ? designTokens.darkPalette.background.elevated
-                  : 'rgba(255, 152, 0, 0.04)',
-                borderRadius: designTokens.borderRadius.xl,
-                border: (theme) => theme.palette.mode === 'dark'
-                  ? `1px solid ${designTokens.darkPalette.border.subtle}`
-                  : '1px solid rgba(255, 152, 0, 0.1)',
-              }}
-            >
-              <LocalShipping
-                sx={{
-                  fontSize: 48,
-                  color: 'text.secondary',
-                  opacity: 0.5,
-                  mb: 2,
-                }}
-              />
-              <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                Brak aktywnych questów
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Rozpocznij nową dostawę, aby zobaczyć ją tutaj
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => navigate('/transfers/create')}
-                startIcon={<RocketLaunch />}
-                sx={{ borderRadius: designTokens.borderRadius.lg }}
-              >
-                Utwórz quest
-              </Button>
+              <Box sx={{ color: stat.color, display: 'flex', flexShrink: 0 }}>{stat.icon}</Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: stat.color, lineHeight: 1 }}>
+                  {stat.value === null
+                    ? <CircularProgress size={18} sx={{ color: stat.color }} />
+                    : stat.value}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+                  {stat.label}
+                </Typography>
+              </Box>
             </Paper>
-          ) : (
-            <List sx={{ mt: 1 }}>
-              {userTransfers.map((transfer) => (
-                <QuestItem
-                  key={transfer.ID}
-                  onClick={() => navigate(`/transfers/${transfer.ID}`)}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <QuestStatus label="W trakcie" />
-                  <QuestTitle variant="h6">
-                    <LocalShipping sx={{ color: 'inherit', fontSize: '1.2rem' }} />
-                    Quest #{transfer.ID}
-                  </QuestTitle>
+          </Grid>
+        ))}
+      </Grid>
 
-                  <QuestLocation>
-                    <LocationOn sx={{ fontSize: '1.1rem' }} />
-                    Z: {transfer.FromLocationName}
-                  </QuestLocation>
+      {/* Main grid */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Pending quests */}
+        {!isMobile && <Grid item xs={12} md={7}>
+          <Paper sx={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{
+              px: 2.5, py: 1.75,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              borderBottom: '1px solid', borderColor: 'divider',
+              background: 'rgba(255,152,0,0.04)',
+              flexShrink: 0,
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <HourglassEmpty sx={{ color: 'primary.main', fontSize: '1.1rem' }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  Questy do obsługi
+                </Typography>
+                {counts.pending > 0 && (
+                  <Chip label={counts.pending} size="small" color="primary" sx={{ height: 18, fontSize: '0.7rem' }} />
+                )}
+              </Box>
+              <Button
+                component={RouterLink}
+                to="/quests"
+                size="small"
+                endIcon={<ChevronRight />}
+                sx={{ fontSize: '0.75rem', minWidth: 'auto' }}
+              >
+                Wszystkie
+              </Button>
+            </Box>
 
-                  <QuestLocation>
-                    <LocationOn sx={{ fontSize: '1.1rem' }} />
-                    Do: {transfer.ToLocationName}
-                  </QuestLocation>
-
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <QuestDate>
-                      Rozpoczęto: {new Date(transfer.TransferDate).toLocaleString('pl-PL')}
-                    </QuestDate>
+            <Box sx={{ flex: 1 }}>
+              {pendingLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <Box key={i} sx={{ px: 2.5, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Skeleton width="55%" height={18} sx={{ mb: 0.5 }} />
+                    <Skeleton width="38%" height={14} />
                   </Box>
-                </QuestItem>
-              ))}
-            </List>
-          )}
-        </Box>
+                ))
+              ) : pendingQuests.length === 0 ? (
+                <Box sx={{ px: 2.5, py: 5, textAlign: 'center' }}>
+                  <CheckCircle sx={{ fontSize: '2rem', color: 'success.main', mb: 1, opacity: 0.6 }} />
+                  <Typography color="text.secondary" variant="body2">
+                    Brak oczekujących questów
+                  </Typography>
+                </Box>
+              ) : (
+                pendingQuests.map((quest) => (
+                  <Box
+                    key={quest.id}
+                    component={RouterLink}
+                    to={`/quests/${quest.id}`}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      px: 2.5,
+                      py: 1.4,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      gap: 2,
+                      transition: 'background 0.15s',
+                      '&:hover': { background: 'rgba(255,152,0,0.06)' },
+                      '&:last-child': { borderBottom: 'none' },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.2 }} noWrap>
+                        {quest.destination?.pavilion} — {quest.destination?.location}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {formatQuestItems(quest.items)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatDate(quest.delivery_date)}
+                      </Typography>
+                      <ChevronRight sx={{ fontSize: '1rem', color: 'text.disabled' }} />
+                    </Box>
+                  </Box>
+                ))
+              )}
+            </Box>
+          </Paper>
+        </Grid>}
 
+        {/* My active transfers */}
+        <Grid item xs={12} md={5}>
+          <Paper sx={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{
+              px: 2.5, py: 1.75,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              borderBottom: '1px solid', borderColor: 'divider',
+              flexShrink: 0,
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <LocalShipping sx={{ color: 'info.main', fontSize: '1.1rem' }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  Moje aktywne wydania
+                </Typography>
+              </Box>
+              <Button
+                component={RouterLink}
+                to="/transfers"
+                size="small"
+                endIcon={<ChevronRight />}
+                sx={{ fontSize: '0.75rem', minWidth: 'auto' }}
+              >
+                Wszystkie
+              </Button>
+            </Box>
 
-      </Container>
+            <Box sx={{ flex: 1 }}>
+              {userTransfersLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <Box key={i} sx={{ px: 2.5, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Skeleton width="45%" height={18} sx={{ mb: 0.5 }} />
+                    <Skeleton width="65%" height={14} />
+                  </Box>
+                ))
+              ) : userTransfers.length === 0 ? (
+                <Box sx={{ px: 2.5, py: 5, textAlign: 'center' }}>
+                  <LocalShipping sx={{ fontSize: '2rem', color: 'text.disabled', mb: 1 }} />
+                  <Typography color="text.secondary" variant="body2">
+                    Brak aktywnych wydań
+                  </Typography>
+                </Box>
+              ) : (
+                userTransfers.map((transfer) => {
+                  const id = transfer.ID ?? transfer.id;
+                  const from = transfer.FromLocationName ?? transfer.from_location_name ?? '—';
+                  const to = transfer.ToLocationName ?? transfer.to_location_name ?? '—';
+                  return (
+                    <Box
+                      key={id}
+                      component={RouterLink}
+                      to={`/transfers/${id}`}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        px: 2.5,
+                        py: 1.4,
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        gap: 2,
+                        transition: 'background 0.15s',
+                        '&:hover': { background: 'rgba(66,165,245,0.06)' },
+                        '&:last-child': { borderBottom: 'none' },
+                      }}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.2 }}>
+                          Transfer #{id}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          {from} → {to}
+                        </Typography>
+                      </Box>
+                      <ChevronRight sx={{ fontSize: '1rem', color: 'text.disabled', flexShrink: 0 }} />
+                    </Box>
+                  );
+                })
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
     </Box>
   );
 };

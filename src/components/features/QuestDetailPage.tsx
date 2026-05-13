@@ -25,7 +25,7 @@ import {
   Autocomplete,
   TextField,
 } from '@mui/material';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useQuestDetail } from '../../hooks/useQuestDetail';
 import { useQuestStream } from '../../hooks/useQuestStream';
 import { useLocations } from '../../hooks/useLocations';
@@ -264,19 +264,9 @@ const QuestDetailPage: React.FC = () => {
           pb: 2,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Button
-            variant="text"
-            startIcon={<Suspense fallback={null}><ArrowBackIcon /></Suspense>}
-            onClick={() => navigate('/quests')}
-            sx={{ minWidth: 'auto' }}
-          >
-            Powrót
-          </Button>
-          <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: 'primary.main' }}>
-            Zamówienie
-          </Typography>
-        </Box>
+        <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: 'primary.main' }}>
+          Zamówienie
+        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {getStatusChip(quest.status)}
           {hasTransfer && (
@@ -284,8 +274,8 @@ const QuestDetailPage: React.FC = () => {
               icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
               label={`Transfer #${quest.transfer_id}`}
               color="info"
-              size="small"
-              onClick={() => navigate(`/transfers/${quest.transfer_id}`)}
+              component={RouterLink}
+              to={`/transfers/${quest.transfer_id}`}
               clickable
             />
           )}
@@ -568,7 +558,8 @@ const QuestDetailPage: React.FC = () => {
           <Button
             variant="outlined"
             color="info"
-            onClick={() => navigate(`/transfers/${quest.transfer_id}`)}
+            component={RouterLink}
+            to={`/transfers/${quest.transfer_id}`}
             startIcon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
           >
             Zobacz szczegóły transferu

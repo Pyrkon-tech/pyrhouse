@@ -34,7 +34,6 @@ const Home = lazy(() => import('@mui/icons-material/Home'));
 const AutoAwesome = lazy(() => import('@mui/icons-material/AutoAwesome'));
 const RocketLaunch = lazy(() => import('@mui/icons-material/RocketLaunch'));
 const Quiz = lazy(() => import('@mui/icons-material/Quiz'));
-const Castle = lazy(() => import('@mui/icons-material/Castle'));
 const Inventory2 = lazy(() => import('@mui/icons-material/Inventory2'));
 const AddTask = lazy(() => import('@mui/icons-material/AddTask'));
 const Warehouse = lazy(() => import('@mui/icons-material/Warehouse'));
@@ -59,6 +58,9 @@ const Source = lazy(() => import('@mui/icons-material/Source'));
 const SettingsIcon = lazy(() => import('@mui/icons-material/Settings'));
 const MapIcon = lazy(() => import('@mui/icons-material/Map'));
 const Outbox = lazy(() => import('@mui/icons-material/Outbox'));
+const AddBusiness = lazy(() => import('@mui/icons-material/AddBusiness'));
+const ShoppingBasket = lazy(() => import('@mui/icons-material/ShoppingBasket'));
+
 interface JwtPayload {
   role: string;
   userID: number;
@@ -69,6 +71,7 @@ interface JwtPayload {
 const SAFETY_MARGIN = 5 * 60;
 const DRAWER_WIDTH = 220;
 const RAIL_WIDTH = 56;
+const SIDEBAR_STATE_KEY = 'sidebar_open';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -86,7 +89,6 @@ const Icons = {
   AutoAwesome,
   RocketLaunch,
   Quiz,
-  Castle,
   Inventory2,
   AddTask,
   Warehouse,
@@ -112,6 +114,8 @@ const Icons = {
   Settings: SettingsIcon,
   Map: MapIcon,
   Outbox,
+  AddBusiness,
+  ShoppingBasket,
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -120,7 +124,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { isTokenValid } = useTokenValidation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [open, setOpen] = useState(!isMobile);
+  const [open, setOpen] = useState(() => {
+    if (window.innerWidth <= 600) return false;
+    const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
+    return saved !== null ? saved === 'true' : true;
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
@@ -141,6 +149,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       '--sidebar-width',
       isMobile ? '0px' : `${open ? DRAWER_WIDTH : RAIL_WIDTH}px`
     );
+    if (!isMobile) {
+      localStorage.setItem(SIDEBAR_STATE_KEY, String(open));
+    }
   }, [open, isMobile]);
 
   const handleLogout = useCallback(() => {
@@ -277,16 +288,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const menuItems: MenuItem[] = [
     { path: '/home', label: 'Home', icon: <Icons.Home /> },
-    { 
+    {
       type: 'divider',
       label: 'Questy',
       icon: <Icons.AutoAwesome sx={{ fontSize: '0.9rem' }} />
     },
     { path: '/dispatch', label: 'Mapa Dispatch', icon: <Icons.Map /> },
-    { path: '/transfers/create', label: 'Nowe wydanie', icon: <Icons.RocketLaunch /> },
-    { path: '/transfers', label: 'Wydania', icon: <Icons.Quiz /> },
-    { path: '/quests', label: 'Zapotrzebowanie', icon: <Icons.Castle /> },
+    { path: '/quests', label: 'Zapotrzebowanie', icon: <Icons.AddBusiness /> },
     { path: '/servicedesk', label: 'Service Desk', icon: <Icons.MedicalServices /> },
+    {
+      type: 'divider',
+      label: 'Wydania',
+      icon: <Icons.LocalShipping sx={{ fontSize: '0.9rem' }} />
+    },
+    { path: '/transfers/create', label: 'Nowe wydanie', icon: <Icons.RocketLaunch /> },
+    { path: '/transfers', label: 'Wydania', icon: <Icons.ShoppingBasket /> },
     {
       type: 'divider',
       label: 'Magazyn',
