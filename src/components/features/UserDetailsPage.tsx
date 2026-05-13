@@ -534,7 +534,7 @@ const UserDetailsPage: React.FC = () => {
                       Discord
                     </Typography>
                     <Chip
-                      label={hasDiscord ? 'Połączono' : 'Niepołączono'}
+                      label={hasDiscord ? user.discord_username : 'Niepołączono'}
                       size="small"
                       sx={{
                         ml: 'auto',
@@ -545,21 +545,6 @@ const UserDetailsPage: React.FC = () => {
                       variant={hasDiscord ? 'filled' : 'outlined'}
                     />
                   </Box>
-
-                  {hasDiscord && (
-                    <Box sx={{ mt: 1, pl: 3.5 }}>
-                      {user.discord_username && (
-                        <Typography variant="body2" color="text.secondary">
-                          {user.discord_username}
-                        </Typography>
-                      )}
-                      {isAdmin && user.discord_id && (
-                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', display: 'block' }}>
-                          ID: {user.discord_id}
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
 
                   {!hasDiscord && (isAdmin || isModerator) && (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>

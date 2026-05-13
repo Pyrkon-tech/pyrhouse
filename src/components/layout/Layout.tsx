@@ -67,6 +67,8 @@ interface JwtPayload {
 
 // Stała określająca margines bezpieczeństwa w sekundach (5 minut)
 const SAFETY_MARGIN = 5 * 60;
+const DRAWER_WIDTH = 220;
+const RAIL_WIDTH = 56;
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -137,7 +139,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   useEffect(() => {
     document.documentElement.style.setProperty(
       '--sidebar-width',
-      open && !isMobile ? '240px' : '0px'
+      isMobile ? '0px' : `${open ? DRAWER_WIDTH : RAIL_WIDTH}px`
     );
   }, [open, isMobile]);
 
@@ -251,9 +253,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleUserMenuClose = () => {
     setUserMenuAnchor(null);
+    setMobileOpen(false);
   };
 
   const handleProfileClick = () => {
+    handleUserMenuClose();
     if (userId) {
       navigate(`/users/${userId}`);
     }
@@ -307,116 +311,118 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/settings', label: 'Ustawienia', icon: <Icons.Settings />, adminOnly: true },
   ].filter(item => !item.adminOnly || userRole === 'admin');
 
+  const showFullNav = open || isMobile;
+
+  const navItemSx = (isActive: boolean): object => ({
+    borderRadius: '8px',
+    mx: showFullNav ? 1 : 0.5,
+    my: 0.15,
+    py: 0.65,
+    pl: showFullNav ? 1.5 : 0,
+    pr: showFullNav ? 1.5 : 0,
+    justifyContent: showFullNav ? 'flex-start' : 'center',
+    minHeight: 40,
+    background: isActive ? designTokens.gradients.primary : 'transparent',
+    color: isActive ? '#ffffff' : 'text.primary',
+    boxShadow: isActive ? designTokens.glow.orangeSubtle : 'none',
+    '&:hover': {
+      background: isActive
+        ? designTokens.gradients.hero
+        : (theme: { palette: { mode: string } }) => theme.palette.mode === 'dark'
+          ? 'rgba(255, 152, 0, 0.12)'
+          : 'rgba(255, 152, 0, 0.08)',
+      transform: showFullNav ? 'translateX(4px)' : 'scale(1.08)',
+      boxShadow: isActive ? designTokens.glow.orange : 'none',
+    },
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
+    ...(showFullNav && {
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: isActive ? '4px' : '3px',
+        height: isActive ? '80%' : '0%',
+        background: isActive ? '#ffffff' : designTokens.colors.primary[500],
+        borderRadius: '0 4px 4px 0',
+        transition: 'all 0.25s ease-in-out',
+        boxShadow: isActive ? '0 0 8px rgba(255, 255, 255, 0.5)' : 'none',
+      },
+    }),
+  });
+
+  const navIconSx = (isActive: boolean): object => ({
+    color: isActive ? '#ffffff' : 'primary.main',
+    minWidth: showFullNav ? '36px' : 0,
+    justifyContent: 'center',
+    transition: 'color 0.2s ease, min-width 0.2s ease',
+    '& .MuiSvgIcon-root': {
+      fontSize: '1.2rem',
+      filter: isActive ? 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))' : 'none',
+    },
+  });
+
   const drawer = (
     <Box sx={{
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      pt: isMobile ? '64px' : 1,
-    }}>      
-      <List sx={{ flexGrow: 1 }}>
+      pt: isMobile ? '64px' : 0.5,
+      overflowX: 'hidden',
+    }}>
+      <List sx={{ flexGrow: 1, px: 0 }}>
         {menuItems.map((item, index) => (
           item.type === 'divider' ? (
             <Box key={`divider-${index}`}>
-              <Divider sx={{ my: 1.5, mx: 2 }} />
-              <Typography 
-                variant="subtitle2" 
-                color="text.secondary" 
-                sx={{ 
-                  px: 3, 
-                  py: 0.8,
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <LazyIcon>
-                  {item.icon}
-                </LazyIcon>
-                {item.label}
-              </Typography>
+              <Divider sx={{ my: showFullNav ? 0.75 : 0.5, mx: showFullNav ? 1.5 : 0.75 }} />
+              {showFullNav && (
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  sx={{
+                    px: 2.5,
+                    py: 0.4,
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                  }}
+                >
+                  <LazyIcon>{item.icon}</LazyIcon>
+                  {item.label}
+                </Typography>
+              )}
             </Box>
           ) : isMobile && item.path === '/dispatch' ? null : (
-            <ListItem key={item.path} disablePadding>
-              <ListItemButton
-                component={RouterLink}
-                to={item.path!}
-                onClick={() => item.path && handleMenuItemClick(item.path)}
-                sx={{
-                  borderRadius: '8px',
-                  mx: 1.5,
-                  my: 0.3,
-                  background: activeItem === item.path
-                    ? designTokens.gradients.primary
-                    : 'transparent',
-                  color: activeItem === item.path ? '#ffffff' : 'text.primary',
-                  boxShadow: activeItem === item.path
-                    ? designTokens.glow.orangeSubtle
-                    : 'none',
-                  '&:hover': {
-                    background: activeItem === item.path
-                      ? designTokens.gradients.hero
-                      : (theme) => theme.palette.mode === 'dark'
-                        ? 'rgba(255, 152, 0, 0.12)'
-                        : 'rgba(255, 152, 0, 0.08)',
-                    transform: 'translateX(4px)',
-                    boxShadow: activeItem === item.path
-                      ? designTokens.glow.orange
-                      : 'none',
-                  },
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                  py: 1.1,
-                  pl: 2,
-                  fontSize: '0.9rem',
-                  position: 'relative',
-                  // Orange accent bar
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: activeItem === item.path ? '4px' : '3px',
-                    height: activeItem === item.path ? '80%' : '0%',
-                    background: activeItem === item.path
-                      ? '#ffffff'
-                      : designTokens.colors.primary[500],
-                    borderRadius: '0 4px 4px 0',
-                    transition: 'all 0.25s ease-in-out',
-                    boxShadow: activeItem === item.path
-                      ? '0 0 8px rgba(255, 255, 255, 0.5)'
-                      : 'none',
-                  }
-                }}
-              >
-                <ListItemIcon sx={{
-                  color: activeItem === item.path ? '#ffffff' : 'primary.main',
-                  minWidth: '36px',
-                  transition: 'color 0.2s ease',
-                  '& .MuiSvgIcon-root': {
-                    fontSize: '1.3rem',
-                    filter: activeItem === item.path
-                      ? 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))'
-                      : 'none',
-                  }
-                }}>
-                  <LazyIcon>
-                    {item.icon}
-                  </LazyIcon>
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{
-                    fontWeight: activeItem === item.path ? 600 : 400,
-                    fontSize: '0.9rem',
-                    letterSpacing: '0.01em'
-                  }}
-                />
-              </ListItemButton>
+            <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
+              <Tooltip title={!showFullNav ? item.label : ''} placement="right" arrow>
+                <ListItemButton
+                  component={RouterLink}
+                  to={item.path!}
+                  onClick={() => item.path && handleMenuItemClick(item.path)}
+                  sx={navItemSx(activeItem === item.path)}
+                >
+                  <ListItemIcon sx={navIconSx(activeItem === item.path)}>
+                    <LazyIcon>{item.icon}</LazyIcon>
+                  </ListItemIcon>
+                  {showFullNav && (
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontWeight: activeItem === item.path ? 600 : 400,
+                        fontSize: '0.875rem',
+                        letterSpacing: '0.01em',
+                        noWrap: true,
+                      }}
+                    />
+                  )}
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
           )
         ))}
@@ -424,104 +430,55 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {hasAdminAccess() && (
         <>
-          <Divider sx={{ my: 1.5, mx: 2 }} />
-          <Typography 
-            variant="subtitle2" 
-            color="text.secondary" 
-            sx={{ 
-              px: 3, 
-              py: 0.8,
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            <LazyIcon>
-              <Icons.AdminPanelSettings sx={{ fontSize: '1rem' }} />
-            </LazyIcon>
-            Admin
-          </Typography>
-          <List>
+          <Divider sx={{ my: showFullNav ? 0.75 : 0.5, mx: showFullNav ? 1.5 : 0.75 }} />
+          {showFullNav && (
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{
+                px: 2.5,
+                py: 0.4,
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.75,
+              }}
+            >
+              <LazyIcon>
+                <Icons.AdminPanelSettings sx={{ fontSize: '1rem' }} />
+              </LazyIcon>
+              Admin
+            </Typography>
+          )}
+          <List sx={{ pb: 1 }}>
             {adminMenuItems.map((item) => (
-              <ListItem key={item.path} disablePadding>
-                <ListItemButton
-                  component={RouterLink}
-                  to={item.path}
-                  onClick={() => handleMenuItemClick(item.path)}
-                  sx={{
-                    borderRadius: '8px',
-                    mx: 1.5,
-                    my: 0.3,
-                    background: activeItem === item.path
-                      ? designTokens.gradients.primary
-                      : 'transparent',
-                    color: activeItem === item.path ? '#ffffff' : 'text.primary',
-                    boxShadow: activeItem === item.path
-                      ? designTokens.glow.orangeSubtle
-                      : 'none',
-                    '&:hover': {
-                      background: activeItem === item.path
-                        ? designTokens.gradients.hero
-                        : (theme) => theme.palette.mode === 'dark'
-                          ? 'rgba(255, 152, 0, 0.12)'
-                          : 'rgba(255, 152, 0, 0.08)',
-                      transform: 'translateX(4px)',
-                      boxShadow: activeItem === item.path
-                        ? designTokens.glow.orange
-                        : 'none',
-                    },
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                    py: 1.1,
-                    pl: 2,
-                    fontSize: '0.9rem',
-                    position: 'relative',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      left: 0,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: activeItem === item.path ? '4px' : '3px',
-                      height: activeItem === item.path ? '80%' : '0%',
-                      background: activeItem === item.path
-                        ? '#ffffff'
-                        : designTokens.colors.primary[500],
-                      borderRadius: '0 4px 4px 0',
-                      transition: 'all 0.25s ease-in-out',
-                      boxShadow: activeItem === item.path
-                        ? '0 0 8px rgba(255, 255, 255, 0.5)'
-                        : 'none',
-                    }
-                  }}
-                >
-                  <ListItemIcon sx={{
-                    color: activeItem === item.path ? '#ffffff' : 'primary.main',
-                    minWidth: '36px',
-                    transition: 'color 0.2s ease',
-                    '& .MuiSvgIcon-root': {
-                      fontSize: '1.3rem',
-                      filter: activeItem === item.path
-                        ? 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))'
-                        : 'none',
-                    }
-                  }}>
-                    <LazyIcon>
-                      {item.icon}
-                    </LazyIcon>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{
-                      fontWeight: activeItem === item.path ? 600 : 400,
-                      fontSize: '0.9rem',
-                      letterSpacing: '0.01em'
-                    }}
-                  />
-                </ListItemButton>
+              <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
+                <Tooltip title={!showFullNav ? item.label : ''} placement="right" arrow>
+                  <ListItemButton
+                    component={RouterLink}
+                    to={item.path}
+                    onClick={() => handleMenuItemClick(item.path)}
+                    sx={navItemSx(activeItem === item.path)}
+                  >
+                    <ListItemIcon sx={navIconSx(activeItem === item.path)}>
+                      <LazyIcon>{item.icon}</LazyIcon>
+                    </ListItemIcon>
+                    {showFullNav && (
+                      <ListItemText
+                        primary={item.label}
+                        primaryTypographyProps={{
+                          fontWeight: activeItem === item.path ? 600 : 400,
+                          fontSize: '0.875rem',
+                          letterSpacing: '0.01em',
+                          noWrap: true,
+                        }}
+                      />
+                    )}
+                  </ListItemButton>
+                </Tooltip>
               </ListItem>
             ))}
           </List>
@@ -610,10 +567,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            {/* Theme Toggle - minimalistyczny z ikonami */}
+            {/* Theme Toggle - minimalistyczny z ikonami, ukryty na mobile */}
             <Box
               sx={{
-                display: 'flex',
+                display: { xs: 'none', sm: 'flex' },
                 alignItems: 'center',
                 gap: 0.5,
                 p: 0.5,
@@ -810,9 +767,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   />
                 </MenuItem>
 
-                <MenuItem 
-                  onClick={() => navigate('/tutorial')} 
-                  sx={{ 
+                <MenuItem
+                  onClick={() => { handleUserMenuClose(); navigate('/tutorial'); }}
+                  sx={{
                     borderRadius: 1,
                     mb: 1,
                     '&:hover': {
@@ -834,7 +791,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   />
                 </MenuItem>
                 <MenuItem
-                  onClick={() => navigate('/my-schedule')}
+                  onClick={() => { handleUserMenuClose(); navigate('/my-schedule'); }}
                   sx={{ borderRadius: 1, mb: 1, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <ListItemIcon>
@@ -850,6 +807,56 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Typography variant="overline" sx={{ px: 1, color: 'text.secondary', display: 'block' }}>
                   Ustawienia
                 </Typography>
+
+                {isMobile && (
+                  <Box sx={{ px: 1, py: 0.5, mb: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                      Motyw
+                    </Typography>
+                    <Box sx={{
+                      display: 'flex',
+                      gap: 0.5,
+                      p: 0.5,
+                      borderRadius: '10px',
+                      background: theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.05)'
+                        : 'rgba(0, 0, 0, 0.04)',
+                      border: theme.palette.mode === 'dark'
+                        ? `1px solid ${designTokens.darkPalette.border.subtle}`
+                        : '1px solid rgba(0, 0, 0, 0.08)',
+                    }}>
+                      {([
+                        { mode: 'light' as const, icon: <Icons.LightMode sx={{ fontSize: 18 }} />, label: 'Jasny' },
+                        { mode: 'system' as const, icon: <Icons.SettingsBrightness sx={{ fontSize: 18 }} />, label: 'Systemowy' },
+                        { mode: 'dark' as const, icon: <Icons.DarkMode sx={{ fontSize: 18 }} />, label: 'Ciemny' },
+                      ]).map(({ mode, icon, label }) => (
+                        <Tooltip key={mode} title={label}>
+                          <IconButton
+                            size="small"
+                            onClick={() => setThemeMode(mode)}
+                            sx={{
+                              flex: 1,
+                              p: 0.75,
+                              borderRadius: '7px',
+                              background: themeMode === mode ? designTokens.gradients.primary : 'transparent',
+                              color: themeMode === mode ? '#fff' : 'text.secondary',
+                              boxShadow: themeMode === mode ? designTokens.glow.orangeSubtle : 'none',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                background: themeMode === mode
+                                  ? designTokens.gradients.hero
+                                  : 'rgba(255, 152, 0, 0.1)',
+                              },
+                            }}
+                          >
+                            <LazyIcon>{icon}</LazyIcon>
+                          </IconButton>
+                        </Tooltip>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
                 <MenuItem sx={{ borderRadius: 1 }}>
                   <ListItemIcon>
                     {prefersAnimations ? <LazyIcon><Icons.Animation /></LazyIcon> : <LazyIcon><Icons.BlockTwoTone /></LazyIcon>}
@@ -868,7 +875,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                 <Divider sx={{ my: 1 }} />
 
-                <MenuItem onClick={handleLogout} sx={{ 
+                <MenuItem onClick={() => { handleUserMenuClose(); handleLogout(); }} sx={{
                   borderRadius: 1,
                   color: 'error.main',
                   '&:hover': {
@@ -891,18 +898,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <Drawer
         variant={isMobile ? 'temporary' : 'permanent'}
-        open={isMobile ? mobileOpen : open}
+        open={isMobile ? mobileOpen : true}
         onClose={handleDrawerToggle}
         ModalProps={{
           keepMounted: true,
         }}
         sx={{
-          display: isMobile ? 'block' : 'block',
+          display: 'block',
           '& .MuiDrawer-paper': {
-            width: 240,
+            width: isMobile ? '100%' : open ? DRAWER_WIDTH : RAIL_WIDTH,
             boxSizing: 'border-box',
-            transition: 'all 0.3s ease-in-out',
-            // Pozycjonowanie pod AppBar
+            overflowX: 'hidden',
+            transition: 'width 0.25s cubic-bezier(0.4, 0, 0.6, 1)',
             marginTop: isMobile ? 0 : '64px',
             height: isMobile ? '100%' : 'calc(100% - 64px)',
             background: theme.palette.mode === 'dark'
@@ -911,13 +918,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             borderRight: theme.palette.mode === 'dark'
               ? `1px solid ${designTokens.darkPalette.border.subtle}`
               : '1px solid rgba(0, 0, 0, 0.06)',
-            ...(isMobile && {
-              width: '100%',
-            }),
-            ...(!open && !isMobile && {
-              width: 0,
-              overflow: 'hidden',
-            }),
           },
         }}
       >
@@ -928,9 +928,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         component="main"
         sx={{
           ...styles.mainContent,
-          marginLeft: open && !isMobile ? '240px' : '0px',
-          width: open && !isMobile ? 'calc(100% - 240px)' : '100%',
-          transition: 'margin-left 0.3s ease-in-out, width 0.3s ease-in-out',
+          marginLeft: isMobile ? '0px' : `${open ? DRAWER_WIDTH : RAIL_WIDTH}px`,
+          width: isMobile ? '100%' : `calc(100% - ${open ? DRAWER_WIDTH : RAIL_WIDTH}px)`,
+          transition: 'margin-left 0.25s cubic-bezier(0.4, 0, 0.6, 1), width 0.25s cubic-bezier(0.4, 0, 0.6, 1)',
         }}
       >
         <Suspense fallback={<div>Ładowanie...</div>}>
