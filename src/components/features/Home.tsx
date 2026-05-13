@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import SystemInitAnimation from '../animations/SystemInitAnimation';
 import {
@@ -33,7 +33,7 @@ import { searchGlobalAPI } from '../../services/assetService';
 import type { GlobalSearchAsset, GlobalSearchStock } from '../../services/assetService';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
-import BarcodeScanner from '../common/BarcodeScanner';
+const BarcodeScanner = lazy(() => import('../common/BarcodeScanner'));
 import { designTokens } from '../../theme/designTokens';
 import { useQuestCounts } from '../../hooks/useQuestCounts';
 import { useQuests } from '../../hooks/useQuests';
@@ -174,7 +174,11 @@ const HomePage: React.FC = () => {
   const handleCloseScanner = useCallback(() => setShowScanner(false), []);
 
   const scannerComponent = useMemo(
-    () => showScanner ? <BarcodeScanner onClose={handleCloseScanner} onScan={handleBarcodeScan} /> : null,
+    () => showScanner ? (
+      <Suspense fallback={null}>
+        <BarcodeScanner onClose={handleCloseScanner} onScan={handleBarcodeScan} />
+      </Suspense>
+    ) : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [showScanner, handleCloseScanner],
   );

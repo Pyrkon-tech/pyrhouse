@@ -90,7 +90,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
           </defs>
 
           <image
-            href="/mtp-map.png"
+            href="/mtp-map.webp"
             x="0" y="0" width="2130" height="1035"
             filter="url(#dispatch-dark)"
             preserveAspectRatio="xMidYMid slice"

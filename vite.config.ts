@@ -61,17 +61,25 @@ export default defineConfig({
     setupFiles: ['./src/setupTests.ts'],
   },
   build: {
-    target: 'es2015',
+    target: 'es2020',
     minify: 'terser',
     cssMinify: true,
     chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-mui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-          'vendor-maps': ['@vis.gl/react-google-maps'],
-          'vendor-utils': ['date-fns', 'jwt-decode']
+        manualChunks(id) {
+          if (id.includes('/node_modules/react/') || id.includes('/node_modules/react-dom/') || id.includes('/node_modules/scheduler/')) {
+            return 'vendor-react';
+          }
+          if (id.includes('/node_modules/@mui/') || id.includes('/node_modules/@emotion/')) {
+            return 'vendor-mui';
+          }
+          if (id.includes('/node_modules/@vis.gl/')) {
+            return 'vendor-maps';
+          }
+          if (id.includes('/node_modules/date-fns/') || id.includes('/node_modules/jwt-decode/')) {
+            return 'vendor-utils';
+          }
         }
       }
     },
