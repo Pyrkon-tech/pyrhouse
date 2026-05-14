@@ -589,8 +589,8 @@ const UserDetailsPage: React.FC = () => {
                   )}
                 </Box>
 
-                {/* Google — status + link (widoczne tylko na cudzym profilu lub gdy już połączono) */}
-                {(hasGoogle || (!isOwner && (isAdmin || isModerator))) && (
+                {/* Google — status + link */}
+                {(hasGoogle || isOwner || isAdmin || isModerator) && (
                   <Box sx={{
                     mt: 2,
                     p: 1.5,
@@ -622,7 +622,7 @@ const UserDetailsPage: React.FC = () => {
                       />
                     </Box>
 
-                    {!hasGoogle && !isOwner && (isAdmin || isModerator) && (
+                    {!hasGoogle && isOwner && (
                       <Box sx={{ mt: 1 }}>
                         <Button
                           variant="outlined"
