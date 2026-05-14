@@ -32,6 +32,7 @@ import { useLocations } from '../../hooks/useLocations';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../context/NotificationContext';
 import { updateQuestLocationAPI } from '../../services/questService';
+import { getPricesAPI } from '../../services/budgetService';
 import type { QuestEvent } from '../../types/quest.types';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import TransferFormCore from './Transfer/components/TransferFormCore';
@@ -132,6 +133,22 @@ const QuestDetailPage: React.FC = () => {
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [priceMap, setPriceMap] = useState<Map<string, number>>(new Map());
+
+  const isAdmin = userRole === 'admin';
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    getPricesAPI().then(data => {
+      const map = new Map<string, number>();
+      data.prices.forEach(p => {
+        const key = p.item_name.toLowerCase().trim();
+        const existing = map.get(key);
+        if (existing === undefined || p.unit_price < existing) map.set(key, p.unit_price);
+      });
+      setPriceMap(map);
+    }).catch(() => {});
+  }, [isAdmin]);
   const [showTransferForm, setShowTransferForm] = useState(false);
   const [stocksRefreshTrigger, setStocksRefreshTrigger] = useState(0);
 
@@ -485,8 +502,9 @@ const QuestDetailPage: React.FC = () => {
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Nazwa</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }} align="center">Ilość</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Dopasowanie kategorii</TableCell>
-              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Budget Owner</TableCell>
+              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Właściciel budżetu</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Notatki</TableCell>
+              {isAdmin && <TableCell sx={{ color: '#ff9800', fontWeight: 600 }} align="right">Wycena (min × szt)</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -501,7 +519,7 @@ const QuestDetailPage: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" color="text.secondary">
-                    {item.budget_owner || '—'}
+                    {item.budget_owner || quest.budget_owner || '—'}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -509,11 +527,38 @@ const QuestDetailPage: React.FC = () => {
                     {item.notes || '—'}
                   </Typography>
                 </TableCell>
+                {isAdmin && (() => {
+                  const minPrice = priceMap.get(item.name.toLowerCase().trim());
+                  const total = minPrice != null ? minPrice * item.quantity : null;
+                  return (
+                    <TableCell align="right">
+                      <Typography variant="body2" sx={{ color: total != null ? '#ff9800' : 'text.disabled', fontWeight: total != null ? 600 : 400 }}>
+                        {total != null ? `${total} zł` : 'brak'}
+                      </Typography>
+                    </TableCell>
+                  );
+                })()}
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+      {isAdmin && (() => {
+        let total = 0;
+        let hasAny = false;
+        quest.items.forEach(item => {
+          const minPrice = priceMap.get(item.name.toLowerCase().trim());
+          if (minPrice != null) { total += minPrice * item.quantity; hasAny = true; }
+        });
+        return (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 3, px: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>Łączna wycena (min):</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#ff9800' }}>
+              {hasAny ? `${total} zł` : '—'}
+            </Typography>
+          </Box>
+        );
+      })()}
 
       {/* Inline Transfer Form */}
       {canCreateTransfer && showTransferForm && (

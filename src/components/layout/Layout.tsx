@@ -60,6 +60,7 @@ const MapIcon = lazy(() => import('@mui/icons-material/Map'));
 const Outbox = lazy(() => import('@mui/icons-material/Outbox'));
 const AddBusiness = lazy(() => import('@mui/icons-material/AddBusiness'));
 const ShoppingBasket = lazy(() => import('@mui/icons-material/ShoppingBasket'));
+const CalculateIcon = lazy(() => import('@mui/icons-material/Calculate'));
 
 interface JwtPayload {
   role: string;
@@ -116,6 +117,7 @@ const Icons = {
   Outbox,
   AddBusiness,
   ShoppingBasket,
+  Calculate: CalculateIcon,
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -323,6 +325,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/duty-schedule', label: 'Grafik', icon: <Icons.Event />, adminOnly: false },
     { path: '/categories', label: 'Kategorie', icon: <Icons.Category />, adminOnly: false },
     { path: '/origins', label: 'Pochodzenie', icon: <Icons.Source />, adminOnly: false },
+    { path: '/budget', label: 'Budżet', icon: <Icons.Calculate />, adminOnly: true },
     { path: '/users', label: 'Użytkownicy', icon: <Icons.People />, adminOnly: false },
     { path: '/settings', label: 'Ustawienia', icon: <Icons.Settings />, adminOnly: true },
   ].filter(item => !item.adminOnly || userRole === 'admin');

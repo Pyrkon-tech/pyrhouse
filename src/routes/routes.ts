@@ -26,6 +26,7 @@ const DispatchPage = lazy(() => import('../components/features/DispatchPage'));
 const ReleasesListPage = lazy(() => import('../components/features/Releases/ReleasesListPage'));
 const ReleaseCreatePage = lazy(() => import('../components/features/Releases/ReleaseCreatePage'));
 const ReleaseDetailPage = lazy(() => import('../components/features/Releases/ReleaseDetailPage'));
+const BudgetPage = lazy(() => import('../components/features/BudgetPage'));
 
 // Public routes (nie wymagają autoryzacji)
 export const publicRoutes: RouteConfig[] = [
@@ -223,6 +224,14 @@ export const adminRoutes: RouteConfig[] = [
     icon: 'Origins',
     showInNav: true,
     requiredRoles: ['admin', 'moderator'],
+  },
+  {
+    path: '/budget',
+    component: BudgetPage,
+    title: 'Zapotrzebowanie',
+    icon: 'Budget',
+    showInNav: true,
+    requiredRoles: ['admin'],
   },
   {
     path: '/settings',
