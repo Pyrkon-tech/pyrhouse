@@ -45,6 +45,11 @@ export const publicRoutes: RouteConfig[] = [
     title: 'Discord Link',
   },
   {
+    path: '/auth/google/callback',
+    component: lazy(() => import('../components/features/GoogleCallback')),
+    title: 'Google Login',
+  },
+  {
     path: '/servicedesk/request',
     component: lazy(() => import('../components/features/ServiceDesk/PublicServiceDeskForm')),
     title: 'Zgłoszenie serwisowe',

@@ -10,7 +10,7 @@ export type UserRole = 'user' | 'dispatcher' | 'moderator' | 'admin';
 /**
  * Typ providera autoryzacji
  */
-export type AuthProvider = 'discord' | null;
+export type AuthProvider = 'discord' | 'google' | 'local' | null;
 
 /**
  * Użytkownik na liście (GET /users)
@@ -41,6 +41,8 @@ export interface UserDetails {
   discord_id: string | null;
   discord_username: string | null;
   avatar_url: string | null;
+  google_id: string | null;
+  google_email: string | null;
   auth_provider: AuthProvider;
 }
 
@@ -128,6 +130,21 @@ export interface AuthState {
   isAuthenticated: boolean;
   userRole: UserRole | null;
   userId: number | null;
+}
+
+/**
+ * Payload do łączenia konta z Google (POST /users/:id/link-google)
+ */
+export interface LinkGooglePayload {
+  code: string;
+  redirect_uri: string;
+}
+
+/**
+ * Odpowiedź po połączeniu z Google
+ */
+export interface LinkGoogleResponse {
+  message: string;
 }
 
 /**

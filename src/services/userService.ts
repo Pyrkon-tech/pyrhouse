@@ -12,6 +12,8 @@ import type {
   LinkDiscordPayload,
   LinkDiscordResponse,
   MergeDiscordResponse,
+  LinkGooglePayload,
+  LinkGoogleResponse,
 } from '../types/user.types';
 
 // ============================================================================
@@ -89,3 +91,20 @@ export const mergeDiscordAPI = (targetUserId: number, sourceUserId: number) =>
   apiClient.post<MergeDiscordResponse>(`/users/${targetUserId}/merge-discord`, {
     source_user_id: sourceUserId,
   });
+
+// ============================================================================
+// Google Integration
+// ============================================================================
+
+/**
+ * Łączy konto użytkownika z Google
+ * Wymaga kodu autoryzacyjnego z Google OAuth2
+ *
+ * Możliwe odpowiedzi:
+ * - 200: Połączono pomyślnie
+ * - 400: Brak code/redirect_uri lub nieprawidłowe dane
+ * - 403: Nie jesteś właścicielem konta ani adminem / email spoza @pyrkon.pl
+ * - 409: Konto Google jest już podłączone do innego usera
+ */
+export const linkGoogleAPI = (userId: number, payload: LinkGooglePayload) =>
+  apiClient.post<LinkGoogleResponse>(`/users/${userId}/link-google`, payload);
