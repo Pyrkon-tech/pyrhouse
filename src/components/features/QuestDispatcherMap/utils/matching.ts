@@ -5,21 +5,21 @@ import { ZONES } from '../constants/zones';
 
 export const matchZone = (pavilion: string): string | null => {
   const p = pavilion.toLowerCase().trim();
-  // Step 1: exact match
+  // Step 1: exact match (case-insensitive)
   for (const zone of ZONES) {
-    if (zone.aliases.some(a => a === p)) return zone.id;
+    if (zone.aliases.some(a => a.toLowerCase() === p)) return zone.id;
   }
   // Step 2: substring fuzzy — only for aliases with length >= 3 to prevent
   // short codes like "6" from matching "6b", "6a", etc.
   for (const zone of ZONES) {
-    if (zone.aliases.some(a => a.length >= 3 && (p.includes(a) || a.includes(p)))) return zone.id;
+    if (zone.aliases.some(a => { const al = a.toLowerCase(); return al.length >= 3 && (p.includes(al) || al.includes(p)); })) return zone.id;
   }
   // Step 3: extract numeric pavilion code from text (e.g. "Pawilon 5" → "5", "5B" → "5b")
   const numMatch = p.match(/\b(\d+[a-z]?)\b/);
   if (numMatch) {
     const num = numMatch[1];
     for (const zone of ZONES) {
-      if (zone.aliases.includes(num)) return zone.id;
+      if (zone.aliases.some(a => a.toLowerCase() === num)) return zone.id;
     }
   }
   return null;
@@ -41,7 +41,7 @@ function isSameDay(dateStr: string, now: number): boolean {
     && d.getDate() === today.getDate();
 }
 
-export function getZoneMetrics(quests: Quest[], urgencyHours = 8, simulatedTime?: Date): ZoneMetrics {
+export function getZoneMetrics(quests: Quest[], urgencyHours = 8, simulatedTime?: Date, sdRequests: ServiceDeskRequest[] = []): ZoneMetrics {
   const now = simulatedTime ? simulatedTime.getTime() : Date.now();
   const H = 3_600_000;
   return {
@@ -67,6 +67,7 @@ export function getZoneMetrics(quests: Quest[], urgencyHours = 8, simulatedTime?
         ? new Date(d).getTime() - now <= 2 * H
         : isSameDay(d, now);
     }).length,
+    sdNew: sdRequests.filter(r => r.status === 'new').length,
   };
 }
 
@@ -80,7 +81,7 @@ export function groupServiceDeskByZone(
   const result: Record<string, ServiceDeskRequest[]> = {};
   for (const req of requests) {
     const zoneId = req.location ? matchZone(req.location) : null;
-    const key = zoneId ?? '__unmatched';
+    const key = zoneId ?? 'other';
     (result[key] ??= []).push(req);
   }
   return result;
@@ -93,7 +94,7 @@ export function groupServiceDeskByZone(
  * 1. Jeśli quest.location_resolved i locationPavilionMap zawiera location_id:
  *    → matchZone(canonicalPavilion) — znormalizowany pawilon z bazy danych
  * 2. Fallback: matchZone(destination.pavilion) — surowy input z formularza
- * 3. Brak dopasowania → '__unmatched'
+ * 3. Brak dopasowania → 'other'
  *
  * @param locationPavilionMap Map<location_id, pavilion> zbudowana z GET /locations
  */
@@ -119,7 +120,7 @@ export function groupQuestsByZone(
       zoneId = matchZone(quest.destination.pavilion);
     }
 
-    const key = zoneId ?? '__unmatched';
+    const key = zoneId ?? 'other';
     if (!result[key]) result[key] = [];
     result[key].push(quest);
   }

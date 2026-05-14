@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Chip, Divider, IconButton, Tooltip, Select, MenuItem, FormControl, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import DispatchSdModal from './DispatchSdModal';
 import type { Quest, QuestStatus } from '../../../../types/quest.types';
 import type { ServiceDeskRequest } from '../../../../types/servicedesk.types';
 import type { Location } from '../../../../types/location.types';
@@ -9,10 +10,12 @@ import { STATUS_COLORS, STATUS_LABELS } from '../constants/statusConfig';
 import { getZoneMetrics, formatDate } from '../utils/matching';
 import { ZONES } from '../constants/zones';
 
-const SD_PRIORITY_COLORS: Record<string, string> = {
-  high: '#ef5350',
-  medium: '#ffd54f',
-  low: '#66bb6a',
+const SD_STATUS_COLORS: Record<string, string> = {
+  new: '#ff9800',
+  in_progress: '#00acc1',
+  waiting: '#ffd54f',
+  resolved: '#66bb6a',
+  closed: '#546e7a',
 };
 
 const SD_STATUS_LABELS: Record<string, string> = {
@@ -23,27 +26,35 @@ const SD_STATUS_LABELS: Record<string, string> = {
   closed: 'ZAMKNIĘTE',
 };
 
-const ServiceDeskItem: React.FC<{ request: ServiceDeskRequest }> = ({ request }) => (
-  <Box sx={{
-    px: 1, py: 0.75, borderRadius: 1,
-    bgcolor: '#050d18', border: '1px solid #1a3548',
-    borderLeft: `3px solid ${SD_PRIORITY_COLORS[request.priority] ?? '#aaa'}`,
-  }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 0.5 }}>
-      <Typography variant="caption" sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontWeight: 700, fontSize: 11, lineHeight: 1.3, flex: 1 }}>
-        {request.title}
-      </Typography>
-      <Typography variant="caption" sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 9, flexShrink: 0 }}>
-        {SD_STATUS_LABELS[request.status] ?? request.status}
-      </Typography>
+const ServiceDeskItem: React.FC<{ request: ServiceDeskRequest; onClick: () => void }> = ({ request, onClick }) => {
+  const statusColor = SD_STATUS_COLORS[request.status] ?? '#546e7a';
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        px: 1, py: 0.75, borderRadius: 1, cursor: 'pointer',
+        bgcolor: '#050d18', border: '1px solid #1a3548',
+        borderLeft: `3px solid ${statusColor}`,
+        transition: 'all 0.15s ease',
+        '&:hover': { bgcolor: '#0a1a2a', borderColor: `${statusColor}66` },
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 0.5 }}>
+        <Typography variant="caption" sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontWeight: 700, fontSize: 11, lineHeight: 1.3, flex: 1 }}>
+          {request.title}
+        </Typography>
+        <Typography variant="caption" sx={{ color: statusColor, fontFamily: 'monospace', fontSize: 9, flexShrink: 0, opacity: 0.85 }}>
+          {SD_STATUS_LABELS[request.status] ?? request.status}
+        </Typography>
+      </Box>
+      {request.created_by && (
+        <Typography variant="caption" sx={{ color: '#2a5a6a', fontFamily: 'monospace', fontSize: 10, display: 'block' }}>
+          {request.created_by}
+        </Typography>
+      )}
     </Box>
-    {request.created_by && (
-      <Typography variant="caption" sx={{ color: '#2a5a6a', fontFamily: 'monospace', fontSize: 10, display: 'block' }}>
-        {request.created_by}
-      </Typography>
-    )}
-  </Box>
-);
+  );
+};
 
 interface DispatchSidebarProps {
   selectedZoneId: string | null;
@@ -112,7 +123,7 @@ const QuestItem: React.FC<{
 };
 
 /**
- * Inline location picker for quests with unresolved locations (shown in __unmatched zone).
+ * Inline location picker for quests with unresolved locations (shown in other zone).
  */
 const InlineLocationAssign: React.FC<{
   quest: Quest;
@@ -183,9 +194,10 @@ const ZoneDetail: React.FC<{
   onClose: () => void;
   onNavigate: (id: string) => void;
   onDispatchQuest?: (quest: Quest) => void;
+  onSdTicketClick: (req: ServiceDeskRequest) => void;
   locations?: Location[];
   onAssignQuestLocation?: (questId: string, locationId: number) => Promise<void>;
-}> = ({ zone, isUnmatched, quests, sdRequests, onClose, onNavigate, onDispatchQuest, locations, onAssignQuestLocation }) => (
+}> = ({ zone, isUnmatched, quests, sdRequests, onClose, onNavigate, onDispatchQuest, onSdTicketClick, locations, onAssignQuestLocation }) => (
   <>
     <Box sx={{ p: 1.5, borderBottom: '1px solid #1a3548', bgcolor: '#050d18', flexShrink: 0 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -233,7 +245,7 @@ const ZoneDetail: React.FC<{
           <Typography sx={{ color: '#00acc1', fontFamily: 'monospace', fontSize: 10, px: 0.5, letterSpacing: 1 }}>
             SERVICE DESK · {sdRequests.length}
           </Typography>
-          {sdRequests.map(req => <ServiceDeskItem key={req.id} request={req} />)}
+          {sdRequests.map(req => <ServiceDeskItem key={req.id} request={req} onClick={() => onSdTicketClick(req)} />)}
         </>
       )}
     </Box>
@@ -242,10 +254,13 @@ const ZoneDetail: React.FC<{
 
 const ZoneSummary: React.FC<{
   questsByZone: Record<string, Quest[]>;
-  unmatchedCount: number;
+  sdByZone: Record<string, ServiceDeskRequest[]>;
   onZoneSelect: (id: string) => void;
-}> = ({ questsByZone, unmatchedCount, onZoneSelect }) => {
-  const activeZones = ZONES.filter(z => (questsByZone[z.id] ?? []).length > 0);
+}> = ({ questsByZone, sdByZone, onZoneSelect }) => {
+  const activeZones = ZONES.filter(z =>
+    (questsByZone[z.id] ?? []).length > 0 ||
+    (sdByZone[z.id] ?? []).some(r => r.status === 'new'),
+  );
 
   return (
     <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -256,29 +271,20 @@ const ZoneSummary: React.FC<{
           <Typography sx={{ color: '#2a6a7a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1 }}>AKTYWNE PAWILONY:</Typography>
           {activeZones.map(z => {
             const m = getZoneMetrics(questsByZone[z.id] ?? []);
+            const sdNew = (sdByZone[z.id] ?? []).filter(r => r.status === 'new').length;
             return (
               <Box key={z.id} onClick={() => onZoneSelect(z.id)}
                 sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', p: 0.75, borderRadius: 0.5, border: '1px solid #0f2a38', '&:hover': { bgcolor: '#0d1f2e', borderColor: '#2a4a5a' }, transition: 'all 0.15s' }}
               >
-                <Typography sx={{ color: '#9ad0e0', fontFamily: 'monospace', fontSize: 11 }}>Paw. {z.label.replace('\n', ' ')}</Typography>
+                <Typography sx={{ color: '#9ad0e0', fontFamily: 'monospace', fontSize: 11 }}>{z.id === 'other' ? z.label : `Paw. ${z.label.replace('\n', ' ')}`}</Typography>
                 <Box sx={{ display: 'flex', gap: 0.5 }}>
                   {m.pending > 0 && <Chip label={`⚡${m.pending}`} size="small" sx={{ height: 16, fontSize: 9, bgcolor: '#ff980025', color: '#ff9800' }} />}
                   {m.inProgress > 0 && <Chip label={`▶${m.inProgress}`} size="small" sx={{ height: 16, fontSize: 9, bgcolor: '#ffd54f25', color: '#ffd54f' }} />}
+                  {sdNew > 0 && <Chip label={`SD·${sdNew}`} size="small" sx={{ height: 16, fontSize: 9, bgcolor: '#00acc125', color: '#00acc1' }} />}
                 </Box>
               </Box>
             );
           })}
-        </>
-      )}
-      {unmatchedCount > 0 && (
-        <>
-          <Divider sx={{ borderColor: '#1a3548', my: 0.5 }} />
-          <Box onClick={() => onZoneSelect('__unmatched')}
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', p: 0.75, borderRadius: 0.5, border: '1px solid #3a2000', '&:hover': { bgcolor: '#1a0f00' } }}
-          >
-            <Typography sx={{ color: '#ff9800', fontFamily: 'monospace', fontSize: 11 }}>⚠ Nieprzypisane</Typography>
-            <Chip label={unmatchedCount} size="small" sx={{ height: 16, fontSize: 9, bgcolor: '#ff980025', color: '#ff9800' }} />
-          </Box>
         </>
       )}
     </Box>
@@ -287,12 +293,11 @@ const ZoneSummary: React.FC<{
 
 const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, sdByZone = {}, onZoneSelect, onDispatchQuest, bottomPanel, locations, onAssignQuestLocation, onCollapse }) => {
   const navigate = useNavigate();
-  const isUnmatched = selectedZoneId === '__unmatched';
+  const [selectedSdRequest, setSelectedSdRequest] = useState<ServiceDeskRequest | null>(null);
   const selectedZone = ZONES.find(z => z.id === selectedZoneId) ?? null;
   const selectedQuests = selectedZoneId ? (questsByZone[selectedZoneId] ?? []) : [];
   const selectedSdRequests = selectedZoneId ? (sdByZone[selectedZoneId] ?? []) : [];
-  const unmatchedQuests = questsByZone['__unmatched'] ?? [];
-  const showDetail = selectedZoneId && (selectedZone || isUnmatched);
+  const showDetail = selectedZoneId && selectedZone;
 
   return (
     <Box sx={{
@@ -318,19 +323,20 @@ const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, quest
         {showDetail ? (
           <ZoneDetail
             zone={selectedZone}
-            isUnmatched={isUnmatched}
+            isUnmatched={false}
             quests={selectedQuests}
             sdRequests={selectedSdRequests}
             onClose={() => onZoneSelect(null)}
             onNavigate={(id) => navigate(`/quests/${id}`)}
             onDispatchQuest={onDispatchQuest}
+            onSdTicketClick={setSelectedSdRequest}
             locations={locations}
             onAssignQuestLocation={onAssignQuestLocation}
           />
         ) : (
           <ZoneSummary
             questsByZone={questsByZone}
-            unmatchedCount={unmatchedQuests.length}
+            sdByZone={sdByZone}
             onZoneSelect={(id) => onZoneSelect(id)}
           />
         )}
@@ -340,6 +346,10 @@ const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, quest
           {bottomPanel}
         </Box>
       )}
+      <DispatchSdModal
+        request={selectedSdRequest}
+        onClose={() => setSelectedSdRequest(null)}
+      />
     </Box>
   );
 };

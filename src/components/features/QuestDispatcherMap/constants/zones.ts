@@ -86,6 +86,13 @@ export const ZONES: Zone[] = [
     aliases: ['wschód', 'Akredytacja Wschód','Wejście wschodnie', 'east', 'est', 'EST'],
     points: [[1119,925],[1135,990],[1470,928],[1452,860]] },
   { id: 'wtc', label: 'WTC',
-    aliases: ['WTC', 'Biuro Akredytacji', 'Wejście północne', 'Akredytacj Północ', 'NRT'],
+    aliases: ['WTC', 'Biuro Akredytacji', 'Wejście północne', 'Wejscie polnocne', 'Akredytacja Północ', 'Akredytacj Północ', 'Szatnia Północ', 'Szatnia Polnocna', 'Szatnia', 'NRT'],
     points: [[1765,361],[1805,490],[1920,468],[1880,340]] },
+
+  {
+    id: 'other', label: 'Inne',
+    aliases: ['inne', 'Plac Marka', 'Krewni Pyrkonu', 'Akredytacja', 'other', 'inny', 'inny pawilon', 'inny hall', 'inny h'],
+    shape: 'ellipse',
+    points: [[1330,780],[1380,830],[1400,760],[1420,790],[1350,820]]
+  }
 ];

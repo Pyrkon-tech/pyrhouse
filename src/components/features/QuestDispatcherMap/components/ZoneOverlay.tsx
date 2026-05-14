@@ -175,6 +175,36 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
           <animate attributeName="opacity" values="1;0.4;1" dur="2.4s" repeatCount="indefinite" />
         </circle>
       )}
+
+      {/* SD new badge — teal pulsing, anchored to centroid bottom-right to stay inside the zone */}
+      {metrics.sdNew > 0 && (() => {
+        const sdx = Math.round(cx + (bb.maxX - cx) * 0.40);
+        const sdy = Math.round(cy + (bb.maxY - cy) * 0.20);
+        return (
+          <g style={{ pointerEvents: 'none' }}>
+            <circle cx={sdx} cy={sdy} r={20} fill="#00acc1" opacity={0.15}
+              style={{ filter: 'blur(6px)' }}>
+              <animate attributeName="opacity" values="0.15;0.4;0.15" dur="1.8s" repeatCount="indefinite" />
+            </circle>
+            <circle cx={sdx} cy={sdy} r={15} fill="#00304a" stroke="#00acc1" strokeWidth={1.5}>
+              <animate attributeName="opacity" values="1;0.55;1" dur="1.8s" repeatCount="indefinite" />
+            </circle>
+            <text x={sdx} y={sdy + 1}
+              textAnchor="middle" dominantBaseline="central"
+              fill="#00e5ff" fontSize={9} fontWeight="bold" fontFamily="monospace"
+            >SD</text>
+            {metrics.sdNew > 1 && (
+              <>
+                <circle cx={sdx + 9} cy={sdy - 9} r={7} fill="#d32f2f" stroke="rgba(255,255,255,0.4)" strokeWidth={1} />
+                <text x={sdx + 9} y={sdy - 8}
+                  textAnchor="middle" dominantBaseline="central"
+                  fill="#fff" fontSize={9} fontWeight="bold" fontFamily="monospace"
+                >{metrics.sdNew}</text>
+              </>
+            )}
+          </g>
+        );
+      })()}
     </g>
   );
 };

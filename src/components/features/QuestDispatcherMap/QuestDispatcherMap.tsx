@@ -132,6 +132,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
         <Box sx={{ position: 'relative' }}>
           <MapCanvas
             questsByZone={questsByZone}
+            sdByZone={sdByZone}
             selectedZoneId={selectedZoneId}
             onZoneSelect={setSelectedZoneId}
             onZoneDispatch={handleZoneDispatch}

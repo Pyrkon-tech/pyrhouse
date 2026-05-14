@@ -19,6 +19,8 @@ export interface ZoneMetrics {
   alertVisible: number;
   /** Pending quests within 2h window (or same-day if no time specified) — pulse exclamation */
   alertPulsing: number;
+  /** SD tickets with status 'new' in this zone */
+  sdNew: number;
 }
 
 // Dispatch Volunteer System

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import type { Quest } from '../../../../types/quest.types';
+import type { ServiceDeskRequest } from '../../../../types/servicedesk.types';
 import type { Point } from '../types';
 import { ZONES } from '../constants/zones';
 import { getZoneMetrics } from '../utils/matching';
@@ -9,6 +10,7 @@ import ZoneOverlay from './ZoneOverlay';
 
 interface MapCanvasProps {
   questsByZone: Record<string, Quest[]>;
+  sdByZone?: Record<string, ServiceDeskRequest[]>;
   selectedZoneId: string | null;
   onZoneSelect: (id: string | null) => void;
   onZoneDispatch?: (zoneId: string) => void;
@@ -18,8 +20,7 @@ interface MapCanvasProps {
   children?: React.ReactNode;
 }
 
-const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZoneSelect, onZoneDispatch, debugMode = false, urgencyHours = 8, simulatedTime, children }) => {
-  const unmatchedQuests = questsByZone['__unmatched'] ?? [];
+const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, sdByZone = {}, selectedZoneId, onZoneSelect, onZoneDispatch, debugMode = false, urgencyHours = 8, simulatedTime, children }) => {
 
   // Debug state
   const [debugCoords, setDebugCoords] = useState<{ x: number; y: number } | null>(null);
@@ -103,21 +104,13 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, selectedZoneId, onZ
             <ZoneOverlay
               key={zone.id}
               zone={zone}
-              metrics={getZoneMetrics(questsByZone[zone.id] ?? [], urgencyHours, simulatedTime)}
+              metrics={getZoneMetrics(questsByZone[zone.id] ?? [], urgencyHours, simulatedTime, sdByZone[zone.id] ?? [])}
               isSelected={selectedZoneId === zone.id}
               onSelect={(id) => onZoneSelect(selectedZoneId === id ? null : id)}
               onDispatch={onZoneDispatch}
             />
           ))}
 
-          {/* Unmatched indicator */}
-          {unmatchedQuests.length > 0 && (
-            <g onClick={(e) => { e.stopPropagation(); onZoneSelect('__unmatched'); }} style={{ cursor: 'pointer' }}>
-              <rect x="80" y="940" width="300" height="60" fill="rgba(80,30,0,0.4)" stroke="#ff980066" strokeWidth={2} rx={6} />
-              <text x="230" y="964" textAnchor="middle" fill="#ff9800" fontSize={18} fontFamily="monospace">⚠ NIEPRZYPISANE</text>
-              <text x="230" y="988" textAnchor="middle" fill="#ffa726" fontSize={16} fontFamily="monospace" fontWeight="bold">{unmatchedQuests.length} zamówień</text>
-            </g>
-          )}
 
           {/* Watermark */}
           <text x="1065" y="1020" textAnchor="middle" fill="rgba(20,60,90,0.5)" fontSize={18} fontFamily="monospace" letterSpacing={6}>
