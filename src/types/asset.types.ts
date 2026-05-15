@@ -105,3 +105,55 @@ export interface BulkAddAssetsResponse {
     error: string;
   }[];
 }
+
+// ============================================================================
+// Reservations
+// ============================================================================
+
+export type ReservationStatus = 'free' | 'claimed' | 'all';
+
+export interface AssetReservation {
+  id: number;
+  pyr_code: string;
+  category_id: number;
+  reserved_at: string;
+  claimed_at: string | null;
+}
+
+export interface CreateReservationsPayload {
+  category_id: number;
+  quantity: number;
+}
+
+export interface CreateReservationsResponse {
+  reservations: AssetReservation[];
+}
+
+export interface ClaimItem {
+  pyr_code: string;
+  serial?: string;
+}
+
+export interface ClaimReservationsPayload {
+  origin: string;
+  location_id?: number;
+  items: ClaimItem[];
+}
+
+export interface ClaimReservationsResponse {
+  created: Asset[];
+}
+
+export interface DeleteReservationsPayload {
+  pyr_codes?: string[];
+  ids?: number[];
+}
+
+export interface DeleteReservationsResponse {
+  deleted: number;
+}
+
+export interface ClaimError {
+  pyr_code: string;
+  reason: string;
+}

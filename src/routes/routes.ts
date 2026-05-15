@@ -27,6 +27,7 @@ const ReleasesListPage = lazy(() => import('../components/features/Releases/Rele
 const ReleaseCreatePage = lazy(() => import('../components/features/Releases/ReleaseCreatePage'));
 const ReleaseDetailPage = lazy(() => import('../components/features/Releases/ReleaseDetailPage'));
 const BudgetPage = lazy(() => import('../components/features/BudgetPage'));
+const ReservationsPage = lazy(() => import('../components/features/ReservationsPage'));
 
 // Public routes (nie wymagają autoryzacji)
 export const publicRoutes: RouteConfig[] = [
@@ -83,6 +84,12 @@ export const protectedRoutes: RouteConfig[] = [
     title: 'Dodaj przedmiot',
     icon: 'Add',
     showInNav: true,
+  },
+  {
+    path: '/reservations',
+    component: ReservationsPage,
+    title: 'Rezerwacje PYR',
+    showInNav: false,
   },
   {
     path: '/transfers/create',

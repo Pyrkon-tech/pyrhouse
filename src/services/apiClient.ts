@@ -148,9 +148,11 @@ class ApiClient {
         const details: string | undefined =
           typeof detailsField === 'string'
             ? detailsField
-            : Object.keys(rest).length > 0
-              ? JSON.stringify(rest)
-              : undefined;
+            : detailsField !== undefined
+              ? JSON.stringify(detailsField)
+              : Object.keys(rest).length > 0
+                ? JSON.stringify(rest)
+                : undefined;
 
         throw new ApiError(errorMessage, response.status, code as string | undefined, details);
       }
@@ -223,8 +225,8 @@ class ApiClient {
   /**
    * DELETE request
    */
-  delete<T>(endpoint: string, config?: RequestConfig): Promise<T> {
-    return this.request<T>(endpoint, { ...config, method: 'DELETE' });
+  delete<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
+    return this.request<T>(endpoint, { ...config, method: 'DELETE', body: data });
   }
 }
 

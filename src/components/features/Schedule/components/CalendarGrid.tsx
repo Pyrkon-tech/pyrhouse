@@ -9,9 +9,10 @@ import { parseAsLocal, avatarColor } from '../utils';
 // ---- Constants ---------------------------------------------------------------
 
 const TIME_AXIS_W = 56;
-const MIN_COL_W = 160;
+const MIN_COL_W = 210;
 const MIN_SLOT_H = 32;
-const HOUR_LABEL_H = 20; // height of each hour row label zone
+const HOUR_LABEL_H = 20;
+const CHIPS_PER_ROW = 4;
 
 // ---- Helpers -----------------------------------------------------------------
 
@@ -19,7 +20,6 @@ function fmtHour(h: number): string {
   const h24 = ((h % 24) + 24) % 24;
   return `${String(h24).padStart(2, '0')}:00`;
 }
-
 
 function slotStartH(slot: ScheduleSlot): number {
   const d = parseAsLocal(slot.start);
@@ -35,12 +35,81 @@ function slotEndH(slot: ScheduleSlot): number {
   return h === 0 ? 24 : h;
 }
 
+/** Compute per-hour heights so each hour row is tall enough for its chips. */
+function computeHourLayout(
+  days: import('../types').CalendarDay[],
+  minHour: number,
+  maxHour: number,
+  pxPerHour: number,
+): { hourHeights: number[]; hourOffsets: number[]; totalH: number } {
+  const chipH = pxPerHour < 35 ? 16 : pxPerHour < 70 ? 19 : 22;
+  const rowGapPx = pxPerHour < 35 ? 2 : 3;
+  const rowPx = chipH + rowGapPx;
+  const hourCount = maxHour - minHour;
+
+  const hourHeights: number[] = Array.from({ length: hourCount }, (_, i) => {
+    const h = minHour + i;
+    let maxVols = 0;
+    for (const day of days) {
+      for (const { slot } of day.slotItems) {
+        const sH = slotStartH(slot);
+        const eH = slotEndH(slot);
+        if (h < eH && h + 1 > sH) {
+          maxVols = Math.max(maxVols, slot.volunteers.length);
+        }
+      }
+    }
+    const rows = Math.max(1, Math.ceil(maxVols / CHIPS_PER_ROW));
+    return Math.max(pxPerHour, rows * rowPx + 8);
+  });
+
+  const hourOffsets: number[] = [0];
+  for (const h of hourHeights) {
+    hourOffsets.push(hourOffsets[hourOffsets.length - 1] + h);
+  }
+
+  return { hourHeights, hourOffsets, totalH: hourOffsets[hourCount] };
+}
+
+/** Convert absolute Y within column to fractional hour. */
+function yToHour(relY: number, minHour: number, hourOffsets: number[]): number {
+  for (let i = 0; i < hourOffsets.length - 1; i++) {
+    if (relY < hourOffsets[i + 1]) {
+      const frac = (relY - hourOffsets[i]) / (hourOffsets[i + 1] - hourOffsets[i]);
+      return minHour + i + frac;
+    }
+  }
+  return minHour + hourOffsets.length - 1;
+}
+
+/** Top pixel position for a slot. */
+function getSlotTop(startH: number, minHour: number, hourOffsets: number[], hourHeights: number[]): number {
+  const idx = Math.max(0, Math.min(Math.floor(startH - minHour), hourHeights.length - 1));
+  const frac = Math.max(0, startH - minHour - idx);
+  return hourOffsets[idx] + frac * hourHeights[idx];
+}
+
+/** Pixel height for a slot spanning startH..endH. */
+function getSlotH(startH: number, endH: number, minHour: number, hourOffsets: number[], hourHeights: number[]): number {
+  const si = Math.max(0, Math.min(Math.floor(startH - minHour), hourHeights.length - 1));
+  const sFrac = Math.max(0, startH - minHour - si);
+  const startPx = hourOffsets[si] + sFrac * hourHeights[si];
+
+  const ei = Math.max(0, Math.min(Math.floor(endH - minHour), hourHeights.length));
+  const eFrac = Math.max(0, endH - minHour - Math.floor(endH - minHour));
+  const endOffset = ei < hourOffsets.length ? hourOffsets[ei] : hourOffsets[hourOffsets.length - 1];
+  const endPx = eFrac > 0 && ei < hourHeights.length
+    ? hourOffsets[ei] + eFrac * hourHeights[ei]
+    : endOffset;
+
+  return Math.max(MIN_SLOT_H, endPx - startPx);
+}
+
 // ---- SlotBlock ---------------------------------------------------------------
 
 interface DragPayload {
   volunteerId: number;
   nickname: string;
-  /** Present when dragging an existing chip (move). Absent when dragging from roster (assign). */
   assignmentId?: number;
   fromSlotId?: number;
 }
@@ -49,6 +118,8 @@ interface SlotBlockProps {
   item: CalendarSlotItem;
   minHour: number;
   pxPerHour: number;
+  hourOffsets: number[];
+  hourHeights: number[];
   isSelected: boolean;
   isAssignMode: boolean;
   highlightedVolunteerId: number | null;
@@ -63,7 +134,7 @@ interface SlotBlockProps {
 }
 
 const SlotBlock: React.FC<SlotBlockProps> = ({
-  item, minHour, pxPerHour,
+  item, minHour, pxPerHour, hourOffsets, hourHeights,
   isSelected, isAssignMode, highlightedVolunteerId, nicknameToVolId,
   canEdit, onSelect, onContextMenu, onAssignModeClick, onRemoveAssignment, onMoveAssignment, onAssignVolunteer,
 }) => {
@@ -73,33 +144,21 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
 
   const startH = slotStartH(slot);
   const endH = slotEndH(slot);
-  const durationH = endH - startH;
-  const top = (startH - minHour) * pxPerHour;
-  const naturalH = durationH * pxPerHour;
-  const height = Math.max(MIN_SLOT_H, naturalH);
   const isCrossMidnight = endH > 24;
 
+  const top = getSlotTop(startH, minHour, hourOffsets, hourHeights);
+  const slotHeight = getSlotH(startH, endH, minHour, hourOffsets, hourHeights);
+
   // Chip dimensions scale with zoom level
-  const chipH  = pxPerHour < 35 ? 13 : pxPerHour < 70 ? 15 : 17;
-  const chipFs = pxPerHour < 35 ? '0.5rem'  : pxPerHour < 70 ? '0.6rem'  : '0.65rem';
-  const chipPx = pxPerHour < 35 ? 0.35 : 0.45;
+  const chipH  = pxPerHour < 35 ? 16 : pxPerHour < 70 ? 19 : 22;
+  const chipFs = pxPerHour < 35 ? '0.62rem' : pxPerHour < 70 ? '0.72rem' : '0.78rem';
+  const chipPx = pxPerHour < 35 ? 0.45 : 0.6;
   const rowGapPx = pxPerHour < 35 ? 2 : 3;
-  const colGap   = pxPerHour < 35 ? 0.25 : 0.35;
-  const rowPx = chipH + rowGapPx; // height consumed per chip row
+  const colGap   = pxPerHour < 35 ? 0.3 : 0.4;
 
-  // isLarge: enough room for label row (non-festival) + ≥2 chip rows
+  // isLarge: tall enough for label row + chips (non-festival only)
   const labelRowPx = !isFestival ? 20 : 0;
-  const isLarge = height >= labelRowPx + rowPx * 2 + 4;
-
-  // Overflow: estimate 3 chips/row (suitable for 160-250px column widths)
-  const CHIPS_PER_ROW = 3;
-  const availH = Math.max(rowPx, height - labelRowPx - 6);
-  const maxRows = Math.max(1, Math.floor(availH / rowPx));
-  const maxVisible = isLarge ? maxRows * CHIPS_PER_ROW : slot.volunteers.length;
-  const visibleVols = slot.volunteers.length > maxVisible + 1
-    ? slot.volunteers.slice(0, maxVisible)
-    : slot.volunteers;
-  const overflowCount = slot.volunteers.length - visibleVols.length;
+  const isLarge = slotHeight >= labelRowPx + (chipH + rowGapPx) * 2 + 4;
 
   const alreadyHere = isAssignMode && highlightedVolunteerId != null &&
     slot.volunteers.some(sv => nicknameToVolId.get(sv.nickname) === highlightedVolunteerId);
@@ -136,7 +195,6 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
     } catch { /* ignore malformed */ }
   };
 
-  // ---- Shared chip styles ----
   const baseChipSx = {
     display: 'inline-flex' as const,
     alignItems: 'center' as const,
@@ -152,7 +210,7 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
     flexShrink: 0,
   };
 
-  const chips = visibleVols.map(sv => {
+  const chips = slot.volunteers.map(sv => {
     const volId = nicknameToVolId.get(sv.nickname);
     const isHl = highlightedVolunteerId != null && volId === highlightedVolunteerId;
     const color = avatarColor(volId ?? 0);
@@ -196,19 +254,12 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
     );
   });
 
-  const overflowBadge = overflowCount > 0 ? (
-    <Box sx={{ ...baseChipSx, borderColor: 'rgba(255,255,255,0.15)', bgcolor: 'rgba(255,255,255,0.06)', color: 'text.disabled', fontWeight: 700, cursor: 'default' }}>
-      +{overflowCount}
-    </Box>
-  ) : null;
-
   const assignHint = isAssignMode && !alreadyHere
     ? <Box sx={{ fontSize: chipFs, color: 'primary.main', fontWeight: 700, lineHeight: `${chipH}px`, flexShrink: 0 }}>＋</Box>
     : isAssignMode && alreadyHere
     ? <Box sx={{ fontSize: '0.52rem', color: 'rgba(255,210,0,0.9)', fontWeight: 700, lineHeight: `${chipH}px`, flexShrink: 0 }}>✓</Box>
     : null;
 
-  // Festival understaffed dot
   const understaffedDot = isFestival && slot.volunteers.length < 2 ? (
     <Box sx={{
       flexShrink: 0,
@@ -220,7 +271,6 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
     }} />
   ) : null;
 
-  // Non-festival count badge
   const countBadge = !isFestival ? (
     <Box sx={{
       flexShrink: 0,
@@ -236,31 +286,13 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
     </Box>
   ) : null;
 
-  // Chip area: wrap (large) vs single-row (compact)
-  const chipAreaWrap = (
+  const chipArea = (
     <Box sx={{
       display: 'flex',
       flexWrap: 'wrap',
       rowGap: `${rowGapPx}px`,
       columnGap: colGap,
       alignContent: 'flex-start',
-      overflow: 'hidden',
-      flex: 1,
-      minHeight: 0,
-    }}>
-      {chips}{overflowBadge}{assignHint}
-    </Box>
-  );
-
-  const chipAreaRow = (
-    <Box sx={{
-      display: 'flex',
-      flexWrap: 'nowrap',
-      gap: colGap,
-      overflow: 'hidden',
-      flex: 1,
-      alignItems: 'center',
-      minWidth: 0,
     }}>
       {chips}{assignHint}
     </Box>
@@ -277,7 +309,7 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
         top,
         left: `calc(${left * 100}% + 1px)`,
         width: `calc(${width * 100}% - 2px)`,
-        height,
+        height: slotHeight,
         bgcolor: alreadyHere
           ? 'rgba(255,200,0,0.13)'
           : isAssignMode ? 'rgba(255,152,0,0.06)'
@@ -308,7 +340,6 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
       }}
     >
       {isLarge && !isFestival ? (
-        // Large non-festival (montage/demontage): label row + wrapped chips
         <>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, mb: `${rowGapPx}px` }}>
             <Typography sx={{
@@ -322,18 +353,16 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
             </Typography>
             {countBadge}
           </Box>
-          {chipAreaWrap}
+          {chipArea}
         </>
       ) : isLarge ? (
-        // Large festival: chips wrap top-left + understaffed dot at top-right
         <Box sx={{ display: 'flex', alignItems: 'flex-start', overflow: 'hidden', flex: 1, minHeight: 0, gap: 0.4 }}>
-          {chipAreaWrap}
+          {chipArea}
           {understaffedDot}
         </Box>
       ) : (
-        // Compact (all types): single chip row + indicator at right
-        <Box sx={{ display: 'flex', alignItems: 'center', overflow: 'hidden', flex: 1, minHeight: 0, gap: 0.4 }}>
-          {chipAreaRow}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', overflow: 'hidden', flex: 1, minHeight: 0, gap: 0.4 }}>
+          {chipArea}
           {isFestival ? understaffedDot : countBadge}
         </Box>
       )}
@@ -345,28 +374,33 @@ const MemoSlotBlock = React.memo(SlotBlock);
 
 // ---- Now line ----------------------------------------------------------------
 
-const NowLine: React.FC<{ top: number }> = ({ top }) => (
+const NowLine: React.FC<{ top: number; isToday: boolean }> = ({ top, isToday }) => (
   <Box sx={{
     position: 'absolute',
     top,
     left: 0,
     right: 0,
-    height: 2,
-    bgcolor: 'error.main',
-    opacity: 0.8,
+    height: 0,
+    borderTop: isToday
+      ? '2px dashed rgba(255,152,0,0.9)'
+      : '1px dashed rgba(255,152,0,0.35)',
     zIndex: 8,
     pointerEvents: 'none',
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      left: -4,
-      top: -4,
-      width: 10,
-      height: 10,
-      borderRadius: '50%',
-      bgcolor: 'error.main',
-    },
-  }} />
+  }}>
+    {/* Dot on left edge — only on today */}
+    {isToday && (
+      <Box sx={{
+        position: 'absolute',
+        left: -5,
+        top: -5,
+        width: 10,
+        height: 10,
+        borderRadius: '50%',
+        bgcolor: 'primary.main',
+        boxShadow: '0 0 6px rgba(255,152,0,0.8)',
+      }} />
+    )}
+  </Box>
 );
 
 // ---- DayColumn ---------------------------------------------------------------
@@ -376,6 +410,8 @@ interface DayColumnProps {
   minHour: number;
   maxHour: number;
   pxPerHour: number;
+  hourOffsets: number[];
+  hourHeights: number[];
   totalH: number;
   now: Date;
   canEdit: boolean;
@@ -393,7 +429,7 @@ interface DayColumnProps {
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({
-  day, minHour, maxHour, pxPerHour, totalH, now,
+  day, minHour, maxHour, pxPerHour, hourOffsets, hourHeights, totalH, now,
   canEdit, isAssignMode, highlightedVolunteerId, selectedSlotId,
   nicknameToVolId, onSlotSelect, onContextMenu, onAssignModeClick,
   onRemoveAssignment, onMoveAssignment, onAssignVolunteer, onEmptyClick,
@@ -404,15 +440,14 @@ const DayColumn: React.FC<DayColumnProps> = ({
     if (!canEdit || !onEmptyClick || !containerRef.current || isAssignMode) return;
     const rect = containerRef.current.getBoundingClientRect();
     const relY = e.clientY - rect.top;
-    const rawH = minHour + relY / pxPerHour;
+    const rawH = yToHour(relY, minHour, hourOffsets);
     const snapped = Math.round(rawH * 2) / 2;
     const clamped = Math.max(minHour, Math.min(maxHour - 1, snapped));
     onEmptyClick(day.dateKey, clamped);
-  }, [canEdit, onEmptyClick, isAssignMode, minHour, maxHour, pxPerHour, day.dateKey]);
+  }, [canEdit, onEmptyClick, isAssignMode, minHour, maxHour, hourOffsets, day.dateKey]);
 
-  /** Find which slot covers a given Y position within this column */
   const slotAtY = useCallback((relY: number) => {
-    const hour = minHour + relY / pxPerHour;
+    const hour = yToHour(relY, minHour, hourOffsets);
     return day.slotItems.find(({ slot }) => {
       const d = parseAsLocal(slot.start);
       const startH = d.getHours() + d.getMinutes() / 60;
@@ -422,7 +457,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
       if (endH === 0) endH = 24;
       return hour >= startH && hour < endH;
     }) ?? null;
-  }, [day.slotItems, minHour, pxPerHour]);
+  }, [day.slotItems, minHour, hourOffsets]);
 
   const handleColumnDragOver = useCallback((e: React.DragEvent) => {
     if (!canEdit) return;
@@ -440,20 +475,18 @@ const DayColumn: React.FC<DayColumnProps> = ({
       if (!target) return;
       const toSlotId = target.slot.id;
       if (data.assignmentId != null && data.fromSlotId != null) {
-        // chip-to-chip move — only if SlotBlock didn't already handle it (stopPropagation)
         if (toSlotId !== data.fromSlotId) {
           onMoveAssignment?.(data.assignmentId, data.volunteerId, data.nickname, data.fromSlotId, toSlotId);
         }
       } else {
-        // drag from roster — assign
         onAssignVolunteer?.(data.volunteerId, data.nickname, toSlotId);
       }
     } catch { /* ignore malformed */ }
   }, [canEdit, slotAtY, onMoveAssignment, onAssignVolunteer]);
 
   const nowH = now.getHours() + now.getMinutes() / 60;
-  const showNow = day.isToday && nowH >= minHour && nowH <= maxHour;
-  const nowTop = showNow ? (nowH - minHour) * pxPerHour : null;
+  const showNow = nowH >= minHour && nowH <= maxHour;
+  const nowTop = showNow ? getSlotTop(nowH, minHour, hourOffsets, hourHeights) : null;
 
   const hourCount = maxHour - minHour;
 
@@ -474,10 +507,10 @@ const DayColumn: React.FC<DayColumnProps> = ({
         cursor: canEdit && !isAssignMode ? 'crosshair' : 'default',
       }}
     >
-      {/* Hour grid lines */}
+      {/* Hour grid lines — positioned using hourOffsets */}
       {Array.from({ length: hourCount + 1 }, (_, i) => {
         const h = minHour + i;
-        const top = i * pxPerHour;
+        const top = hourOffsets[i];
         const isMidnight = h % 24 === 0 && h !== minHour;
         const isMajor = h % 6 === 0;
         return (
@@ -500,26 +533,8 @@ const DayColumn: React.FC<DayColumnProps> = ({
         );
       })}
 
-      {/* Half-hour lines */}
-      {pxPerHour >= 60 && Array.from({ length: hourCount }, (_, i) => {
-        const top = (i + 0.5) * pxPerHour;
-        return (
-          <Box
-            key={`h${i}`}
-            sx={{
-              position: 'absolute',
-              left: 0, right: 0,
-              top,
-              height: '1px',
-              bgcolor: 'rgba(255,255,255,0.025)',
-              pointerEvents: 'none',
-            }}
-          />
-        );
-      })}
-
       {/* Now line */}
-      {nowTop !== null && <NowLine top={nowTop} />}
+      {nowTop !== null && <NowLine top={nowTop} isToday={day.isToday} />}
 
       {/* Slot blocks */}
       {day.slotItems.map(item => (
@@ -528,6 +543,8 @@ const DayColumn: React.FC<DayColumnProps> = ({
           item={item}
           minHour={minHour}
           pxPerHour={pxPerHour}
+          hourOffsets={hourOffsets}
+          hourHeights={hourHeights}
           isSelected={selectedSlotId === item.slot.id}
           isAssignMode={isAssignMode}
           highlightedVolunteerId={highlightedVolunteerId}
@@ -547,44 +564,78 @@ const DayColumn: React.FC<DayColumnProps> = ({
 
 // ---- Time axis ---------------------------------------------------------------
 
-const TimeAxis: React.FC<{ minHour: number; maxHour: number; pxPerHour: number; totalH: number }> = ({
-  minHour, maxHour, pxPerHour, totalH,
-}) => (
-  <Box
-    sx={{
-      width: TIME_AXIS_W,
-      flexShrink: 0,
-      height: totalH,
-      position: 'relative',
-      borderRight: '1px solid',
-      borderColor: 'divider',
-    }}
-  >
-    {Array.from({ length: maxHour - minHour + 1 }, (_, i) => {
-      const h = minHour + i;
-      const top = i * pxPerHour - HOUR_LABEL_H / 2;
-      const isMidnight = h % 24 === 0 && h !== minHour;
-      return (
-        <Typography
-          key={h}
-          sx={{
-            position: 'absolute',
-            right: 6,
-            top,
-            fontSize: '0.55rem',
-            fontFamily: 'monospace',
-            lineHeight: `${HOUR_LABEL_H}px`,
-            color: isMidnight ? 'warning.main' : h % 6 === 0 ? 'text.secondary' : 'text.disabled',
-            fontWeight: isMidnight || h % 6 === 0 ? 700 : 400,
-            userSelect: 'none',
-          }}
-        >
-          {fmtHour(h)}
-        </Typography>
-      );
-    })}
-  </Box>
-);
+const TimeAxis: React.FC<{
+  minHour: number;
+  maxHour: number;
+  hourOffsets: number[];
+  hourHeights: number[];
+  totalH: number;
+  now: Date;
+}> = ({ minHour, maxHour, hourOffsets, hourHeights, totalH, now }) => {
+  const nowH = now.getHours() + now.getMinutes() / 60;
+  const showNow = nowH >= minHour && nowH <= maxHour;
+  const nowTop = showNow ? getSlotTop(nowH, minHour, hourOffsets, hourHeights) : null;
+  const nowLabel = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  return (
+    <Box
+      sx={{
+        width: TIME_AXIS_W,
+        flexShrink: 0,
+        height: totalH,
+        position: 'relative',
+        borderRight: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      {Array.from({ length: maxHour - minHour + 1 }, (_, i) => {
+        const h = minHour + i;
+        const top = (hourOffsets[i] ?? hourOffsets[hourOffsets.length - 1]) - HOUR_LABEL_H / 2;
+        const isMidnight = h % 24 === 0 && h !== minHour;
+        return (
+          <Typography
+            key={h}
+            sx={{
+              position: 'absolute',
+              right: 6,
+              top,
+              fontSize: isMidnight || h % 6 === 0 ? '0.72rem' : '0.66rem',
+              fontFamily: 'monospace',
+              lineHeight: `${HOUR_LABEL_H}px`,
+              color: isMidnight ? 'warning.main' : h % 6 === 0 ? 'text.primary' : 'text.secondary',
+              fontWeight: isMidnight ? 700 : h % 6 === 0 ? 700 : 600,
+              userSelect: 'none',
+            }}
+          >
+            {fmtHour(h)}
+          </Typography>
+        );
+      })}
+
+      {/* Now indicator on time axis */}
+      {nowTop !== null && (
+        <Box sx={{
+          position: 'absolute',
+          right: 0,
+          top: nowTop - 9,
+          bgcolor: 'primary.main',
+          color: '#000',
+          fontSize: '0.6rem',
+          fontFamily: 'monospace',
+          fontWeight: 700,
+          px: 0.5,
+          lineHeight: '18px',
+          borderRadius: '3px 0 0 3px',
+          zIndex: 12,
+          userSelect: 'none',
+          boxShadow: '0 0 6px rgba(255,152,0,0.6)',
+        }}>
+          {nowLabel}
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 // ---- Day header row ----------------------------------------------------------
 
@@ -605,7 +656,6 @@ const DayHeaderRow: React.FC<{
       borderColor: 'divider',
     }}
   >
-    {/* Time axis spacer */}
     <Box sx={{ width: TIME_AXIS_W, flexShrink: 0, borderRight: '1px solid', borderColor: 'divider' }} />
 
     {days.map(day => {
@@ -701,6 +751,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     [volunteers],
   );
 
+  const { hourHeights, hourOffsets, totalH } = React.useMemo(
+    () => computeHourLayout(days, minHour, maxHour, pxPerHour),
+    [days, minHour, maxHour, pxPerHour],
+  );
+
   if (days.length === 0) {
     return (
       <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -711,14 +766,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   }
 
-  const totalH = (maxHour - minHour) * pxPerHour;
-
   return (
     <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Sticky header */}
       <DayHeaderRow days={days} canEdit={canEdit} onAddSlot={onAddSlot} />
 
-      {/* Scrollable body */}
       <Box
         sx={{
           flex: 1,
@@ -731,19 +782,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           '&::-webkit-scrollbar-thumb': { bgcolor: 'action.disabled', borderRadius: 1 },
         }}
       >
-        {/* Time axis — sticky horizontally */}
-        <Box
-          sx={{
-            position: 'sticky',
-            left: 0,
-            zIndex: 10,
-            bgcolor: 'background.default',
-          }}
-        >
-          <TimeAxis minHour={minHour} maxHour={maxHour} pxPerHour={pxPerHour} totalH={totalH} />
+        <Box sx={{ position: 'sticky', left: 0, zIndex: 10, bgcolor: 'background.default' }}>
+          <TimeAxis minHour={minHour} maxHour={maxHour} hourOffsets={hourOffsets} hourHeights={hourHeights} totalH={totalH} now={now} />
         </Box>
 
-        {/* Day columns */}
         {days.map(day => (
           <DayColumn
             key={day.dateKey}
@@ -751,6 +793,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             minHour={minHour}
             maxHour={maxHour}
             pxPerHour={pxPerHour}
+            hourOffsets={hourOffsets}
+            hourHeights={hourHeights}
             totalH={totalH}
             now={now}
             canEdit={canEdit}

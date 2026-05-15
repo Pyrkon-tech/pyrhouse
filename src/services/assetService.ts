@@ -107,3 +107,35 @@ interface AddAssetsWithoutSerialResponse {
  */
 export const addAssetsWithoutSerialAPI = (payload: AddAssetWithoutSerialPayload) =>
   apiClient.post<AddAssetsWithoutSerialResponse>('/assets/without-serial', payload);
+
+// ============================================================================
+// Reservations
+// ============================================================================
+
+import type {
+  AssetReservation,
+  ReservationStatus,
+  CreateReservationsPayload,
+  CreateReservationsResponse,
+  ClaimReservationsPayload,
+  ClaimReservationsResponse,
+  DeleteReservationsPayload,
+  DeleteReservationsResponse,
+} from '../types/asset.types';
+
+export const createReservationsAPI = (payload: CreateReservationsPayload) =>
+  apiClient.post<CreateReservationsResponse>('/assets/reservations', payload);
+
+export const getReservationsAPI = (params?: { status?: ReservationStatus; category_id?: number }) => {
+  const query = new URLSearchParams();
+  if (params?.status) query.set('status', params.status);
+  if (params?.category_id) query.set('category_id', String(params.category_id));
+  const qs = query.toString();
+  return apiClient.get<AssetReservation[]>(`/assets/reservations${qs ? `?${qs}` : ''}`);
+};
+
+export const claimReservationsAPI = (payload: ClaimReservationsPayload) =>
+  apiClient.post<ClaimReservationsResponse>('/assets/reservations/claim', payload);
+
+export const deleteReservationsAPI = (payload: DeleteReservationsPayload) =>
+  apiClient.delete<DeleteReservationsResponse>('/assets/reservations', payload);

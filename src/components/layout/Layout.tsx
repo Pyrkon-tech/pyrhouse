@@ -36,6 +36,7 @@ const RocketLaunch = lazy(() => import('@mui/icons-material/RocketLaunch'));
 const Quiz = lazy(() => import('@mui/icons-material/Quiz'));
 const Inventory2 = lazy(() => import('@mui/icons-material/Inventory2'));
 const AddTask = lazy(() => import('@mui/icons-material/AddTask'));
+const ConfirmationNumber = lazy(() => import('@mui/icons-material/ConfirmationNumber'));
 const Warehouse = lazy(() => import('@mui/icons-material/Warehouse'));
 const EditLocationAlt = lazy(() => import('@mui/icons-material/EditLocationAlt'));
 const Category = lazy(() => import('@mui/icons-material/Category'));
@@ -92,6 +93,7 @@ const Icons = {
   Quiz,
   Inventory2,
   AddTask,
+  ConfirmationNumber,
   Warehouse,
   EditLocationAlt,
   Category,
@@ -506,9 +508,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     </Box>
   );
 
+  const virtualParents: Record<string, string[]> = {
+    reservations: ['add-item', 'reservations'],
+  };
+
   const generateBreadcrumbs = () => {
-    const pathnames = window.location.pathname.split('/').filter((x) => x);
-    if (pathnames.length === 1 && ['home', 'dispatch'].includes(pathnames[0])) return null;
+    const raw = window.location.pathname.split('/').filter((x) => x);
+    if (raw.length === 1 && ['home', 'dispatch'].includes(raw[0])) return null;
+    const pathnames = raw.length === 1 && virtualParents[raw[0]] ? virtualParents[raw[0]] : raw;
     return <BreadcrumbsComponent pathnames={pathnames} />;
   };
 

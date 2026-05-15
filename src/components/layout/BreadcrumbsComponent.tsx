@@ -20,7 +20,8 @@ const defaultTranslations: { [key: string]: string } = {
   warehouses: 'Magazyny',
   users: 'Użytkownicy',
   list: 'Magazyn',
-  'add-item': 'Nowy sprzęt'
+  'add-item': 'Nowy sprzęt',
+  reservations: 'Rezerwacje PYR'
 };
 
 const BreadcrumbsComponent: React.FC<BreadcrumbsComponentProps> = ({ pathnames, translations = {} }) => {

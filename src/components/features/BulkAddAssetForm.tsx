@@ -12,6 +12,13 @@ import {
   Dialog,
   DialogContent,
   Grid,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Paper,
 } from '@mui/material';
 import { bulkAddAssetsAPI } from '../../services/assetService';
 import { BarcodeGenerator } from '../common/BarcodeGenerator';
@@ -228,52 +235,52 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
         </Grid>
       </Grid>
 
-      <Box sx={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Numer seryjny</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Akcje</th>
-            </tr>
-          </thead>
-          <tbody>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ width: 36, color: 'text.secondary', fontSize: 12 }}>#</TableCell>
+              <TableCell>Numer seryjny</TableCell>
+              <TableCell sx={{ width: 40 }} />
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {assets.map((asset, index) => {
               const serialTrimmed = asset.serial.trim();
               const isDuplicate =
                 serialTrimmed !== '' &&
                 assets.filter((a, i) => a.serial.trim() === serialTrimmed && i !== index).length > 0;
               return (
-                <tr key={asset.id}>
-                  <td style={{ padding: '8px' }}>
+                <TableRow key={asset.id}>
+                  <TableCell sx={{ color: 'text.secondary', fontSize: 12 }}>{index + 1}</TableCell>
+                  <TableCell sx={{ py: 0.5 }}>
                     <TextField
                       fullWidth
+                      size="small"
                       value={asset.serial}
                       onChange={(e) => handleSerialChange(index, e.target.value)}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, index)}
                       placeholder="Wprowadź numer seryjny"
-                      size="small"
                       inputRef={(el) => (inputRefs.current[index] = el)}
                       error={isDuplicate}
                       helperText={isDuplicate ? 'Duplikat numeru seryjnego' : ''}
                     />
-                  </td>
-                  <td style={{ padding: '8px' }}>
+                  </TableCell>
+                  <TableCell sx={{ py: 0.5 }}>
                     <IconButton
                       onClick={() => handleDeleteRow(index)}
                       disabled={assets.length === 1}
                       size="small"
                     >
-                      <Suspense fallback={null}>
-                        <DeleteIcon />
-                      </Suspense>
+                      <Suspense fallback={null}><DeleteIcon /></Suspense>
                     </IconButton>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
-      </Box>
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
         <Button
