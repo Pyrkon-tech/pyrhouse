@@ -96,7 +96,7 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
           x={cx} y={cy + i * 28 - (labelLines.length - 1) * 14 + (hasQuests ? -12 : 0)}
           textAnchor="middle" dominantBaseline="central"
           fill={hasQuests ? '#fff' : 'rgba(255,255,255,0.35)'}
-          fontSize={hasQuests ? 26 : 22}
+          fontSize={hasQuests ? 28 : 23}
           fontFamily="'Courier New', monospace"
           fontWeight="700"
           style={{ userSelect: 'none', pointerEvents: 'none', textShadow: hasQuests ? '0 2px 8px rgba(0,0,0,0.8)' : 'none' }}
@@ -126,7 +126,7 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
 
       {/* Exclamation circle — visible 24h before delivery (or same day if no time) */}
       {metrics.alertVisible > 0 && (() => {
-        const r = 24;
+        const r = 30;
         const [px, py] = zone.points[0];
         const pulsing = metrics.alertPulsing > 0;
         return (
@@ -178,27 +178,27 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
 
       {/* SD new badge — teal pulsing, anchored to centroid bottom-right to stay inside the zone */}
       {metrics.sdNew > 0 && (() => {
-        const sdx = Math.round(cx + (bb.maxX - cx) * 0.40);
-        const sdy = Math.round(cy + (bb.maxY - cy) * 0.20);
+        const sdx = Math.round(cx + (bb.maxX - cx) * 0.60);
+        const sdy = Math.round(cy + (bb.maxY - cy) * 0.40);
         return (
           <g style={{ pointerEvents: 'none' }}>
-            <circle cx={sdx} cy={sdy} r={20} fill="#00acc1" opacity={0.15}
-              style={{ filter: 'blur(6px)' }}>
+            <circle cx={sdx} cy={sdy} r={40} fill="#00acc1" opacity={0.15}
+              style={{ filter: 'blur(10px)' }}>
               <animate attributeName="opacity" values="0.15;0.4;0.15" dur="1.8s" repeatCount="indefinite" />
             </circle>
-            <circle cx={sdx} cy={sdy} r={15} fill="#00304a" stroke="#00acc1" strokeWidth={1.5}>
+            <circle cx={sdx} cy={sdy} r={30} fill="#00304a" stroke="#00acc1" strokeWidth={2.5}>
               <animate attributeName="opacity" values="1;0.55;1" dur="1.8s" repeatCount="indefinite" />
             </circle>
             <text x={sdx} y={sdy + 1}
               textAnchor="middle" dominantBaseline="central"
-              fill="#00e5ff" fontSize={9} fontWeight="bold" fontFamily="monospace"
+              fill="#00e5ff" fontSize={20} fontWeight="bold" fontFamily="monospace"
             >SD</text>
             {metrics.sdNew > 1 && (
               <>
-                <circle cx={sdx + 9} cy={sdy - 9} r={7} fill="#d32f2f" stroke="rgba(255,255,255,0.4)" strokeWidth={1} />
-                <text x={sdx + 9} y={sdy - 8}
+                <circle cx={sdx + 30} cy={sdy - 30} r={9} fill="#d32f2f" stroke="rgba(255,255,255,0.5)" strokeWidth={1} />
+                <text x={sdx + 30} y={sdy - 29}
                   textAnchor="middle" dominantBaseline="central"
-                  fill="#fff" fontSize={9} fontWeight="bold" fontFamily="monospace"
+                  fill="#fff" fontSize={11} fontWeight="bold" fontFamily="monospace"
                 >{metrics.sdNew}</text>
               </>
             )}

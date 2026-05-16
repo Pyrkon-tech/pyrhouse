@@ -633,7 +633,7 @@ const ReservationsPage: React.FC = () => {
       )}
 
       {/* Table */}
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ '& .MuiTableCell-root': { fontSize: '0.9375rem' } }}>
         <Table size="small">
           <TableHead>
             <TableRow>

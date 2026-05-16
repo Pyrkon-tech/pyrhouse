@@ -545,52 +545,51 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </IconButton>
 
           <Box
-            component="img"
-            src={pyrkonLogo}
-            alt="Pyrkon Logo"
-            sx={{
-              height: '42px',
-              width: 'auto',
-              mr: 0.5,
-              mt: -0.5,
-              filter: theme.palette.mode === 'light'
-                ? 'drop-shadow(0px 0px 4px rgba(255, 152, 0, 0.4))'
-                : 'drop-shadow(0px 0px 6px rgba(255, 152, 0, 0.5))',
-              '&:hover': {
-                filter: theme.palette.mode === 'light'
-                  ? 'drop-shadow(0px 0px 8px rgba(255, 152, 0, 0.6)) drop-shadow(0px 0px 16px rgba(255, 152, 0, 0.3))'
-                  : 'drop-shadow(0px 0px 10px rgba(255, 152, 0, 0.7)) drop-shadow(0px 0px 20px rgba(255, 152, 0, 0.4))',
-                transform: 'scale(1.08)',
-              },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              cursor: 'pointer',
-            }}
             onClick={() => navigate('/home')}
-          />
-
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{
-              flexGrow: 1,
-              fontFamily: designTokens.typography.fontFamily.secondary,
-              fontWeight: 600,
-              letterSpacing: '0.05em',
-              background: theme.palette.mode === 'dark'
-                ? designTokens.gradients.primary
-                : 'inherit',
-              WebkitBackgroundClip: theme.palette.mode === 'dark' ? 'text' : 'unset',
-              WebkitTextFillColor: theme.palette.mode === 'dark' ? 'transparent' : 'inherit',
-              cursor: 'pointer',
-              '&:hover': {
-                opacity: 0.9,
-              },
-            }}
-            onClick={() => navigate('/home')}
+            sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }}
           >
-            yrhouse
-          </Typography>
+            <Box
+              component="img"
+              src={pyrkonLogo}
+              alt="Pyrkon Logo"
+              sx={{
+                height: '42px',
+                width: 'auto',
+                mr: 0.5,
+                mt: -0.5,
+                filter: theme.palette.mode === 'light'
+                  ? 'drop-shadow(0px 0px 4px rgba(255, 152, 0, 0.4))'
+                  : 'drop-shadow(0px 0px 6px rgba(255, 152, 0, 0.5))',
+                '&:hover': {
+                  filter: theme.palette.mode === 'light'
+                    ? 'drop-shadow(0px 0px 8px rgba(255, 152, 0, 0.6)) drop-shadow(0px 0px 16px rgba(255, 152, 0, 0.3))'
+                    : 'drop-shadow(0px 0px 10px rgba(255, 152, 0, 0.7)) drop-shadow(0px 0px 20px rgba(255, 152, 0, 0.4))',
+                  transform: 'scale(1.08)',
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            />
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                fontFamily: designTokens.typography.fontFamily.secondary,
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+                background: theme.palette.mode === 'dark'
+                  ? designTokens.gradients.primary
+                  : 'inherit',
+                WebkitBackgroundClip: theme.palette.mode === 'dark' ? 'text' : 'unset',
+                WebkitTextFillColor: theme.palette.mode === 'dark' ? 'transparent' : 'inherit',
+                '&:hover': { opacity: 0.9 },
+              }}
+            >
+              yrhouse
+            </Typography>
+          </Box>
+
+          <Box sx={{ flexGrow: 1 }} />
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             {/* Theme Toggle - minimalistyczny z ikonami, ukryty na mobile */}
