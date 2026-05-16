@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import JsBarcode from 'jsbarcode';
+import { jsPDF } from 'jspdf';
 import {
   Box,
   Container,
@@ -27,6 +29,9 @@ import {
   Alert,
   CircularProgress,
   Divider,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 import { useAuth } from '../../hooks/useAuth';
 import { useCategories } from '../../hooks/useCategories';
@@ -48,6 +53,7 @@ import type {
 const RefreshIcon = lazy(() => import('@mui/icons-material/Refresh'));
 const DeleteIcon = lazy(() => import('@mui/icons-material/Delete'));
 const CheckIcon = lazy(() => import('@mui/icons-material/Check'));
+const PrintIcon = lazy(() => import('@mui/icons-material/Print'));
 
 // ─── Claim Dialog ─────────────────────────────────────────────────────────────
 
@@ -337,6 +343,10 @@ const ReservationsPage: React.FC = () => {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [claimOpen, setClaimOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const isModerator = userRole === 'admin' || userRole === 'moderator';
   const assetCategories = categories.filter((c) => c.type === 'asset');
@@ -388,9 +398,10 @@ const ReservationsPage: React.FC = () => {
 
   // ─── Actions ─────────────────────────────────────────────────────────────
 
-  const handleDelete = async () => {
+  const handleDeleteConfirmed = async () => {
     if (selected.size === 0) return;
     const pyr_codes = selectedReservations.map((r) => r.pyr_code);
+    setDeleteConfirmOpen(false);
     setDeleting(true);
     try {
       const result = await deleteReservationsAPI({ pyr_codes });
@@ -400,6 +411,88 @@ const ReservationsPage: React.FC = () => {
       showSnackbar('error', err?.message || 'Błąd usuwania rezerwacji');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const generateBarcodeSVGDataUrl = (value: string, isPortrait: boolean) => {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    const svgWidth = isPortrait ? 240 : 400;
+    const svgHeight = isPortrait ? 400 : 180;
+    svg.setAttribute('width', svgWidth.toString());
+    svg.setAttribute('height', svgHeight.toString());
+    svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+    JsBarcode(svg, value, {
+      format: 'CODE128', width: 2, height: 40, displayValue: true,
+      fontSize: 18, margin: 5, background: '#FFFFFF', lineColor: '#000000',
+      textAlign: 'center', textPosition: 'bottom', textMargin: 2, text: value,
+    });
+    const svgString = new XMLSerializer().serializeToString(svg);
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+  };
+
+  const handlePrintBarcodes = async () => {
+    if (selectedReservations.length === 0) return;
+    setIsPrinting(true);
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) throw new Error('Nie można otworzyć okna drukowania');
+      const isPortrait = orientation === 'portrait';
+      let html = `<html><head><title>Etykiety PYR</title><style>
+        @page { size: ${orientation}; margin: 0; }
+        body { margin: 0; display: flex; flex-direction: column; align-items: center; background: white; }
+        .barcode-container { page-break-after: always; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100%; }
+        .barcode-container:last-child { page-break-after: avoid; }
+      </style></head><body>`;
+      for (const r of selectedReservations) {
+        const dataUrl = generateBarcodeSVGDataUrl(r.pyr_code, isPortrait);
+        html += `<div class="barcode-container"><img src="${dataUrl}" style="${
+          isPortrait
+            ? 'transform: rotate(-90deg); width: 95vh; height: auto; margin: auto; display: block;'
+            : 'width: 95%; height: auto; margin: auto; display: block;'
+        }" /></div>`;
+      }
+      html += '</body></html>';
+      printWindow.document.write(html);
+      printWindow.document.close();
+      await new Promise<void>((resolve) => {
+        const imgs = printWindow.document.querySelectorAll('img');
+        let loaded = 0;
+        if (imgs.length === 0) { resolve(); return; }
+        imgs.forEach((img) => { img.onload = () => { if (++loaded === imgs.length) resolve(); }; });
+      });
+      printWindow.print();
+      printWindow.close();
+    } catch {
+      showSnackbar('error', 'Nie udało się otworzyć okna drukowania');
+    } finally {
+      setIsPrinting(false);
+      setPrintDialogOpen(false);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (selectedReservations.length === 0) return;
+    setIsPrinting(true);
+    try {
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [40, 80] });
+      for (let i = 0; i < selectedReservations.length; i++) {
+        if (i > 0) doc.addPage();
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 240;
+        JsBarcode(canvas, selectedReservations[i].pyr_code, {
+          format: 'CODE128', width: 2, height: 40, displayValue: true,
+          fontSize: 12, margin: 5, background: '#FFFFFF', lineColor: '#000000',
+          textAlign: 'center', textPosition: 'bottom', textMargin: 2,
+          text: selectedReservations[i].pyr_code,
+        });
+        doc.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 10, 7.5, 60, 25);
+      }
+      doc.save(`etykiety-${selectedReservations.length}.pdf`);
+    } finally {
+      setIsPrinting(false);
+      setPrintDialogOpen(false);
     }
   };
 
@@ -505,6 +598,15 @@ const ReservationsPage: React.FC = () => {
             </Button>
           )}
 
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Suspense fallback={null}><PrintIcon /></Suspense>}
+            onClick={() => setPrintDialogOpen(true)}
+          >
+            Drukuj etykiety ({selected.size})
+          </Button>
+
           {isModerator && (
             <Button
               variant="outlined"
@@ -517,7 +619,7 @@ const ReservationsPage: React.FC = () => {
                   <Suspense fallback={null}><DeleteIcon /></Suspense>
                 )
               }
-              onClick={handleDelete}
+              onClick={() => setDeleteConfirmOpen(true)}
               disabled={deleting}
             >
               Usuń zaznaczone
@@ -607,6 +709,64 @@ const ReservationsPage: React.FC = () => {
         Nowe rezerwacje tworzysz w{' '}
         <strong>Dodaj przedmiot → Masowa dostawa</strong>.
       </Typography>
+
+      {/* Print barcodes dialog */}
+      <Dialog open={printDialogOpen} onClose={() => setPrintDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Drukuj etykiety ({selected.size})</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Każda etykieta zostanie wydrukowana na osobnej stronie jako kod kreskowy CODE128.
+          </Typography>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>Orientacja strony</Typography>
+          <RadioGroup
+            row
+            value={orientation}
+            onChange={(e) => setOrientation(e.target.value as 'landscape' | 'portrait')}
+          >
+            <FormControlLabel value="landscape" control={<Radio size="small" />} label="Pozioma" />
+            <FormControlLabel value="portrait" control={<Radio size="small" />} label="Pionowa" />
+          </RadioGroup>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPrintDialogOpen(false)} disabled={isPrinting}>Anuluj</Button>
+          <Button
+            variant="outlined"
+            onClick={handleDownloadPDF}
+            disabled={isPrinting}
+            startIcon={isPrinting ? <CircularProgress size={14} /> : undefined}
+          >
+            Pobierz PDF
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handlePrintBarcodes}
+            disabled={isPrinting}
+            startIcon={isPrinting ? <CircularProgress size={14} color="inherit" /> : <Suspense fallback={null}><PrintIcon /></Suspense>}
+          >
+            Drukuj
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Usuń rezerwacje</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Czy na pewno chcesz usunąć <strong>{selected.size}</strong>{' '}
+            {selected.size === 1 ? 'rezerwację' : 'rezerwacje'}?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {selectedReservations.map((r) => r.pyr_code).join(', ')}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Anuluj</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteConfirmed}>
+            Usuń
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <ClaimDialog
         open={claimOpen}
