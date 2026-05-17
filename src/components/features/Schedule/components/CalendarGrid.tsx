@@ -9,10 +9,17 @@ import { parseAsLocal, avatarColor } from '../utils';
 // ---- Constants ---------------------------------------------------------------
 
 const TIME_AXIS_W = 56;
-const MIN_COL_W = 210;
+const MIN_COL_W_DEFAULT = 260;
 const MIN_SLOT_H = 32;
 const HOUR_LABEL_H = 20;
-const CHIPS_PER_ROW = 4;
+
+/** Estimate how many chips fit in a column of given width. */
+function chipsPerRow(colW: number, chipFs: string): number {
+  // Approximate chip width: ~10 chars × font-size-px + 2×padding
+  const fsPx = chipFs === '0.62rem' ? 10 : chipFs === '0.72rem' ? 11.5 : 12.5;
+  const approxChipW = 7 * fsPx + 20; // ~7 avg chars per nick + padding + ×
+  return Math.max(1, Math.floor((colW - 12) / approxChipW));
+}
 
 // ---- Helpers -----------------------------------------------------------------
 
@@ -41,10 +48,13 @@ function computeHourLayout(
   minHour: number,
   maxHour: number,
   pxPerHour: number,
+  minColW: number,
 ): { hourHeights: number[]; hourOffsets: number[]; totalH: number } {
   const chipH = pxPerHour < 35 ? 16 : pxPerHour < 70 ? 19 : 22;
+  const chipFs = pxPerHour < 35 ? '0.62rem' : pxPerHour < 70 ? '0.72rem' : '0.78rem';
   const rowGapPx = pxPerHour < 35 ? 2 : 3;
   const rowPx = chipH + rowGapPx;
+  const cpr = chipsPerRow(minColW, chipFs);
   const hourCount = maxHour - minHour;
 
   const hourHeights: number[] = Array.from({ length: hourCount }, (_, i) => {
@@ -59,7 +69,7 @@ function computeHourLayout(
         }
       }
     }
-    const rows = Math.max(1, Math.ceil(maxVols / CHIPS_PER_ROW));
+    const rows = Math.max(1, Math.ceil(maxVols / cpr));
     return Math.max(pxPerHour, rows * rowPx + 8);
   });
 
@@ -410,6 +420,7 @@ interface DayColumnProps {
   minHour: number;
   maxHour: number;
   pxPerHour: number;
+  minColW: number;
   hourOffsets: number[];
   hourHeights: number[];
   totalH: number;
@@ -429,7 +440,7 @@ interface DayColumnProps {
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({
-  day, minHour, maxHour, pxPerHour, hourOffsets, hourHeights, totalH, now,
+  day, minHour, maxHour, pxPerHour, minColW, hourOffsets, hourHeights, totalH, now,
   canEdit, isAssignMode, highlightedVolunteerId, selectedSlotId,
   nicknameToVolId, onSlotSelect, onContextMenu, onAssignModeClick,
   onRemoveAssignment, onMoveAssignment, onAssignVolunteer, onEmptyClick,
@@ -498,7 +509,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
       onDrop={canEdit ? handleColumnDrop : undefined}
       sx={{
         flex: 1,
-        minWidth: MIN_COL_W,
+        minWidth: minColW,
         height: totalH,
         position: 'relative',
         borderLeft: '1px solid',
@@ -642,8 +653,9 @@ const TimeAxis: React.FC<{
 const DayHeaderRow: React.FC<{
   days: import('../types').CalendarDay[];
   canEdit: boolean;
+  minColW: number;
   onAddSlot?: (dateKey: string) => void;
-}> = ({ days, canEdit, onAddSlot }) => (
+}> = ({ days, canEdit, minColW, onAddSlot }) => (
   <Box
     sx={{
       display: 'flex',
@@ -665,7 +677,7 @@ const DayHeaderRow: React.FC<{
           key={day.dateKey}
           sx={{
             flex: 1,
-            minWidth: MIN_COL_W,
+            minWidth: minColW,
             borderLeft: '1px solid',
             borderColor: 'divider',
             borderBottom: `3px solid ${cfg.color}`,
@@ -722,6 +734,7 @@ const DayHeaderRow: React.FC<{
 export interface CalendarGridProps {
   calendarData: CalendarData;
   pxPerHour: number;
+  minColW?: number;
   canEdit: boolean;
   now: Date;
   highlightedVolunteerId: number | null;
@@ -739,12 +752,13 @@ export interface CalendarGridProps {
 }
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
-  calendarData, pxPerHour, canEdit, now,
+  calendarData, pxPerHour, minColW, canEdit, now,
   highlightedVolunteerId, selectedSlotId, isAssignMode,
   volunteers, onSlotSelect, onContextMenu, onAssignModeClick,
   onRemoveAssignment, onMoveAssignment, onAssignVolunteer, onAddSlot, onEmptyClick,
 }) => {
   const { days, minHour, maxHour } = calendarData;
+  const effectiveColW = minColW ?? MIN_COL_W_DEFAULT;
 
   const nicknameToVolId = React.useMemo(
     () => new Map(volunteers.map(v => [v.nickname, v.id])),
@@ -752,8 +766,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   );
 
   const { hourHeights, hourOffsets, totalH } = React.useMemo(
-    () => computeHourLayout(days, minHour, maxHour, pxPerHour),
-    [days, minHour, maxHour, pxPerHour],
+    () => computeHourLayout(days, minHour, maxHour, pxPerHour, effectiveColW),
+    [days, minHour, maxHour, pxPerHour, effectiveColW],
   );
 
   if (days.length === 0) {
@@ -768,7 +782,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   return (
     <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <DayHeaderRow days={days} canEdit={canEdit} onAddSlot={onAddSlot} />
+      <DayHeaderRow days={days} canEdit={canEdit} onAddSlot={onAddSlot} minColW={effectiveColW} />
 
       <Box
         sx={{
@@ -793,6 +807,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             minHour={minHour}
             maxHour={maxHour}
             pxPerHour={pxPerHour}
+            minColW={effectiveColW}
             hourOffsets={hourOffsets}
             hourHeights={hourHeights}
             totalH={totalH}

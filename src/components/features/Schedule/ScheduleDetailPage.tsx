@@ -30,9 +30,11 @@ import { useScheduleLocalState } from './useScheduleLocalState';
 import { useScheduleSync } from './useScheduleSync';
 import { useScheduleValidation } from './useScheduleValidation';
 import { useZoom } from './hooks/useZoom';
+import { useColWidth } from './hooks/useColWidth';
 
 import ApiErrorAlert from './components/ApiErrorAlert';
 import CalendarGrid from './components/CalendarGrid';
+import DayWindowsDialog from './components/DayWindowsDialog';
 import ScheduleHeader from './components/ScheduleHeader';
 import ValidationPanel from './components/ValidationPanel';
 import SlotEditor from './components/SlotEditor';
@@ -77,6 +79,7 @@ const ScheduleDetailPage: React.FC = () => {
 
   // ---- New UI state ---------------------------------------------------------
   const [zoom, setZoom] = useZoom();
+  const [colWidth, setColWidth] = useColWidth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
   });
@@ -85,6 +88,7 @@ const ScheduleDetailPage: React.FC = () => {
   const [contextMenu, setContextMenu] = useState<SlotContextMenuState | null>(null);
   // Type for new slot creation — defaults to 'festival', can be changed by phase filter
   const [newSlotType, setNewSlotType] = useState<ScheduleSlot['type']>('festival');
+  const [dayWindowsOpen, setDayWindowsOpen] = useState(false);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => {
@@ -484,6 +488,7 @@ const ScheduleDetailPage: React.FC = () => {
           redoLabel={redoLabel}
           isAdmin={isAdmin}
           onDeleteSchedule={isAdmin ? handleDeleteSchedule : undefined}
+          onDayWindowsOpen={isModerator ? () => setDayWindowsOpen(true) : undefined}
         />
 
         {/* API errors */}
@@ -499,14 +504,15 @@ const ScheduleDetailPage: React.FC = () => {
 
           {/* Calendar area */}
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-            {/* Zoom control (controls px/hour vertically) */}
-            <ZoomControl zoom={zoom} onZoomChange={setZoom} />
+            {/* Zoom + column width controls */}
+            <ZoomControl zoom={zoom} onZoomChange={setZoom} colWidth={colWidth} onColWidthChange={setColWidth} />
 
             {/* Calendar grid */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
               <CalendarGrid
                 calendarData={calendarData}
                 pxPerHour={zoom}
+                minColW={colWidth}
                 canEdit={canEdit}
                 now={now}
                 highlightedVolunteerId={highlightedVolunteerId}
@@ -606,6 +612,17 @@ const ScheduleDetailPage: React.FC = () => {
         onClose={() => setImportOpen(false)}
         onImported={fetchSchedule}
       />
+
+      {/* Day windows dialog */}
+      {schedule && (
+        <DayWindowsDialog
+          open={dayWindowsOpen}
+          schedule={schedule}
+          isAdmin={isAdmin}
+          onClose={() => setDayWindowsOpen(false)}
+          onRegenerated={(updated) => { loadFromServer(updated); setDayWindowsOpen(false); }}
+        />
+      )}
 
       {/* Slot editor */}
       {editingSlot && (

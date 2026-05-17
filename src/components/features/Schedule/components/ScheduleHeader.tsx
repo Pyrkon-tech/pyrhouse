@@ -17,6 +17,7 @@ const WarningIcon = lazy(() => import('@mui/icons-material/Warning'));
 const PersonAddIcon = lazy(() => import('@mui/icons-material/PersonAdd'));
 const TableChartIcon = lazy(() => import('@mui/icons-material/TableChart'));
 const RuleIcon = lazy(() => import('@mui/icons-material/Rule'));
+const WindowIcon = lazy(() => import('@mui/icons-material/CalendarViewWeek'));
 
 interface ScheduleHeaderProps {
   schedule: ScheduleDetail;
@@ -45,6 +46,7 @@ interface ScheduleHeaderProps {
   redoLabel: string | null;
   isAdmin?: boolean;
   onDeleteSchedule?: () => Promise<void>;
+  onDayWindowsOpen?: () => void;
 }
 
 const SYNC_STATUS_LABEL: Record<SyncStatus, string> = {
@@ -88,6 +90,7 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   redoLabel,
   isAdmin,
   onDeleteSchedule,
+  onDayWindowsOpen,
 }) => {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const closeMenu = () => setMenuAnchor(null);
@@ -252,6 +255,12 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
                   : <Suspense fallback={null}><TableChartIcon fontSize="small" /></Suspense>}
               </ListItemIcon>
               <ListItemText>Eksport Sheets</ListItemText>
+            </MenuItem>
+          )}
+          {isModerator && onDayWindowsOpen && (
+            <MenuItem onClick={() => { onDayWindowsOpen(); closeMenu(); }}>
+              <ListItemIcon><Suspense fallback={null}><WindowIcon fontSize="small" /></Suspense></ListItemIcon>
+              <ListItemText>Okna montażowe</ListItemText>
             </MenuItem>
           )}
           {canDeleteSchedule && <Divider />}

@@ -120,12 +120,42 @@ export interface ValidationResult {
   issues: ValidationIssue[];
 }
 
+// ---- Day window ------------------------------------------------------------
+
+/**
+ * Operational time window for a single day (montage/demontage).
+ * If no window is set for a date, the backend defaults to 08:00–20:00.
+ */
+export interface DayWindow {
+  id: number;
+  schedule_id: number;
+  /** ISO date e.g. "2026-06-16" */
+  date: string;
+  /** "HH:MM" e.g. "10:00" */
+  window_start: string;
+  /** "HH:MM" e.g. "18:00" */
+  window_end: string;
+}
+
+/** Body for PUT /schedule/day-windows */
+export interface SetDayWindowPayload {
+  /** ISO date e.g. "2026-06-16" */
+  date: string;
+  window_start: string;
+  window_end: string;
+}
+
 // ---- Schedule detail (GET /schedule) ---------------------------------------
 
 /** Full schedule with slots, volunteers and optional inline validation */
 export interface ScheduleDetail extends Schedule {
   slots: ScheduleSlot[];
   volunteers: ScheduleVolunteer[];
+  /**
+   * Per-day operational windows for montage/demontage slots.
+   * Absent dates use the backend default (08:00–20:00).
+   */
+  day_windows?: DayWindow[];
   /**
    * Validation is included inline in GET /schedule response.
    * May also be fetched separately via GET /schedule/validate.

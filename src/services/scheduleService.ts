@@ -15,6 +15,8 @@ import type {
   DraftResponse,
   OnDutyVolunteer,
   MyScheduleResponse,
+  DayWindow,
+  SetDayWindowPayload,
 } from '../types/schedule.types';
 
 // ---- Active schedule (singular — only one active at a time) ----------------
@@ -149,6 +151,34 @@ export const importFromSheetAPI = (sheetId: string, sheetName: string) =>
     '/schedule/volunteers/import-sheet',
     { sheet_id: sheetId, sheet_name: sheetName },
   );
+
+// ---- Day windows -----------------------------------------------------------
+
+/**
+ * PUT /schedule/day-windows — upsert operational window for a single day.
+ * If a window already exists for that date, it is overwritten.
+ * Requires moderator role.
+ */
+export const setDayWindowAPI = (payload: SetDayWindowPayload) =>
+  apiClient.put<DayWindow>('/schedule/day-windows', payload);
+
+/**
+ * DELETE /schedule/day-windows/:date — remove window for a date.
+ * After deletion, next regeneration will use the default 08:00–20:00.
+ * Requires moderator role.
+ */
+export const deleteDayWindowAPI = (date: string) =>
+  apiClient.delete<void>(`/schedule/day-windows/${date}`);
+
+/**
+ * POST /schedule/regenerate-slots — regenerate all montage/demontage slots.
+ * Deletes existing montage/demontage slots and assignments, recreates hourly
+ * slots according to current day_windows. Festival slots are untouched.
+ * Returns full ScheduleDetail with new version.
+ * Requires admin role.
+ */
+export const regenerateSlotsAPI = () =>
+  apiClient.post<ScheduleDetail>('/schedule/regenerate-slots', {});
 
 // ---- Dispatch integration --------------------------------------------------
 

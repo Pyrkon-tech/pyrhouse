@@ -42,6 +42,11 @@ export const ZOOM_MAX = 240;
 export const ZOOM_DEFAULT = 60;
 export const ZOOM_STORAGE_KEY = 'pyrhouse_schedule_zoom';
 
+export const COL_W_MIN = 160;
+export const COL_W_MAX = 500;
+export const COL_W_DEFAULT = 260;
+export const COL_W_STORAGE_KEY = 'pyrhouse_schedule_col_w';
+
 // ---- Sidebar ----------------------------------------------------------------
 
 /** Collapsed sidebar width (only icons visible) */

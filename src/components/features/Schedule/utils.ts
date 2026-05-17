@@ -96,7 +96,6 @@ export function computeGlobalHourRange(slots: ScheduleSlot[]): { minHour: number
   let hasTimedSlots = false;
 
   for (const s of slots) {
-    if (s.type === 'montage' || s.type === 'demontage') continue;
     hasTimedSlots = true;
 
     const sStart = parseAsLocal(s.start);

@@ -32,8 +32,7 @@ export type ScheduleChange =
 
 // ---- Credit hours calculation (mirrors backend logic) ----------------------
 
-function computeCreditHours(type: SlotType, start: string, end: string): number {
-  if (type === 'montage' || type === 'demontage') return 7;
+function computeCreditHours(_type: SlotType, start: string, end: string): number {
   const ms = new Date(end).getTime() - new Date(start).getTime();
   const hours = ms / 3_600_000;
   return Math.round(hours * 2) / 2; // round to nearest 0.5h
