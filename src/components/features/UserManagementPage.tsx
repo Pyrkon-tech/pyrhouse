@@ -210,7 +210,7 @@ const UserManagementPage: React.FC = () => {
                   <Typography variant="body2">{user.username}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Imię i nazwisko:</Typography>
+                  <Typography variant="body2" color="text.secondary">Nazwa:</Typography>
                   <Typography variant="body2" sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
                     {user.fullname || '—'}
                   </Typography>
@@ -264,7 +264,7 @@ const UserManagementPage: React.FC = () => {
     <DataTable  size="medium">
       <TableHead>
         <TableRow>
-          {["ID", "Ksywa", "Imię i Nazwisko", "Rola", "Discord", "Aktywny"].map((field) => (
+          {["ID", "Pseudonim", "Nazwa", "Rola", "Discord", "Aktywny"].map((field) => (
             <TableCell key={field}>{field}</TableCell>
           ))}
         </TableRow>
