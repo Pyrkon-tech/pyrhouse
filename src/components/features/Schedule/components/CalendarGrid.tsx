@@ -154,7 +154,6 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
 
   const startH = slotStartH(slot);
   const endH = slotEndH(slot);
-  const isCrossMidnight = endH > 24;
 
   const top = getSlotTop(startH, minHour, hourOffsets, hourHeights);
   const slotHeight = getSlotH(startH, endH, minHour, hourOffsets, hourHeights);
@@ -350,21 +349,10 @@ const SlotBlock: React.FC<SlotBlockProps> = ({
       }}
     >
       {isLarge && !isFestival ? (
-        <>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, mb: `${rowGapPx}px` }}>
-            <Typography sx={{
-              fontSize: '0.63rem', fontWeight: 700, lineHeight: 1.3,
-              color: isAssignMode ? 'primary.light' : typeCfg.color,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              flex: 1, minWidth: 0,
-            }}>
-              {slot.label || typeCfg.label}
-              {isCrossMidnight && <Box component="span" sx={{ ml: 0.4, fontSize: '0.5rem', color: 'warning.main' }}>🌙</Box>}
-            </Typography>
-            {countBadge}
-          </Box>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', overflow: 'hidden', flex: 1, minHeight: 0, gap: 0.4 }}>
           {chipArea}
-        </>
+          {countBadge}
+        </Box>
       ) : isLarge ? (
         <Box sx={{ display: 'flex', alignItems: 'flex-start', overflow: 'hidden', flex: 1, minHeight: 0, gap: 0.4 }}>
           {chipArea}
@@ -668,7 +656,7 @@ const DayHeaderRow: React.FC<{
       borderColor: 'divider',
     }}
   >
-    <Box sx={{ width: TIME_AXIS_W, flexShrink: 0, borderRight: '1px solid', borderColor: 'divider' }} />
+    <Box sx={{ width: TIME_AXIS_W, flexShrink: 0, borderRight: '1px solid', borderColor: 'divider', position: 'sticky', left: 0, zIndex: 21, bgcolor: 'background.default' }} />
 
     {days.map(day => {
       const cfg = DAY_TYPE_COLORS[day.dayType] ?? DAY_TYPE_COLORS.mixed;
@@ -782,8 +770,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   return (
     <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <DayHeaderRow days={days} canEdit={canEdit} onAddSlot={onAddSlot} minColW={effectiveColW} />
-
       <Box
         sx={{
           flex: 1,
@@ -791,41 +777,46 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           overflowY: 'auto',
           overflowX: 'auto',
           display: 'flex',
+          flexDirection: 'column',
           '&::-webkit-scrollbar': { width: 8, height: 8 },
           '&::-webkit-scrollbar-track': { bgcolor: 'background.default' },
           '&::-webkit-scrollbar-thumb': { bgcolor: 'action.disabled', borderRadius: 1 },
         }}
       >
-        <Box sx={{ position: 'sticky', left: 0, zIndex: 10, bgcolor: 'background.default' }}>
-          <TimeAxis minHour={minHour} maxHour={maxHour} hourOffsets={hourOffsets} hourHeights={hourHeights} totalH={totalH} now={now} />
-        </Box>
+        <DayHeaderRow days={days} canEdit={canEdit} onAddSlot={onAddSlot} minColW={effectiveColW} />
 
-        {days.map(day => (
-          <DayColumn
-            key={day.dateKey}
-            day={day}
-            minHour={minHour}
-            maxHour={maxHour}
-            pxPerHour={pxPerHour}
-            minColW={effectiveColW}
-            hourOffsets={hourOffsets}
-            hourHeights={hourHeights}
-            totalH={totalH}
-            now={now}
-            canEdit={canEdit}
-            isAssignMode={isAssignMode}
-            highlightedVolunteerId={highlightedVolunteerId}
-            selectedSlotId={selectedSlotId}
-            nicknameToVolId={nicknameToVolId}
-            onSlotSelect={onSlotSelect}
-            onContextMenu={onContextMenu}
-            onAssignModeClick={onAssignModeClick}
-            onRemoveAssignment={onRemoveAssignment}
-            onMoveAssignment={onMoveAssignment}
-            onAssignVolunteer={onAssignVolunteer}
-            onEmptyClick={onEmptyClick}
-          />
-        ))}
+        <Box sx={{ display: 'flex', flex: 1 }}>
+          <Box sx={{ position: 'sticky', left: 0, zIndex: 10, bgcolor: 'background.default' }}>
+            <TimeAxis minHour={minHour} maxHour={maxHour} hourOffsets={hourOffsets} hourHeights={hourHeights} totalH={totalH} now={now} />
+          </Box>
+
+          {days.map(day => (
+            <DayColumn
+              key={day.dateKey}
+              day={day}
+              minHour={minHour}
+              maxHour={maxHour}
+              pxPerHour={pxPerHour}
+              minColW={effectiveColW}
+              hourOffsets={hourOffsets}
+              hourHeights={hourHeights}
+              totalH={totalH}
+              now={now}
+              canEdit={canEdit}
+              isAssignMode={isAssignMode}
+              highlightedVolunteerId={highlightedVolunteerId}
+              selectedSlotId={selectedSlotId}
+              nicknameToVolId={nicknameToVolId}
+              onSlotSelect={onSlotSelect}
+              onContextMenu={onContextMenu}
+              onAssignModeClick={onAssignModeClick}
+              onRemoveAssignment={onRemoveAssignment}
+              onMoveAssignment={onMoveAssignment}
+              onAssignVolunteer={onAssignVolunteer}
+              onEmptyClick={onEmptyClick}
+            />
+          ))}
+        </Box>
       </Box>
     </Box>
   );
