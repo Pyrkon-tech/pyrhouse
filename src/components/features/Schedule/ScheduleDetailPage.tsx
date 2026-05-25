@@ -274,7 +274,7 @@ const ScheduleDetailPage: React.FC = () => {
       const merged = { ...current, ...changes };
       try {
         const created = await createSlotAPI({ type: merged.type, start: merged.start, end: merged.end, capacity: merged.capacity ?? 1, label: merged.label });
-        localState.replaceSlot(slotId, created);
+        localState.replaceSlot(slotId, { ...created, volunteers: created.volunteers ?? [] });
         showSuccess('Slot zapisany');
       } catch (e) {
         captureApiError(e, 'Tworzenie slotu');
@@ -323,7 +323,7 @@ const ScheduleDetailPage: React.FC = () => {
     if (!slot) return;
     try {
       const created = await createSlotAPI({ type: slot.type, start: slot.start, end: slot.end, capacity: slot.capacity ?? 0, label: `${slot.label} (kopia)` });
-      localState.addPersistedSlot(created);
+      localState.addPersistedSlot({ ...created, volunteers: created.volunteers ?? [] });
       showSuccess('Slot zduplikowany');
     } catch (e) {
       captureApiError(e, 'Duplikowanie slotu');
