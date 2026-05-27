@@ -83,7 +83,7 @@ export const StyledTextField = styled(TextField, {
     '& .MuiInputBase-input::placeholder': { color: placeholder, opacity: 1 },
     '& label': { color: label, fontWeight: 500 },
     '& .MuiFormHelperText-root': { color: helper },
-    '& input': { color: text },
+    '& input, & textarea': { color: text, textAlign: 'left' },
   };
 });
 
@@ -95,7 +95,7 @@ export const StyledSelect = styled(Select, {
   return {
     ...inputOverrides(isDark, theme.palette.primary.main),
     color: text,
-    '& .MuiSelect-select': { color: text },
+    '& .MuiSelect-select': { color: text, textAlign: 'left' },
     '& .MuiSvgIcon-root': { color: icon },
   };
 });

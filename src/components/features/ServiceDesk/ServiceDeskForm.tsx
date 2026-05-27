@@ -92,10 +92,10 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
             mb: 2,
           }}>
             <CheckCircleOutlineIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
-            <Typography variant="h5" fontWeight={700} color="success.main" gutterBottom>
+            <Typography variant="h5" fontWeight={700} sx={{ color: '#2e7d32', mb: 0.5 }}>
               Dziękujemy za zgłoszenie!
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 320, mx: 'auto' }}>
+            <Typography variant="body1" sx={{ color: '#333', mb: 3, maxWidth: 320, mx: 'auto' }}>
               Twoje zgłoszenie zostało przesłane do zespołu technicznego.
             </Typography>
             <StyledButton isPublic onClick={() => window.location.reload()}>
