@@ -16,7 +16,8 @@ import VolunteerPanel from './components/VolunteerPanel';
 import DispatchModal from './components/DispatchModal';
 import DevTimeSimulator from './components/DevTimeSimulator';
 
-const IS_DEV = import.meta.env.DEV && window.location.hostname === 'localhost';
+const IS_DEV = (import.meta.env.DEV && window.location.hostname === 'localhost')
+  || import.meta.env.VITE_ENABLE_TIME_SIMULATOR === 'true';
 
 function mapOnDutyToVolunteer(entry: OnDutyVolunteer): Volunteer {
   return {
