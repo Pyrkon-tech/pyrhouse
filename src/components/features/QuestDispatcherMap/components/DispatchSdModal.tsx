@@ -58,6 +58,7 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
     try {
       await apiClient.put(`/service-desk/requests/${request.id}/status`, { status: newStatus });
       onUpdated?.();
+      onClose();
     } finally {
       setSaving(false);
     }
