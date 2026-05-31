@@ -113,7 +113,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           )}
 
           {/* Elementy */}
-          <Box sx={{ 
+          <Box sx={{
             p: 1.5,
             border: '1px solid',
             borderColor: 'divider',
@@ -124,6 +124,35 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               <Inventory sx={{ mr: 1, color: 'primary.main' }} />
               <Typography variant="subtitle1">Elementy do transferu</Typography>
             </Box>
+
+            {/* Summary chips */}
+            {(() => {
+              const validItems = formData.items.filter(item =>
+                item.type === 'pyr_code' ? item.status === 'success' : Boolean(item.id)
+              );
+              const summary = validItems.reduce<Record<string, number>>((acc, item) => {
+                const label = item.category?.label ?? (item.type === 'pyr_code' ? item.pyrcode : 'Nieznany');
+                const qty = item.type === 'pyr_code' ? 1 : item.quantity;
+                acc[label] = (acc[label] ?? 0) + qty;
+                return acc;
+              }, {});
+              const entries = Object.entries(summary);
+              if (entries.length === 0) return null;
+              return (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.5 }}>
+                  {entries.map(([label, count]) => (
+                    <Chip
+                      key={label}
+                      label={`${count}× ${label}`}
+                      size="small"
+                      color="primary"
+                      sx={{ fontWeight: 700 }}
+                    />
+                  ))}
+                </Box>
+              );
+            })()}
+
             <List disablePadding>
               {formData.items
                 .filter(item => item.type === 'pyr_code' ? item.status === 'success' : Boolean(item.id))

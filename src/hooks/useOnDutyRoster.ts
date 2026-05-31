@@ -28,18 +28,24 @@ export const useOnDutyRoster = (simulatedTime?: Date): UseOnDutyRosterResult => 
   const simulatedTimeRef = useRef(simulatedTime);
   simulatedTimeRef.current = simulatedTime;
 
+  // Stale-request guard: ignore results from superseded fetches (rapid time changes, StrictMode double-invoke)
+  const fetchGenRef = useRef(0);
+
   const fetchRoster = useCallback(async (overrideTime?: Date) => {
+    const generation = ++fetchGenRef.current;
     const t = overrideTime ?? simulatedTimeRef.current;
     const at = t ? t.toISOString() : undefined;
     setLoading(true);
     setError(null);
     try {
       const data = await getOnDutyAPI(at);
+      if (fetchGenRef.current !== generation) return;
       setRoster(data);
     } catch (e: any) {
+      if (fetchGenRef.current !== generation) return;
       setError(e.message || 'Błąd pobierania dyżurnych');
     } finally {
-      setLoading(false);
+      if (fetchGenRef.current === generation) setLoading(false);
     }
   }, []);
 

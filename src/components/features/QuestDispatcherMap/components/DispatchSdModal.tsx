@@ -40,7 +40,7 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
   const [saving, setSaving] = useState(false);
   const commentsEndRef = React.useRef<HTMLDivElement>(null);
 
-  const isMod = userRole === 'moderator' || userRole === 'admin';
+  const isMod = userRole === 'moderator' || userRole === 'admin' || userRole === 'dispatcher';
   const isEditable = request && request.status !== 'closed' && request.status !== 'resolved';
 
   React.useEffect(() => {

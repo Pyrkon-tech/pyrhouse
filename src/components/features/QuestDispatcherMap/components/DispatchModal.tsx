@@ -9,10 +9,18 @@ import {
   Button,
   Avatar,
   Tooltip,
+  Autocomplete,
+  TextField,
+  IconButton,
+  CircularProgress,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import type { Quest } from '../../../../types/quest.types';
 import type { Zone, Volunteer, DispatchAssignment } from '../types';
+import type { UserListItem } from '../../../../types/user.types';
 import { formatDate } from '../utils/matching';
+import { getUsersAPI } from '../../../../services/userService';
 import UnknownAgentAvatar from './UnknownAgentAvatar';
 
 const AVATAR_PALETTE = ['#ff9800', '#00acc1', '#66bb6a', '#ffd54f', '#ef5350', '#ab47bc', '#42a5f5'];
@@ -33,15 +41,27 @@ interface DispatchModalProps {
 
 const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunteers, onClose, onDispatch }) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [manualUsers, setManualUsers] = useState<UserListItem[]>([]);
+  const [showUserSearch, setShowUserSearch] = useState(false);
+  const [allUsers, setAllUsers] = useState<UserListItem[] | null>(null);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [autocompleteValue, setAutocompleteValue] = useState<UserListItem | null>(null);
 
-  // Reset selection when modal opens with new quest
   const questId = quest?.id;
   useEffect(() => {
     setSelectedIds([]);
+    setManualUsers([]);
+    setShowUserSearch(false);
+    setAutocompleteValue(null);
   }, [questId]);
 
   const availableVolunteers = useMemo(
     () => volunteers.filter(v => v.status !== 'offline'),
+    [volunteers],
+  );
+
+  const onDutyUserIds = useMemo(
+    () => new Set(volunteers.map(v => v.user_id).filter((id): id is number => id !== null)),
     [volunteers],
   );
 
@@ -51,22 +71,53 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  const handleOpenUserSearch = async () => {
+    setShowUserSearch(true);
+    if (!allUsers) {
+      setLoadingUsers(true);
+      try {
+        const users = await getUsersAPI();
+        setAllUsers(users.filter(u => u.active));
+      } finally {
+        setLoadingUsers(false);
+      }
+    }
+  };
+
+  const handleAddManualUser = (_: React.SyntheticEvent, user: UserListItem | null) => {
+    if (!user) return;
+    if (manualUsers.some(u => u.id === user.id)) return;
+    setManualUsers(prev => [...prev, user]);
+    setAutocompleteValue(null);
+  };
+
+  const handleRemoveManualUser = (userId: number) => {
+    setManualUsers(prev => prev.filter(u => u.id !== userId));
+  };
+
   const handleDispatch = () => {
     if (!quest || !zone) return;
-    // Map selected volunteer IDs → system user IDs (drop unlinked volunteers with user_id=null)
-    const userIds = selectedIds
+    const dutyUserIds = selectedIds
       .map(vid => volunteers.find(v => v.id === vid)?.user_id ?? null)
       .filter((uid): uid is number => uid !== null);
+    const allUserIds = [...new Set([...dutyUserIds, ...manualUsers.map(u => u.id)])];
     onDispatch({
       quest_id: quest.id,
       zone_id: zone.id,
-      user_ids: userIds,
+      user_ids: allUserIds,
     });
   };
+
+  const userPickerOptions = useMemo(() => {
+    if (!allUsers) return [];
+    const addedIds = new Set(manualUsers.map(u => u.id));
+    return allUsers.filter(u => !onDutyUserIds.has(u.id) && !addedIds.has(u.id));
+  }, [allUsers, onDutyUserIds, manualUsers]);
 
   if (!quest) return null;
 
   const totalItems = quest.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalSelected = selectedIds.length + manualUsers.length;
 
   return (
     <Dialog
@@ -102,7 +153,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
       </DialogTitle>
 
       <DialogContent sx={{ py: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {/* Quest info row: destination + date */}
+        {/* Quest info row */}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11 }}>
             {quest.location_name ?? `${quest.destination.pavilion} — ${quest.destination.location}`}
@@ -129,30 +180,28 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
           }}>
             {quest.items.map((item, i) => (
               <Box key={i} sx={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 py: 0.5, px: 1, borderRadius: 0.5,
                 bgcolor: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
               }}>
-                <Typography sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontSize: 12 }}>
-                  {item.name}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
-                  {/* TODO Notes should be in new line below position name  */}
-                  {item.notes && (
-                    <Typography sx={{ color: '#2a5a6a', fontFamily: 'monospace', fontSize: 10, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.notes}
-                    </Typography>
-                  )}
-                  <Typography sx={{ color: '#ff9800', fontFamily: 'monospace', fontSize: 12, fontWeight: 700, minWidth: 32, textAlign: 'right' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}>
+                  <Typography sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontSize: 12 }}>
+                    {item.name}
+                  </Typography>
+                  <Typography sx={{ color: '#ff9800', fontFamily: 'monospace', fontSize: 12, fontWeight: 700, minWidth: 32, textAlign: 'right', flexShrink: 0 }}>
                     x{item.quantity}
                   </Typography>
                 </Box>
+                {item.notes && (
+                  <Typography sx={{ color: '#2a5a6a', fontFamily: 'monospace', fontSize: 10, whiteSpace: 'pre-wrap', wordBreak: 'break-word', mt: 0.25 }}>
+                    {item.notes}
+                  </Typography>
+                )}
               </Box>
             ))}
           </Box>
         </Box>
 
-        {/* Volunteer selection — horizontal */}
+        {/* Volunteer selection */}
         <Box>
           <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.5, mb: 0.75 }}>
             PRZYPISZ WOLONTARIUSZY
@@ -163,6 +212,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
             '&::-webkit-scrollbar': { height: 4 },
             '&::-webkit-scrollbar-thumb': { bgcolor: '#1a3548', borderRadius: 2 },
           }}>
+            {/* On-duty volunteer cards */}
             {availableVolunteers.map(v => {
               const isBusy = v.status === 'on_mission';
               const isChecked = selectedIds.includes(v.id);
@@ -187,13 +237,8 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                     '&:hover': !isBusy ? { borderColor: isChecked ? '#00acc1' : '#2a4a60' } : {},
                   }}
                 >
-                  {/* Avatar fills the card */}
                   {v.is_unlinked ? (
-                    <Box sx={{
-                      width: '100%', height: '100%',
-                      filter: isBusy ? 'brightness(0.4)' : 'none',
-                      transition: 'filter 0.15s ease',
-                    }}>
+                    <Box sx={{ width: '100%', height: '100%', filter: isBusy ? 'brightness(0.4)' : 'none', transition: 'filter 0.15s ease' }}>
                       <UnknownAgentAvatar />
                     </Box>
                   ) : (
@@ -211,44 +256,20 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                       {!v.avatar_url && getInitials(v.fullname, v.username)}
                     </Avatar>
                   )}
-
-                  {/* BUSY banner */}
                   {isBusy && (
-                    <Box sx={{
-                      position: 'absolute', top: 0, left: 0, right: 0,
-                      bgcolor: 'rgba(33,100,180,0.85)', py: 0.25, textAlign: 'center',
-                    }}>
+                    <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bgcolor: 'rgba(33,100,180,0.85)', py: 0.25, textAlign: 'center' }}>
                       <Typography sx={{ color: '#fff', fontFamily: 'monospace', fontSize: 8, fontWeight: 700, letterSpacing: 1.5 }}>
                         BUSY
                       </Typography>
                     </Box>
                   )}
-
-                  {/* Selected checkmark */}
                   {isChecked && (
-                    <Box sx={{
-                      position: 'absolute', top: 2, right: 2,
-                      width: 18, height: 18, borderRadius: '50%',
-                      bgcolor: '#00acc1', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Typography sx={{ color: '#000', fontSize: 12, fontWeight: 900, lineHeight: 1 }}>
-                        ✓
-                      </Typography>
+                    <Box sx={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: '50%', bgcolor: '#00acc1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Typography sx={{ color: '#000', fontSize: 12, fontWeight: 900, lineHeight: 1 }}>✓</Typography>
                     </Box>
                   )}
-
-                  {/* Name overlay */}
-                  <Box sx={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0,
-                    bgcolor: isChecked ? 'rgba(0,20,40,0.88)' : 'rgba(0,0,0,0.75)',
-                    px: 0.5, py: 0.5,
-                  }}>
-                    <Typography sx={{
-                      color: isBusy ? '#607080' : isChecked ? '#fff' : '#e0f4ff',
-                      fontFamily: 'monospace', fontSize: 11, fontWeight: 700,
-                      textAlign: 'center', lineHeight: 1.2,
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
+                  <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, bgcolor: isChecked ? 'rgba(0,20,40,0.88)' : 'rgba(0,0,0,0.75)', px: 0.5, py: 0.5 }}>
+                    <Typography sx={{ color: isBusy ? '#607080' : isChecked ? '#fff' : '#e0f4ff', fontFamily: 'monospace', fontSize: 11, fontWeight: 700, textAlign: 'center', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {displayName}
                     </Typography>
                   </Box>
@@ -263,11 +284,126 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                 <React.Fragment key={v.id}>{card}</React.Fragment>
               );
             })}
+
+            {/* Manually added user cards (purple border) */}
+            {manualUsers.map(u => {
+              const avatarBg = AVATAR_PALETTE[u.id % AVATAR_PALETTE.length];
+              const displayName = u.discord_username || u.fullname || u.username;
+              return (
+                <Box
+                  key={`manual-${u.id}`}
+                  sx={{
+                    position: 'relative',
+                    width: 72,
+                    height: 72,
+                    flexShrink: 0,
+                    borderRadius: 1.5,
+                    overflow: 'hidden',
+                    border: '2px solid #ab47bc',
+                    boxShadow: '0 0 10px rgba(171,71,188,0.35)',
+                  }}
+                >
+                  <Avatar
+                    variant="square"
+                    sx={{ width: '100%', height: '100%', borderRadius: 0, bgcolor: avatarBg, fontSize: 22, fontFamily: 'monospace', fontWeight: 700 }}
+                  >
+                    {getInitials(u.fullname, u.username)}
+                  </Avatar>
+                  <Box
+                    onClick={() => handleRemoveManualUser(u.id)}
+                    sx={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: '50%', bgcolor: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#ef5350' } }}
+                  >
+                    <Typography sx={{ color: '#fff', fontSize: 11, fontWeight: 900, lineHeight: 1 }}>×</Typography>
+                  </Box>
+                  <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, bgcolor: 'rgba(20,0,30,0.88)', px: 0.5, py: 0.5 }}>
+                    <Typography sx={{ color: '#e0cfff', fontFamily: 'monospace', fontSize: 11, fontWeight: 700, textAlign: 'center', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {displayName}
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            })}
+
+            {/* Add from list button */}
+            <Tooltip title="Dodaj z listy użytkowników" placement="top" arrow>
+              <Box
+                onClick={handleOpenUserSearch}
+                sx={{
+                  width: 72, height: 72, flexShrink: 0,
+                  borderRadius: 1.5,
+                  border: '2px dashed #1a3548',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#2a5a6a',
+                  transition: 'all 0.15s ease',
+                  '&:hover': { borderColor: '#ab47bc', color: '#ab47bc', bgcolor: 'rgba(171,71,188,0.07)' },
+                }}
+              >
+                {loadingUsers
+                  ? <CircularProgress size={22} sx={{ color: '#ab47bc' }} />
+                  : <AddIcon sx={{ fontSize: 28 }} />
+                }
+              </Box>
+            </Tooltip>
           </Box>
 
-          {availableVolunteers.length === 0 && (
+          {/* User search autocomplete */}
+          {showUserSearch && (
+            <Box sx={{ mt: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Autocomplete
+                options={userPickerOptions}
+                getOptionLabel={u => {
+                  const parts = [u.username];
+                  if (u.fullname) parts.push(u.fullname);
+                  if (u.discord_username) parts.push(`@${u.discord_username}`);
+                  return parts.join(' · ');
+                }}
+                value={autocompleteValue}
+                onChange={handleAddManualUser}
+                loading={loadingUsers}
+                size="small"
+                fullWidth
+                noOptionsText="Brak wyników"
+                loadingText="Ładowanie..."
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Szukaj po nazwie lub pseudonimie..."
+                    sx={{
+                      '& .MuiInputBase-root': { bgcolor: '#07111e', fontFamily: 'monospace', fontSize: 12, color: '#c8e8f5' },
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#1a3548' },
+                      '& .MuiInputBase-root:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ab47bc' },
+                      '& .MuiInputBase-input::placeholder': { color: '#1a5a6a', opacity: 1 },
+                      '& .MuiAutocomplete-endAdornment .MuiIconButton-root': { color: '#3a7a8a' },
+                    }}
+                  />
+                )}
+                ListboxProps={{
+                  sx: {
+                    bgcolor: '#07111e',
+                    border: '1px solid #1a3548',
+                    '& .MuiAutocomplete-option': {
+                      fontFamily: 'monospace', fontSize: 12, color: '#c8e8f5',
+                      '&:hover': { bgcolor: 'rgba(171,71,188,0.12)' },
+                      '&[aria-selected="true"]': { bgcolor: 'rgba(171,71,188,0.2)' },
+                    },
+                  },
+                }}
+                sx={{ flex: 1 }}
+              />
+              <IconButton
+                onClick={() => setShowUserSearch(false)}
+                size="small"
+                sx={{ color: '#3a7a8a', '&:hover': { color: '#ef5350' } }}
+              >
+                <CloseIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Box>
+          )}
+
+          {availableVolunteers.length === 0 && manualUsers.length === 0 && !showUserSearch && (
             <Typography sx={{ color: '#1a5a6a', fontFamily: 'monospace', textAlign: 'center', fontSize: 11, py: 2 }}>
-              Brak dostępnych wolontariuszy
+              Brak dostępnych wolontariuszy — użyj + by dodać z listy
             </Typography>
           )}
         </Box>
@@ -285,7 +421,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
         </Button>
         <Button
           variant="contained"
-          disabled={selectedIds.length === 0}
+          disabled={totalSelected === 0}
           onClick={handleDispatch}
           sx={{
             bgcolor: '#ff9800',
@@ -300,7 +436,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
             '&.Mui-disabled': { bgcolor: '#333', color: '#666' },
           }}
         >
-          DISPATCH ({selectedIds.length})
+          DISPATCH ({totalSelected})
         </Button>
       </DialogActions>
     </Dialog>

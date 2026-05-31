@@ -18,6 +18,7 @@ import ServiceDeskDetailsModal from './components/ServiceDeskDetailsModal';
 import { addUserPointsAPI } from '../../../services/userService';
 import { useServiceDeskStream } from '../../../hooks/useServiceDeskStream';
 import type { ServiceDeskSSEEvent } from '../../../hooks/useServiceDeskStream';
+import { useAuth } from '../../../hooks/useAuth';
 
 const ServiceDeskPage: React.FC = () => {
   const [status, setStatus] = useState('new');
@@ -49,6 +50,9 @@ const ServiceDeskPage: React.FC = () => {
   const assignButtonRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [menuWidth, setMenuWidth] = useState<number>(220);
   const isEditable = selectedRequest && selectedRequest.status !== 'closed' && selectedRequest.status !== 'resolved';
+
+  const { userRole } = useAuth();
+  const canChangeStatus = userRole === 'admin' || userRole === 'moderator' || userRole === 'dispatcher';
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -339,6 +343,7 @@ const ServiceDeskPage: React.FC = () => {
           onStatusChange={handleStatusChange}
           assignButtonRefs={assignButtonRefs}
           handleAssignDropdownOpen={handleAssignDropdownOpen}
+          canChangeStatus={canChangeStatus}
         />
       ) : viewMode === 'cards' ? (
         <ServiceDeskCardsView

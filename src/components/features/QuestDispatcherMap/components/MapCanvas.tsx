@@ -14,13 +14,14 @@ interface MapCanvasProps {
   selectedZoneId: string | null;
   onZoneSelect: (id: string | null) => void;
   onZoneDispatch?: (zoneId: string) => void;
+  onZoneSdClick?: (zoneId: string) => void;
   debugMode?: boolean;
   urgencyHours?: number;
   simulatedTime?: Date;
   children?: React.ReactNode;
 }
 
-const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, sdByZone = {}, selectedZoneId, onZoneSelect, onZoneDispatch, debugMode = false, urgencyHours = 8, simulatedTime, children }) => {
+const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, sdByZone = {}, selectedZoneId, onZoneSelect, onZoneDispatch, onZoneSdClick, debugMode = false, urgencyHours = 8, simulatedTime, children }) => {
 
   // Debug state
   const [debugCoords, setDebugCoords] = useState<{ x: number; y: number } | null>(null);
@@ -108,6 +109,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, sdByZone = {}, sele
               isSelected={selectedZoneId === zone.id}
               onSelect={(id) => onZoneSelect(selectedZoneId === id ? null : id)}
               onDispatch={onZoneDispatch}
+              onSdClick={onZoneSdClick}
             />
           ))}
 

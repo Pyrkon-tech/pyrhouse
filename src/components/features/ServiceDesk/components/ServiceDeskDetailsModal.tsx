@@ -145,20 +145,23 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
             >
               {request.title}
             </Typography>
-            <IconButton onClick={onClose} size="large" aria-label="Zamknij" sx={{ ml: 1 }}>
-              <span style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}>×</span>
+            <IconButton onClick={onClose} aria-label="Zamknij" sx={{ ml: 1, width: 36, height: 36, p: 0 }}>
+              <span style={{ fontSize: 22, fontWeight: 700, lineHeight: 1 }}>×</span>
             </IconButton>
           </Box>
         ) : (
-          <IconButton onClick={onClose} size="large" aria-label="Zamknij" sx={{
+          <IconButton onClick={onClose} aria-label="Zamknij" sx={{
             position: 'absolute',
             top: 18,
             right: 18,
             zIndex: 30,
+            width: 36,
+            height: 36,
+            p: 0,
             bgcolor: 'rgba(0,0,0,0.08)',
             '&:hover': { bgcolor: 'rgba(0,0,0,0.18)' },
           }}>
-            <span style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}>×</span>
+            <span style={{ fontSize: 22, fontWeight: 700, lineHeight: 1 }}>×</span>
           </IconButton>
         )}
         {/* CONTENT */}

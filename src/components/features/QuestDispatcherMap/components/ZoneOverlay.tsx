@@ -8,9 +8,10 @@ interface ZoneOverlayProps {
   isSelected: boolean;
   onSelect: (id: string) => void;
   onDispatch?: (zoneId: string) => void;
+  onSdClick?: (zoneId: string) => void;
 }
 
-const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, onSelect, onDispatch }) => {
+const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, onSelect, onDispatch, onSdClick }) => {
   const hasQuests = metrics.total > 0;
   const isUrgent = metrics.urgent > 0;
   const isActive = metrics.inProgress > 0;
@@ -18,15 +19,17 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
   const [cx, cy] = zone.lx != null && zone.ly != null ? [zone.lx, zone.ly] : centroid(zone.points);
   const bb = bbox(zone.points);
 
+  const onlyCompleted = metrics.completed > 0 && metrics.pending === 0 && metrics.inProgress === 0;
+
   const fill = isSelected
-    ? 'rgba(255,152,0,0.40)'
+    ? onlyCompleted ? 'rgba(102,187,106,0.30)' : 'rgba(255,152,0,0.40)'
     : isUrgent ? 'rgba(255,152,0,0.30)'
     : isActive ? 'rgba(0,172,193,0.22)'
     : hasQuests ? 'rgba(102,187,106,0.20)'
     : 'rgba(255,255,255,0.03)';
 
   const stroke = isSelected
-    ? '#ff9800'
+    ? onlyCompleted ? '#66bb6a' : '#ff9800'
     : isUrgent ? '#ff9800'
     : isActive ? '#00acc1'
     : hasQuests ? '#66bb6a'
@@ -39,8 +42,7 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
     <g
       onClick={(e) => {
         e.stopPropagation();
-        if (isUrgent && onDispatch) onDispatch(zone.id);
-        else onSelect(zone.id);
+        onSelect(zone.id);
       }}
       style={{ cursor: 'pointer' }}
       role="button"
@@ -117,7 +119,7 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
           style={{ userSelect: 'none', pointerEvents: 'none' }}
         >
           {isUrgent
-            ? `⚡${metrics.pending}${metrics.inProgress > 0 ? ` ▶${metrics.inProgress}` : ''}`
+            ? `⚡${metrics.urgent}${metrics.inProgress > 0 ? ` ▶${metrics.inProgress}` : ''}`
             : isActive
             ? `▶ ${metrics.inProgress}`
             : `✓ ${metrics.completed}`}
@@ -130,7 +132,10 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
         const [px, py] = zone.points[0];
         const pulsing = metrics.alertPulsing > 0;
         return (
-          <g style={{ pointerEvents: 'none' }}>
+          <g
+            style={{ cursor: 'pointer' }}
+            onClick={(e) => { e.stopPropagation(); onDispatch?.(zone.id); }}
+          >
             {/* Outer expanding ring */}
             {pulsing && (
               <circle cx={px} cy={py} r={r} fill="none" stroke="#ff9800" strokeWidth={3} opacity={0}>
@@ -181,7 +186,7 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
         const sdx = Math.round(cx + (bb.maxX - cx) * 0.60);
         const sdy = Math.round(cy + (bb.maxY - cy) * 0.40);
         return (
-          <g style={{ pointerEvents: 'none' }}>
+          <g onClick={(e) => { e.stopPropagation(); onSdClick ? onSdClick(zone.id) : onSelect(zone.id); }} style={{ cursor: 'pointer' }}>
             <circle cx={sdx} cy={sdy} r={40} fill="#00acc1" opacity={0.15}
               style={{ filter: 'blur(10px)' }}>
               <animate attributeName="opacity" values="0.15;0.4;0.15" dur="1.8s" repeatCount="indefinite" />

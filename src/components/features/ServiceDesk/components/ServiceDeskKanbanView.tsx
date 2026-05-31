@@ -39,6 +39,7 @@ interface KanbanCardProps {
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleAssignDropdownOpen: (reqId: string) => void;
   isDragging?: boolean;
+  canChangeStatus?: boolean;
 }
 
 const PRIORITY_LABEL: Record<string, string> = {
@@ -67,9 +68,10 @@ const STATUS_COLOR: Record<string, 'primary' | 'info' | 'warning' | 'success' | 
 };
 
 const KanbanCardContent: React.FC<KanbanCardProps> = ({
-  req, types, onOpenDetails, assignButtonRefs, handleAssignDropdownOpen,
+  req, types, onOpenDetails, assignButtonRefs, handleAssignDropdownOpen, canChangeStatus,
 }) => {
   const isClosed = req.status === 'closed';
+  const isDraggable = canChangeStatus && !isClosed;
   return (
     <Box
       sx={{
@@ -83,14 +85,14 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
         opacity: isClosed ? 0.65 : 1,
         transition: 'box-shadow 0.2s, transform 0.2s',
         '&:hover': isClosed ? {} : { boxShadow: 8, transform: 'translateY(-2px)' },
-        cursor: isClosed ? 'default' : 'grab',
+        cursor: isDraggable ? 'grab' : 'default',
         userSelect: 'none',
       }}
       onClick={() => onOpenDetails(req)}
     >
       {/* Header row: drag handle + title + details button */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-        {!isClosed && (
+        {isDraggable && (
           <DragIndicatorIcon
             sx={{ color: 'text.disabled', fontSize: 18, mt: 0.3, flexShrink: 0 }}
           />
@@ -185,11 +187,11 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
 
 // Draggable wrapper
 const DraggableCard: React.FC<KanbanCardProps> = (props) => {
-  const { req } = props;
+  const { req, canChangeStatus } = props;
   const isClosed = req.status === 'closed';
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: req.id,
-    disabled: isClosed,
+    disabled: isClosed || !canChangeStatus,
   });
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -209,11 +211,13 @@ const KanbanColumn: React.FC<{
   column: KanbanColumn;
   cards: any[];
   isOver: boolean;
+  isSourceColumn: boolean;
   types: Record<string, any>;
   onOpenDetails: (req: any) => void;
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleAssignDropdownOpen: (reqId: string) => void;
-}> = ({ column, cards, isOver, types, onOpenDetails, assignButtonRefs, handleAssignDropdownOpen }) => {
+  canChangeStatus?: boolean;
+}> = ({ column, cards, isOver, isSourceColumn, types, onOpenDetails, assignButtonRefs, handleAssignDropdownOpen, canChangeStatus }) => {
   const { setNodeRef } = useDroppable({ id: column.id });
 
   return (
@@ -226,8 +230,8 @@ const KanbanColumn: React.FC<{
         bgcolor: 'background.default',
         borderRadius: 2,
         border: '1px solid',
-        borderColor: isOver ? column.color : 'divider',
-        boxShadow: isOver ? `0 0 0 2px ${column.color}40` : 'none',
+        borderColor: isOver && !isSourceColumn ? column.color : 'divider',
+        boxShadow: isOver && !isSourceColumn ? `0 0 0 2px ${column.color}40` : 'none',
         transition: 'border-color 0.15s, box-shadow 0.15s',
         overflow: 'hidden',
       }}
@@ -267,8 +271,8 @@ const KanbanColumn: React.FC<{
           gap: 1,
           overflowY: 'auto',
           maxHeight: 'calc(100vh - 280px)',
-          minHeight: 80,
-          bgcolor: isOver ? `${column.color}08` : 'transparent',
+          minHeight: 'calc(100vh - 380px)',
+          bgcolor: isOver && !isSourceColumn ? `${column.color}08` : 'transparent',
           transition: 'background-color 0.15s',
         }}
       >
@@ -285,6 +289,7 @@ const KanbanColumn: React.FC<{
               onOpenDetails={onOpenDetails}
               assignButtonRefs={assignButtonRefs}
               handleAssignDropdownOpen={handleAssignDropdownOpen}
+              canChangeStatus={canChangeStatus}
             />
           ))
         )}
@@ -300,6 +305,7 @@ interface ServiceDeskKanbanViewProps {
   onStatusChange: (id: string, newStatus: string) => Promise<void>;
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleAssignDropdownOpen: (reqId: string) => void;
+  canChangeStatus?: boolean;
 }
 
 const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
@@ -309,10 +315,12 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
   onStatusChange,
   assignButtonRefs,
   handleAssignDropdownOpen,
+  canChangeStatus = false,
 }) => {
   const [localRequests, setLocalRequests] = useState(requests);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const [sourceColumnId, setSourceColumnId] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalRequests(requests);
@@ -328,7 +336,13 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
   const activeReq = activeId ? localRequests.find(r => r.id === activeId) : null;
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
+    const id = event.active.id as string;
+    setActiveId(id);
+    const req = localRequests.find(r => r.id === id);
+    if (req) {
+      const col = COLUMNS.find(c => c.statuses.includes(req.status));
+      setSourceColumnId(col?.id ?? null);
+    }
   };
 
   const handleDragOver = (event: { over: { id: string } | null }) => {
@@ -339,6 +353,7 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
     const { active, over } = event;
     setActiveId(null);
     setOverId(null);
+    setSourceColumnId(null);
 
     if (!over) return;
 
@@ -376,10 +391,12 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
             column={column}
             cards={getCardsForColumn(column)}
             isOver={overId === column.id}
+            isSourceColumn={sourceColumnId === column.id}
             types={types}
             onOpenDetails={onOpenDetails}
             assignButtonRefs={assignButtonRefs}
             handleAssignDropdownOpen={handleAssignDropdownOpen}
+            canChangeStatus={canChangeStatus}
           />
         ))}
       </Box>
@@ -393,6 +410,7 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
               onOpenDetails={() => {}}
               assignButtonRefs={assignButtonRefs}
               handleAssignDropdownOpen={() => {}}
+              canChangeStatus={canChangeStatus}
             />
           </Box>
         ) : null}

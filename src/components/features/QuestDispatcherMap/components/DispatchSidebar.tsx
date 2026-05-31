@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, Chip, Divider, IconButton, Tooltip, Select, MenuItem, FormControl, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import DispatchSdModal from './DispatchSdModal';
 import type { Quest, QuestStatus } from '../../../../types/quest.types';
 import type { ServiceDeskRequest } from '../../../../types/servicedesk.types';
 import type { Location } from '../../../../types/location.types';
@@ -62,6 +61,7 @@ interface DispatchSidebarProps {
   sdByZone?: Record<string, ServiceDeskRequest[]>;
   onZoneSelect: (id: string | null) => void;
   onDispatchQuest?: (quest: Quest) => void;
+  onSdTicketOpen?: (req: ServiceDeskRequest) => void;
   bottomPanel?: React.ReactNode;
   locations?: Location[];
   onAssignQuestLocation?: (questId: string, locationId: number) => Promise<void>;
@@ -74,9 +74,13 @@ const QuestItem: React.FC<{
   onDispatch?: (quest: Quest) => void;
 }> = ({ quest, onClick, onDispatch }) => {
   const locationLabel = quest.location_name ?? `${quest.destination.pavilion} · ${quest.destination.location}`;
+  const handleClick = () => {
+    if (quest.status === 'pending' && onDispatch) onDispatch(quest);
+    else onClick();
+  };
   return (
     <Box
-      onClick={onClick}
+      onClick={handleClick}
       sx={{
         p: 1.5, borderRadius: 1, cursor: 'pointer',
         bgcolor: '#07111e', border: '1px solid #1a3548',
@@ -257,10 +261,12 @@ const ZoneSummary: React.FC<{
   sdByZone: Record<string, ServiceDeskRequest[]>;
   onZoneSelect: (id: string) => void;
 }> = ({ questsByZone, sdByZone, onZoneSelect }) => {
-  const activeZones = ZONES.filter(z =>
-    (questsByZone[z.id] ?? []).length > 0 ||
-    (sdByZone[z.id] ?? []).some(r => r.status === 'new'),
-  );
+  const activeZones = ZONES
+    .filter(z =>
+      (questsByZone[z.id] ?? []).length > 0 ||
+      (sdByZone[z.id] ?? []).some(r => r.status === 'new'),
+    )
+    .sort((a, b) => a.label.replace('\n', ' ').localeCompare(b.label.replace('\n', ' '), 'pl', { numeric: true }));
 
   return (
     <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -291,9 +297,8 @@ const ZoneSummary: React.FC<{
   );
 };
 
-const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, sdByZone = {}, onZoneSelect, onDispatchQuest, bottomPanel, locations, onAssignQuestLocation, onCollapse }) => {
+const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, sdByZone = {}, onZoneSelect, onDispatchQuest, onSdTicketOpen, bottomPanel, locations, onAssignQuestLocation, onCollapse }) => {
   const navigate = useNavigate();
-  const [selectedSdRequest, setSelectedSdRequest] = useState<ServiceDeskRequest | null>(null);
   const selectedZone = ZONES.find(z => z.id === selectedZoneId) ?? null;
   const selectedQuests = selectedZoneId ? (questsByZone[selectedZoneId] ?? []) : [];
   const selectedSdRequests = selectedZoneId ? (sdByZone[selectedZoneId] ?? []) : [];
@@ -329,7 +334,7 @@ const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, quest
             onClose={() => onZoneSelect(null)}
             onNavigate={(id) => navigate(`/quests/${id}`)}
             onDispatchQuest={onDispatchQuest}
-            onSdTicketClick={setSelectedSdRequest}
+            onSdTicketClick={(req) => onSdTicketOpen?.(req)}
             locations={locations}
             onAssignQuestLocation={onAssignQuestLocation}
           />
@@ -346,10 +351,6 @@ const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, quest
           {bottomPanel}
         </Box>
       )}
-      <DispatchSdModal
-        request={selectedSdRequest}
-        onClose={() => setSelectedSdRequest(null)}
-      />
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Box, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Quest } from '../../../types/quest.types';
@@ -14,6 +14,7 @@ import MapCanvas from './components/MapCanvas';
 import DispatchSidebar from './components/DispatchSidebar';
 import VolunteerPanel from './components/VolunteerPanel';
 import DispatchModal from './components/DispatchModal';
+import DispatchSdModal from './components/DispatchSdModal';
 import DevTimeSimulator from './components/DevTimeSimulator';
 
 const IS_DEV = (import.meta.env.DEV && window.location.hostname === 'localhost')
@@ -51,7 +52,11 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
   const navigate = useNavigate();
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [simulatedTime, setSimulatedTime] = useState<Date | undefined>(undefined);
+  const [simulatedTime, setSimulatedTime] = useState<Date | undefined>(() => {
+    if (!IS_DEV) return undefined;
+    const stored = sessionStorage.getItem('dispatch_sim_time');
+    return stored ? new Date(stored) : undefined;
+  });
   const { locations, refetch: fetchLocations } = useLocations();
 
   useEffect(() => { fetchLocations(); }, [fetchLocations]);
@@ -71,7 +76,21 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
   const { roster, fetchRoster } = useOnDutyRoster(simulatedTime);
   useEffect(() => { fetchRoster(); }, [fetchRoster]);
 
+  const rosterFetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const volunteers = useMemo(() => roster.map(mapOnDutyToVolunteer), [roster]);
+
+  // SD modal state (lifted from DispatchSidebar so map badge can open it directly)
+  const [selectedSdRequest, setSelectedSdRequest] = useState<ServiceDeskRequest | null>(null);
+
+  const handleZoneSdClick = useCallback((zoneId: string) => {
+    const newItems = (sdByZone[zoneId] ?? []).filter(r => r.status === 'new');
+    if (newItems.length === 1) {
+      setSelectedSdRequest(newItems[0]);
+    } else {
+      setSelectedZoneId(zoneId);
+    }
+  }, [sdByZone]);
 
   // Dispatch modal state
   const [dispatchModal, setDispatchModal] = useState<DispatchModalState>({
@@ -98,12 +117,14 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
     setDispatchModal({ open: true, quest_id: quest.id, zone_id: zoneId });
   }, [questsByZone]);
 
-  // Open dispatch modal from zone icon click — pick first pending quest
+  // Open dispatch modal from zone exclamation icon — if multiple pending, open sidebar instead
   const handleZoneDispatch = useCallback((zoneId: string) => {
     const zoneQuests = questsByZone[zoneId] ?? [];
-    const pendingQuest = zoneQuests.find(q => q.status === 'pending');
-    if (pendingQuest) {
-      setDispatchModal({ open: true, quest_id: pendingQuest.id, zone_id: zoneId });
+    const pendingQuests = zoneQuests.filter(q => q.status === 'pending');
+    if (pendingQuests.length === 1) {
+      setDispatchModal({ open: true, quest_id: pendingQuests[0].id, zone_id: zoneId });
+    } else if (pendingQuests.length > 1) {
+      setSelectedZoneId(zoneId);
     }
   }, [questsByZone]);
 
@@ -137,6 +158,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
             selectedZoneId={selectedZoneId}
             onZoneSelect={setSelectedZoneId}
             onZoneDispatch={handleZoneDispatch}
+            onZoneSdClick={handleZoneSdClick}
             urgencyHours={urgencyHours}
             simulatedTime={simulatedTime}
           />
@@ -145,7 +167,10 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
               simulatedTime={simulatedTime}
               onChange={(t) => {
                 setSimulatedTime(t);
-                fetchRoster(t);
+                if (t) sessionStorage.setItem('dispatch_sim_time', t.toISOString());
+                else sessionStorage.removeItem('dispatch_sim_time');
+                if (rosterFetchTimerRef.current) clearTimeout(rosterFetchTimerRef.current);
+                rosterFetchTimerRef.current = setTimeout(() => fetchRoster(t), 300);
               }}
             />
           )}
@@ -160,6 +185,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
           sdByZone={sdByZone}
           onZoneSelect={setSelectedZoneId}
           onDispatchQuest={handleDispatchQuest}
+          onSdTicketOpen={setSelectedSdRequest}
           locations={locations}
           onAssignQuestLocation={handleAssignQuestLocation}
           onCollapse={() => setSidebarOpen(false)}
@@ -190,6 +216,11 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
         volunteers={volunteers}
         onClose={handleCloseDispatch}
         onDispatch={handleDispatch}
+      />
+      {/* SD modal */}
+      <DispatchSdModal
+        request={selectedSdRequest}
+        onClose={() => setSelectedSdRequest(null)}
       />
     </Box>
   );

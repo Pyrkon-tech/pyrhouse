@@ -214,7 +214,7 @@ export const adminRoutes: RouteConfig[] = [
     component: UserDetailsPage,
     title: 'Szczegóły użytkownika',
     showInNav: false,
-    requiredRoles: ['admin', 'moderator'],
+    requiredRoles: ['admin', 'moderator', 'dispatcher'],
   },
   {
     path: '/categories',

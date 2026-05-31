@@ -46,7 +46,6 @@ const CancelIcon = lazy(() => import('@mui/icons-material/Cancel'));
 const PlaceIcon = lazy(() => import('@mui/icons-material/Place'));
 const PersonIcon = lazy(() => import('@mui/icons-material/Person'));
 const CalendarTodayIcon = lazy(() => import('@mui/icons-material/CalendarToday'));
-const AccountBalanceWalletIcon = lazy(() => import('@mui/icons-material/AccountBalanceWallet'));
 const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
 const SendIcon = lazy(() => import('@mui/icons-material/Send'));
 
@@ -193,7 +192,7 @@ const QuestDetailPage: React.FC = () => {
 
   useQuestStream({ onEvent: onSseEvent });
 
-  const hasAdminAccess = userRole === 'admin' || userRole === 'moderator';
+  const hasAdminAccess = userRole === 'admin' || userRole === 'moderator' || userRole === 'dispatcher';
   const hasTransfer = quest?.transfer_id != null;
   const canChangeStatus = hasAdminAccess && !hasTransfer;
   const canCreateTransfer = hasAdminAccess && !hasTransfer && quest?.status === 'pending';
@@ -213,10 +212,6 @@ const QuestDetailPage: React.FC = () => {
   const handleCancel = async () => {
     setCancelDialogOpen(false);
     await handleStatusChange('cancelled');
-  };
-
-  const handleStartIssue = () => {
-    setShowTransferForm(true);
   };
 
   const getStatusLabel = (status: QuestStatus) => {
@@ -359,17 +354,6 @@ const QuestDetailPage: React.FC = () => {
             </Box>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Suspense fallback={null}><AccountBalanceWalletIcon color="primary" /></Suspense>
-              <Box>
-                <Typography variant="caption" color="text.secondary">Właściciel budżetu</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {quest.budget_owner}
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
         </Grid>
       </Paper>
 
@@ -429,12 +413,12 @@ const QuestDetailPage: React.FC = () => {
         {canCreateTransfer && quest.location_resolved && (
           <Button
             variant="contained"
-            color="primary"
-            onClick={handleStartIssue}
+            color={showTransferForm ? 'inherit' : 'primary'}
+            onClick={() => setShowTransferForm(v => !v)}
             startIcon={<Suspense fallback={null}><SendIcon /></Suspense>}
             sx={{ px: 3 }}
           >
-            Wydaj sprzęt
+            {showTransferForm ? 'Zwiń formularz' : 'Wydaj sprzęt'}
           </Button>
         )}
         {canCreateTransfer && !quest.location_resolved && (
@@ -453,7 +437,7 @@ const QuestDetailPage: React.FC = () => {
         {/* Status change buttons - only for quests without a transfer */}
         {canChangeStatus && quest.status !== 'completed' && quest.status !== 'cancelled' && (
           <>
-            {quest.status === 'pending' && (
+            {quest.status === 'pending' && !showTransferForm && (
               <Button
                 variant="outlined"
                 color="warning"
@@ -461,7 +445,7 @@ const QuestDetailPage: React.FC = () => {
                 disabled={updating}
                 startIcon={updating ? <CircularProgress size={16} /> : <Suspense fallback={null}><LocalShippingIcon /></Suspense>}
               >
-                Rozpocznij realizację
+                Oznacz jako w realizacji
               </Button>
             )}
             {quest.status === 'in_progress' && (
@@ -522,7 +506,7 @@ const QuestDetailPage: React.FC = () => {
                     {item.budget_owner || quest.budget_owner || '—'}
                   </Typography>
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ maxWidth: 240, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                   <Typography variant="body2" color="text.secondary" sx={{ fontStyle: item.notes ? 'italic' : 'normal' }}>
                     {item.notes || '—'}
                   </Typography>
