@@ -35,92 +35,74 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   return (
-    <Box 
-      sx={{ 
-        height: { xs: '200px', sm: '260px', md: '340px' },
-        width: '100%',
-        maxWidth: { xs: 340, sm: 500, md: 800 },
-        overflow: 'hidden',
-        position: 'relative',
-        mx: 'auto',
-      }}
-      id="map-container"
-    >
+    <Box sx={{ width: '100%', maxWidth: { xs: 340, sm: 500, md: 800 }, mx: 'auto' }}>
       <Box
         sx={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          zIndex: 1,
-          display: 'flex',
-          gap: 1
+          height: { xs: '200px', sm: '260px', md: '340px' },
+          width: '100%',
+          overflow: 'hidden',
+          position: 'relative',
         }}
+        id="map-container"
       >
-        <Tooltip title="Pokaż moją lokalizację">
-          <IconButton
-            onClick={onGetUserLocation}
-            sx={{
-              backgroundColor: 'white',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              }
-            }}
-          >
-            <GpsFixedIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-      <APIProvider apiKey={locationService.getGoogleMapsApiKey()}>
-        <Map
-          defaultCenter={mapLocation}
-          defaultZoom={17}
-          mapId="pyrhouse-map"
-          gestureHandling={'greedy'}
-          disableDefaultUI={false}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            zIndex: 1,
+            display: 'flex',
+            gap: 1
+          }}
         >
-          <AdvancedMarker position={mapLocation}>
-            <Pin
-              background={'#1976d2'}
-              borderColor={'#1565c0'}
-              glyphColor={'#ffffff'}
-            />
-          </AdvancedMarker>
-          {userLocation && (
-            <AdvancedMarker position={userLocation}>
+          <Tooltip title="Pokaż moją lokalizację">
+            <IconButton
+              onClick={onGetUserLocation}
+              sx={{
+                backgroundColor: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                }
+              }}
+            >
+              <GpsFixedIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+        <APIProvider apiKey={locationService.getGoogleMapsApiKey()}>
+          <Map
+            defaultCenter={mapLocation}
+            defaultZoom={17}
+            mapId="pyrhouse-map"
+            gestureHandling={'greedy'}
+            disableDefaultUI={false}
+          >
+            <AdvancedMarker position={mapLocation}>
               <Pin
-                background={'#4caf50'}
-                borderColor={'#388e3c'}
+                background={'#1976d2'}
+                borderColor={'#1565c0'}
                 glyphColor={'#ffffff'}
               />
             </AdvancedMarker>
-          )}
-        </Map>
-      </APIProvider>
+            {userLocation && (
+              <AdvancedMarker position={userLocation}>
+                <Pin
+                  background={'#4caf50'}
+                  borderColor={'#388e3c'}
+                  glyphColor={'#ffffff'}
+                />
+              </AdvancedMarker>
+            )}
+          </Map>
+        </APIProvider>
+      </Box>
       {locationError && (
-        <Alert 
-          severity="error" 
-          sx={{ 
-            position: 'absolute',
-            bottom: 10,
-            left: 10,
-            right: 10,
-            zIndex: 1
-          }}
-        >
+        <Alert severity="error" sx={{ mt: 1 }}>
           {locationError}
         </Alert>
       )}
       {userLocation && showLocationAlert && (
-        <Alert 
-          severity="success" 
-          sx={{ 
-            position: 'absolute',
-            bottom: locationError ? 60 : 30,
-            left: 10,
-            right: 10,
-            zIndex: 1
-          }}
-        >
+        <Alert severity="success" sx={{ mt: 1 }}>
           Twoja lokalizacja została oznaczona na mapie (zielony marker)
         </Alert>
       )}

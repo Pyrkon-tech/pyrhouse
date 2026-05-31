@@ -179,7 +179,7 @@ const QuestBoardPage: React.FC = () => {
     try {
       const result = await triggerSync();
       showSuccess(
-        `Synchronizacja zakończona: ${result.stats.quests_created} nowych, ${result.stats.quests_updated} zaktualizowanych`
+        `Synchronizacja zakończona: ${result.stats.quests_created} nowych zamówień, ${result.stats.quests_updated} zaktualizowanych`
       );
       setPage(0);
       fetchQuests({ limit: LIMIT, offset: 0, status: statusFilter || undefined });
@@ -261,7 +261,7 @@ const QuestBoardPage: React.FC = () => {
         }
       >
         Ostatnia synchronizacja: {formatRelativeTime(syncLog.synced_at)}
-        {syncLog.success && ` (${syncLog.quests_created} nowych, ${syncLog.quests_updated} zaktualizowanych)`}
+        {syncLog.success && ` (${syncLog.quests_created} nowych zamówień, ${syncLog.quests_updated} zaktualizowanych)`}
         {syncLog.errors && ` — Błędy: ${syncLog.errors}`}
         {syncStatus?.enabled && (
           <Typography component="span" variant="body2" sx={{ ml: 1, opacity: 0.75 }}>

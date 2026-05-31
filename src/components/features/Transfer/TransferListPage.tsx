@@ -283,14 +283,14 @@ const TransfersListPage: React.FC = () => {
       />
 
       <PageHeader
-        title="Questy transportowe"
+        title="Transfery"
         actions={
           <Button
             variant="primary"
             leftIcon={<Suspense fallback={null}><AddIcon /></Suspense>}
             onClick={() => navigate('/transfers/create')}
           >
-            Utwórz Nowy Quest
+            Nowy transfer
           </Button>
         }
       />
@@ -390,7 +390,7 @@ const TransfersListPage: React.FC = () => {
         <LoadingSkeleton />
       ) : sortedTransfers.length === 0 ? (
         <EmptyState
-          message="Brak questów"
+          message="Brak transferów"
           description={searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Utwórz nowy transfer, aby rozpocząć'}
           action={hasActiveFilters ? { label: 'Wyczyść filtry', onClick: clearFilters } : undefined}
         />

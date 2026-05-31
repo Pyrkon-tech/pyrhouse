@@ -294,7 +294,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/home', label: 'Home', icon: <Icons.Home /> },
     {
       type: 'divider',
-      label: 'Questy',
+      label: 'Zamówienia',
       icon: <Icons.AutoAwesome sx={{ fontSize: '0.9rem' }} />
     },
     { path: '/dispatch', label: 'Mapa Dispatch', icon: <Icons.Map /> },

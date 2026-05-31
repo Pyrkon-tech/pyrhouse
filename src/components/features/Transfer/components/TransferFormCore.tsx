@@ -440,7 +440,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
       />
       <Container maxWidth="lg" sx={{ py: 2 }}>
         <Typography variant="h5" gutterBottom>
-          Nowy Quest dostawy
+          Nowa dostawa
         </Typography>
 
         <form onSubmit={handleSubmit(handleFormSubmit)}>

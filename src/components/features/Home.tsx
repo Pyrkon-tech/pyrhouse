@@ -190,12 +190,12 @@ const HomePage: React.FC = () => {
 
   const stats = [
     {
-      label: 'Oczekujące questy',
+      label: 'Oczekujące zamówienia',
       value: counts.pending,
       icon: <HourglassEmpty fontSize="small" />,
       color: designTokens.colors.primary[500],
       bg: 'rgba(255,152,0,0.08)',
-      href: '/quests',
+      href: '/quests?status=pending',
     },
     {
       label: 'W realizacji',
@@ -203,7 +203,7 @@ const HomePage: React.FC = () => {
       icon: <LocalShipping fontSize="small" />,
       color: '#42a5f5',
       bg: 'rgba(66,165,245,0.08)',
-      href: '/quests',
+      href: '/quests?status=in_progress',
     },
     {
       label: 'Service Desk',
@@ -219,7 +219,7 @@ const HomePage: React.FC = () => {
       icon: <CheckCircle fontSize="small" />,
       color: '#66bb6a',
       bg: 'rgba(102,187,106,0.08)',
-      href: '/quests',
+      href: '/quests?status=completed',
     },
   ];
 
@@ -350,7 +350,7 @@ const HomePage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <HourglassEmpty sx={{ color: 'primary.main', fontSize: '1.1rem' }} />
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Questy do obsługi
+                  Zamówienia do obsługi
                 </Typography>
                 {counts.pending > 0 && (
                   <Chip label={counts.pending} size="small" color="primary" sx={{ height: 18, fontSize: '0.7rem' }} />
@@ -379,7 +379,7 @@ const HomePage: React.FC = () => {
                 <Box sx={{ px: 2.5, py: 5, textAlign: 'center' }}>
                   <CheckCircle sx={{ fontSize: '2rem', color: 'success.main', mb: 1, opacity: 0.6 }} />
                   <Typography color="text.secondary" variant="body2">
-                    Brak oczekujących questów
+                    Brak oczekujących zamówień
                   </Typography>
                 </Box>
               ) : (

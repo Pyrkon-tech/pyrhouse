@@ -156,18 +156,10 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
         )}
       </Box>
 
-      {/* Footer: reporter + assigned */}
+      {/* Footer: assigned (primary/left) + reporter (secondary/right) */}
       <Box
         sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pt: 0.5, borderTop: '1px solid', borderColor: 'divider' }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Avatar sx={{ width: 20, height: 20, fontSize: 11, bgcolor: 'background.default', color: 'text.primary' }}>
-            {req.created_by_user?.username?.[0] || '?'}
-          </Avatar>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
-            {req.created_by_user?.username || req.created_by}
-          </Typography>
-        </Box>
         <Box
           ref={el => { if (req.id) assignButtonRefs.current[req.id] = el as HTMLDivElement | null; }}
           sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: !isClosed ? 'pointer' : 'not-allowed', opacity: !isClosed ? 1 : 0.5, px: 0.5, borderRadius: 1, '&:hover': !isClosed ? { bgcolor: 'action.hover' } : {} }}
@@ -178,6 +170,14 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
           </Avatar>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
             {req.assigned_to_user ? req.assigned_to_user.username : '—'}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Avatar sx={{ width: 20, height: 20, fontSize: 11, bgcolor: 'background.default', color: 'text.primary' }}>
+            {req.created_by_user?.username?.[0] || '?'}
+          </Avatar>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+            {req.created_by_user?.username || req.created_by}
           </Typography>
         </Box>
       </Box>
@@ -194,7 +194,7 @@ const DraggableCard: React.FC<KanbanCardProps> = (props) => {
     disabled: isClosed || !canChangeStatus,
   });
   const style = {
-    transform: CSS.Translate.toString(transform),
+    transform: isDragging ? undefined : CSS.Translate.toString(transform),
     opacity: isDragging ? 0.4 : 1,
     transition: isDragging ? undefined : 'opacity 0.2s',
   };
@@ -384,7 +384,7 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
       onDragOver={handleDragOver as any}
       onDragEnd={handleDragEnd}
     >
-      <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1, alignItems: 'flex-start' }}>
+      <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1, alignItems: 'stretch' }}>
         {COLUMNS.map(column => (
           <KanbanColumn
             key={column.id}

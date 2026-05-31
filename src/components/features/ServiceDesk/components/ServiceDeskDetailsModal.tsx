@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog, Box, Typography, IconButton, Chip, Select, MenuItem, Avatar, Divider, Grid, Menu, CircularProgress, TextField, Button, Fade } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import CloseIcon from '@mui/icons-material/Close';
 import { useServiceDeskComments } from '../../../../hooks/useServiceDeskComments';
 import { useAuth } from '../../../../hooks/useAuth';
 
@@ -145,8 +146,8 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
             >
               {request.title}
             </Typography>
-            <IconButton onClick={onClose} aria-label="Zamknij" sx={{ ml: 1, width: 36, height: 36, p: 0 }}>
-              <span style={{ fontSize: 22, fontWeight: 700, lineHeight: 1 }}>×</span>
+            <IconButton onClick={onClose} aria-label="Zamknij" sx={{ ml: 1, width: 36, height: 36, p: 0, borderRadius: '50%' }}>
+              <CloseIcon sx={{ fontSize: 22 }} />
             </IconButton>
           </Box>
         ) : (
@@ -158,10 +159,11 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
             width: 36,
             height: 36,
             p: 0,
+            borderRadius: '50%',
             bgcolor: 'rgba(0,0,0,0.08)',
             '&:hover': { bgcolor: 'rgba(0,0,0,0.18)' },
           }}>
-            <span style={{ fontSize: 22, fontWeight: 700, lineHeight: 1 }}>×</span>
+            <CloseIcon sx={{ fontSize: 22 }} />
           </IconButton>
         )}
         {/* CONTENT */}
@@ -188,7 +190,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                   <MenuItem selected={request.priority === 'medium'} onClick={() => handlePrioritySelect('medium')}>Średni</MenuItem>
                   <MenuItem selected={request.priority === 'low'} onClick={() => handlePrioritySelect('low')}>Niski</MenuItem>
                 </Menu>
-                {(userRole === 'moderator' || userRole === 'admin') ? (
+                {(userRole === 'moderator' || userRole === 'admin' || userRole === 'dispatcher') ? (
                   <Select
                     value={request.status}
                     onChange={(e) => onStatusChange(request.id, e.target.value)}
@@ -403,7 +405,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">Status</Typography>
-                {(userRole === 'moderator' || userRole === 'admin') ? (
+                {(userRole === 'moderator' || userRole === 'admin' || userRole === 'dispatcher') ? (
                   <Select
                     value={request.status}
                     onChange={(e) => onStatusChange(request.id, e.target.value)}

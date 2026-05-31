@@ -98,7 +98,7 @@ const DispatchPage: React.FC = () => {
         <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontWeight: 700, fontSize: 11, letterSpacing: 3, flex: 1 }}>
           DISPATCH
         </Typography>
-        <Tooltip title={questSseConnected ? 'Questy: real-time' : 'Questy: brak połączenia'}>
+        <Tooltip title={questSseConnected ? 'Zamówienia: real-time' : 'Zamówienia: brak połączenia'}>
           <Box component="span" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: questSseConnected ? 'success.main' : 'warning.main', display: 'inline-block' }} />
         </Tooltip>
         <Tooltip title={sdSseConnected ? 'Service Desk: real-time' : 'SD: brak połączenia'}>

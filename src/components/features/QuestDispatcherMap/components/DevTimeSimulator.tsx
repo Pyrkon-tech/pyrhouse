@@ -11,9 +11,10 @@ interface DevTimeSimulatorProps {
 }
 
 const toInputValue = (d: Date) => {
-  // Format: YYYY-MM-DDTHH:MM (local time, for datetime-local input)
+  // Use UTC methods: the schedule displays slot times as UTC "clock time" (parseAsLocal strips Z),
+  // so the simulator input must also show UTC to stay consistent with what users see in the grid.
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 };
 
 const DevTimeSimulator: React.FC<DevTimeSimulatorProps> = ({ simulatedTime, onChange }) => {
@@ -23,7 +24,8 @@ const DevTimeSimulator: React.FC<DevTimeSimulatorProps> = ({ simulatedTime, onCh
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.value) return;
-    onChange(new Date(e.target.value));
+    // Append Z so the value is parsed as UTC, matching parseAsLocal convention in the schedule grid.
+    onChange(new Date(e.target.value + 'Z'));
   }, [onChange]);
 
   const handleJumpForward = useCallback(() => {

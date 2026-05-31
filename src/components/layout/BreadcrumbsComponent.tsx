@@ -11,11 +11,11 @@ interface BreadcrumbsComponentProps {
 
 const defaultTranslations: { [key: string]: string } = {
   home: 'Strona Główna',
-  quests: 'Quest Board',
+  quests: 'Zamówienia',
   create: 'Utwórz',
   locations: 'Lokalizacje',
   categories: 'Kategorie',
-  transfers: 'Questy',
+  transfers: 'Transfery',
   ongoing: 'Aktywne',
   warehouses: 'Magazyny',
   users: 'Użytkownicy',
