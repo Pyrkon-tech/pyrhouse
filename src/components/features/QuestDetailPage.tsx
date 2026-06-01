@@ -506,7 +506,7 @@ const QuestDetailPage: React.FC = () => {
                     {item.budget_owner || quest.budget_owner || '—'}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ maxWidth: 240, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                <TableCell sx={{ maxWidth: 240, wordBreak: 'break-word', '&&': { whiteSpace: 'pre-wrap', overflow: 'visible', textOverflow: 'clip' } }}>
                   <Typography variant="body2" color="text.secondary" sx={{ fontStyle: item.notes ? 'italic' : 'normal' }}>
                     {item.notes || '—'}
                   </Typography>
