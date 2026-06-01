@@ -15,6 +15,7 @@ import DispatchSidebar from './components/DispatchSidebar';
 import VolunteerPanel from './components/VolunteerPanel';
 import DispatchModal from './components/DispatchModal';
 import DispatchSdModal from './components/DispatchSdModal';
+import ActiveQuestModal from './components/ActiveQuestModal';
 import DevTimeSimulator from './components/DevTimeSimulator';
 
 const IS_DEV = (import.meta.env.DEV && window.location.hostname === 'localhost')
@@ -71,6 +72,19 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
   }, [locations]);
 
   const questsByZone = useMemo(() => groupQuestsByZone(quests, locationPavilionMap), [quests, locationPavilionMap]);
+
+  // Map: user_id → in_progress quest (for volunteer click → mission modal)
+  const activeQuestByUserId = useMemo(() => {
+    const map = new Map<number, Quest>();
+    for (const quest of quests) {
+      if (quest.status === 'in_progress') {
+        for (const v of quest.assigned_volunteers) {
+          map.set(v.id, quest);
+        }
+      }
+    }
+    return map;
+  }, [quests]);
   const sdByZone = useMemo(() => groupServiceDeskByZone(serviceDeskRequests), [serviceDeskRequests]);
 
   const { roster, fetchRoster } = useOnDutyRoster(simulatedTime);
@@ -142,6 +156,19 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
     onQuestUpdated?.();
   }, [onQuestUpdated]);
 
+  // Active quest modal — opened by volunteer click or in_progress quest click in sidebar
+  const [activeQuestModal, setActiveQuestModal] = useState<Quest | null>(null);
+
+  const handleViewActiveQuest = useCallback((quest: Quest) => {
+    setActiveQuestModal(quest);
+  }, []);
+
+  const handleVolunteerClick = useCallback((volunteer: Volunteer) => {
+    if (volunteer.status !== 'on_mission' || volunteer.user_id === null) return;
+    const quest = activeQuestByUserId.get(volunteer.user_id);
+    if (quest) setActiveQuestModal(quest);
+  }, [activeQuestByUserId]);
+
   const handleDispatch = useCallback((assignment: DispatchAssignment) => {
     handleCloseDispatch();
     navigate(`/quests/${assignment.quest_id}`, {
@@ -180,7 +207,12 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
             />
           )}
         </Box>
-        {showVolunteerPanel && <VolunteerPanel volunteers={volunteers} />}
+        {showVolunteerPanel && (
+          <VolunteerPanel
+            volunteers={volunteers}
+            onVolunteerClick={handleVolunteerClick}
+          />
+        )}
       </Box>
       {/* Right column: sidebar or thin expand strip */}
       {sidebarOpen ? (
@@ -190,7 +222,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
           sdByZone={sdByZone}
           onZoneSelect={setSelectedZoneId}
           onDispatchQuest={handleDispatchQuest}
-          onCompleteQuest={handleCompleteQuest}
+          onViewActiveQuest={handleViewActiveQuest}
           onSdTicketOpen={setSelectedSdRequest}
           locations={locations}
           onAssignQuestLocation={handleAssignQuestLocation}
@@ -227,6 +259,12 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
       <DispatchSdModal
         request={selectedSdRequest}
         onClose={() => setSelectedSdRequest(null)}
+      />
+      {/* Active quest modal (volunteer click) */}
+      <ActiveQuestModal
+        quest={activeQuestModal}
+        onClose={() => setActiveQuestModal(null)}
+        onComplete={handleCompleteQuest}
       />
     </Box>
   );

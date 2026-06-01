@@ -60,11 +60,12 @@ const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onCl
             borderRadius: 1.5,
             overflow: 'hidden',
             bgcolor: selected ? 'rgba(0,172,193,0.10)' : '#07111e',
-            border: `2px solid ${selected ? '#00acc1' : '#1a3548'}`,
+            border: `2px solid ${selected ? '#00acc1' : isBusy && onClick ? '#00acc144' : '#1a3548'}`,
             boxShadow: selected ? '0 0 12px rgba(0,172,193,0.45)' : 'none',
             transition: 'all 0.2s ease',
             '&:hover': onClick ? {
-              borderColor: selected ? '#00acc1' : '#2a4a60',
+              borderColor: selected ? '#00acc1' : isBusy ? '#00acc1' : '#2a4a60',
+              boxShadow: isBusy ? '0 0 10px rgba(0,172,193,0.3)' : 'none',
             } : {},
           }}
         >

@@ -2,7 +2,7 @@ import type { QuestStatus } from '../../../../types/quest.types';
 
 export const STATUS_COLORS: Record<QuestStatus, string> = {
   pending: '#ff9800',
-  in_progress: '#ffd54f',
+  in_progress: '#00acc1',
   completed: '#66bb6a',
   cancelled: '#ef5350',
 };

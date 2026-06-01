@@ -421,7 +421,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
         </Button>
         <Button
           variant="contained"
-          disabled={totalSelected === 0}
+          disabled={false}
           onClick={handleDispatch}
           sx={{
             bgcolor: '#ff9800',

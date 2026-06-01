@@ -48,6 +48,7 @@ const PersonIcon = lazy(() => import('@mui/icons-material/Person'));
 const CalendarTodayIcon = lazy(() => import('@mui/icons-material/CalendarToday'));
 const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
 const SendIcon = lazy(() => import('@mui/icons-material/Send'));
+const AccountBalanceWalletIcon = lazy(() => import('@mui/icons-material/AccountBalanceWallet'));
 
 const getStatusChip = (status: QuestStatus) => {
   switch (status) {
@@ -354,6 +355,20 @@ const QuestDetailPage: React.FC = () => {
             </Box>
           </Grid>
 
+          {quest.budget_owner && (
+            <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Suspense fallback={null}><AccountBalanceWalletIcon color="primary" /></Suspense>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Odpowiedzialna za budżet</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {quest.budget_owner}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          )}
+
         </Grid>
       </Paper>
 
@@ -431,6 +446,19 @@ const QuestDetailPage: React.FC = () => {
             title="Przypisz lokalizację przed wydaniem sprzętu"
           >
             Wydaj sprzęt
+          </Button>
+        )}
+
+        {/* Restore cancelled quest */}
+        {hasAdminAccess && quest.status === 'cancelled' && (
+          <Button
+            variant="outlined"
+            color="warning"
+            onClick={() => handleStatusChange('pending')}
+            disabled={updating}
+            startIcon={updating ? <CircularProgress size={16} /> : <Suspense fallback={null}><HourglassEmptyIcon /></Suspense>}
+          >
+            Przywróć do oczekującego
           </Button>
         )}
 
