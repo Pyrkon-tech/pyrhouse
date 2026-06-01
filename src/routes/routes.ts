@@ -179,6 +179,12 @@ export const protectedRoutes: RouteConfig[] = [
     showInNav: true,
   },
   {
+    path: '/users/:id',
+    component: UserDetailsPage,
+    title: 'Profil użytkownika',
+    showInNav: false,
+  },
+  {
     path: '/releases',
     component: ReleasesListPage,
     title: 'Demontażkon',
@@ -208,13 +214,6 @@ export const adminRoutes: RouteConfig[] = [
     icon: 'Users',
     showInNav: true,
     requiredRoles: ['admin', 'moderator'],
-  },
-  {
-    path: '/users/:id',
-    component: UserDetailsPage,
-    title: 'Szczegóły użytkownika',
-    showInNav: false,
-    requiredRoles: ['admin', 'moderator', 'dispatcher'],
   },
   {
     path: '/categories',
