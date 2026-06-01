@@ -12,8 +12,8 @@ const createCriticalComponents = (mode: 'light' | 'dark'): Components<Omit<Theme
         margin: 0,
         padding: 0,
         boxSizing: 'border-box',
-        WebkitFontSmoothing: 'antialiased',
-        MozOsxFontSmoothing: 'grayscale',
+        WebkitFontSmoothing: mode === 'dark' ? 'auto' : 'antialiased',
+        MozOsxFontSmoothing: mode === 'dark' ? 'auto' : 'grayscale',
         fontFamily: designTokens.typography.fontFamily.primary,
         background: mode === 'dark'
           ? designTokens.gradients.dark
@@ -709,8 +709,8 @@ export const createThemeWithMode = (mode: 'light' | 'dark') => {
       background: mode === 'light' ? lightBackground : darkBackground,
       text: {
         primary: mode === 'light' ? designTokens.colors.grey[900] : 'rgba(255, 255, 255, 0.95)',
-        secondary: mode === 'light' ? designTokens.colors.grey[600] : 'rgba(255, 255, 255, 0.7)',
-        disabled: mode === 'light' ? designTokens.colors.grey[400] : 'rgba(255, 255, 255, 0.4)',
+        secondary: mode === 'light' ? designTokens.colors.grey[600] : 'rgba(255, 255, 255, 0.82)',
+        disabled: mode === 'light' ? designTokens.colors.grey[400] : 'rgba(255, 255, 255, 0.52)',
       },
       divider: mode === 'light'
         ? designTokens.colors.grey[200]
@@ -730,6 +730,13 @@ export const createThemeWithMode = (mode: 'light' | 'dark') => {
     components: {
       ...criticalComponents,
       ...tableComponents,
+      ...(mode === 'dark' ? {
+        MuiTypography: {
+          styleOverrides: {
+            body2: { fontWeight: 450 },
+          },
+        },
+      } : {}),
     },
   }));
 

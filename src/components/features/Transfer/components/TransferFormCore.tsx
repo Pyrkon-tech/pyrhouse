@@ -142,7 +142,11 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
   const fromLocation = watch('fromLocation');
   const items = watch('items');
 
-  const { locations, refetch: refetchLocations } = useLocations();
+  const { locations: rawLocations, refetch: refetchLocations } = useLocations();
+  const locations = React.useMemo(
+    () => [...rawLocations].sort((a, b) => a.name.localeCompare(b.name, 'pl')),
+    [rawLocations]
+  );
   const { stocks, fetchStocks } = useStocks();
 
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();

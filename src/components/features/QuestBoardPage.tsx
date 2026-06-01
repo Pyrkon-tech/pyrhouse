@@ -153,6 +153,8 @@ const QuestBoardPage: React.FC = () => {
   }, []);
 
   // Client-side filtering: text search + unresolved location
+  const STATUS_ORDER: Record<string, number> = { in_progress: 0, pending: 1, completed: 2, cancelled: 3 };
+
   const filteredQuests = useMemo(() => {
     let result = quests;
     if (showUnresolvedOnly) {
@@ -168,7 +170,7 @@ const QuestBoardPage: React.FC = () => {
           quest.id.toLowerCase().includes(q)
       );
     }
-    return result;
+    return [...result].sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9));
   }, [quests, searchQuery, showUnresolvedOnly]);
 
   const unresolvedLocationCount = useMemo(

@@ -222,8 +222,8 @@ export const designTokens = {
   darkPalette: {
     background: {
       default: '#0f0f23',     // Deep dark blue-black
-      paper: '#1a1a2e',       // Slightly lighter
-      elevated: '#16213e',    // Cards, elevated surfaces
+      paper: '#1e2040',       // Slightly lighter — raised from #1a1a2e for better layer contrast
+      elevated: '#1a2545',    // Cards, elevated surfaces
       overlay: 'rgba(15, 15, 35, 0.8)',
     },
     surface: {

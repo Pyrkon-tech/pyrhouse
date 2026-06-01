@@ -302,11 +302,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/servicedesk', label: 'Service Desk', icon: <Icons.MedicalServices /> },
     {
       type: 'divider',
-      label: 'Wydania',
+      label: 'Transfery',
       icon: <Icons.LocalShipping sx={{ fontSize: '0.9rem' }} />
     },
-    { path: '/transfers/create', label: 'Nowe wydanie', icon: <Icons.RocketLaunch /> },
-    { path: '/transfers', label: 'Wydania', icon: <Icons.ShoppingBasket /> },
+    { path: '/transfers/create', label: 'Nowy transfer', icon: <Icons.RocketLaunch /> },
+    { path: '/transfers', label: 'Transfery', icon: <Icons.ShoppingBasket /> },
     {
       type: 'divider',
       label: 'Magazyn',

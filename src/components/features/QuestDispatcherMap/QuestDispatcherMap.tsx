@@ -9,7 +9,7 @@ import { groupQuestsByZone, groupServiceDeskByZone } from './utils/matching';
 import { ZONES } from './constants/zones';
 import { useOnDutyRoster } from '../../../hooks/useOnDutyRoster';
 import { useLocations } from '../../../hooks/useLocations';
-import { updateQuestLocationAPI } from '../../../services/questService';
+import { updateQuestLocationAPI, updateQuestStatusAPI } from '../../../services/questService';
 import MapCanvas from './components/MapCanvas';
 import DispatchSidebar from './components/DispatchSidebar';
 import VolunteerPanel from './components/VolunteerPanel';
@@ -137,6 +137,11 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
     onQuestUpdated?.();
   }, [onQuestUpdated]);
 
+  const handleCompleteQuest = useCallback(async (quest: Quest) => {
+    await updateQuestStatusAPI(quest.id, { status: 'completed' });
+    onQuestUpdated?.();
+  }, [onQuestUpdated]);
+
   const handleDispatch = useCallback((assignment: DispatchAssignment) => {
     handleCloseDispatch();
     navigate(`/quests/${assignment.quest_id}`, {
@@ -185,6 +190,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
           sdByZone={sdByZone}
           onZoneSelect={setSelectedZoneId}
           onDispatchQuest={handleDispatchQuest}
+          onCompleteQuest={handleCompleteQuest}
           onSdTicketOpen={setSelectedSdRequest}
           locations={locations}
           onAssignQuestLocation={handleAssignQuestLocation}

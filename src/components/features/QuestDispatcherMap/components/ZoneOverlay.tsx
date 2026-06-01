@@ -129,7 +129,8 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
       {/* Exclamation circle — visible 24h before delivery (or same day if no time) */}
       {metrics.alertVisible > 0 && (() => {
         const r = 30;
-        const [px, py] = zone.points[0];
+        const px = Math.round(cx + (bb.minX - cx) * 0.55);
+        const py = Math.round(cy + (bb.minY - cy) * 0.55);
         const pulsing = metrics.alertPulsing > 0;
         return (
           <g

@@ -61,6 +61,7 @@ interface DispatchSidebarProps {
   sdByZone?: Record<string, ServiceDeskRequest[]>;
   onZoneSelect: (id: string | null) => void;
   onDispatchQuest?: (quest: Quest) => void;
+  onCompleteQuest?: (quest: Quest) => Promise<void>;
   onSdTicketOpen?: (req: ServiceDeskRequest) => void;
   bottomPanel?: React.ReactNode;
   locations?: Location[];
@@ -72,11 +73,19 @@ const QuestItem: React.FC<{
   quest: Quest;
   onClick: () => void;
   onDispatch?: (quest: Quest) => void;
-}> = ({ quest, onClick, onDispatch }) => {
+  onComplete?: (quest: Quest) => Promise<void>;
+}> = ({ quest, onClick, onDispatch, onComplete }) => {
+  const [completing, setCompleting] = useState(false);
   const locationLabel = quest.location_name ?? `${quest.destination.pavilion} · ${quest.destination.location}`;
   const handleClick = () => {
     if (quest.status === 'pending' && onDispatch) onDispatch(quest);
     else onClick();
+  };
+  const handleComplete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onComplete || completing) return;
+    setCompleting(true);
+    try { await onComplete(quest); } finally { setCompleting(false); }
   };
   return (
     <Box
@@ -119,6 +128,23 @@ const QuestItem: React.FC<{
             }}
           >
             DISPATCH
+          </Box>
+        )}
+        {quest.status === 'in_progress' && onComplete && (
+          <Box
+            component="button"
+            onClick={handleComplete}
+            sx={{
+              display: 'inline-flex', alignItems: 'center', gap: 0.25,
+              px: 0.75, py: 0.25, border: '1px solid #66bb6a66',
+              borderRadius: 0.5, bgcolor: 'rgba(102,187,106,0.1)',
+              color: completing ? '#3a7a4a' : '#66bb6a', fontFamily: 'monospace', fontSize: 9,
+              fontWeight: 700, cursor: completing ? 'default' : 'pointer', letterSpacing: 0.5,
+              transition: 'all 0.15s ease',
+              '&:hover': completing ? {} : { bgcolor: 'rgba(102,187,106,0.2)', borderColor: '#66bb6a' },
+            }}
+          >
+            {completing ? '…' : '✓ DONE'}
           </Box>
         )}
       </Box>
@@ -198,10 +224,11 @@ const ZoneDetail: React.FC<{
   onClose: () => void;
   onNavigate: (id: string) => void;
   onDispatchQuest?: (quest: Quest) => void;
+  onCompleteQuest?: (quest: Quest) => Promise<void>;
   onSdTicketClick: (req: ServiceDeskRequest) => void;
   locations?: Location[];
   onAssignQuestLocation?: (questId: string, locationId: number) => Promise<void>;
-}> = ({ zone, isUnmatched, quests, sdRequests, onClose, onNavigate, onDispatchQuest, onSdTicketClick, locations, onAssignQuestLocation }) => (
+}> = ({ zone, isUnmatched, quests, sdRequests, onClose, onNavigate, onDispatchQuest, onCompleteQuest, onSdTicketClick, locations, onAssignQuestLocation }) => (
   <>
     <Box sx={{ p: 1.5, borderBottom: '1px solid #1a3548', bgcolor: '#050d18', flexShrink: 0 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -233,7 +260,7 @@ const ZoneDetail: React.FC<{
         ? <Typography sx={{ color: '#1a4a5a', fontFamily: 'monospace', textAlign: 'center', mt: 3, fontSize: 11 }}>Brak zamówień</Typography>
         : quests.map(q => (
           <Box key={q.id}>
-            <QuestItem quest={q} onClick={() => onNavigate(q.id)} onDispatch={onDispatchQuest} />
+            <QuestItem quest={q} onClick={() => onNavigate(q.id)} onDispatch={onDispatchQuest} onComplete={onCompleteQuest} />
             {isUnmatched && !q.location_resolved && locations && locations.length > 0 && onAssignQuestLocation && (
               <InlineLocationAssign
                 quest={q}
@@ -297,7 +324,7 @@ const ZoneSummary: React.FC<{
   );
 };
 
-const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, sdByZone = {}, onZoneSelect, onDispatchQuest, onSdTicketOpen, bottomPanel, locations, onAssignQuestLocation, onCollapse }) => {
+const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, questsByZone, sdByZone = {}, onZoneSelect, onDispatchQuest, onCompleteQuest, onSdTicketOpen, bottomPanel, locations, onAssignQuestLocation, onCollapse }) => {
   const navigate = useNavigate();
   const selectedZone = ZONES.find(z => z.id === selectedZoneId) ?? null;
   const selectedQuests = selectedZoneId ? (questsByZone[selectedZoneId] ?? []) : [];
@@ -334,6 +361,7 @@ const DispatchSidebar: React.FC<DispatchSidebarProps> = ({ selectedZoneId, quest
             onClose={() => onZoneSelect(null)}
             onNavigate={(id) => navigate(`/quests/${id}`)}
             onDispatchQuest={onDispatchQuest}
+            onCompleteQuest={onCompleteQuest}
             onSdTicketClick={(req) => onSdTicketOpen?.(req)}
             locations={locations}
             onAssignQuestLocation={onAssignQuestLocation}
