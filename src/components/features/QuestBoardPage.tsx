@@ -389,32 +389,35 @@ const QuestBoardPage: React.FC = () => {
               <TableCell>{getStatusChip(quest.status)}</TableCell>
               <TableCell align="center">
                 <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                  {quest.transfer_id ? (
+                  {quest.transfers.map(t => (
                     <Chip
+                      key={t.transfer_id}
                       icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
-                      label={`Transfer #${quest.transfer_id}`}
+                      label={`#${t.transfer_id}`}
                       size="small"
                       color="info"
                       clickable
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/transfers/${quest.transfer_id}`);
+                        navigate(`/transfers/${t.transfer_id}`);
                       }}
                     />
-                  ) : quest.status === 'pending' ? (
+                  ))}
+                  {quest.status !== 'completed' && quest.status !== 'cancelled' && (
                     <Button
-                      variant="outlined"
+                      variant={quest.transfers.length === 0 ? 'outlined' : 'text'}
                       color="primary"
                       size="small"
-                      startIcon={<Suspense fallback={null}><SendIcon /></Suspense>}
+                      startIcon={quest.transfers.length === 0 ? <Suspense fallback={null}><SendIcon /></Suspense> : undefined}
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/quests/${quest.id}`);
                       }}
                     >
-                      Wydaj
+                      {quest.transfers.length === 0 ? 'Wydaj' : 'Dodaj transfer'}
                     </Button>
-                  ) : (
+                  )}
+                  {quest.status === 'completed' || quest.status === 'cancelled' ? (
                     <Button
                       variant="text"
                       color="primary"
@@ -426,7 +429,7 @@ const QuestBoardPage: React.FC = () => {
                     >
                       Szczegóły
                     </Button>
-                  )}
+                  ) : null}
                 </Box>
               </TableCell>
             </TableRow>
@@ -470,24 +473,29 @@ const QuestBoardPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">Przedmioty:</Typography>
                   <Typography variant="body2">{quest.items.length} poz.</Typography>
                 </Box>
-                {quest.transfer_id && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">Transfer:</Typography>
-                    <Chip
-                      icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
-                      label={`#${quest.transfer_id}`}
-                      size="small"
-                      color="info"
-                      clickable
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/transfers/${quest.transfer_id}`);
-                      }}
-                    />
+                {quest.transfers.length > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">Transfery:</Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      {quest.transfers.map(t => (
+                        <Chip
+                          key={t.transfer_id}
+                          icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
+                          label={`#${t.transfer_id}`}
+                          size="small"
+                          color="info"
+                          clickable
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/transfers/${t.transfer_id}`);
+                          }}
+                        />
+                      ))}
+                    </Box>
                   </Box>
                 )}
               </Box>
-              {!quest.transfer_id && quest.status === 'pending' && (
+              {quest.status !== 'completed' && quest.status !== 'cancelled' && (
                 <Button
                   variant="outlined"
                   color="primary"
@@ -500,7 +508,7 @@ const QuestBoardPage: React.FC = () => {
                     navigate(`/quests/${quest.id}`);
                   }}
                 >
-                  Utwórz transfer
+                  {quest.transfers.length === 0 ? 'Wydaj' : 'Dodaj transfer'}
                 </Button>
               )}
             </CardContent>

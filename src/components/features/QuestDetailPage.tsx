@@ -154,7 +154,7 @@ const QuestDetailPage: React.FC = () => {
 
   // Auto-open formularza transferu po dispatchu z mapy — tylko gdy brak istniejącego transferu
   useEffect(() => {
-    if (dispatchState?.autoOpenTransfer && quest && !quest.transfer_id && quest.status !== 'completed') {
+    if (dispatchState?.autoOpenTransfer && quest && quest.status !== 'completed' && quest.status !== 'cancelled') {
       setShowTransferForm(true);
       // Wyczyść route state by nie re-triggerować po odświeżeniu
       navigate(location.pathname, { replace: true, state: null });
@@ -194,9 +194,10 @@ const QuestDetailPage: React.FC = () => {
   useQuestStream({ onEvent: onSseEvent });
 
   const hasAdminAccess = userRole === 'admin' || userRole === 'moderator' || userRole === 'dispatcher';
-  const hasTransfer = quest?.transfer_id != null;
-  const canChangeStatus = hasAdminAccess && !hasTransfer;
-  const canCreateTransfer = hasAdminAccess && !hasTransfer && quest?.status === 'pending';
+  const hasTransfer = (quest?.transfers?.length ?? 0) > 0;
+  const hasActiveTransfer = quest?.transfers?.some(t => t.status !== 'completed' && t.status !== 'cancelled') ?? false;
+  const canChangeStatus = hasAdminAccess && !hasActiveTransfer;
+  const canCreateTransfer = hasAdminAccess && quest?.status !== 'completed' && quest?.status !== 'cancelled';
 
   const handleStatusChange = async (newStatus: QuestStatus) => {
     try {
@@ -282,23 +283,24 @@ const QuestDetailPage: React.FC = () => {
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {getStatusChip(quest.status)}
-          {hasTransfer && (
+          {quest.transfers.map(t => (
             <Chip
+              key={t.transfer_id}
               icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
-              label={`Transfer #${quest.transfer_id}`}
+              label={`Transfer #${t.transfer_id}`}
               color="info"
               component={RouterLink}
-              to={`/transfers/${quest.transfer_id}`}
+              to={`/transfers/${t.transfer_id}`}
               clickable
             />
-          )}
+          ))}
         </Box>
       </Box>
 
       {/* Transfer managed banner */}
-      {hasTransfer && (
+      {hasActiveTransfer && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          Status tego zamówienia jest zarządzany automatycznie przez powiązany transfer #{quest.transfer_id}.
+          Status tego zamówienia jest zarządzany automatycznie przez aktywne transfery.
           Zmiany statusu następują automatycznie po aktualizacji transferu.
         </Alert>
       )}
@@ -592,7 +594,7 @@ const QuestDetailPage: React.FC = () => {
         </Box>
       )}
 
-      {/* Linked Transfer Card */}
+      {/* Linked Transfers */}
       {hasTransfer && (
         <Paper
           sx={{
@@ -603,24 +605,34 @@ const QuestDetailPage: React.FC = () => {
             borderRadius: 2,
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Powiązany transfer
-            </Typography>
-            {quest.transfer_status && getTransferStatusChip(quest.transfer_status)}
-          </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Transfer #{quest.transfer_id} — status zamówienia aktualizowany automatycznie
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+            Transfery
           </Typography>
-          <Button
-            variant="outlined"
-            color="info"
-            component={RouterLink}
-            to={`/transfers/${quest.transfer_id}`}
-            startIcon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
-          >
-            Zobacz szczegóły transferu
-          </Button>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {quest.transfers.map(t => (
+              <Box
+                key={t.transfer_id}
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {getTransferStatusChip(t.status)}
+                  <Typography variant="body2" color="text.secondary">
+                    {new Date(t.created_at).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' })}
+                  </Typography>
+                </Box>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  size="small"
+                  component={RouterLink}
+                  to={`/transfers/${t.transfer_id}`}
+                  startIcon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
+                >
+                  Transfer #{t.transfer_id}
+                </Button>
+              </Box>
+            ))}
+          </Box>
         </Paper>
       )}
 

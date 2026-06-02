@@ -23,6 +23,12 @@ export interface QuestVolunteer {
   fullname: string | null;
 }
 
+export interface QuestTransfer {
+  transfer_id: number;
+  status: string;
+  created_at: string;
+}
+
 export interface Quest {
   id: string;
   destination: QuestDestination;
@@ -32,14 +38,13 @@ export interface Quest {
   budget_owner: string;
   items: QuestItem[];
   status: QuestStatus;
-  transfer_id?: number | null;
-  transfer_status?: string | null;
+  transfers: QuestTransfer[];
   location_id: number | null;
   location_name: string | null;
   location_resolved: boolean;
   source_rows: number[];
   last_synced: string;
-  /** Wolontariusze przypisani do transferu questa. Pustа tablica gdy brak transferu. */
+  /** Wolontariusze przypisani do transferów questa. Pustа tablica gdy brak transferów. */
   assigned_volunteers: QuestVolunteer[];
 }
 
