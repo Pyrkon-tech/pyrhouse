@@ -217,7 +217,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
               const isBusy = v.status === 'on_mission';
               const isChecked = selectedIds.includes(v.id);
               const avatarBg = AVATAR_PALETTE[v.id % AVATAR_PALETTE.length];
-              const displayName = v.discord_username || v.username;
+              const displayName = v.username;
 
               const card = (
                 <Box
@@ -288,7 +288,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
             {/* Manually added user cards (purple border) */}
             {manualUsers.map(u => {
               const avatarBg = AVATAR_PALETTE[u.id % AVATAR_PALETTE.length];
-              const displayName = u.discord_username || u.fullname || u.username;
+              const displayName = u.username;
               return (
                 <Box
                   key={`manual-${u.id}`}

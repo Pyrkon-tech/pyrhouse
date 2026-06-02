@@ -25,7 +25,7 @@ interface VolunteerCardProps {
 }
 
 const VolunteerCard: React.FC<VolunteerCardProps> = ({ volunteer, selected, onClick, compact }) => {
-  const displayName = volunteer.discord_username || volunteer.username;
+  const displayName = volunteer.username;
   const isBusy = volunteer.status === 'on_mission';
   const isUnlinked = volunteer.is_unlinked === true;
   const avatarBg = AVATAR_PALETTE[volunteer.id % AVATAR_PALETTE.length];
