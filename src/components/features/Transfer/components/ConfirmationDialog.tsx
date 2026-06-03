@@ -212,7 +212,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           color="primary"
           disabled={loading}
         >
-          {loading ? 'Tworzenie...' : 'Rozpocznij quest'}
+          {loading ? 'Tworzenie...' : 'Rozpocznij transfer'}
         </Button>
       </DialogActions>
     </Dialog>

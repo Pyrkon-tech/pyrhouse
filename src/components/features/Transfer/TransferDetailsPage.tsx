@@ -446,7 +446,7 @@ const TransferDetailsPage: React.FC = () => {
           Powrót
         </Button>
         <Typography variant="h5" component="h1" sx={{ fontWeight: 'medium', fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
-          Status Quest'a #{id}
+          Status Transferu #{id}
         </Typography>
       </Box>
 

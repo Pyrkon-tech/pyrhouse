@@ -1083,7 +1083,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
               disabled={loading}
               startIcon={loading ? <CircularProgress size={20} /> : <Check />}
             >
-              {loading ? 'Tworzenie...' : 'Rozpocznij quest'}
+              {loading ? 'Tworzenie...' : 'Rozpocznij transfer'}
             </Button>
           </DialogActions>
         </Dialog>
