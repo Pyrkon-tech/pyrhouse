@@ -46,7 +46,6 @@ const CancelIcon = lazy(() => import('@mui/icons-material/Cancel'));
 const PlaceIcon = lazy(() => import('@mui/icons-material/Place'));
 const PersonIcon = lazy(() => import('@mui/icons-material/Person'));
 const CalendarTodayIcon = lazy(() => import('@mui/icons-material/CalendarToday'));
-const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
 const SendIcon = lazy(() => import('@mui/icons-material/Send'));
 const AccountBalanceWalletIcon = lazy(() => import('@mui/icons-material/AccountBalanceWallet'));
 
@@ -283,17 +282,6 @@ const QuestDetailPage: React.FC = () => {
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {getStatusChip(quest.status)}
-          {quest.transfers.map(t => (
-            <Chip
-              key={t.transfer_id}
-              icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
-              label={`Transfer #${t.transfer_id}`}
-              color="info"
-              component={RouterLink}
-              to={`/transfers/${t.transfer_id}`}
-              clickable
-            />
-          ))}
         </Box>
       </Box>
 
@@ -464,10 +452,21 @@ const QuestDetailPage: React.FC = () => {
           </Button>
         )}
 
-        {/* Status change buttons - only for quests without a transfer */}
-        {canChangeStatus && quest.status !== 'completed' && quest.status !== 'cancelled' && (
+        {/* Status change buttons */}
+        {canChangeStatus && quest.status !== 'cancelled' && (
           <>
-            {quest.status === 'pending' && !showTransferForm && (
+            {quest.status === 'completed' && (
+              <Button
+                variant="outlined"
+                color="warning"
+                onClick={() => handleStatusChange('pending')}
+                disabled={updating}
+                startIcon={updating ? <CircularProgress size={16} /> : <Suspense fallback={null}><HourglassEmptyIcon /></Suspense>}
+              >
+                Przywróć do oczekującego
+              </Button>
+            )}
+            {(quest.status === 'pending' || quest.status === 'completed') && !showTransferForm && (
               <Button
                 variant="outlined"
                 color="warning"
