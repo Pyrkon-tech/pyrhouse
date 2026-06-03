@@ -575,8 +575,8 @@ const QuestDetailPage: React.FC = () => {
       })()}
 
       {/* Inline Transfer Form */}
-      {canCreateTransfer && showTransferForm && (
-        <Box sx={{ mb: 3 }}>
+      {canCreateTransfer && (
+        <Box sx={{ mb: 3, display: showTransferForm ? 'block' : 'none' }}>
           <TransferFormCore
             questId={quest.id}
             questLocationId={quest.location_id}
