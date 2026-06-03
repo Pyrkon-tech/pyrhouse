@@ -100,16 +100,16 @@ const QuestItem: React.FC<{
           sx={{ height: 18, fontSize: 9, flexShrink: 0, bgcolor: `${STATUS_COLORS[quest.status]}22`, color: STATUS_COLORS[quest.status], border: `1px solid ${STATUS_COLORS[quest.status]}44` }}
         />
       </Box>
-      <Typography variant="caption" sx={{ color: '#3a7a8a', fontFamily: 'monospace', display: 'block', mt: 0.25, fontSize: 10 }}>
+      <Typography variant="caption" sx={{ color: '#7ec8e3', fontFamily: 'monospace', display: 'block', mt: 0.25, fontSize: 10 }}>
         {locationLabel} · {quest.items.length} poz.
       </Typography>
       {quest.budget_owner && (
-        <Typography variant="caption" sx={{ color: '#5a9ab0', fontFamily: 'monospace', display: 'block', fontSize: 9 }}>
+        <Typography variant="caption" sx={{ color: '#90c4d8', fontFamily: 'monospace', display: 'block', fontSize: 9 }}>
           {quest.budget_owner}
         </Typography>
       )}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.25 }}>
-        <Typography variant="caption" sx={{ color: '#204050', fontFamily: 'monospace', fontSize: 10 }}>
+        <Typography variant="caption" sx={{ color: '#a8d8ea', fontFamily: 'monospace', fontSize: 10 }}>
           {formatDate(quest.delivery_date)}{quest.pickup_time && ` · ${quest.pickup_time}`}
         </Typography>
         {quest.status === 'pending' && onDispatch && (
