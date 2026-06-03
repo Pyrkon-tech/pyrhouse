@@ -24,6 +24,10 @@ import {
   Checkbox,
   Autocomplete,
   TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { useNavigate, useParams, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useQuestDetail } from '../../hooks/useQuestDetail';
@@ -130,7 +134,7 @@ const QuestDetailPage: React.FC = () => {
   const location = useLocation();
   const dispatchState = location.state as { autoOpenTransfer?: boolean; volunteerIds?: number[] } | null;
 
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<QuestStatus | null>(null);
   const [updating, setUpdating] = useState(false);
   const [priceMap, setPriceMap] = useState<Map<string, number>>(new Map());
 
@@ -210,9 +214,25 @@ const QuestDetailPage: React.FC = () => {
     }
   };
 
-  const handleCancel = async () => {
-    setCancelDialogOpen(false);
-    await handleStatusChange('cancelled');
+  const handleConfirmStatusChange = async () => {
+    if (!pendingStatus) return;
+    const target = pendingStatus;
+    setPendingStatus(null);
+    await handleStatusChange(target);
+  };
+
+  const STATUS_OPTIONS: Record<QuestStatus, Array<{ value: QuestStatus; label: string; danger?: boolean }>> = {
+    pending:     [{ value: 'in_progress', label: 'W realizacji' }, { value: 'cancelled', label: 'Anuluj zamówienie', danger: true }],
+    in_progress: [{ value: 'completed',   label: 'Zrealizowane' }, { value: 'cancelled', label: 'Anuluj zamówienie', danger: true }],
+    completed:   [{ value: 'pending',     label: 'Oczekujące'   }, { value: 'in_progress', label: 'W realizacji' }],
+    cancelled:   [{ value: 'pending',     label: 'Oczekujące'   }],
+  };
+
+  const CONFIRM_MESSAGES: Record<QuestStatus, string> = {
+    pending:     'Czy na pewno chcesz cofnąć status zamówienia do „Oczekujące"?',
+    in_progress: 'Czy na pewno chcesz oznaczyć zamówienie jako „W realizacji"?',
+    completed:   'Czy na pewno chcesz oznaczyć zamówienie jako „Zrealizowane"?',
+    cancelled:   'Czy na pewno chcesz anulować to zamówienie? Tej operacji nie można łatwo cofnąć.',
   };
 
   const getStatusLabel = (status: QuestStatus) => {
@@ -439,65 +459,26 @@ const QuestDetailPage: React.FC = () => {
           </Button>
         )}
 
-        {/* Restore cancelled quest */}
-        {hasAdminAccess && quest.status === 'cancelled' && (
-          <Button
-            variant="outlined"
-            color="warning"
-            onClick={() => handleStatusChange('pending')}
-            disabled={updating}
-            startIcon={updating ? <CircularProgress size={16} /> : <Suspense fallback={null}><HourglassEmptyIcon /></Suspense>}
-          >
-            Przywróć do oczekującego
-          </Button>
-        )}
-
-        {/* Status change buttons */}
-        {canChangeStatus && quest.status !== 'cancelled' && (
-          <>
-            {quest.status === 'completed' && (
-              <Button
-                variant="outlined"
-                color="warning"
-                onClick={() => handleStatusChange('pending')}
-                disabled={updating}
-                startIcon={updating ? <CircularProgress size={16} /> : <Suspense fallback={null}><HourglassEmptyIcon /></Suspense>}
-              >
-                Przywróć do oczekującego
-              </Button>
-            )}
-            {(quest.status === 'pending' || quest.status === 'completed') && !showTransferForm && (
-              <Button
-                variant="outlined"
-                color="warning"
-                onClick={() => handleStatusChange('in_progress')}
-                disabled={updating}
-                startIcon={updating ? <CircularProgress size={16} /> : <Suspense fallback={null}><LocalShippingIcon /></Suspense>}
-              >
-                Oznacz jako w realizacji
-              </Button>
-            )}
-            {quest.status === 'in_progress' && (
-              <Button
-                variant="contained"
-                color="success"
-                onClick={() => handleStatusChange('completed')}
-                disabled={updating}
-                startIcon={updating ? <CircularProgress size={16} /> : <Suspense fallback={null}><CheckCircleIcon /></Suspense>}
-              >
-                Oznacz jako zrealizowane
-              </Button>
-            )}
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={() => setCancelDialogOpen(true)}
-              disabled={updating}
-              startIcon={<Suspense fallback={null}><CancelIcon /></Suspense>}
+        {/* Status change dropdown */}
+        {canChangeStatus && (
+          <FormControl size="small" sx={{ minWidth: 180 }} disabled={updating}>
+            <InputLabel>Zmień status</InputLabel>
+            <Select
+              value=""
+              label="Zmień status"
+              onChange={(e) => setPendingStatus(e.target.value as QuestStatus)}
             >
-              Anuluj zamówienie
-            </Button>
-          </>
+              {STATUS_OPTIONS[quest.status].map(opt => (
+                <MenuItem
+                  key={opt.value}
+                  value={opt.value}
+                  sx={opt.danger ? { color: 'error.main' } : undefined}
+                >
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         )}
       </Box>
 
@@ -649,18 +630,23 @@ const QuestDetailPage: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Cancel dialog */}
-      <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)}>
-        <DialogTitle>Anuluj zamówienie</DialogTitle>
+      {/* Status change confirmation dialog */}
+      <Dialog open={pendingStatus !== null} onClose={() => setPendingStatus(null)}>
+        <DialogTitle>Zmiana statusu zamówienia</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Czy na pewno chcesz anulować to zamówienie? Tej operacji nie można cofnąć.
+            {pendingStatus ? CONFIRM_MESSAGES[pendingStatus] : ''}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCancelDialogOpen(false)}>Nie</Button>
-          <Button onClick={handleCancel} color="error" variant="contained">
-            Tak, anuluj
+          <Button onClick={() => setPendingStatus(null)}>Anuluj</Button>
+          <Button
+            onClick={handleConfirmStatusChange}
+            color={pendingStatus === 'cancelled' ? 'error' : 'primary'}
+            variant="contained"
+            disabled={updating}
+          >
+            {updating ? <CircularProgress size={16} /> : 'Potwierdź'}
           </Button>
         </DialogActions>
       </Dialog>
