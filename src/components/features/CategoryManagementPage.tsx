@@ -50,7 +50,9 @@ const CategoryManagementPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { userRole } = useAuth();
-  const canEdit = userRole !== 'dispatcher';
+  const canCreate = userRole === 'admin' || userRole === 'moderator' || userRole === 'dispatcher';
+  const canDelete = userRole === 'admin' || userRole === 'moderator';
+  const canUpdate = userRole === 'admin';
 
   const dialogs = useDialogState<Category>();
 
@@ -285,22 +287,26 @@ const CategoryManagementPage: React.FC = () => {
               />
             </TableCell>
             <TableCell>
-              {canEdit && (
+              {(canUpdate || canDelete) && (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleOpenEditModal(category)}
-                    size="small"
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    color="error"
-                    onClick={() => handleOpenDeleteModal(category)}
-                    size="small"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
+                  {canUpdate && (
+                    <IconButton
+                      color="primary"
+                      onClick={() => handleOpenEditModal(category)}
+                      size="small"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  )}
+                  {canDelete && (
+                    <IconButton
+                      color="error"
+                      onClick={() => handleOpenDeleteModal(category)}
+                      size="small"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </Box>
               )}
             </TableCell>
@@ -357,7 +363,7 @@ const CategoryManagementPage: React.FC = () => {
                 )}
               </Box>
 
-              {canEdit && (
+              {(canUpdate || canDelete) && (
                 <Box
                   sx={{
                     display: 'flex',
@@ -366,20 +372,24 @@ const CategoryManagementPage: React.FC = () => {
                     mt: 2
                   }}
                 >
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleOpenEditModal(category)}
-                    size="small"
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    color="error"
-                    onClick={() => handleOpenDeleteModal(category)}
-                    size="small"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
+                  {canUpdate && (
+                    <IconButton
+                      color="primary"
+                      onClick={() => handleOpenEditModal(category)}
+                      size="small"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  )}
+                  {canDelete && (
+                    <IconButton
+                      color="error"
+                      onClick={() => handleOpenDeleteModal(category)}
+                      size="small"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </Box>
               )}
             </CardContent>
@@ -420,7 +430,7 @@ const CategoryManagementPage: React.FC = () => {
         title="Kategorie"
         subtitle={`${filteredCategories.length} kategorii`}
         actions={
-          canEdit ? (
+          canCreate ? (
             <Button variant="primary" leftIcon={<AddIcon />} onClick={handleOpenAddModal}>
               Dodaj Kategorię
             </Button>
