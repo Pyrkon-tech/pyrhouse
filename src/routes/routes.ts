@@ -222,7 +222,7 @@ export const adminRoutes: RouteConfig[] = [
     title: 'Zarządzanie kategoriami',
     icon: 'Categories',
     showInNav: true,
-    requiredRoles: ['admin', 'moderator'],
+    requiredRoles: ['admin', 'moderator', 'dispatcher'],
   },
   {
     path: '/origins',
@@ -230,7 +230,7 @@ export const adminRoutes: RouteConfig[] = [
     title: 'Zarządzanie originami',
     icon: 'Origins',
     showInNav: true,
-    requiredRoles: ['admin', 'moderator'],
+    requiredRoles: ['admin', 'moderator', 'dispatcher'],
   },
   {
     path: '/budget',

@@ -278,11 +278,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  // Funkcja sprawdzająca, czy użytkownik ma uprawnienia administratora
-  const hasAdminAccess = () => {
-    return userRole === 'admin' || userRole === 'moderator';
-  };
-
   const handleMenuItemClick = (path: string): void => {
     setActiveItem(path);
     if (isMobile) {
@@ -324,13 +319,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const adminMenuItems = [
-    { path: '/duty-schedule', label: 'Grafik', icon: <Icons.Event />, adminOnly: false },
-    { path: '/categories', label: 'Kategorie', icon: <Icons.Category />, adminOnly: false },
-    { path: '/origins', label: 'Pochodzenie', icon: <Icons.Source />, adminOnly: false },
-    { path: '/budget', label: 'Budżet', icon: <Icons.Calculate />, adminOnly: true },
-    { path: '/users', label: 'Użytkownicy', icon: <Icons.People />, adminOnly: false },
-    { path: '/settings', label: 'Ustawienia', icon: <Icons.Settings />, adminOnly: true },
-  ].filter(item => !item.adminOnly || userRole === 'admin');
+    { path: '/duty-schedule', label: 'Grafik', icon: <Icons.Event />, allowedRoles: ['admin', 'moderator'] },
+    { path: '/categories', label: 'Kategorie', icon: <Icons.Category />, allowedRoles: ['admin', 'moderator', 'dispatcher'] },
+    { path: '/origins', label: 'Pochodzenie', icon: <Icons.Source />, allowedRoles: ['admin', 'moderator', 'dispatcher'] },
+    { path: '/budget', label: 'Budżet', icon: <Icons.Calculate />, allowedRoles: ['admin'] },
+    { path: '/users', label: 'Użytkownicy', icon: <Icons.People />, allowedRoles: ['admin', 'moderator'] },
+    { path: '/settings', label: 'Ustawienia', icon: <Icons.Settings />, allowedRoles: ['admin'] },
+  ].filter(item => item.allowedRoles.includes(userRole));
 
   const showFullNav = open || isMobile;
 
@@ -449,7 +444,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         ))}
       </List>
 
-      {hasAdminAccess() && (
+      {adminMenuItems.length > 0 && (
         <>
           <Divider sx={{ my: showFullNav ? 0.75 : 0.5, mx: showFullNav ? 1.5 : 0.75 }} />
           {showFullNav && (
