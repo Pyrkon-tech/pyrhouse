@@ -192,8 +192,8 @@ export const MassDeliveryForm: React.FC<MassDeliveryFormProps> = ({ categories }
         Wygeneruj kody PYR z wyprzedzeniem, wydrukuj naklejki, a potem przypisz numery seryjne podczas odbierania sprzętu.
       </Typography>
 
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start', mb: 3 }}>
-        <FormControl sx={{ minWidth: 220 }}>
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 220 }}>
           <InputLabel>Kategoria</InputLabel>
           <Select
             value={categoryId || ''}
@@ -212,6 +212,7 @@ export const MassDeliveryForm: React.FC<MassDeliveryFormProps> = ({ categories }
         <TextField
           label="Ilość"
           type="number"
+          size="small"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           inputProps={{ min: 1, max: 9999 }}
@@ -221,6 +222,7 @@ export const MassDeliveryForm: React.FC<MassDeliveryFormProps> = ({ categories }
 
         <Button
           variant="contained"
+          size="small"
           onClick={handleReserve}
           disabled={isSubmitting || reservations.length > 0}
           startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : undefined}
