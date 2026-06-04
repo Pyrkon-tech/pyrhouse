@@ -125,6 +125,7 @@ const Icons = {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isDispatch = location.pathname === '/dispatch';
   const { isTokenValid } = useTokenValidation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -951,6 +952,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           marginLeft: isMobile ? '0px' : `${open ? DRAWER_WIDTH : RAIL_WIDTH}px`,
           width: isMobile ? '100%' : `calc(100% - ${open ? DRAWER_WIDTH : RAIL_WIDTH}px)`,
           transition: 'margin-left 0.25s cubic-bezier(0.4, 0, 0.6, 1), width 0.25s cubic-bezier(0.4, 0, 0.6, 1)',
+          ...(isDispatch && { bgcolor: '#060e1a' }),
         }}
       >
         <Suspense fallback={<div>Ładowanie...</div>}>

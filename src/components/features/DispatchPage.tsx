@@ -65,6 +65,12 @@ const DispatchPage: React.FC = () => {
     fetchQuests({ limit: 500 });
   }, [fetchQuests]);
 
+  useEffect(() => {
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = '#060e1a';
+    return () => { document.body.style.backgroundColor = prev; };
+  }, []);
+
   if (isMobileOrSmall) {
     return (
       <Box sx={{
@@ -88,7 +94,7 @@ const DispatchPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 64px)', overflow: 'hidden', m: -3, p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box sx={{ height: 'calc(100vh - 64px)', overflow: 'hidden', m: -3, p: 1, display: 'flex', flexDirection: 'column', gap: 1, bgcolor: '#060e1a' }}>
       {/* Dispatch toolbar */}
       <Box sx={{
         display: 'flex', alignItems: 'center', gap: 1.5,
