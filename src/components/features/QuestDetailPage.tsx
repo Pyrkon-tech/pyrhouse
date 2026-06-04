@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useCallback, useEffect, lazy } from 'react';
+import React, { Suspense, useState, useCallback, useEffect, useMemo, lazy } from 'react';
 import {
   Box,
   Typography,
@@ -24,10 +24,8 @@ import {
   Checkbox,
   Autocomplete,
   TextField,
-  Select,
+  Menu,
   MenuItem,
-  FormControl,
-  InputLabel,
 } from '@mui/material';
 import { useNavigate, useParams, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useQuestDetail } from '../../hooks/useQuestDetail';
@@ -37,6 +35,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../context/NotificationContext';
 import { updateQuestLocationAPI } from '../../services/questService';
 import { getPricesAPI } from '../../services/budgetService';
+import { getTransferDetailsAPI } from '../../services/transferService';
 import type { QuestEvent } from '../../types/quest.types';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import TransferFormCore from './Transfer/components/TransferFormCore';
@@ -136,7 +135,9 @@ const QuestDetailPage: React.FC = () => {
 
   const [pendingStatus, setPendingStatus] = useState<QuestStatus | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState<HTMLElement | null>(null);
   const [priceMap, setPriceMap] = useState<Map<string, number>>(new Map());
+  const [transferDetails, setTransferDetails] = useState<Map<number, any>>(new Map());
 
   const isAdmin = userRole === 'admin';
 
@@ -187,6 +188,30 @@ const QuestDetailPage: React.FC = () => {
       setAssigningLocation(false);
     }
   };
+
+  useEffect(() => {
+    if (!quest?.transfers?.length) return;
+    Promise.all(quest.transfers.map(t => getTransferDetailsAPI(t.transfer_id)))
+      .then(results => {
+        setTransferDetails(new Map(results.map(t => [t.id, t])));
+      })
+      .catch(() => {});
+  }, [quest?.transfers]);
+
+  const sentByCategory = useMemo(() => {
+    const map = new Map<number, number>();
+    transferDetails.forEach(transfer => {
+      (transfer.assets ?? []).forEach((asset: any) => {
+        const catId = asset.category?.id;
+        if (catId) map.set(catId, (map.get(catId) || 0) + 1);
+      });
+      (transfer.stock_items ?? []).forEach((stock: any) => {
+        const catId = stock.category?.id;
+        if (catId) map.set(catId, (map.get(catId) || 0) + (stock.quantity ?? 0));
+      });
+    });
+    return map;
+  }, [transferDetails]);
 
   const onSseEvent = useCallback((event: QuestEvent) => {
     if (event.type === 'stocks_changed') {
@@ -301,7 +326,28 @@ const QuestDetailPage: React.FC = () => {
           Zamówienie
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {getStatusChip(quest.status)}
+          <Box
+            onClick={canChangeStatus && !updating ? (e) => setStatusMenuAnchor(e.currentTarget as HTMLElement) : undefined}
+            sx={canChangeStatus ? { cursor: 'pointer', '&:hover': { opacity: 0.8 } } : undefined}
+          >
+            {getStatusChip(quest.status)}
+          </Box>
+          {updating && <CircularProgress size={16} />}
+          <Menu
+            anchorEl={statusMenuAnchor}
+            open={Boolean(statusMenuAnchor)}
+            onClose={() => setStatusMenuAnchor(null)}
+          >
+            {STATUS_OPTIONS[quest.status].map(opt => (
+              <MenuItem
+                key={opt.value}
+                onClick={() => { setStatusMenuAnchor(null); setPendingStatus(opt.value); }}
+                sx={opt.danger ? { color: 'error.main' } : undefined}
+              >
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Menu>
         </Box>
       </Box>
 
@@ -459,27 +505,6 @@ const QuestDetailPage: React.FC = () => {
           </Button>
         )}
 
-        {/* Status change dropdown */}
-        {canChangeStatus && (
-          <FormControl size="small" sx={{ minWidth: 180 }} disabled={updating}>
-            <InputLabel>Zmień status</InputLabel>
-            <Select
-              value=""
-              label="Zmień status"
-              onChange={(e) => setPendingStatus(e.target.value as QuestStatus)}
-            >
-              {STATUS_OPTIONS[quest.status].map(opt => (
-                <MenuItem
-                  key={opt.value}
-                  value={opt.value}
-                  sx={opt.danger ? { color: 'error.main' } : undefined}
-                >
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
       </Box>
 
       {/* Items table */}
@@ -498,6 +523,7 @@ const QuestDetailPage: React.FC = () => {
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Dopasowanie kategorii</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Właściciel budżetu</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Notatki</TableCell>
+              {hasTransfer && <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }} align="center">Wysłano</TableCell>}
               {isAdmin && <TableCell sx={{ color: '#ff9800', fontWeight: 600 }} align="right">Wycena (min × szt)</TableCell>}
             </TableRow>
           </TableHead>
@@ -521,6 +547,22 @@ const QuestDetailPage: React.FC = () => {
                     {item.notes || '—'}
                   </Typography>
                 </TableCell>
+                {hasTransfer && (() => {
+                  if (!item.category_id) return <TableCell align="center"><Typography variant="body2" color="text.secondary">—</Typography></TableCell>;
+                  const sent = sentByCategory.get(item.category_id) ?? 0;
+                  const needed = item.quantity;
+                  const done = sent >= needed;
+                  return (
+                    <TableCell align="center">
+                      <Chip
+                        label={transferDetails.size > 0 ? `${sent}/${needed}` : '…'}
+                        size="small"
+                        color={transferDetails.size === 0 ? 'default' : done ? 'success' : sent > 0 ? 'warning' : 'default'}
+                        variant={sent > 0 ? 'filled' : 'outlined'}
+                      />
+                    </TableCell>
+                  );
+                })()}
                 {isAdmin && (() => {
                   const minPrice = priceMap.get(item.name.toLowerCase().trim());
                   const total = minPrice != null ? minPrice * item.quantity : null;
@@ -589,29 +631,56 @@ const QuestDetailPage: React.FC = () => {
             Transfery
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {quest.transfers.map(t => (
-              <Box
-                key={t.transfer_id}
-                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {getTransferStatusChip(t.status)}
-                  <Typography variant="body2" color="text.secondary">
-                    {new Date(t.created_at).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' })}
-                  </Typography>
+            {quest.transfers.map(t => {
+              const details = transferDetails.get(t.transfer_id);
+              const itemSummary = details
+                ? (() => {
+                    const map = new Map<string, number>();
+                    (details.assets ?? []).forEach((a: any) => {
+                      const label = a.category?.label || a.pyrcode || '?';
+                      map.set(label, (map.get(label) || 0) + 1);
+                    });
+                    (details.stock_items ?? []).forEach((s: any) => {
+                      const label = s.category?.label || '?';
+                      map.set(label, (map.get(label) || 0) + (s.quantity ?? 0));
+                    });
+                    return [...map.entries()];
+                  })()
+                : null;
+
+              return (
+                <Box key={t.transfer_id} sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {getTransferStatusChip(t.status)}
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(t.created_at).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' })}
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="outlined"
+                      color="info"
+                      size="small"
+                      component={RouterLink}
+                      to={`/transfers/${t.transfer_id}`}
+                      startIcon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
+                    >
+                      Transfer #{t.transfer_id}
+                    </Button>
+                  </Box>
+                  {itemSummary && itemSummary.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, pl: 1 }}>
+                      {itemSummary.map(([label, qty]) => (
+                        <Chip key={label} label={`${label} ×${qty}`} size="small" variant="outlined" />
+                      ))}
+                    </Box>
+                  )}
+                  {itemSummary === null && (
+                    <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>Ładowanie…</Typography>
+                  )}
                 </Box>
-                <Button
-                  variant="outlined"
-                  color="info"
-                  size="small"
-                  component={RouterLink}
-                  to={`/transfers/${t.transfer_id}`}
-                  startIcon={<Suspense fallback={null}><LocalShippingIcon /></Suspense>}
-                >
-                  Transfer #{t.transfer_id}
-                </Button>
-              </Box>
-            ))}
+              );
+            })}
           </Box>
         </Paper>
       )}

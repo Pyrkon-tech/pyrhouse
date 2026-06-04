@@ -9,6 +9,7 @@
  */
 
 import { env } from '../config/env';
+import { TOKEN_KEY } from '../hooks/useStorage';
 
 /**
  * Klasa błędu API z dodatkowymi informacjami
@@ -153,6 +154,11 @@ class ApiClient {
               : Object.keys(rest).length > 0
                 ? JSON.stringify(rest)
                 : undefined;
+
+        if (response.status === 401 && !skipAuth) {
+          localStorage.removeItem(TOKEN_KEY);
+          window.location.href = '/login';
+        }
 
         throw new ApiError(errorMessage, response.status, code as string | undefined, details);
       }

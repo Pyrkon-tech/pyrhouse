@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Container,
   Typography,
@@ -97,7 +97,7 @@ interface FormItem {
   };
 }
 
-interface FormData {
+interface TransferFormValues {
   fromLocation: number;
   toLocation: string;
   items: FormItem[];
@@ -117,7 +117,7 @@ export interface TransferFormCoreProps {
 }
 
 const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocationId, onSuccess, onCancel, stocksRefreshTrigger, initialVolunteerIds }) => {
-  const { control, handleSubmit, setValue, watch, reset } = useForm<FormData>({
+  const { control, handleSubmit, setValue, watch, reset } = useForm<TransferFormValues>({
     defaultValues: {
       fromLocation: 1,
       toLocation: questLocationId != null ? String(questLocationId) : '',
@@ -135,7 +135,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const formDataRef = useRef<FormData | null>(null);
+  const formDataRef = useRef<TransferFormValues | null>(null);
   const lastInputRef = useRef<HTMLInputElement>(null);
   const [lastFieldId, setLastFieldId] = useState<string | null>(null);
 
@@ -148,6 +148,21 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
     [rawLocations]
   );
   const { stocks, fetchStocks } = useStocks();
+
+  const itemSummary = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const item of items) {
+      if (item.type === 'pyr_code' && item.status === 'success' && item.category?.label) {
+        totals.set(item.category.label, (totals.get(item.category.label) || 0) + 1);
+      } else if (item.type === 'stock' && item.id) {
+        const stock = stocks.find(s => s.id === Number(item.id));
+        if (stock && Number(item.quantity) > 0) {
+          totals.set(stock.category.label, (totals.get(stock.category.label) || 0) + Number(item.quantity));
+        }
+      }
+    }
+    return [...totals.entries()];
+  }, [items, stocks]);
 
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
 
@@ -290,7 +305,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
     return errorMessages[error] || 'Wystąpił błąd podczas przetwarzania transferu';
   };
 
-  const handleFormSubmit = (formData: FormData) => {
+  const handleFormSubmit = (formData: TransferFormValues) => {
     formDataRef.current = formData;
     setShowConfirmation(true);
   };
@@ -447,6 +462,17 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
           Nowa dostawa
         </Typography>
 
+        {itemSummary.length > 0 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.5, p: 1.25, borderRadius: 1, bgcolor: 'action.hover' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center', mr: 0.5 }}>
+              W koszyku:
+            </Typography>
+            {itemSummary.map(([label, qty]) => (
+              <Chip key={label} label={`${label} ×${qty}`} size="small" color="primary" variant="outlined" />
+            ))}
+          </Box>
+        )}
+
         <form onSubmit={handleSubmit(handleFormSubmit)}>
           <Box sx={{
             display: 'flex',
@@ -488,7 +514,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                   size="small"
                   displayEmpty
                   fullWidth
-                  value={field.value}
+                  value={locations.length > 0 ? field.value : ''}
                 >
                   <MenuItem value="" disabled>
                     Wybierz lokalizację docelową

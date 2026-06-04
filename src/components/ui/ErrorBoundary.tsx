@@ -19,15 +19,19 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   static getDerivedStateFromError(error: Error) {
     const isChunkError = /Failed to fetch dynamically imported module|Expected a JavaScript-or-Wasm module script|Importing a module script failed/.test(error.message ?? '');
-    if (isChunkError && !sessionStorage.getItem('chunk_reload_attempted')) {
-      sessionStorage.setItem('chunk_reload_attempted', '1');
-      window.location.reload();
+    if (isChunkError) {
       return { hasError: false, error: null };
     }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    const isChunkError = /Failed to fetch dynamically imported module|Expected a JavaScript-or-Wasm module script|Importing a module script failed/.test(error.message ?? '');
+    if (isChunkError && !sessionStorage.getItem('chunk_reload_attempted')) {
+      sessionStorage.setItem('chunk_reload_attempted', '1');
+      window.location.reload();
+      return;
+    }
     console.error('ErrorBoundary caught an error', error, errorInfo);
   }
 
