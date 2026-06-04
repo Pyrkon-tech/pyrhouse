@@ -33,6 +33,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import EditIcon from '@mui/icons-material/Edit';
 import { useCategories } from '../../hooks/useCategories';
 import { useDialogState } from '../../hooks/useDialogState';
+import { useAuth } from '../../hooks/useAuth';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 
@@ -48,6 +49,8 @@ const CategoryManagementPage: React.FC = () => {
   const { categories, loading, error, addCategory, deleteCategory, updateCategory, setError, refreshCategories } = useCategories();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { userRole } = useAuth();
+  const canEdit = userRole !== 'dispatcher';
 
   const dialogs = useDialogState<Category>();
 
@@ -282,22 +285,24 @@ const CategoryManagementPage: React.FC = () => {
               />
             </TableCell>
             <TableCell>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <IconButton
-                  color="primary"
-                  onClick={() => handleOpenEditModal(category)}
-                  size="small"
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  color="error"
-                  onClick={() => handleOpenDeleteModal(category)}
-                  size="small"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
+              {canEdit && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <IconButton
+                    color="primary"
+                    onClick={() => handleOpenEditModal(category)}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    color="error"
+                    onClick={() => handleOpenDeleteModal(category)}
+                    size="small"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              )}
             </TableCell>
           </TableRow>
         ))}
@@ -352,29 +357,31 @@ const CategoryManagementPage: React.FC = () => {
                 )}
               </Box>
 
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 1,
-                  justifyContent: 'flex-end',
-                  mt: 2
-                }}
-              >
-                <IconButton
-                  color="primary"
-                  onClick={() => handleOpenEditModal(category)}
-                  size="small"
+              {canEdit && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    justifyContent: 'flex-end',
+                    mt: 2
+                  }}
                 >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  color="error"
-                  onClick={() => handleOpenDeleteModal(category)}
-                  size="small"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
+                  <IconButton
+                    color="primary"
+                    onClick={() => handleOpenEditModal(category)}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    color="error"
+                    onClick={() => handleOpenDeleteModal(category)}
+                    size="small"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -413,9 +420,11 @@ const CategoryManagementPage: React.FC = () => {
         title="Kategorie"
         subtitle={`${filteredCategories.length} kategorii`}
         actions={
-          <Button variant="primary" leftIcon={<AddIcon />} onClick={handleOpenAddModal}>
-            Dodaj Kategorię
-          </Button>
+          canEdit ? (
+            <Button variant="primary" leftIcon={<AddIcon />} onClick={handleOpenAddModal}>
+              Dodaj Kategorię
+            </Button>
+          ) : undefined
         }
       />
 

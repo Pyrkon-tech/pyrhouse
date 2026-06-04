@@ -33,6 +33,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useOrigins, notifyOriginsChanged } from '../../hooks/useOrigins';
 import { useDialogState } from '../../hooks/useDialogState';
+import { useAuth } from '../../hooks/useAuth';
 import { createOriginAPI, updateOriginAPI, deleteOriginAPI } from '../../services/originService';
 import { ApiError } from '../../services/apiClient';
 import type { Origin, CreateOriginPayload, UpdateOriginPayload } from '../../types/origin.types';
@@ -49,6 +50,8 @@ const emptyCreateForm = (): CreateOriginPayload => ({
 const OriginsManagementPage: React.FC = () => {
   const { origins, loading, error, refresh } = useOrigins(true);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
+  const { userRole } = useAuth();
+  const canEdit = userRole !== 'dispatcher';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -164,8 +167,8 @@ const OriginsManagementPage: React.FC = () => {
                   label={origin.active ? 'Aktywny' : 'Nieaktywny'}
                   size="small"
                   color={origin.active ? 'success' : 'default'}
-                  onClick={() => handleToggleActive(origin)}
-                  clickable
+                  onClick={canEdit ? () => handleToggleActive(origin) : undefined}
+                  clickable={canEdit}
                 />
               </Box>
 
@@ -190,18 +193,20 @@ const OriginsManagementPage: React.FC = () => {
                 </Box>
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
-                <Tooltip title="Edytuj">
-                  <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
-                  <IconButton size="small" color="error" onClick={() => dialogs.openDelete(origin)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+              {canEdit && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+                  <Tooltip title="Edytuj">
+                    <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
+                    <IconButton size="small" color="error" onClick={() => dialogs.openDelete(origin)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -247,26 +252,30 @@ const OriginsManagementPage: React.FC = () => {
                   label={origin.active ? 'Aktywny' : 'Nieaktywny'}
                   size="small"
                   color={origin.active ? 'success' : 'default'}
-                  onClick={() => handleToggleActive(origin)}
-                  clickable
+                  onClick={canEdit ? () => handleToggleActive(origin) : undefined}
+                  clickable={canEdit}
                 />
               </TableCell>
               <TableCell align="center">{origin.sort_order}</TableCell>
               <TableCell align="right">
-                <Tooltip title="Edytuj">
-                  <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => dialogs.openDelete(origin)}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                {canEdit && (
+                  <>
+                    <Tooltip title="Edytuj">
+                      <IconButton size="small" onClick={() => handleOpenEdit(origin)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Usuń (hard delete — niemożliwe jeśli ma sprzęt)">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => dialogs.openDelete(origin)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </>
+                )}
               </TableCell>
             </TableRow>
           ))
@@ -295,9 +304,11 @@ const OriginsManagementPage: React.FC = () => {
                 <RefreshIcon />
               </IconButton>
             </Tooltip>
-            <Button variant="primary" leftIcon={<AddIcon />} onClick={handleOpenAdd}>
-              Dodaj origin
-            </Button>
+            {canEdit && (
+              <Button variant="primary" leftIcon={<AddIcon />} onClick={handleOpenAdd}>
+                Dodaj origin
+              </Button>
+            )}
           </>
         }
       />
