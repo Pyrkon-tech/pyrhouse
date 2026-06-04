@@ -288,21 +288,19 @@ const EquipmentList: React.FC = () => {
     return <Suspense fallback={null}><CheckCircleIcon color="info" /></Suspense>;
   };
 
+  const getStockIconColor = (item: Equipment): string => {
+    if (item.state === 'in_transit') return 'warning.main';
+    if (item.location.id === 1) return 'success.main';
+    return 'info.main';
+  };
+
   const renderStatusOrQuantity = (item: Equipment) => {
     if (item.type === 'stock') {
+      const iconColor = getStockIconColor(item);
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography
-            component="div"
-            fontWeight="bold"
-            sx={{
-              color: item.state === 'in_transit' ? 'primary.main' : (item.quantity && item.quantity > 0 ? 'success.main' : 'text.secondary'),
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <Suspense fallback={null}><Inventory2Icon sx={{ color: item.state === 'in_transit' ? 'primary.main' : undefined }} /></Suspense>
+          <Suspense fallback={null}><Inventory2Icon sx={{ color: iconColor }} /></Suspense>
+          <Typography component="div" fontWeight="bold" sx={{ color: iconColor }}>
             {item.quantity ?? '-'}
           </Typography>
         </Box>
