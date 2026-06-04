@@ -151,13 +151,6 @@ export const protectedRoutes: RouteConfig[] = [
     showInNav: true,
   },
   {
-    path: '/duty-schedule',
-    component: ScheduleDetailPage,
-    title: 'Harmonogram dyżurów',
-    icon: 'Schedule',
-    showInNav: true,
-  },
-  {
     path: '/my-schedule',
     component: MySchedulePage,
     title: 'Mój grafik',
@@ -207,6 +200,14 @@ export const protectedRoutes: RouteConfig[] = [
 
 // Admin routes (wymagają roli admin/moderator)
 export const adminRoutes: RouteConfig[] = [
+  {
+    path: '/duty-schedule',
+    component: ScheduleDetailPage,
+    title: 'Harmonogram dyżurów',
+    icon: 'Schedule',
+    showInNav: true,
+    requiredRoles: ['admin', 'moderator'],
+  },
   {
     path: '/users',
     component: UserManagementPage,
