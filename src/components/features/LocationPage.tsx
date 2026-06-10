@@ -77,7 +77,7 @@ const LocationPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, showSnackbar]);
 
   useEffect(() => {
     fetchLocationData();

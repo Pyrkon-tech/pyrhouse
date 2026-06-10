@@ -493,7 +493,7 @@ const ReleaseDetailPage: React.FC = () => {
                             onChange={() => {
                               setRemovedAssetIds((prev) => {
                                 const next = new Set(prev);
-                                next.has(asset.item_id) ? next.delete(asset.item_id) : next.add(asset.item_id);
+                                if (next.has(asset.item_id)) next.delete(asset.item_id); else next.add(asset.item_id);
                                 return next;
                               });
                             }}

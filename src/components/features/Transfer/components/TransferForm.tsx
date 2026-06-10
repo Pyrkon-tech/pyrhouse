@@ -127,7 +127,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
 
   const fromLocation = watch('fromLocation');
 
-  const [rowAddedRef] = useState({ current: false });
+  const rowAddedRef = useRef(false);
 
   const handlePyrCodeSearch = async (value: string) => {
     if (!/^[a-zA-Z0-9-]*$/.test(value)) {

@@ -188,6 +188,9 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
     };
 
     fetchUsers();
+    // Intentionally mount-only: re-running on initialVolunteerIds/setValue changes
+    // would overwrite manual edits to the users field with the dispatch preselection
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isPyrCodeSelected = (pyrcode: string): boolean => {
@@ -255,7 +258,7 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
           }
         }, 500);
       }
-    } catch (err: any) {
+    } catch {
       setValue(`items.${index}.status`, 'failure' as ValidationStatus);
     } finally {
       setIsValidationInProgress(false);

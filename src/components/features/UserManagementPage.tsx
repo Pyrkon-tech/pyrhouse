@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import {
   Box,
   TableBody,
@@ -64,11 +64,7 @@ const UserManagementPage: React.FC = () => {
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiClient.get<any[]>('/users');
@@ -78,7 +74,11 @@ const UserManagementPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showSnackbar]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleOpenAddUserModal = () => {
     dialogs.openAdd();

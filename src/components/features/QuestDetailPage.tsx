@@ -157,13 +157,14 @@ const QuestDetailPage: React.FC = () => {
   const [stocksRefreshTrigger, setStocksRefreshTrigger] = useState(0);
 
   // Auto-open formularza transferu po dispatchu z mapy — tylko gdy brak istniejącego transferu
+  // Re-runs are safe: clearing route state below makes autoOpenTransfer falsy
   useEffect(() => {
     if (dispatchState?.autoOpenTransfer && quest && quest.status !== 'completed' && quest.status !== 'cancelled') {
       setShowTransferForm(true);
       // Wyczyść route state by nie re-triggerować po odświeżeniu
       navigate(location.pathname, { replace: true, state: null });
     }
-  }, [dispatchState?.autoOpenTransfer, quest?.id]);
+  }, [dispatchState?.autoOpenTransfer, quest, navigate, location.pathname]);
 
   // Location resolution
   const { locations, refetch: fetchLocations } = useLocations();
@@ -171,9 +172,10 @@ const QuestDetailPage: React.FC = () => {
   const [saveMapping, setSaveMapping] = useState(true);
   const [assigningLocation, setAssigningLocation] = useState(false);
 
+  const questId = quest?.id;
   useEffect(() => {
-    if (quest) fetchLocations();
-  }, [quest?.id, fetchLocations]);
+    if (questId != null) fetchLocations();
+  }, [questId, fetchLocations]);
 
   const handleAssignLocation = async () => {
     if (!quest || selectedLocationId == null) return;

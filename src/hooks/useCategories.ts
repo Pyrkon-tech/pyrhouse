@@ -208,7 +208,7 @@ export const useCategories = () => {
         let errorResponse;
         try {
           errorResponse = await response.json();
-        } catch (e) {}
+        } catch {}
         if (response.status === 409) {
           errorMessage = 'Nie można usunąć kategorii, ponieważ jest już powiązana ze sprzętem.';
           if (errorResponse?.details) {

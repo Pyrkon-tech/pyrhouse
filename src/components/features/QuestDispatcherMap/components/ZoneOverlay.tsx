@@ -187,7 +187,7 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
         const sdx = Math.round(cx + (bb.maxX - cx) * 0.60);
         const sdy = Math.round(cy + (bb.maxY - cy) * 0.40);
         return (
-          <g onClick={(e) => { e.stopPropagation(); onSdClick ? onSdClick(zone.id) : onSelect(zone.id); }} style={{ cursor: 'pointer' }}>
+          <g onClick={(e) => { e.stopPropagation(); if (onSdClick) onSdClick(zone.id); else onSelect(zone.id); }} style={{ cursor: 'pointer' }}>
             <circle cx={sdx} cy={sdy} r={40} fill="#00acc1" opacity={0.15}
               style={{ filter: 'blur(10px)' }}>
               <animate attributeName="opacity" values="0.15;0.4;0.15" dur="1.8s" repeatCount="indefinite" />

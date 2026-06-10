@@ -1,71 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
-import { useStorage } from './useStorage';
+/**
+ * Thin wrapper around AuthContext — keeps the original `useAuth()` API
+ * ({ isAuthenticated, userRole, userId, checkToken, handleLogout }) so the
+ * 16 existing consumers don't need changes. State and the validation interval
+ * live once in AuthProvider instead of per-consumer.
+ */
 
-interface JwtPayload {
-  role: string;
-  exp: number;
-  userID: number;
-}
-
-// Stała określająca margines bezpieczeństwa w sekundach (5 minut)
-const SAFETY_MARGIN = 5 * 60;
+import { useEffect } from 'react';
+import { useAuthContext } from '../context/AuthContext';
 
 export const useAuth = () => {
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
-  const { getToken, removeToken } = useStorage();
+  const auth = useAuthContext();
+  const { checkToken } = auth;
 
-  const handleLogout = useCallback(() => {
-    removeToken();
-    setIsAuthenticated(false);
-    setUserRole(null);
-    setUserId(null);
-    navigate('/login');
-  }, [navigate, removeToken]);
-
-  const checkToken = useCallback(() => {
-    const token = getToken();
-    if (!token) {
-      handleLogout();
-      return false;
-    }
-
-    try {
-      const decodedToken = jwtDecode<JwtPayload>(token);
-      const currentTime = Date.now() / 1000;
-
-      // Dodajemy margines bezpieczeństwa - token jest uznawany za nieważny 5 minut przed faktycznym wygaśnięciem
-      if (decodedToken.exp < currentTime + SAFETY_MARGIN) {
-        handleLogout();
-        return false;
-      }
-
-      setIsAuthenticated(true);
-      setUserRole(decodedToken.role);
-      setUserId(decodedToken.userID);
-      return true;
-    } catch (error) {
-      console.error('Błąd dekodowania tokenu:', error);
-      handleLogout();
-      return false;
-    }
-  }, [handleLogout, getToken]);
-
+  // Re-validate on consumer mount so a freshly stored token (after login)
+  // is picked up immediately instead of waiting for the next interval tick.
   useEffect(() => {
     checkToken();
-    const interval = setInterval(checkToken, 60000);
-    return () => clearInterval(interval);
   }, [checkToken]);
 
-  return {
-    isAuthenticated,
-    userRole,
-    userId,
-    checkToken,
-    handleLogout
-  };
-}; 
+  return auth;
+};

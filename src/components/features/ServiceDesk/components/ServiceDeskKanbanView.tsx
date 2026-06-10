@@ -207,7 +207,7 @@ const DraggableCard: React.FC<KanbanCardProps> = (props) => {
 };
 
 // Droppable column
-const KanbanColumn: React.FC<{
+const KanbanColumnView: React.FC<{
   column: KanbanColumn;
   cards: any[];
   isOver: boolean;
@@ -386,7 +386,7 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
     >
       <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1, alignItems: 'stretch' }}>
         {COLUMNS.map(column => (
-          <KanbanColumn
+          <KanbanColumnView
             key={column.id}
             column={column}
             cards={getCardsForColumn(column)}

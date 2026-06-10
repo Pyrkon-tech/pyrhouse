@@ -70,7 +70,7 @@ const SettingsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showSnackbar]);
 
   useEffect(() => {
     fetchSettings();

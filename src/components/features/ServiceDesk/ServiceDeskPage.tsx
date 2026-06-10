@@ -71,7 +71,7 @@ const ServiceDeskPage: React.FC = () => {
       if (!res.ok) throw new Error('Błąd zmiany statusu');
       showSnackbar('success', 'Status zmieniony pomyślnie');
       onSuccess?.();
-    } catch (e) {
+    } catch {
       showSnackbar('error', 'Nie udało się zmienić statusu');
     }
   };
@@ -90,7 +90,7 @@ const ServiceDeskPage: React.FC = () => {
       if (!res.ok) throw new Error('Błąd przypisywania użytkownika');
       showSnackbar('success', 'Użytkownik przypisany pomyślnie');
       onSuccess?.();
-    } catch (e) {
+    } catch {
       showSnackbar('error', 'Nie udało się przypisać użytkownika');
     }
   };
@@ -156,8 +156,8 @@ const ServiceDeskPage: React.FC = () => {
   }, [assignDropdownOpenId]);
 
   useEffect(() => {
-    if (isMobile && viewMode === 'kanban') {
-      setViewMode('cards');
+    if (isMobile) {
+      setViewMode((prev) => (prev === 'kanban' ? 'cards' : prev));
     }
   }, [isMobile]);
 
@@ -193,7 +193,7 @@ const ServiceDeskPage: React.FC = () => {
       if (!res.ok) throw new Error('Błąd zmiany priorytetu');
       showSnackbar('success', 'Priorytet zmieniony pomyślnie');
       onSuccess?.();
-    } catch (e) {
+    } catch {
       showSnackbar('error', 'Nie udało się zmienić priorytetu');
     }
   };

@@ -79,7 +79,7 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-interface MenuItem {
+interface NavMenuItem {
   path?: string;
   label: string;
   icon: React.ReactNode;
@@ -286,7 +286,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  const menuItems: MenuItem[] = [
+  const menuItems: NavMenuItem[] = [
     { path: '/home', label: 'Home', icon: <Icons.Home /> },
     {
       type: 'divider',

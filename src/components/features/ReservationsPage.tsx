@@ -365,7 +365,7 @@ const ReservationsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, categoryFilter]);
+  }, [statusFilter, categoryFilter, showSnackbar]);
 
   useEffect(() => {
     fetchReservations();
@@ -388,7 +388,7 @@ const ReservationsPage: React.FC = () => {
   const toggleOne = (id: number) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };

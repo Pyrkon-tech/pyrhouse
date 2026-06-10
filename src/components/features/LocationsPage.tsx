@@ -55,13 +55,13 @@ const LocationsPage: React.FC = () => {
 
   useEffect(() => {
     refetch();
-  }, []);
+  }, [refetch]);
 
   useEffect(() => {
     if (error) {
       showSnackbar('error', error);
     }
-  }, [error]);
+  }, [error, showSnackbar]);
 
   const handleOpenDialog = (location?: Location) => {
     if (location) {

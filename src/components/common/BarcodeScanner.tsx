@@ -28,7 +28,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         (video as any).srcObject = null;
         console.log('🔴 Strumień kamery zatrzymany');
       }
-    } catch (e) {}
+    } catch {}
   };
 
   const stopQuagga = () => {
@@ -36,7 +36,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       Quagga.offDetected(handleDetected);
       Quagga.stop();
       console.log('🔴 Quagga zatrzymana');
-    } catch (e) {}
+    } catch {}
   };
 
   const handleDetected = (result: any) => {
@@ -118,6 +118,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       stopCamera();
       scanBufferRef.current = {};
     };
+    // Intentionally mount-only: camera/Quagga lifecycle must init and tear down
+    // exactly once; handleDetected/stopQuagga are stable for the component's lifetime
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {

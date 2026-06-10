@@ -1,4 +1,4 @@
-import React, { useEffect, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -91,7 +91,7 @@ const TransferDetailsPage: React.FC = () => {
     return userRole === 'admin' || userRole === 'moderator';
   };
 
-  const fetchTransferDetails = async () => {
+  const fetchTransferDetails = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -116,7 +116,7 @@ const TransferDetailsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [numericId]);
 
   useEffect(() => {
     if (isNaN(numericId)) {
@@ -126,7 +126,7 @@ const TransferDetailsPage: React.FC = () => {
     }
 
     fetchTransferDetails();
-  }, [numericId]);
+  }, [numericId, fetchTransferDetails]);
 
   useEffect(() => {
     fetchLocations();
@@ -136,7 +136,7 @@ const TransferDetailsPage: React.FC = () => {
     if (error) {
       showSnackbar('error', error);
     }
-  }, [error]);
+  }, [error, showSnackbar]);
 
   useEffect(() => {
     if (transfer?.users) {
@@ -248,26 +248,22 @@ const TransferDetailsPage: React.FC = () => {
     return ['Utworzony', 'W drodze', 'Dostarczony'];
   };
 
-  const getCurrentStep = () => {
-    if (!transfer) return 0;
+  useEffect(() => {
+    if (!transfer) return;
     switch (transfer.status) {
       case 'created':
-        return 0;
+        setCurrentStep(0);
+        break;
       case 'in_transit':
-        return 1;
+        setCurrentStep(1);
+        break;
       case 'delivered':
       case 'completed':
-        return 2;
       case 'cancelled':
-        return 2;
+        setCurrentStep(2);
+        break;
       default:
-        return 0;
-    }
-  };
-
-  useEffect(() => {
-    if (transfer) {
-      setCurrentStep(getCurrentStep());
+        setCurrentStep(0);
     }
   }, [transfer]);
 

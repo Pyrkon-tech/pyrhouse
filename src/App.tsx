@@ -9,6 +9,7 @@ import { ThemeProvider } from './theme/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { publicRoutes, protectedRoutes, adminRoutes } from './routes/routes';
 import RequireRole from './components/features/RequireRole';
+import { AuthProvider } from './context/AuthContext';
 
 // Konfiguracja flag React Router v7
 // Komponent dla chronionych tras
@@ -52,6 +53,7 @@ function App() {
       <CssBaseline />
       <NotificationProvider>
       <Router>
+        <AuthProvider>
         <Routes>
           {/* Publiczne trasy */}
           {publicRoutes.map((route) => (
@@ -105,6 +107,7 @@ function App() {
           {/* Fallback dla nieznanych tras */}
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
+        </AuthProvider>
       </Router>
       </NotificationProvider>
     </ThemeProvider>

@@ -92,7 +92,7 @@ const LoginForm: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown as EventListener);
       window.removeEventListener('keyup', handleKeyUp as EventListener);
     };
-  }, []);
+  }, [showSnackbar, closeSnackbar]);
 
   // Funkcja do tłumaczenia komunikatów błędów
   const translateError = (errorMessage: string): string => {

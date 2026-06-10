@@ -350,11 +350,17 @@ const BudgetPage: React.FC = () => {
       }
     };
     init();
+    // Intentionally mount-only: initial load of all page data; filter-driven
+    // budget refreshes are handled by the effect below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!loading) fetchBudget();
-  }, [selectedPerson, vatEnabled]);
+    // `fetchBudget` identity changes with selectedPerson/vatEnabled;
+    // `loading` is intentionally omitted — the init effect covers the first fetch
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchBudget]);
 
   const handlePricesSaved = () => {
     fetchPrices();

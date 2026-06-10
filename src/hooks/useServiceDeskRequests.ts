@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getApiUrl } from '../config/api';
 
 const REQUESTS_API = '/service-desk/requests';
@@ -8,7 +8,7 @@ export const useServiceDeskRequests = (status: string, search: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRequests = () => {
+  const fetchRequests = useCallback(() => {
     setLoading(true);
     setError(null);
     const token = localStorage.getItem('token');
@@ -26,9 +26,9 @@ export const useServiceDeskRequests = (status: string, search: string) => {
       })
       .catch(e => setError(e.message || 'Błąd pobierania zgłoszeń'))
       .finally(() => setLoading(false));
-  };
+  }, [status]);
 
-  useEffect(() => { fetchRequests(); }, [status]);
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
   // Filtrowanie lokalne:
   const filteredRequests = search

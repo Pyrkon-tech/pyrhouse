@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -94,7 +94,7 @@ const EquipmentDetails: React.FC = () => {
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  const fetchDetails = async () => {
+  const fetchDetails = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -123,11 +123,11 @@ const EquipmentDetails: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, type, showSnackbar]);
 
   useEffect(() => {
     fetchDetails();
-  }, [id, type]);
+  }, [fetchDetails]);
 
   useEffect(() => {
     if (details && type === 'stock') setEditQuantity(details.quantity);

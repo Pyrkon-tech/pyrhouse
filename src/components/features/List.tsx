@@ -261,20 +261,18 @@ const EquipmentList: React.FC = () => {
       filtered = filtered.filter(item => item.serial === null);
     }
 
+    // Default sort by ID descending (previously a separate effect that raced
+    // with this one and sorted a stale snapshot of filteredEquipment)
+    filtered.sort((a, b) => b.id - a.id);
+
     setFilteredEquipment(filtered);
   }, [equipment, selectedLocations, selectedCategory, categoryType, filter, activeQuickFilters]);
 
   useEffect(() => {
     fetchEquipment();
-  }, []); // Pobieramy dane tylko raz przy montowaniu komponentu
-
-  // Domyślne sortowanie po ID
-  useEffect(() => {
-    if (filteredEquipment.length > 0) {
-      const sortedEquipment = [...filteredEquipment].sort((a, b) => b.id - a.id);
-      setFilteredEquipment(sortedEquipment);
-    }
-  }, [equipment]);
+    // Intentionally mount-only: data is fetched once, filtering is client-side
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // const handleSort = (field: string) =>
       // setSortField(field

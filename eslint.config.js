@@ -33,6 +33,11 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
+      // Empty catch = intentional "ignore this error" (non-critical fetches, parsers)
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      // TEMPORARY downgrade to warn: ~150 `any` usages live mostly in legacy fetch
+      // code slated for the apiClient migration (phase 3). Restore to error after it.
+      '@typescript-eslint/no-explicit-any': 'warn',
       // `_` prefix = intentionally unused (e.g. destructuring that skips fields)
       '@typescript-eslint/no-unused-vars': [
         'error',

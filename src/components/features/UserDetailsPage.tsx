@@ -230,7 +230,7 @@ const UserDetailsPage: React.FC = () => {
       }
     };
     fetchUserData();
-  }, [id]);
+  }, [id, showSnackbar]);
 
   useEffect(() => {
     const fetchTransfers = async () => {
@@ -253,7 +253,7 @@ const UserDetailsPage: React.FC = () => {
       }
     };
     fetchTransfers();
-  }, [id, tabValue]);
+  }, [id, tabValue, showSnackbar]);
 
   const getRoleColor = (role: string): 'error' | 'warning' | 'info' => {
     switch (role) {

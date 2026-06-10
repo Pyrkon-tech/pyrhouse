@@ -212,7 +212,7 @@ export const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({
       });
       printWindow.print();
       printWindow.close();
-    } catch (err) {
+    } catch {
       setError('Nie udało się wydrukować');
     } finally {
       setIsGenerating(false);

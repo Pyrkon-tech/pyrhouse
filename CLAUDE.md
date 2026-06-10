@@ -12,10 +12,10 @@ PyrHouse to aplikacja React/TypeScript do zarządzania stanami magazynowymi dla 
 
 ## Tech Stack
 
-- **Framework**: React 18.2 + TypeScript 5.2
-- **UI**: Material-UI 5.17 + Emotion
-- **Build**: Vite 6.3
-- **Routing**: React Router DOM 6.22
+- **Framework**: React 19.2 + TypeScript 5.9
+- **UI**: Material-UI 5.18 + Emotion
+- **Build**: Vite 6.4
+- **Routing**: React Router DOM 7.17
 - **State**: React Context + Custom Hooks
 - **Formularze**: react-hook-form
 - **Mapy**: Google Maps API
@@ -52,7 +52,8 @@ src/
 | `src/theme/theme.ts` | Konfiguracja MUI theme |
 | `src/routes/routes.ts` | Definicje tras |
 | `src/hooks/useStyles.ts` | Hook do stylowania |
-| `src/hooks/useAuth.ts` | Autentykacja i walidacja tokenu |
+| `src/context/AuthContext.tsx` | Centralny stan auth (jeden interwał walidacji JWT); provider w App.tsx wewnątrz Routera |
+| `src/hooks/useAuth.ts` | Cienki wrapper na AuthContext (stare API zachowane) |
 | `src/services/apiClient.ts` | Centralny klient API |
 | `src/config/env.ts` | Konfiguracja zmiennych środowiskowych |
 | `src/context/NotificationContext.tsx` | Centralne powiadomienia |
