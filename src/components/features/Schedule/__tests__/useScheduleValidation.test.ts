@@ -35,30 +35,17 @@ function makeVol(overrides: Partial<ScheduleVolunteer> = {}): ScheduleVolunteer 
 
 describe('useScheduleValidation', () => {
   describe('slot capacity', () => {
-    it('warns when slot is understaffed', () => {
-      const slots = [makeSlot({ capacity: 3, volunteers: [{ id: 1, nickname: 'Alice' }] })];
-      const { result } = renderHook(() => useScheduleValidation(slots, []));
-      const issue = result.current.issues.find((i) => i.type === 'slot_understaffed');
-      expect(issue).toBeDefined();
-      expect(issue?.severity).toBe('warning');
-    });
-
-    it('warns when slot is overstaffed', () => {
-      const slots = [makeSlot({
-        capacity: 1,
-        volunteers: [{ id: 1, nickname: 'Alice' }, { id: 2, nickname: 'Bob' }],
-      })];
-      const { result } = renderHook(() => useScheduleValidation(slots, []));
-      const issue = result.current.issues.find((i) => i.type === 'slot_overstaffed');
-      expect(issue).toBeDefined();
-      expect(issue?.severity).toBe('warning');
-    });
-
-    it('no capacity issue when exactly at capacity', () => {
-      const slots = [makeSlot({
-        capacity: 2,
-        volunteers: [{ id: 1, nickname: 'Alice' }, { id: 2, nickname: 'Bob' }],
-      })];
+    // Capacity validation was intentionally removed in v1 (658bd97) — slot staffing
+    // is signalled visually in the grid, not as a validation issue
+    it('does not flag under/overstaffed slots', () => {
+      const slots = [
+        makeSlot({ id: 1, capacity: 3, volunteers: [{ id: 1, nickname: 'Alice' }] }),
+        makeSlot({
+          id: 2,
+          capacity: 1,
+          volunteers: [{ id: 1, nickname: 'Alice' }, { id: 2, nickname: 'Bob' }],
+        }),
+      ];
       const { result } = renderHook(() => useScheduleValidation(slots, []));
       const capacityIssues = result.current.issues.filter(
         (i) => i.type === 'slot_understaffed' || i.type === 'slot_overstaffed',
@@ -237,7 +224,8 @@ describe('useScheduleValidation', () => {
     });
 
     it('returns valid=false when issues exist', () => {
-      const slots = [makeSlot({ capacity: 5, volunteers: [] })];
+      // Slot longer than 8h → slot_too_long issue
+      const slots = [makeSlot({ start: '2026-06-19T08:00:00Z', end: '2026-06-19T20:00:00Z' })];
       const { result } = renderHook(() => useScheduleValidation(slots, []));
       expect(result.current.valid).toBe(false);
     });

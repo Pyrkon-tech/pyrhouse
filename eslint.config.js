@@ -33,6 +33,47 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
+      // `_` prefix = intentionally unused (e.g. destructuring that skips fields)
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+  {
+    // TypeScript itself catches undefined identifiers (including DOM types and the
+    // global `google.maps`) — no-undef on TS files only produces false positives
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-undef': 'off',
+    },
+  },
+  {
+    // Vitest with `globals: true` — describe/it/expect/vi available without imports
+    files: ['**/__tests__/**', '**/*.{test,spec}.{ts,tsx}', 'src/setupTests.ts'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        vi: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+      },
+    },
+  },
+  {
+    // Config files executed in Node
+    files: ['*.config.{js,ts}', 'vite.config.ts'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ]

@@ -64,7 +64,7 @@ export const useServiceDeskStream = ({ onEvent, enabled = true }: UseServiceDesk
         let buffer = '';
         let currentEventName = '';
 
-        // eslint-disable-next-line no-constant-condition
+         
         while (true) {
           const { done, value } = await reader.read();
           if (done || cancelled) break;
@@ -114,7 +114,7 @@ export const useServiceDeskStream = ({ onEvent, enabled = true }: UseServiceDesk
       if (retryTimeout !== null) clearTimeout(retryTimeout);
       setConnected(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [enabled]);
 
   return { connected, error };

@@ -73,7 +73,7 @@ export const useDispatchStream = ({
         let buffer = '';
         let currentEventName = '';
 
-        // eslint-disable-next-line no-constant-condition
+         
         while (true) {
           const { done, value } = await reader.read();
           if (done || cancelled) break;
@@ -125,7 +125,7 @@ export const useDispatchStream = ({
       if (retryTimeout !== null) clearTimeout(retryTimeout);
       setConnected(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [enabled]);
 
   return { connected, error };

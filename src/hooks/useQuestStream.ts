@@ -60,7 +60,7 @@ export const useQuestStream = ({ onEvent, enabled = true }: UseQuestStreamOption
         let buffer = '';
         let currentEventName = '';
 
-        // eslint-disable-next-line no-constant-condition
+         
         while (true) {
           const { done, value } = await reader.read();
           if (done || cancelled) break;
@@ -113,7 +113,7 @@ export const useQuestStream = ({ onEvent, enabled = true }: UseQuestStreamOption
       setConnected(false);
     };
   // onEvent celowo pominięty w deps — obsługiwany przez onEventRef
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [enabled]);
 
   return { connected, error };

@@ -68,7 +68,7 @@ class ApiClient {
    * Pobiera nagłówki autoryzacji
    */
   private getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(TOKEN_KEY);
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 

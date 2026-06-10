@@ -256,7 +256,7 @@ describe('createSlot', () => {
     expect(slot?.credit_hours).toBe(4);
   });
 
-  it('computes credit_hours = 7 for montage regardless of actual duration', () => {
+  it('computes credit_hours from actual duration for montage slots', () => {
     const { result } = renderHook(() => useScheduleLocalState());
     act(() => { result.current.loadFromServer(makeDetail()); });
 
@@ -264,7 +264,7 @@ describe('createSlot', () => {
     act(() => { tempId = result.current.createSlot('montage', '2026-06-08T08:00:00Z', '2026-06-08T20:00:00Z'); });
 
     const slot = result.current.state.slots.find((s) => s.id === tempId);
-    expect(slot?.credit_hours).toBe(7);
+    expect(slot?.credit_hours).toBe(12);
   });
 });
 

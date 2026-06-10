@@ -132,9 +132,10 @@ describe('computeGlobalHourRange', () => {
     expect(computeGlobalHourRange([])).toEqual({ minHour: 8, maxHour: 20 });
   });
 
-  it('returns default 8-20 for only full-day (montage/demontage) slots', () => {
+  it('includes full-day (montage/demontage) slots in range computation', () => {
     const slot = makeSlot({ type: 'montage', start: '2026-06-19T08:00:00Z', end: '2026-06-19T20:00:00Z' });
-    expect(computeGlobalHourRange([slot])).toEqual({ minHour: 8, maxHour: 20 });
+    // min = floor(8)-1 = 7, max = ceil(20)+1 = 21
+    expect(computeGlobalHourRange([slot])).toEqual({ minHour: 7, maxHour: 21 });
   });
 
   it('returns padded range for festival slots', () => {
@@ -158,13 +159,13 @@ describe('computeGlobalHourRange', () => {
     expect(computeGlobalHourRange(slots)).toEqual({ minHour: 1, maxHour: 15 });
   });
 
-  it('skips montage/demontage slots in range computation', () => {
+  it('combines montage and festival slots in range computation', () => {
     const slots = [
       makeSlot({ id: 1, type: 'montage', start: '2026-06-19T06:00:00Z', end: '2026-06-19T20:00:00Z' }),
       makeSlot({ id: 2, type: 'festival', start: '2026-06-20T10:00:00Z', end: '2026-06-20T14:00:00Z' }),
     ];
-    // Only festival counts: min = floor(10)-1 = 9, max = ceil(14)+1 = 15
-    expect(computeGlobalHourRange(slots)).toEqual({ minHour: 9, maxHour: 15 });
+    // min = floor(6)-1 = 5, max = ceil(20)+1 = 21
+    expect(computeGlobalHourRange(slots)).toEqual({ minHour: 5, maxHour: 21 });
   });
 
   it('buildGridData uses provided axisRange instead of computing', () => {

@@ -12,6 +12,10 @@ import {
   DialogActions,
   Select,
   MenuItem,
+  Menu,
+  Checkbox,
+  ListItemText,
+  Divider as MenuDivider,
   Card,
   CardContent,
   Grid,
@@ -36,6 +40,7 @@ const PersonIcon = lazy(() => import('@mui/icons-material/Person'));
 const AdminPanelSettingsIcon = lazy(() => import('@mui/icons-material/AdminPanelSettings'));
 const SecurityIcon = lazy(() => import('@mui/icons-material/Security'));
 const SupportAgentIcon = lazy(() => import('@mui/icons-material/SupportAgent'));
+const FilterListIcon = lazy(() => import('@mui/icons-material/FilterList'));
 
 const UserManagementPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -49,6 +54,10 @@ const UserManagementPage: React.FC = () => {
     role: 'user',
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string[]>([]);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [roleMenuAnchor, setRoleMenuAnchor] = useState<null | HTMLElement>(null);
+  const [activeMenuAnchor, setActiveMenuAnchor] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -120,14 +129,28 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
+  const toggleRole = (role: string) => {
+    setRoleFilter(prev =>
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    );
+  };
+
+  const hasActiveFilters = roleFilter.length > 0 || activeFilter !== 'all';
+
   const filteredUsers = users.filter(user => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = !query || (
       user.username.toLowerCase().includes(query) ||
       (user.fullname ?? '').toLowerCase().includes(query) ||
       user.role.toLowerCase().includes(query) ||
       (user.discord_username ?? '').toLowerCase().includes(query)
     );
+    const matchesRole = roleFilter.length === 0 || roleFilter.includes(user.role);
+    const matchesActive =
+      activeFilter === 'all' ||
+      (activeFilter === 'active' && user.active) ||
+      (activeFilter === 'inactive' && !user.active);
+    return matchesSearch && matchesRole && matchesActive;
   });
 
   const getCurrentUserId = () => {
@@ -176,6 +199,12 @@ const UserManagementPage: React.FC = () => {
     } finally {
       setLoadingIds(ids => ids.filter(id => id !== user.id));
     }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setRoleFilter([]);
+    setActiveFilter('all');
   };
 
   const renderMobileCards = () => (
@@ -264,76 +293,112 @@ const UserManagementPage: React.FC = () => {
     <DataTable  size="medium">
       <TableHead>
         <TableRow>
-          {["ID", "Pseudonim", "Nazwa", "Rola", "Discord", "Aktywny"].map((field) => (
-            <TableCell key={field}>{field}</TableCell>
-          ))}
+          <TableCell>ID</TableCell>
+          <TableCell>Pseudonim</TableCell>
+          <TableCell>Nazwa</TableCell>
+          <TableCell
+            onClick={(e) => setRoleMenuAnchor(e.currentTarget)}
+            sx={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: roleFilter.length > 0 ? 'primary.main' : 'inherit' }}>
+              Rola
+              <Suspense fallback={null}>
+                <FilterListIcon fontSize="small" sx={{ opacity: roleFilter.length > 0 ? 1 : 0.4 }} />
+              </Suspense>
+            </Box>
+          </TableCell>
+          <TableCell>Discord</TableCell>
+          <TableCell
+            onClick={(e) => setActiveMenuAnchor(e.currentTarget)}
+            sx={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: activeFilter !== 'all' ? 'primary.main' : 'inherit' }}>
+              Aktywny
+              <Suspense fallback={null}>
+                <FilterListIcon fontSize="small" sx={{ opacity: activeFilter !== 'all' ? 1 : 0.4 }} />
+              </Suspense>
+            </Box>
+          </TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
-        {filteredUsers.map((user) => (
-          <TableRow
-            key={user.id}
-            onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
-            sx={{ cursor: 'pointer' }}
-          >
-            <TableCell sx={{ fontWeight: 500 }}>{user.id}</TableCell>
-            <TableCell>{user.username}</TableCell>
-            <TableCell sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
-              {user.fullname || '—'}
-            </TableCell>
-            <TableCell>
-              <Chip
-                icon={getRoleIcon(user.role)}
-                label={user.role}
-                color={getRoleColor(user.role)}
-                size="small"
-              />
-            </TableCell>
-            <TableCell>
-              <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
-                {(user.discord_username || user.auth_provider === 'discord') ? (
-                  <Tooltip title={user.discord_username || 'Konto Discord'}>
-                    <Chip
-                      label={user.discord_username || 'Discord'}
-                      size="small"
-                      sx={{ bgcolor: 'rgba(88, 101, 242, 0.12)', color: '#5865F2', fontWeight: 500, maxWidth: 160 }}
-                    />
-                  </Tooltip>
-                ) : (
-                  <Chip label="Brak" size="small" variant="outlined" sx={{ color: 'text.disabled', borderColor: 'divider' }} />
-                )}
-                {user.auth_provider === 'discord' && !user.active && (
-                  <Tooltip title="Ghost konto — do scalenia z istniejącym kontem">
-                    <Chip label="Ghost" size="small" sx={{ bgcolor: 'rgba(255, 152, 0, 0.12)', color: 'warning.dark', fontWeight: 600, fontSize: '0.7rem' }} />
-                  </Tooltip>
-                )}
-              </Box>
-            </TableCell>
-            <TableCell>
-              {isAdmin || isModerator ? (
-                <Tooltip title={user.active ? 'Aktywny' : 'Nieaktywny'}>
-                  <span>
-                    <Switch
-                      checked={user.active}
-                      color={user.active ? 'primary' : 'default'}
-                      disabled={user.id === currentUserId || loadingIds.includes(user.id)}
-                      onClick={e => e.stopPropagation()}
-                      onChange={() => handleToggleActive(user)}
-                      inputProps={{ 'aria-label': 'toggle active' }}
-                    />
-                  </span>
-                </Tooltip>
-              ) : (
-                <Chip
-                  label={user.active ? 'Aktywny' : 'Nieaktywny'}
-                  color={user.active ? 'primary' : 'default'}
-                  size="small"
-                  variant="outlined"
-                />
+        {filteredUsers.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6} align="center" sx={{ py: 6, border: 0 }}>
+              <Typography color="text.secondary" sx={{ mb: 1 }}>
+                {searchQuery || hasActiveFilters ? 'Brak wyników dla wybranych filtrów' : 'Brak użytkowników'}
+              </Typography>
+              {(searchQuery || hasActiveFilters) && (
+                <Button variant="ghost" onClick={clearFilters}>Wyczyść filtry</Button>
               )}
             </TableCell>
           </TableRow>
-        ))}
+        ) : (
+          filteredUsers.map((user) => (
+            <TableRow
+              key={user.id}
+              onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
+              sx={{ cursor: 'pointer' }}
+            >
+              <TableCell sx={{ fontWeight: 500 }}>{user.id}</TableCell>
+              <TableCell>{user.username}</TableCell>
+              <TableCell sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
+                {user.fullname || '—'}
+              </TableCell>
+              <TableCell>
+                <Chip
+                  icon={getRoleIcon(user.role)}
+                  label={user.role}
+                  color={getRoleColor(user.role)}
+                  size="small"
+                />
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {(user.discord_username || user.auth_provider === 'discord') ? (
+                    <Tooltip title={user.discord_username || 'Konto Discord'}>
+                      <Chip
+                        label={user.discord_username || 'Discord'}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(88, 101, 242, 0.12)', color: '#5865F2', fontWeight: 500, maxWidth: 160 }}
+                      />
+                    </Tooltip>
+                  ) : (
+                    <Chip label="Brak" size="small" variant="outlined" sx={{ color: 'text.disabled', borderColor: 'divider' }} />
+                  )}
+                  {user.auth_provider === 'discord' && !user.active && (
+                    <Tooltip title="Ghost konto — do scalenia z istniejącym kontem">
+                      <Chip label="Ghost" size="small" sx={{ bgcolor: 'rgba(255, 152, 0, 0.12)', color: 'warning.dark', fontWeight: 600, fontSize: '0.7rem' }} />
+                    </Tooltip>
+                  )}
+                </Box>
+              </TableCell>
+              <TableCell>
+                {isAdmin || isModerator ? (
+                  <Tooltip title={user.active ? 'Aktywny' : 'Nieaktywny'}>
+                    <span>
+                      <Switch
+                        checked={user.active}
+                        color={user.active ? 'primary' : 'default'}
+                        disabled={user.id === currentUserId || loadingIds.includes(user.id)}
+                        onClick={e => e.stopPropagation()}
+                        onChange={() => handleToggleActive(user)}
+                        inputProps={{ 'aria-label': 'toggle active' }}
+                      />
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <Chip
+                    label={user.active ? 'Aktywny' : 'Nieaktywny'}
+                    color={user.active ? 'primary' : 'default'}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+              </TableCell>
+            </TableRow>
+          ))
+        )}
       </TableBody>
     </DataTable>
   );
@@ -360,7 +425,7 @@ const UserManagementPage: React.FC = () => {
         }
       />
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1.5 }}>
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
@@ -369,18 +434,84 @@ const UserManagementPage: React.FC = () => {
           width="100%"
         />
       </Box>
+      <Box sx={{ mb: 1.5, minHeight: 32, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+        {hasActiveFilters && (
+          <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>Filtry:</Typography>
+        )}
+        {roleFilter.map(role => (
+          <Chip
+            key={role}
+            size="small"
+            icon={getRoleIcon(role)}
+            label={role}
+            color={getRoleColor(role)}
+            onDelete={() => toggleRole(role)}
+          />
+        ))}
+        {activeFilter !== 'all' && (
+          <Chip
+            size="small"
+            label={activeFilter === 'active' ? 'Aktywni' : 'Nieaktywni'}
+            color={activeFilter === 'active' ? 'primary' : 'default'}
+            variant="outlined"
+            onDelete={() => setActiveFilter('all')}
+          />
+        )}
+      </Box>
 
       {loading ? (
         <PageLoader message="Ładowanie użytkowników..." />
-      ) : filteredUsers.length === 0 ? (
-        <EmptyState
-          message="Brak użytkowników"
-          description={searchQuery ? 'Spróbuj zmienić kryteria wyszukiwania' : 'Dodaj nowego użytkownika'}
-          action={searchQuery ? { label: 'Wyczyść wyszukiwanie', onClick: () => setSearchQuery('') } : undefined}
-        />
+      ) : isMobile ? (
+        filteredUsers.length === 0 ? (
+          <EmptyState
+            message="Brak użytkowników"
+            description={searchQuery || hasActiveFilters ? 'Spróbuj zmienić kryteria filtrowania' : 'Dodaj nowego użytkownika'}
+            action={searchQuery || hasActiveFilters ? { label: 'Wyczyść filtry', onClick: clearFilters } : undefined}
+          />
+        ) : renderMobileCards()
       ) : (
-        isMobile ? renderMobileCards() : renderTable()
+        renderTable()
       )}
+
+      <Menu
+        anchorEl={roleMenuAnchor}
+        open={Boolean(roleMenuAnchor)}
+        onClose={() => setRoleMenuAnchor(null)}
+      >
+        <MenuItem
+          onClick={() => { setRoleFilter([]); setRoleMenuAnchor(null); }}
+          sx={{ color: roleFilter.length === 0 ? 'primary.main' : 'inherit', fontStyle: 'italic' }}
+        >
+          <Checkbox size="small" checked={roleFilter.length === 0} disableRipple sx={{ p: 0, mr: 1 }} />
+          Wszystkie
+        </MenuItem>
+        <MenuDivider />
+        {(['user', 'dispatcher', 'moderator', 'admin'] as const).map(role => (
+          <MenuItem key={role} onClick={() => toggleRole(role)}>
+            <Checkbox size="small" checked={roleFilter.includes(role)} disableRipple sx={{ p: 0, mr: 1 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {getRoleIcon(role)}
+              <ListItemText primary={role} />
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
+
+      <Menu
+        anchorEl={activeMenuAnchor}
+        open={Boolean(activeMenuAnchor)}
+        onClose={() => setActiveMenuAnchor(null)}
+      >
+        <MenuItem selected={activeFilter === 'all'} onClick={() => { setActiveFilter('all'); setActiveMenuAnchor(null); }}>
+          Wszyscy
+        </MenuItem>
+        <MenuItem selected={activeFilter === 'active'} onClick={() => { setActiveFilter('active'); setActiveMenuAnchor(null); }}>
+          Aktywni
+        </MenuItem>
+        <MenuItem selected={activeFilter === 'inactive'} onClick={() => { setActiveFilter('inactive'); setActiveMenuAnchor(null); }}>
+          Nieaktywni
+        </MenuItem>
+      </Menu>
 
       <Dialog
         open={dialogs.addOpen}
