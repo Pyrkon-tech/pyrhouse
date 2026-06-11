@@ -14,14 +14,14 @@ interface Asset {
   location: {
     id: number;
     name: string;
-    details: string | null;
+    details?: string | null;
   };
   category: {
     id: number;
-    name: string;
     label: string;
-    pyr_id: string;
-    type: string;
+    name?: string;
+    pyr_id?: string;
+    type?: string;
   };
   status: string;
   pyrcode: string;
@@ -71,7 +71,7 @@ export const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({
     });
   }, [assets, currentIndex]);
 
-  const generateBarcodeSVGDataUrl = (value: string, options: any = {}, isPortrait = false) => {
+  const generateBarcodeSVGDataUrl = (value: string, options: Record<string, unknown> = {}, isPortrait = false) => {
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
 

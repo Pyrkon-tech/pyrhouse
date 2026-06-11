@@ -14,7 +14,7 @@ interface RestoreDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: (locationId: number, quantity?: number) => void;
-  locations: any[];
+  locations: Array<{ id: number; name: string }>;
   itemType: 'asset' | 'stock';
   currentQuantity?: number;
 }

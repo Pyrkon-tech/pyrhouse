@@ -278,10 +278,10 @@ export const designTokens = {
 // Helper functions
 export const getDesignToken = (path: string) => {
   const keys = path.split('.');
-  let value: any = designTokens;
+  let value: unknown = designTokens;
   
   for (const key of keys) {
-    value = value[key];
+    value = (value as Record<string, unknown>)[key];
     if (value === undefined) {
       console.warn(`Design token not found: ${path}`);
       return undefined;

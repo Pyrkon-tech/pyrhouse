@@ -5,7 +5,7 @@ import { APIProvider, Map, AdvancedMarker, Pin } from "@vis.gl/react-google-maps
 import { locationService } from '../../services/locationService';
 
 interface MapComponentProps {
-  transfer: any;
+  transfer: { delivery_location?: { lat: number; lng: number } | null } | null;
   userLocation: { lat: number; lng: number } | null;
   onLocationUpdate?: (location: { lat: number; lng: number }) => void;
   locationError?: string | null;

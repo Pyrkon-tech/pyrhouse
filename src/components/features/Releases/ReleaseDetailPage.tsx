@@ -211,8 +211,8 @@ const ReleaseDetailPage: React.FC = () => {
     try {
       const data = await getReleaseAPI(Number(id));
       setRelease(data);
-    } catch (err: any) {
-      setError(err.message || 'Błąd pobierania wydania');
+    } catch (err) {
+      setError((err instanceof Error ? err.message : '') || 'Błąd pobierania wydania');
     } finally {
       setLoading(false);
     }
@@ -234,8 +234,8 @@ const ReleaseDetailPage: React.FC = () => {
       setRelease(updated);
       showSuccess(`Wydanie ${updated.reference} zostało potwierdzone. Sprzęt usunięty z magazynu.`);
       setConfirmDialog(false);
-    } catch (err: any) {
-      showError(err.message || 'Błąd podczas potwierdzania wydania');
+    } catch (err) {
+      showError((err instanceof Error ? err.message : '') || 'Błąd podczas potwierdzania wydania');
     } finally {
       setConfirming(false);
     }
@@ -248,8 +248,8 @@ const ReleaseDetailPage: React.FC = () => {
       await deleteReleaseAPI(release.id);
       showSuccess('Wydanie zostało usunięte');
       navigate('/releases');
-    } catch (err: any) {
-      showError(err.message || 'Błąd podczas usuwania');
+    } catch (err) {
+      showError((err instanceof Error ? err.message : '') || 'Błąd podczas usuwania');
       setDeleting(false);
     }
   };
@@ -286,8 +286,8 @@ const ReleaseDetailPage: React.FC = () => {
       setRelease(updated);
       showSuccess('Wydanie zaktualizowane');
       setEditMode(false);
-    } catch (err: any) {
-      showError(err.message || 'Błąd podczas zapisywania zmian');
+    } catch (err) {
+      showError((err instanceof Error ? err.message : '') || 'Błąd podczas zapisywania zmian');
     } finally {
       setSaving(false);
     }

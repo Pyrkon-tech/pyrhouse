@@ -19,6 +19,7 @@ import { addUserPointsAPI } from '../../../services/userService';
 import { useServiceDeskStream } from '../../../hooks/useServiceDeskStream';
 import type { ServiceDeskSSEEvent } from '../../../hooks/useServiceDeskStream';
 import { useAuth } from '../../../hooks/useAuth';
+import type { ServiceDeskRequest } from '../../../types/servicedesk.types';
 
 const ServiceDeskPage: React.FC = () => {
   const [status, setStatus] = useState('new');
@@ -43,13 +44,13 @@ const ServiceDeskPage: React.FC = () => {
   const { users } = useServiceDeskUsers();
 
   const [openForm, setOpenForm] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<ServiceDeskRequest | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const [assignDropdownOpenId, setAssignDropdownOpenId] = useState<string | null>(null);
   const assignButtonRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [menuWidth, setMenuWidth] = useState<number>(220);
-  const isEditable = selectedRequest && selectedRequest.status !== 'closed' && selectedRequest.status !== 'resolved';
+  const isEditable = !!selectedRequest && selectedRequest.status !== 'closed' && selectedRequest.status !== 'resolved';
 
   const { userRole } = useAuth();
   const canChangeStatus = userRole === 'admin' || userRole === 'moderator' || userRole === 'dispatcher';
@@ -57,7 +58,7 @@ const ServiceDeskPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const changeStatus = async (id: string, newStatus: string, onSuccess?: () => void) => {
+  const changeStatus = async (id: string | number, newStatus: string, onSuccess?: () => void) => {
     try {
       await apiClient.put(`/service-desk/requests/${id}/status`, { status: newStatus });
       showSnackbar('success', 'Status zmieniony pomyślnie');
@@ -67,7 +68,7 @@ const ServiceDeskPage: React.FC = () => {
     }
   };
 
-  const assignUser = async (id: string, assigned_to_id: number, onSuccess?: () => void) => {
+  const assignUser = async (id: string | number, assigned_to_id: number, onSuccess?: () => void) => {
     try {
       await apiClient.put(`/service-desk/requests/${id}/assign`, { assigned_to_id });
       showSnackbar('success', 'Użytkownik przypisany pomyślnie');
@@ -77,27 +78,27 @@ const ServiceDeskPage: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  const handleStatusChange = async (id: string | number, newStatus: string) => {
     // Ids arrive as strings from dnd-kit but the API returns numbers
     const request = requests.find(r => String(r.id) === String(id));
     const assignedUserId = request?.assigned_to_user?.id;
     await changeStatus(id, newStatus, async () => {
       refresh();
       if (selectedRequest) {
-        setSelectedRequest((prev: any) => ({ ...prev, status: newStatus }));
+        setSelectedRequest((prev) => prev ? { ...prev, status: newStatus as ServiceDeskRequest['status'] } : prev);
       }
       if (newStatus === 'resolved' && assignedUserId) {
         try {
           await addUserPointsAPI(assignedUserId, 10);
           showSnackbar('success', `Przypisano 10 punktów użytkownikowi za rozwiązanie zgłoszenia!`);
-        } catch (e: any) {
-          showSnackbar('error', 'Nie udało się dodać punktów użytkownikowi', e?.message || '');
+        } catch (e) {
+          showSnackbar('error', 'Nie udało się dodać punktów użytkownikowi', e instanceof Error ? e.message : '');
         }
       }
     });
   };
 
-  const handleOpenDetails = (request: any) => {
+  const handleOpenDetails = (request: ServiceDeskRequest) => {
     setSelectedRequest(request);
     setIsDetailsModalOpen(true);
   };
@@ -144,7 +145,7 @@ const ServiceDeskPage: React.FC = () => {
     }
   }, [isMobile]);
 
-  const handleTabChange = (_: any, value: string) => setStatus(value);
+  const handleTabChange = (_: React.SyntheticEvent, value: string) => setStatus(value);
 
   const handleViewModeChange = (_: React.MouseEvent<HTMLElement>, newMode: 'cards' | 'list' | 'kanban') => {
     if (newMode !== null) {
@@ -162,7 +163,7 @@ const ServiceDeskPage: React.FC = () => {
 
   const handleAssignDropdownClose = () => setAssignDropdownOpenId(null);
 
-  const changePriority = async (id: string, newPriority: string, onSuccess?: () => void) => {
+  const changePriority = async (id: string | number, newPriority: string, onSuccess?: () => void) => {
     try {
       await apiClient.put(`/service-desk/requests/${id}/priority`, { priority: newPriority });
       showSnackbar('success', 'Priorytet zmieniony pomyślnie');
@@ -172,11 +173,11 @@ const ServiceDeskPage: React.FC = () => {
     }
   };
 
-  const handlePriorityChange = async (id: string, newPriority: string) => {
+  const handlePriorityChange = async (id: string | number, newPriority: string) => {
     await changePriority(id, newPriority, () => {
       refresh();
       if (selectedRequest) {
-        setSelectedRequest((prev: any) => ({ ...prev, priority: newPriority }));
+        setSelectedRequest((prev) => prev ? { ...prev, priority: newPriority as ServiceDeskRequest['priority'] } : prev);
       }
     });
   };
@@ -330,7 +331,7 @@ const ServiceDeskPage: React.FC = () => {
             await assignUser(requestId, user.id, () => {
               refresh();
               if (selectedRequest && selectedRequest.id === requestId) {
-                setSelectedRequest((prev: any) => ({ ...prev, assigned_to_user: user }));
+                setSelectedRequest((prev) => prev ? { ...prev, assigned_to_user: user } : prev);
               }
             });
           }}
@@ -352,7 +353,7 @@ const ServiceDeskPage: React.FC = () => {
             await assignUser(requestId, user.id, () => {
               refresh();
               if (selectedRequest && selectedRequest.id === requestId) {
-                setSelectedRequest((prev: any) => ({ ...prev, assigned_to_user: user }));
+                setSelectedRequest((prev) => prev ? { ...prev, assigned_to_user: user } : prev);
               }
             });
           }}
@@ -383,7 +384,7 @@ const ServiceDeskPage: React.FC = () => {
           await assignUser(requestId, user.id, () => {
             refresh();
             if (selectedRequest && selectedRequest.id === requestId) {
-              setSelectedRequest((prev: any) => ({ ...prev, assigned_to_user: user }));
+              setSelectedRequest((prev) => prev ? { ...prev, assigned_to_user: user } : prev);
             }
           });
         }}

@@ -13,12 +13,12 @@ const RequireRole: React.FC<RequireRoleProps> = ({ allowed, children }) => {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    if (!userRole || !allowed.includes(userRole as any)) {
+    if (!userRole || !(allowed as string[]).includes(userRole)) {
       navigate('/home', { replace: true });
     }
   }, [userRole, isAuthenticated, allowed, navigate]);
 
-  if (!userRole || !allowed.includes(userRole as any)) {
+  if (!userRole || !(allowed as string[]).includes(userRole)) {
     return null;
   }
   return <>{children}</>;

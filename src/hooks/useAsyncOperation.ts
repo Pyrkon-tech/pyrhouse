@@ -33,11 +33,11 @@ export function useAsyncOperation() {
       const result = await operation();
       setState({ loading: false, error: null });
       return result;
-    } catch (err: any) {
+    } catch (err) {
       const message =
         err instanceof ApiError
           ? err.message
-          : err?.message || 'Wystąpił nieoczekiwany błąd';
+          : (err instanceof Error ? err.message : '') || 'Wystąpił nieoczekiwany błąd';
       setState({ loading: false, error: message });
       return null;
     }

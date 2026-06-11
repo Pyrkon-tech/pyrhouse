@@ -108,10 +108,10 @@ const LocationDetailsPage: React.FC = () => {
       setLocationName(data.name);
       setLocationDetailsText(data.details || 'Brak szczegółów');
       setLocationPavilion(data.pavilion || 'Brak pawilonu');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Błąd podczas pobierania szczegółów lokalizacji:', err);
-      setError(err.message || 'Błąd podczas ładowania danych');
-      showSnackbar('error', 'Błąd podczas ładowania danych', err.message);
+      setError((err instanceof Error ? err.message : '') || 'Błąd podczas ładowania danych');
+      showSnackbar('error', 'Błąd podczas ładowania danych', err instanceof Error ? err.message : undefined);
     } finally {
       setLoading(false);
     }
@@ -169,7 +169,7 @@ const LocationDetailsPage: React.FC = () => {
 
 
   // Dodajemy nową funkcję do filtrowania elementów
-  const filterItems = (items: any[], query: string) => {
+  const filterItems = (items: Array<Asset | StockItem>, query: string) => {
     if (!query) return items;
     return items.filter((item) => {
       const searchableFields = [

@@ -39,6 +39,7 @@ import { AppSnackbar, PageHeader, SearchBar, PageLoader, EmptyState } from '../u
 import { jwtDecode } from 'jwt-decode';
 import { getVolunteersAPI, updateVolunteerAPI } from '../../services/scheduleService';
 import type { ScheduleVolunteer } from '../../types/schedule.types';
+import type { UserListItem, JwtPayload } from '../../types/user.types';
 const AddIcon = lazy(() => import('@mui/icons-material/Add'));
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
 const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
@@ -49,9 +50,9 @@ const SupportAgentIcon = lazy(() => import('@mui/icons-material/SupportAgent'));
 const FilterListIcon = lazy(() => import('@mui/icons-material/FilterList'));
 
 const UserManagementPage: React.FC = () => {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const dialogs = useDialogState<any>();
+  const dialogs = useDialogState<UserListItem>();
   const [addLoading, setAddLoading] = useState(false);
   const [newUser, setNewUser] = useState({
     username: '',
@@ -70,15 +71,15 @@ const UserManagementPage: React.FC = () => {
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
   const [volunteers, setVolunteers] = useState<ScheduleVolunteer[]>([]);
-  const [linkPopover, setLinkPopover] = useState<{ anchorEl: HTMLElement; user: any } | null>(null);
+  const [linkPopover, setLinkPopover] = useState<{ anchorEl: HTMLElement; user: UserListItem } | null>(null);
   const [linkSavingId, setLinkSavingId] = useState<number | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiClient.get<any[]>('/users');
+      const data = await apiClient.get<UserListItem[]>('/users');
       setUsers(data);
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', 'Błąd podczas pobierania użytkowników', err instanceof ApiError ? err.message : String(err));
     } finally {
       setLoading(false);
@@ -117,7 +118,7 @@ const UserManagementPage: React.FC = () => {
       await apiClient.post('/users', newUser);
       dialogs.closeAdd();
       fetchUsers();
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', 'Błąd podczas dodawania użytkownika', err instanceof ApiError ? err.message : String(err));
     } finally {
       setAddLoading(false);
@@ -174,7 +175,7 @@ const UserManagementPage: React.FC = () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
     try {
-      const decoded = jwtDecode(token) as any;
+      const decoded = jwtDecode<JwtPayload>(token);
       return decoded.userID;
     } catch {
       return null;
@@ -185,7 +186,7 @@ const UserManagementPage: React.FC = () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
     try {
-      const decoded = jwtDecode(token) as any;
+      const decoded = jwtDecode<JwtPayload>(token);
       return decoded.role;
     } catch {
       return null;
@@ -212,13 +213,13 @@ const UserManagementPage: React.FC = () => {
     [volunteers]
   );
 
-  const handleLinkVolunteer = async (volunteer: ScheduleVolunteer, user: any) => {
+  const handleLinkVolunteer = async (volunteer: ScheduleVolunteer, user: UserListItem) => {
     setLinkSavingId(volunteer.id);
     try {
       await updateVolunteerAPI(volunteer.id, { user_id: user.id });
       setVolunteers(prev => prev.map(v => v.id === volunteer.id ? { ...v, user_id: user.id } : v));
       showSnackbar('success', `Powiązano wolontariusza ${volunteer.nickname} z kontem ${user.username}`);
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', 'Nie udało się zapisać powiązania', err instanceof ApiError ? err.message : String(err));
     } finally {
       setLinkSavingId(null);
@@ -232,14 +233,14 @@ const UserManagementPage: React.FC = () => {
       await updateVolunteerAPI(volunteer.id, { user_id: null });
       setVolunteers(prev => prev.map(v => v.id === volunteer.id ? { ...v, user_id: null } : v));
       showSnackbar('success', `Odłączono wolontariusza ${volunteer.nickname}`);
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', 'Nie udało się odłączyć powiązania', err instanceof ApiError ? err.message : String(err));
     } finally {
       setLinkSavingId(null);
     }
   };
 
-  const renderVolunteerCell = (user: any) => {
+  const renderVolunteerCell = (user: UserListItem) => {
     const volunteer = volunteersByUserId.get(user.id);
     if (volunteer) {
       return (
@@ -277,7 +278,7 @@ const UserManagementPage: React.FC = () => {
     );
   };
 
-  const handleToggleActive = async (user: any) => {
+  const handleToggleActive = async (user: UserListItem) => {
     if (!isAdmin && !isModerator) return;
     if (isModerator && user.role !== 'user') {
       showSnackbar('warning', 'Moderator może zmieniać status tylko użytkownikom z rolą "user"');
@@ -292,7 +293,7 @@ const UserManagementPage: React.FC = () => {
       await apiClient.patch(`/users/${user.id}`, { active: !user.active });
       showSnackbar('success', `Użytkownik został ${user.active ? 'dezaktywowany' : 'aktywowany'}`);
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, active: !user.active } : u));
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd podczas zmiany aktywności');
     } finally {
       setLoadingIds(ids => ids.filter(id => id !== user.id));

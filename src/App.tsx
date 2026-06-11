@@ -38,7 +38,7 @@ const RoleProtectedRoute = ({
 const RouteWithErrorBoundary = ({ 
   component: Component 
 }: { 
-  component: React.ComponentType<any>;
+  component: React.ComponentType<Record<string, never>>;
 }) => (
   <ErrorBoundary>
     <Suspense fallback={<LoadingSkeleton />}>

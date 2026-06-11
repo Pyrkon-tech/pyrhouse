@@ -16,6 +16,11 @@ export interface ServiceDeskRequest {
   updated_at: string;
   assigned_to_user?: {
     id: number;
+    username: string;
+    fullname?: string | null;
+  } | null;
+  created_by_user?: {
+    id?: number;
     username?: string;
     fullname?: string | null;
   } | null;
@@ -25,4 +30,11 @@ export interface ServiceDeskRequest {
 export interface ServiceDeskRequestTypeInfo {
   id: string;
   name: string;
+}
+
+/** Minimal user shape the service desk UI needs (assignment dropdowns etc.) */
+export interface ServiceDeskUserSummary {
+  id: number;
+  username: string;
+  fullname?: string | null;
 }

@@ -3,14 +3,15 @@ import { Grid, Card, Box, Typography, Chip, Avatar, IconButton, Tooltip } from '
 import RoomIcon from '@mui/icons-material/Room';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import type { ServiceDeskRequest, ServiceDeskRequestTypeInfo, ServiceDeskUserSummary } from '../../../../types/servicedesk.types';
 
 interface ServiceDeskCardsViewProps {
-  requests: any[];
-  types: Record<string, any>;
-  users: any[];
+  requests: ServiceDeskRequest[];
+  types: Record<string, ServiceDeskRequestTypeInfo>;
+  users: ServiceDeskUserSummary[];
   isMobile: boolean;
-  onOpenDetails: (request: any) => void;
-  onAssign: (requestId: string, user: any) => void;
+  onOpenDetails: (request: ServiceDeskRequest) => void;
+  onAssign: (requestId: string | number, user: ServiceDeskUserSummary) => void;
   assignDropdownOpenId: string | null;
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   menuWidth: number;
@@ -92,7 +93,7 @@ const ServiceDeskCardsView: React.FC<ServiceDeskCardsViewProps> = ({
                 <Box
                   ref={el => { if (req.id) assignButtonRefs.current[req.id] = el as HTMLDivElement | null; }}
                   sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: isEditable ? 'pointer' : 'not-allowed', opacity: isEditable ? 1 : 0.7, borderRadius: 1, px: 0.5, py: 0.2, '&:hover': isEditable ? { bgcolor: 'action.hover' } : {}, transition: 'background 0.2s' }}
-                  onClick={e => { e.stopPropagation(); if (isEditable) handleAssignDropdownOpen(req.id); }}
+                  onClick={e => { e.stopPropagation(); if (isEditable) handleAssignDropdownOpen(String(req.id)); }}
                   tabIndex={isEditable ? 0 : -1}
                   aria-disabled={!isEditable}
                   role="button"

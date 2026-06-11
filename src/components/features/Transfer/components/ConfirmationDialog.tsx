@@ -20,7 +20,7 @@ interface ConfirmationDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   formData: TransferFormData | null;
-  locations: any[];
+  locations: Array<{ id: number; name: string }>;
   loading: boolean;
 }
 

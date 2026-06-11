@@ -87,8 +87,8 @@ const ReleaseCreatePage: React.FC = () => {
         });
       });
       setSelectedStocks(stockMap);
-    } catch (err: any) {
-      setSuggestError(err.message || 'Błąd pobierania sugestii');
+    } catch (err) {
+      setSuggestError((err instanceof Error ? err.message : '') || 'Błąd pobierania sugestii');
     } finally {
       setLoadingSuggest(false);
     }
@@ -190,8 +190,8 @@ const ReleaseCreatePage: React.FC = () => {
       });
       showSuccess(`Wydanie ${release.reference} zostało utworzone`);
       navigate(`/releases/${release.id}`);
-    } catch (err: any) {
-      showError(err.message || 'Błąd podczas tworzenia wydania');
+    } catch (err) {
+      showError((err instanceof Error ? err.message : '') || 'Błąd podczas tworzenia wydania');
     } finally {
       setSubmitting(false);
     }

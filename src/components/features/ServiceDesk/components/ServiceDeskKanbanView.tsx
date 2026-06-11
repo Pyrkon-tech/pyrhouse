@@ -13,16 +13,18 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import type { ServiceDeskRequest, ServiceDeskRequestTypeInfo, ServiceDeskStatus } from '../../../../types/servicedesk.types';
 
 interface KanbanColumn {
   id: string;
   label: string;
-  statuses: string[];
+  statuses: ServiceDeskStatus[];
   color: string;
-  dropStatus: string;
+  dropStatus: ServiceDeskStatus;
 }
 
 const COLUMNS: KanbanColumn[] = [
@@ -33,9 +35,9 @@ const COLUMNS: KanbanColumn[] = [
 ];
 
 interface KanbanCardProps {
-  req: any;
-  types: Record<string, any>;
-  onOpenDetails: (req: any) => void;
+  req: ServiceDeskRequest;
+  types: Record<string, ServiceDeskRequestTypeInfo>;
+  onOpenDetails: (req: ServiceDeskRequest) => void;
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleAssignDropdownOpen: (reqId: string) => void;
   isDragging?: boolean;
@@ -163,7 +165,7 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
         <Box
           ref={el => { if (req.id) assignButtonRefs.current[req.id] = el as HTMLDivElement | null; }}
           sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: !isClosed ? 'pointer' : 'not-allowed', opacity: !isClosed ? 1 : 0.5, px: 0.5, borderRadius: 1, '&:hover': !isClosed ? { bgcolor: 'action.hover' } : {} }}
-          onClick={e => { e.stopPropagation(); if (!isClosed) handleAssignDropdownOpen(req.id); }}
+          onClick={e => { e.stopPropagation(); if (!isClosed) handleAssignDropdownOpen(String(req.id)); }}
         >
           <Avatar sx={{ width: 20, height: 20, bgcolor: 'background.default', color: 'text.primary', fontSize: 11 }}>
             {req.assigned_to_user ? req.assigned_to_user.username[0]?.toUpperCase() : <PersonAddIcon sx={{ fontSize: 14 }} />}
@@ -209,11 +211,11 @@ const DraggableCard: React.FC<KanbanCardProps> = (props) => {
 // Droppable column
 const KanbanColumnView: React.FC<{
   column: KanbanColumn;
-  cards: any[];
+  cards: ServiceDeskRequest[];
   isOver: boolean;
   isSourceColumn: boolean;
-  types: Record<string, any>;
-  onOpenDetails: (req: any) => void;
+  types: Record<string, ServiceDeskRequestTypeInfo>;
+  onOpenDetails: (req: ServiceDeskRequest) => void;
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleAssignDropdownOpen: (reqId: string) => void;
   canChangeStatus?: boolean;
@@ -299,9 +301,9 @@ const KanbanColumnView: React.FC<{
 };
 
 interface ServiceDeskKanbanViewProps {
-  requests: any[];
-  types: Record<string, any>;
-  onOpenDetails: (req: any) => void;
+  requests: ServiceDeskRequest[];
+  types: Record<string, ServiceDeskRequestTypeInfo>;
+  onOpenDetails: (req: ServiceDeskRequest) => void;
   onStatusChange: (id: string, newStatus: string) => Promise<void>;
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleAssignDropdownOpen: (reqId: string) => void;
@@ -333,20 +335,20 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
   const getCardsForColumn = (column: KanbanColumn) =>
     localRequests.filter(r => column.statuses.includes(r.status));
 
-  const activeReq = activeId ? localRequests.find(r => r.id === activeId) : null;
+  const activeReq = activeId ? localRequests.find(r => String(r.id) === activeId) : null;
 
   const handleDragStart = (event: DragStartEvent) => {
-    const id = event.active.id as string;
+    const id = String(event.active.id);
     setActiveId(id);
-    const req = localRequests.find(r => r.id === id);
+    const req = localRequests.find(r => String(r.id) === id);
     if (req) {
       const col = COLUMNS.find(c => c.statuses.includes(req.status));
       setSourceColumnId(col?.id ?? null);
     }
   };
 
-  const handleDragOver = (event: { over: { id: string } | null }) => {
-    setOverId(event.over?.id ?? null);
+  const handleDragOver = (event: DragOverEvent) => {
+    setOverId(event.over ? String(event.over.id) : null);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -357,7 +359,7 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
 
     if (!over) return;
 
-    const draggedReq = localRequests.find(r => r.id === active.id);
+    const draggedReq = localRequests.find(r => String(r.id) === String(active.id));
     if (!draggedReq || draggedReq.status === 'closed') return;
 
     const targetColumn = COLUMNS.find(c => c.id === over.id);
@@ -368,10 +370,10 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
 
     // Optimistic update
     const prev = [...localRequests];
-    setLocalRequests(reqs => reqs.map(r => r.id === active.id ? { ...r, status: newStatus } : r));
+    setLocalRequests(reqs => reqs.map(r => String(r.id) === String(active.id) ? { ...r, status: newStatus } : r));
 
     try {
-      await onStatusChange(active.id as string, newStatus);
+      await onStatusChange(String(active.id), newStatus);
     } catch {
       setLocalRequests(prev);
     }
@@ -381,7 +383,7 @@ const ServiceDeskKanbanView: React.FC<ServiceDeskKanbanViewProps> = ({
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver as any}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1, alignItems: 'stretch' }}>

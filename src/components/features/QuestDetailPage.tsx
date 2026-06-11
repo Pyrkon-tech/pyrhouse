@@ -37,6 +37,7 @@ import { updateQuestLocationAPI } from '../../services/questService';
 import { getPricesAPI } from '../../services/budgetService';
 import { getTransferDetailsAPI } from '../../services/transferService';
 import type { QuestEvent } from '../../types/quest.types';
+import type { TransferDetails } from '../../types/transfer.types';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import TransferFormCore from './Transfer/components/TransferFormCore';
 import type { QuestStatus, CategoryMatchType } from '../../types/quest.types';
@@ -137,7 +138,7 @@ const QuestDetailPage: React.FC = () => {
   const [updating, setUpdating] = useState(false);
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<HTMLElement | null>(null);
   const [priceMap, setPriceMap] = useState<Map<string, number>>(new Map());
-  const [transferDetails, setTransferDetails] = useState<Map<number, any>>(new Map());
+  const [transferDetails, setTransferDetails] = useState<Map<number, TransferDetails>>(new Map());
 
   const isAdmin = userRole === 'admin';
 
@@ -203,11 +204,11 @@ const QuestDetailPage: React.FC = () => {
   const sentByCategory = useMemo(() => {
     const map = new Map<number, number>();
     transferDetails.forEach(transfer => {
-      (transfer.assets ?? []).forEach((asset: any) => {
+      (transfer.assets ?? []).forEach((asset) => {
         const catId = asset.category?.id;
         if (catId) map.set(catId, (map.get(catId) || 0) + 1);
       });
-      (transfer.stock_items ?? []).forEach((stock: any) => {
+      (transfer.stock_items ?? []).forEach((stock) => {
         const catId = stock.category?.id;
         if (catId) map.set(catId, (map.get(catId) || 0) + (stock.quantity ?? 0));
       });
@@ -638,11 +639,11 @@ const QuestDetailPage: React.FC = () => {
               const itemSummary = details
                 ? (() => {
                     const map = new Map<string, number>();
-                    (details.assets ?? []).forEach((a: any) => {
+                    (details.assets ?? []).forEach((a) => {
                       const label = a.category?.label || a.pyrcode || '?';
                       map.set(label, (map.get(label) || 0) + 1);
                     });
-                    (details.stock_items ?? []).forEach((s: any) => {
+                    (details.stock_items ?? []).forEach((s) => {
                       const label = s.category?.label || '?';
                       map.set(label, (map.get(label) || 0) + (s.quantity ?? 0));
                     });

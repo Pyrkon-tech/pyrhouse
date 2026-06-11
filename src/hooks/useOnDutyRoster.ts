@@ -41,9 +41,9 @@ export const useOnDutyRoster = (simulatedTime?: Date): UseOnDutyRosterResult => 
       const data = await getOnDutyAPI(at);
       if (fetchGenRef.current !== generation) return;
       setRoster(data);
-    } catch (e: any) {
+    } catch (e) {
       if (fetchGenRef.current !== generation) return;
-      setError(e.message || 'Błąd pobierania dyżurnych');
+      setError((e instanceof Error ? e.message : '') || 'Błąd pobierania dyżurnych');
     } finally {
       if (fetchGenRef.current === generation) setLoading(false);
     }

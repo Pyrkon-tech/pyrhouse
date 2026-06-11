@@ -13,8 +13,8 @@ export const useVolunteers = () => {
     try {
       const data = await getVolunteersAPI();
       setVolunteers(data);
-    } catch (e: any) {
-      setError(e.message || 'Błąd pobierania wolontariuszy');
+    } catch (e) {
+      setError((e instanceof Error ? e.message : '') || 'Błąd pobierania wolontariuszy');
     } finally {
       setLoading(false);
     }

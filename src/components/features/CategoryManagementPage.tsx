@@ -116,23 +116,18 @@ const CategoryManagementPage: React.FC = () => {
     try {
       await addCategory(payload);
       dialogs.closeAdd();
-    } catch (err: any) {
+    } catch (err) {
+      const e = (err ?? {}) as { message?: string; details?: string; error?: string; code?: string };
       // Obsługa walidacji PyrID z backendu
-      if (err && typeof err === 'object') {
-        if (err.details && typeof err.details === 'string' && err.details.includes("PatchItemCategoryRequest.PyrID")) {
-          setAddFormErrors({ ...addFormErrors, pyr_id: 'PyrID może mieć maksymalnie 3 znaki alfanumeryczne.' });
-          return;
-        }
-        if (err.error && err.code === 'invalid_request_payload') {
-          showSnackbar('error', err.error + (err.details ? `: ${err.details}` : ''));
-          return;
-        }
-        if ('message' in err) {
-          showSnackbar('error', err.message || err.details || 'Wystąpił nieoczekiwany błąd');
-          return;
-        }
+      if (e.details && typeof e.details === 'string' && e.details.includes("PatchItemCategoryRequest.PyrID")) {
+        setAddFormErrors({ ...addFormErrors, pyr_id: 'PyrID może mieć maksymalnie 3 znaki alfanumeryczne.' });
+        return;
       }
-      showSnackbar('error', err.message || err.details || 'Wystąpił nieoczekiwany błąd');
+      if (e.error && e.code === 'invalid_request_payload') {
+        showSnackbar('error', e.error + (e.details ? `: ${e.details}` : ''));
+        return;
+      }
+      showSnackbar('error', e.message || e.details || 'Wystąpił nieoczekiwany błąd');
     }
   };
 
@@ -146,12 +141,9 @@ const CategoryManagementPage: React.FC = () => {
       await deleteCategory(dialogs.deleteItem.id);
       showSnackbar('success', 'Kategoria została usunięta pomyślnie!', undefined, 3000);
       dialogs.closeDelete();
-    } catch (err: any) {
-      if (err && typeof err === 'object' && 'message' in err) {
-        showSnackbar('error', err.message, err.details, null);
-      } else {
-        showSnackbar('error', err.message || 'Wystąpił nieoczekiwany błąd podczas usuwania kategorii.', undefined, null);
-      }
+    } catch (err) {
+      const e = (err ?? {}) as { message?: string; details?: string };
+      showSnackbar('error', e.message || 'Wystąpił nieoczekiwany błąd podczas usuwania kategorii.', e.details, null);
       dialogs.closeDelete();
     }
   };
@@ -218,23 +210,18 @@ const CategoryManagementPage: React.FC = () => {
       } else {
         handleCloseEditModal();
       }
-    } catch (err: any) {
+    } catch (err) {
+      const e = (err ?? {}) as { message?: string; details?: string; error?: string; code?: string };
       // Obsługa walidacji PyrID z backendu
-      if (err && typeof err === 'object') {
-        if (err.details && typeof err.details === 'string' && err.details.includes("PatchItemCategoryRequest.PyrID")) {
-          setEditFormErrors({ ...editFormErrors, pyr_id: 'PyrID może mieć maksymalnie 3 znaki alfanumeryczne.' });
-          return;
-        }
-        if (err.error && err.code === 'invalid_request_payload') {
-          showSnackbar('error', err.error + (err.details ? `: ${err.details}` : ''));
-          return;
-        }
-        if ('message' in err) {
-          showSnackbar('error', err.message || err.details || 'Wystąpił nieoczekiwany błąd');
-          return;
-        }
+      if (e.details && typeof e.details === 'string' && e.details.includes("PatchItemCategoryRequest.PyrID")) {
+        setEditFormErrors({ ...editFormErrors, pyr_id: 'PyrID może mieć maksymalnie 3 znaki alfanumeryczne.' });
+        return;
       }
-      showSnackbar('error', err.message || err.details || 'Wystąpił nieoczekiwany błąd');
+      if (e.error && e.code === 'invalid_request_payload') {
+        showSnackbar('error', e.error + (e.details ? `: ${e.details}` : ''));
+        return;
+      }
+      showSnackbar('error', e.message || e.details || 'Wystąpił nieoczekiwany błąd');
     }
   };
 

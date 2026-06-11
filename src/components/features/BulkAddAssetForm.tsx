@@ -51,7 +51,7 @@ interface CreatedAsset {
 }
 
 interface BulkAddAssetFormProps {
-  categories: any[];
+  categories: Array<{ id: number; label: string; type: 'asset' | 'stock' }>;
 }
 
 const DeleteIcon = lazy(() => import('@mui/icons-material/Delete'));
@@ -165,11 +165,12 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
           showSnackbar('error', 'Niepoprawna odpowiedź z API');
         }
       }
-    } catch (err: any) {
-      if (err && err.errors && Array.isArray(err.errors)) {
-        showSnackbar('error', err.errors.join('\n'));
-      } else if (err && err.message) {
-        showSnackbar('error', err.message);
+    } catch (err) {
+      const e = (err ?? {}) as { errors?: string[]; message?: string };
+      if (Array.isArray(e.errors)) {
+        showSnackbar('error', e.errors.join('\n'));
+      } else if (e.message) {
+        showSnackbar('error', e.message);
       } else {
         showSnackbar('error', 'Wystąpił błąd podczas dodawania zasobów');
       }

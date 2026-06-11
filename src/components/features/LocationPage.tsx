@@ -72,7 +72,7 @@ const LocationPage: React.FC = () => {
 
       const assetsData = await apiClient.get<Asset[]>(`/locations/${id}/assets`);
       setAssets(assetsData);
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', err instanceof ApiError ? err.message : 'Wystąpił nieoczekiwany błąd');
     } finally {
       setLoading(false);

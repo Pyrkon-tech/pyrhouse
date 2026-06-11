@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, MenuItem, Alert, CircularProgress, InputLabel } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import { useSendPublicServiceDeskRequest } from '../../../services/serviceDeskPublicService';
 import { useLocations } from '../../../hooks/useLocations';
@@ -56,9 +57,9 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
     fetchLocations();
   }, [fetchLocations]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<unknown>) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    setForm(f => ({ ...f, [name]: value as string }));
   };
 
   const isLocationValid = locationId !== null || locationInput.trim().length > 1;
@@ -132,8 +133,8 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
               setLocationInput('');
               setLocationId(null);
               onSuccess?.();
-            } catch (e: any) {
-              const errorMessage = e.message || 'Wystąpił błąd';
+            } catch (e) {
+              const errorMessage = (e instanceof Error ? e.message : '') || 'Wystąpił błąd';
               setError(errorMessage);
               onError?.(errorMessage);
             } finally {

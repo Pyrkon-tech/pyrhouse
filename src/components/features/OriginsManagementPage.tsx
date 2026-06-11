@@ -79,8 +79,8 @@ const OriginsManagementPage: React.FC = () => {
       refresh();
       dialogs.closeAdd();
       showSnackbar('success', 'Origin dodany');
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Błąd podczas dodawania originu');
+    } catch (err) {
+      showSnackbar('error', (err instanceof Error ? err.message : '') || 'Błąd podczas dodawania originu');
     } finally {
       setAddSaving(false);
     }
@@ -109,8 +109,8 @@ const OriginsManagementPage: React.FC = () => {
       refresh();
       dialogs.closeEdit();
       showSnackbar('success', 'Origin zaktualizowany');
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Błąd podczas aktualizacji originu');
+    } catch (err) {
+      showSnackbar('error', (err instanceof Error ? err.message : '') || 'Błąd podczas aktualizacji originu');
     } finally {
       setEditSaving(false);
     }
@@ -122,8 +122,8 @@ const OriginsManagementPage: React.FC = () => {
       notifyOriginsChanged();
       refresh();
       showSnackbar('success', origin.active ? 'Origin dezaktywowany' : 'Origin aktywowany');
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Błąd podczas zmiany statusu');
+    } catch (err) {
+      showSnackbar('error', (err instanceof Error ? err.message : '') || 'Błąd podczas zmiany statusu');
     }
   };
 
@@ -137,7 +137,7 @@ const OriginsManagementPage: React.FC = () => {
       refresh();
       dialogs.closeDelete();
       showSnackbar('success', `Origin "${target.label}" usunięty`);
-    } catch (err: any) {
+    } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         showSnackbar(
           'error',
@@ -145,7 +145,7 @@ const OriginsManagementPage: React.FC = () => {
           'Dezaktywuj origin zamiast go usuwać. Istniejący sprzęt zachowa swoje dane.'
         );
       } else {
-        showSnackbar('error', err.message || 'Błąd podczas usuwania originu');
+        showSnackbar('error', (err instanceof Error ? err.message : '') || 'Błąd podczas usuwania originu');
       }
       dialogs.closeDelete();
     } finally {

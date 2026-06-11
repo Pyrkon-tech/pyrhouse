@@ -54,8 +54,8 @@ const ReleasesListPage: React.FC = () => {
     try {
       const data = await getReleasesAPI(statusFilter ? { status: statusFilter } : undefined);
       setReleases(data);
-    } catch (err: any) {
-      setError(err.message || 'Błąd pobierania listy wydań');
+    } catch (err) {
+      setError((err instanceof Error ? err.message : '') || 'Błąd pobierania listy wydań');
     } finally {
       setLoading(false);
     }

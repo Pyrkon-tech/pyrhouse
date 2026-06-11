@@ -65,7 +65,7 @@ const SettingsPage: React.FC = () => {
       setSettings(data);
       // Zresetuj stany edycji przy odświeżeniu
       setRowStates({});
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd podczas pobierania ustawień');
     } finally {
       setLoading(false);
@@ -110,7 +110,7 @@ const SettingsPage: React.FC = () => {
         editValue: data.value ?? '',
         revealedValue: data.value ?? '',
       });
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd pobierania wartości');
       updateRow(key, { loadingValue: false });
     }
@@ -136,7 +136,7 @@ const SettingsPage: React.FC = () => {
       await updateSettingAPI(key, row.editValue);
       updateRow(key, { saving: false, editing: false, revealedValue: row.editValue });
       showSnackbar('success', `Zapisano: ${key}`);
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd podczas zapisywania');
       updateRow(key, { saving: false });
     }
@@ -147,7 +147,7 @@ const SettingsPage: React.FC = () => {
     try {
       await apiClient.post('/equipment-requests/sync', {});
       showSnackbar('success', 'Synchronizacja zlecona');
-    } catch (err: any) {
+    } catch (err) {
       showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd synchronizacji');
     } finally {
       setSyncing(false);

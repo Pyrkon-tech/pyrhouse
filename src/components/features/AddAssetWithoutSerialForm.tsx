@@ -20,14 +20,16 @@ import { addAssetsWithoutSerialAPI } from '../../services/assetService';
 import { BarcodeGenerator } from '../common/BarcodeGenerator';
 import { OriginSelect } from '../ui/OriginSelect';
 
-export const AddAssetWithoutSerialForm: React.FC<{ categories: any[] }> = ({ categories }) => {
+export const AddAssetWithoutSerialForm: React.FC<{
+  categories: Array<{ id: number; label: string; type: 'asset' | 'stock' }>;
+}> = ({ categories }) => {
   const assetCategories = categories.filter((category) => category.type === 'asset');
   const [quantity, setQuantity] = useState<number>(1);
   const [quantityInput, setQuantityInput] = useState<string>('1');
   const [categoryId, setCategoryId] = useState<number | ''>('');
   const [origin, setOrigin] = useState<string>('probis');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdAssets, setCreatedAssets] = useState<any[]>([]);
+  const [createdAssets, setCreatedAssets] = useState<React.ComponentProps<typeof BarcodeGenerator>['assets']>([]);
   const [showBarcodes, setShowBarcodes] = useState(false);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
 
@@ -83,8 +85,8 @@ export const AddAssetWithoutSerialForm: React.FC<{ categories: any[] }> = ({ cat
       } else {
         showSnackbar('error', 'Niepoprawna odpowiedź z API');
       }
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Wystąpił błąd podczas dodawania sprzętu bez numeru seryjnego');
+    } catch (err) {
+      showSnackbar('error', (err instanceof Error ? err.message : '') || 'Wystąpił błąd podczas dodawania sprzętu bez numeru seryjnego');
     } finally {
       setIsSubmitting(false);
     }

@@ -180,17 +180,18 @@ const ClaimDialog: React.FC<ClaimDialogProps> = ({
       showSnackbar('success', `Utworzono ${result.created.length} assetów`);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      if (err?.details) {
+    } catch (err) {
+      const e = (err ?? {}) as { details?: string; message?: string };
+      if (e.details) {
         try {
-          const parsed = JSON.parse(err.details);
+          const parsed = JSON.parse(e.details);
           if (parsed?.details && Array.isArray(parsed.details)) {
             setClaimErrors(parsed.details);
             return;
           }
         } catch {}
       }
-      showSnackbar('error', err?.message || 'Błąd podczas odbioru sprzętu');
+      showSnackbar('error', e.message || 'Błąd podczas odbioru sprzętu');
     } finally {
       setIsSubmitting(false);
     }
@@ -360,8 +361,8 @@ const ReservationsPage: React.FC = () => {
       });
       setReservations(data);
       setSelected(new Set());
-    } catch (err: any) {
-      showSnackbar('error', err?.message || 'Błąd pobierania rezerwacji');
+    } catch (err) {
+      showSnackbar('error', (err instanceof Error ? err.message : '') || 'Błąd pobierania rezerwacji');
     } finally {
       setLoading(false);
     }
@@ -407,8 +408,8 @@ const ReservationsPage: React.FC = () => {
       const result = await deleteReservationsAPI({ pyr_codes });
       showSnackbar('success', `Usunięto ${result.deleted} rezerwacji`);
       fetchReservations();
-    } catch (err: any) {
-      showSnackbar('error', err?.message || 'Błąd usuwania rezerwacji');
+    } catch (err) {
+      showSnackbar('error', (err instanceof Error ? err.message : '') || 'Błąd usuwania rezerwacji');
     } finally {
       setDeleting(false);
     }

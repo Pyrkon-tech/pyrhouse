@@ -25,7 +25,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       const video = containerRef.current?.querySelector('video');
       if (video && video.srcObject) {
         (video.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-        (video as any).srcObject = null;
+        video.srcObject = null;
         console.log('🔴 Strumień kamery zatrzymany');
       }
     } catch {}
@@ -39,7 +39,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     } catch {}
   };
 
-  const handleDetected = (result: any) => {
+  const handleDetected = (result: { codeResult?: { code?: string | null } }) => {
     if (!result?.codeResult?.code) {
       return;
     }
@@ -99,7 +99,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         locate: true,
         numOfWorkers: 4,
         frequency: 10
-      }, (err: any) => {
+      }, (err: unknown) => {
         if (err) {
           console.error('❌ Błąd inicjalizacji Quagga:', err);
           return;

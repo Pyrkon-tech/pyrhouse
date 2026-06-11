@@ -102,10 +102,10 @@ export const useDiscordAuth = () => {
         }
 
         window.location.href = '/home';
-      } catch (error: any) {
+      } catch (error) {
         setState({
           isProcessing: false,
-          error: error.message || 'Błąd podczas wymiany kodu autoryzacyjnego',
+          error: (error instanceof Error ? error.message : '') || 'Błąd podczas wymiany kodu autoryzacyjnego',
         });
       }
     },

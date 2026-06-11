@@ -136,8 +136,8 @@ const LocationsPage: React.FC = () => {
       }
       handleCloseDialog();
       refetch();
-    } catch (err: any) {
-      setDialogError(err.message);
+    } catch (err) {
+      setDialogError((err instanceof Error ? err.message : '') || 'Wystąpił nieoczekiwany błąd');
     }
   };
 
@@ -149,12 +149,9 @@ const LocationsPage: React.FC = () => {
       showSnackbar('success', 'Lokalizacja została usunięta pomyślnie!', undefined, 3000);
       dialogs.closeDelete();
       refetch();
-    } catch (err: any) {
-      if (err && typeof err === 'object' && 'message' in err) {
-        showSnackbar('error', err.message, err.details, null);
-      } else {
-        showSnackbar('error', err.message || 'Wystąpił nieoczekiwany błąd podczas usuwania lokalizacji.', undefined, null);
-      }
+    } catch (err) {
+      const e = (err ?? {}) as { message?: string; details?: string };
+      showSnackbar('error', e.message || 'Wystąpił nieoczekiwany błąd podczas usuwania lokalizacji.', e.details, null);
       dialogs.closeDelete();
     } finally {
       setDeleteLoading(false);

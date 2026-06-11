@@ -35,10 +35,7 @@ export default [
       ],
       // Empty catch = intentional "ignore this error" (non-critical fetches, parsers)
       'no-empty': ['error', { allowEmptyCatch: true }],
-      // TEMPORARY downgrade to warn: ~120 `any` usages remain, spread across UI
-      // components (props, handlers). They get typed during the phase 4 component
-      // decomposition — restore to 'error' once that lands.
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
       // `_` prefix = intentionally unused (e.g. destructuring that skips fields)
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -80,6 +77,14 @@ export default [
     files: ['*.config.{js,ts}', 'vite.config.ts'],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+  {
+    // Context modules intentionally export a provider component alongside its hook;
+    // losing fast-refresh granularity there is an accepted trade-off
+    files: ['src/context/**', 'src/theme/ThemeContext.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 ]

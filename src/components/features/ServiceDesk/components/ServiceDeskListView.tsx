@@ -2,14 +2,15 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Avatar, Typography, IconButton, Menu, MenuItem, Tooltip, Box, Alert } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import type { ServiceDeskRequest, ServiceDeskRequestTypeInfo, ServiceDeskUserSummary } from '../../../../types/servicedesk.types';
 
 interface ServiceDeskListViewProps {
-  requests: any[];
-  types: Record<string, any>;
-  users: any[];
+  requests: ServiceDeskRequest[];
+  types: Record<string, ServiceDeskRequestTypeInfo>;
+  users: ServiceDeskUserSummary[];
   isMobile: boolean;
-  onOpenDetails: (request: any) => void;
-  onAssign: (requestId: string, user: any) => void;
+  onOpenDetails: (request: ServiceDeskRequest) => void;
+  onAssign: (requestId: string | number, user: ServiceDeskUserSummary) => void;
   assignDropdownOpenId: string | null;
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   menuWidth: number;
@@ -114,7 +115,7 @@ const ServiceDeskListView: React.FC<ServiceDeskListViewProps> = ({
                   <Box
                     ref={el => { if (req.id) assignButtonRefs.current[req.id] = el as HTMLDivElement | null; }}
                     sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, cursor: isEditable ? 'pointer' : 'not-allowed', opacity: isEditable ? 1 : 0.7, borderRadius: 2, px: 1, py: 0.5, '&:hover': isEditable ? { bgcolor: 'action.hover' } : {}, transition: 'background 0.2s' }}
-                    onClick={e => { e.stopPropagation(); if (isEditable) handleAssignDropdownOpen(req.id); }}
+                    onClick={e => { e.stopPropagation(); if (isEditable) handleAssignDropdownOpen(String(req.id)); }}
                     tabIndex={isEditable ? 0 : -1}
                     aria-disabled={!isEditable}
                     role="button"
@@ -129,7 +130,7 @@ const ServiceDeskListView: React.FC<ServiceDeskListViewProps> = ({
                 </Tooltip>
                 <Menu
                   anchorEl={req?.id ? assignButtonRefs.current[req.id] ?? undefined : undefined}
-                  open={assignDropdownOpenId === req.id}
+                  open={assignDropdownOpenId === String(req.id)}
                   onClose={handleAssignDropdownClose}
                   anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                   transformOrigin={{ vertical: 'top', horizontal: 'left' }}

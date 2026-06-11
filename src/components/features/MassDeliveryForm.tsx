@@ -27,7 +27,7 @@ import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 const OpenInNewIcon = lazy(() => import('@mui/icons-material/OpenInNew'));
 
 interface MassDeliveryFormProps {
-  categories: any[];
+  categories: Array<{ id: number; label: string; type: 'asset' | 'stock' }>;
 }
 
 const MAX_PER_REQUEST = 200;
@@ -65,8 +65,8 @@ export const MassDeliveryForm: React.FC<MassDeliveryFormProps> = ({ categories }
       }
       setReservations(allReservations);
       showSnackbar('success', `Zarezerwowano ${allReservations.length} kodów PYR`);
-    } catch (err: any) {
-      showSnackbar('error', err?.message || 'Błąd podczas rezerwacji');
+    } catch (err) {
+      showSnackbar('error', (err instanceof Error ? err.message : '') || 'Błąd podczas rezerwacji');
     } finally {
       setIsSubmitting(false);
     }

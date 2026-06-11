@@ -111,14 +111,15 @@ export const ClaimForm: React.FC = () => {
       setSuccessCount(result.created.length);
       setRows([makeRow()]);
       setTimeout(() => pyrRefs.current[0]?.focus(), 60);
-    } catch (err: any) {
-      if (err?.details) {
+    } catch (err) {
+      const e = (err ?? {}) as { details?: string; message?: string };
+      if (e.details) {
         try {
-          const parsed = JSON.parse(err.details);
+          const parsed = JSON.parse(e.details);
           if (Array.isArray(parsed)) { setClaimErrors(parsed); return; }
         } catch {}
       }
-      showError(err?.message || 'Błąd podczas odbioru sprzętu');
+      showError(e.message || 'Błąd podczas odbioru sprzętu');
     } finally {
       setIsSubmitting(false);
     }

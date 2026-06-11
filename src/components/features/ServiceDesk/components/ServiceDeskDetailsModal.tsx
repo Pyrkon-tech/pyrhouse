@@ -4,23 +4,24 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CloseIcon from '@mui/icons-material/Close';
 import { useServiceDeskComments } from '../../../../hooks/useServiceDeskComments';
 import { useAuth } from '../../../../hooks/useAuth';
+import type { ServiceDeskRequest, ServiceDeskRequestTypeInfo, ServiceDeskUserSummary } from '../../../../types/servicedesk.types';
 
 interface ServiceDeskDetailsModalProps {
   open: boolean;
-  request: any;
-  types: Record<string, any>;
-  users: any[];
+  request: ServiceDeskRequest | null;
+  types: Record<string, ServiceDeskRequestTypeInfo>;
+  users: ServiceDeskUserSummary[];
   isMobile: boolean;
   onClose: () => void;
-  onAssign: (requestId: string, user: any) => void;
+  onAssign: (requestId: string | number, user: ServiceDeskUserSummary) => void;
   assignDropdownOpenId: string | null;
   assignButtonRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   menuWidth: number;
   handleAssignDropdownOpen: (reqId: string) => void;
   handleAssignDropdownClose: () => void;
   isEditable: boolean;
-  onStatusChange: (id: string, newStatus: string) => void;
-  onPriorityChange: (id: string, newPriority: string) => void;
+  onStatusChange: (id: string | number, newStatus: string) => void;
+  onPriorityChange: (id: string | number, newPriority: string) => void;
 }
 
 const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
@@ -62,7 +63,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
   };
   const handlePriorityMenuClose = () => setPriorityMenuAnchor(null);
   const handlePrioritySelect = (priority: string) => {
-    onPriorityChange(request.id, priority);
+    if (request) onPriorityChange(request.id, priority);
     handlePriorityMenuClose();
   };
 
@@ -331,7 +332,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                     '&:hover': isEditable ? { bgcolor: 'action.hover' } : {},
                     transition: 'background 0.2s'
                   }}
-                  onClick={() => isEditable && handleAssignDropdownOpen(request.id)}
+                  onClick={() => isEditable && handleAssignDropdownOpen(String(request.id))}
                   tabIndex={isEditable ? 0 : -1}
                   aria-disabled={!isEditable}
                   role="button"
@@ -345,7 +346,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                 </Box>
                 <Menu
                   anchorEl={request?.id ? assignButtonRefs.current[request.id] ?? undefined : undefined}
-                  open={assignDropdownOpenId === request.id}
+                  open={assignDropdownOpenId === String(request.id)}
                   onClose={handleAssignDropdownClose}
                   anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                   transformOrigin={{ vertical: 'top', horizontal: 'left' }}
@@ -578,7 +579,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                       '&:hover': isEditable ? { bgcolor: 'action.hover' } : {},
                       transition: 'background 0.2s'
                     }}
-                    onClick={() => isEditable && handleAssignDropdownOpen(request.id)}
+                    onClick={() => isEditable && handleAssignDropdownOpen(String(request.id))}
                     tabIndex={isEditable ? 0 : -1}
                     aria-disabled={!isEditable}
                     role="button"
@@ -592,7 +593,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                   </Box>
                   <Menu
                     anchorEl={request?.id ? assignButtonRefs.current[request.id] ?? undefined : undefined}
-                    open={assignDropdownOpenId === request.id}
+                    open={assignDropdownOpenId === String(request.id)}
                     onClose={handleAssignDropdownClose}
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                     transformOrigin={{ vertical: 'top', horizontal: 'left' }}

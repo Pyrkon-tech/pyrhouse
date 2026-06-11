@@ -4,7 +4,7 @@ export type UserRole = 'admin' | 'moderator' | 'dispatcher';
 
 export interface RouteConfig {
   path: string;
-  component?: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
+  component?: LazyExoticComponent<ComponentType<Record<string, never>>> | ComponentType<Record<string, never>>;
   title?: string;
   icon?: string;
   showInNav?: boolean;
