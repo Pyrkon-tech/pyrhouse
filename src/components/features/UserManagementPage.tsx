@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import {
   Box,
   TableBody,
@@ -26,6 +26,8 @@ import {
   Switch,
   Tooltip,
   TextField,
+  Popover,
+  Autocomplete,
 } from '@mui/material';
 import { DataTable } from '../ui/DataTable';
 import { useNavigate } from 'react-router-dom';
@@ -35,7 +37,11 @@ import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { Button } from '../ui/Button';
 import { AppSnackbar, PageHeader, SearchBar, PageLoader, EmptyState } from '../ui';
 import { jwtDecode } from 'jwt-decode';
+import { getVolunteersAPI, updateVolunteerAPI } from '../../services/scheduleService';
+import type { ScheduleVolunteer } from '../../types/schedule.types';
 const AddIcon = lazy(() => import('@mui/icons-material/Add'));
+const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
+const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
 const PersonIcon = lazy(() => import('@mui/icons-material/Person'));
 const AdminPanelSettingsIcon = lazy(() => import('@mui/icons-material/AdminPanelSettings'));
 const SecurityIcon = lazy(() => import('@mui/icons-material/Security'));
@@ -63,6 +69,9 @@ const UserManagementPage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
+  const [volunteers, setVolunteers] = useState<ScheduleVolunteer[]>([]);
+  const [linkPopover, setLinkPopover] = useState<{ anchorEl: HTMLElement; user: any } | null>(null);
+  const [linkSavingId, setLinkSavingId] = useState<number | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -79,6 +88,14 @@ const UserManagementPage: React.FC = () => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    // Volunteer linkage lives on the volunteer side (ScheduleVolunteer.user_id),
+    // so the users list needs this extra fetch to know who is linked.
+    getVolunteersAPI()
+      .then(setVolunteers)
+      .catch(() => { /* schedule module unavailable — column shows nothing to link */ });
+  }, []);
 
   const handleOpenAddUserModal = () => {
     dialogs.openAdd();
@@ -178,6 +195,87 @@ const UserManagementPage: React.FC = () => {
   const isAdmin = getCurrentUserRole() === 'admin';
   const isModerator = getCurrentUserRole() === 'moderator';
   const currentUserId = getCurrentUserId();
+  const canManageVolunteers = isAdmin || isModerator;
+
+  const volunteersByUserId = useMemo(() => {
+    const map = new Map<number, ScheduleVolunteer>();
+    volunteers.forEach((v) => {
+      if (v.user_id != null) map.set(v.user_id, v);
+    });
+    return map;
+  }, [volunteers]);
+
+  const unlinkedVolunteers = useMemo(
+    () => volunteers
+      .filter((v) => v.user_id == null)
+      .sort((a, b) => a.nickname.localeCompare(b.nickname, 'pl')),
+    [volunteers]
+  );
+
+  const handleLinkVolunteer = async (volunteer: ScheduleVolunteer, user: any) => {
+    setLinkSavingId(volunteer.id);
+    try {
+      await updateVolunteerAPI(volunteer.id, { user_id: user.id });
+      setVolunteers(prev => prev.map(v => v.id === volunteer.id ? { ...v, user_id: user.id } : v));
+      showSnackbar('success', `Powiązano wolontariusza ${volunteer.nickname} z kontem ${user.username}`);
+    } catch (err: any) {
+      showSnackbar('error', 'Nie udało się zapisać powiązania', err instanceof ApiError ? err.message : String(err));
+    } finally {
+      setLinkSavingId(null);
+      setLinkPopover(null);
+    }
+  };
+
+  const handleUnlinkVolunteer = async (volunteer: ScheduleVolunteer) => {
+    setLinkSavingId(volunteer.id);
+    try {
+      await updateVolunteerAPI(volunteer.id, { user_id: null });
+      setVolunteers(prev => prev.map(v => v.id === volunteer.id ? { ...v, user_id: null } : v));
+      showSnackbar('success', `Odłączono wolontariusza ${volunteer.nickname}`);
+    } catch (err: any) {
+      showSnackbar('error', 'Nie udało się odłączyć powiązania', err instanceof ApiError ? err.message : String(err));
+    } finally {
+      setLinkSavingId(null);
+    }
+  };
+
+  const renderVolunteerCell = (user: any) => {
+    const volunteer = volunteersByUserId.get(user.id);
+    if (volunteer) {
+      return (
+        <Tooltip title={`Powiązany wolontariusz: ${volunteer.nickname} (${volunteer.assigned_hours}h / ${volunteer.target_hours}h)`}>
+          <Chip
+            icon={<Suspense fallback={null}><CheckCircleIcon /></Suspense>}
+            label={volunteer.nickname}
+            size="small"
+            color="success"
+            variant="outlined"
+            disabled={linkSavingId === volunteer.id}
+            onDelete={canManageVolunteers ? () => handleUnlinkVolunteer(volunteer) : undefined}
+            onClick={(e) => e.stopPropagation()}
+            sx={{ maxWidth: 160 }}
+          />
+        </Tooltip>
+      );
+    }
+    if (!canManageVolunteers) {
+      return <Typography variant="body2" color="text.disabled">—</Typography>;
+    }
+    return (
+      <Chip
+        icon={<Suspense fallback={null}><LinkIcon /></Suspense>}
+        label="Powiąż"
+        size="small"
+        variant="outlined"
+        clickable
+        sx={{ color: 'text.secondary', borderStyle: 'dashed' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setLinkPopover({ anchorEl: e.currentTarget, user });
+        }}
+      />
+    );
+  };
 
   const handleToggleActive = async (user: any) => {
     if (!isAdmin && !isModerator) return;
@@ -261,6 +359,10 @@ const UserManagementPage: React.FC = () => {
                     )}
                   </Box>
                 </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                  <Typography variant="body2" color="text.secondary">Wolontariusz:</Typography>
+                  {renderVolunteerCell(user)}
+                </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="body2" color="text.secondary">Aktywny:</Typography>
                   {isAdmin || isModerator ? (
@@ -308,6 +410,7 @@ const UserManagementPage: React.FC = () => {
             </Box>
           </TableCell>
           <TableCell>Discord</TableCell>
+          <TableCell>Wolontariusz</TableCell>
           <TableCell
             onClick={(e) => setActiveMenuAnchor(e.currentTarget)}
             sx={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
@@ -324,7 +427,7 @@ const UserManagementPage: React.FC = () => {
       <TableBody>
         {filteredUsers.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={6} align="center" sx={{ py: 6, border: 0 }}>
+            <TableCell colSpan={7} align="center" sx={{ py: 6, border: 0 }}>
               <Typography color="text.secondary" sx={{ mb: 1 }}>
                 {searchQuery || hasActiveFilters ? 'Brak wyników dla wybranych filtrów' : 'Brak użytkowników'}
               </Typography>
@@ -372,6 +475,9 @@ const UserManagementPage: React.FC = () => {
                     </Tooltip>
                   )}
                 </Box>
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()} sx={{ cursor: 'default' }}>
+                {renderVolunteerCell(user)}
               </TableCell>
               <TableCell>
                 {isAdmin || isModerator ? (
@@ -512,6 +618,43 @@ const UserManagementPage: React.FC = () => {
           Nieaktywni
         </MenuItem>
       </Menu>
+
+      <Popover
+        open={Boolean(linkPopover)}
+        anchorEl={linkPopover?.anchorEl ?? null}
+        onClose={() => setLinkPopover(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Box sx={{ p: 1.5, width: 300, maxWidth: 'calc(100vw - 32px)' }} onClick={(e) => e.stopPropagation()}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            Powiąż wolontariusza z kontem <strong>{linkPopover?.user.username}</strong>
+          </Typography>
+          <Autocomplete
+            size="small"
+            options={unlinkedVolunteers}
+            getOptionLabel={(v) => v.nickname}
+            noOptionsText="Brak niepowiązanych wolontariuszy"
+            onChange={(_, vol) => {
+              if (vol && linkPopover) handleLinkVolunteer(vol, linkPopover.user);
+            }}
+            disabled={linkSavingId !== null}
+            openOnFocus
+            renderInput={(params) => (
+              <TextField {...params} autoFocus placeholder="Szukaj wolontariusza..." />
+            )}
+            renderOption={(props, vol) => (
+              <li {...props} key={vol.id}>
+                <Box>
+                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>{vol.nickname}</Typography>
+                  <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                    {vol.assigned_hours}h / {vol.target_hours}h{vol.city ? ` · ${vol.city}` : ''}
+                  </Typography>
+                </Box>
+              </li>
+            )}
+          />
+        </Box>
+      </Popover>
 
       <Dialog
         open={dialogs.addOpen}
