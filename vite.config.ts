@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { compression } from 'vite-plugin-compression2'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -34,7 +35,32 @@ export default defineConfig({
         gzipSize: true,
         brotliSize: true,
       filename: 'dist/stats.html'
-      })
+      }),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['p-logo.svg', 'apple-touch-icon.png', 'favicon-64x64.png'],
+      manifest: {
+        name: 'PyrHouse',
+        short_name: 'PyrHouse',
+        description: 'System zarządzania sprzętem i magazynem Pyrkonu',
+        start_url: '/home',
+        display: 'standalone',
+        background_color: '#0f0f23',
+        theme_color: '#ff9800',
+        orientation: 'portrait-primary',
+        icons: [
+          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,woff2}', 'pwa-*.png', 'maskable-*.png', 'mtp-map.webp'],
+        globIgnores: ['stats.html'],
+        navigateFallback: '/index.html',
+        cleanupOutdatedCaches: true
+      }
+    })
   ],
   resolve: {
     alias: {

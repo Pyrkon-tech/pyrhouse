@@ -242,6 +242,16 @@ window.addEventListener('categories_changed', () => fetchCategories(true));
 ```
 Ten wzorzec można zastosować do innych hooków z cache'owaniem.
 
+## PWA
+
+Aplikacja jest instalowalną PWA (od 2026-06):
+- **Plugin**: `vite-plugin-pwa` w `vite.config.ts` — generuje `manifest.webmanifest` + service worker (Workbox, `registerType: 'autoUpdate'`) przy buildzie; w dev mode nieaktywny
+- **Manifest**: definiowany w `vite.config.ts` (NIE w `public/manifest.json` — usunięty); start_url `/home`, standalone, theme `#ff9800`
+- **Ikony**: `public/pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, `apple-touch-icon.png`, `favicon-64x64.png` — wygenerowane z `p-logo.svg` (białe logo na tle `#0f0f23`)
+- **Precache**: bundle JS/CSS/HTML + `mtp-map.webp`; `mtp-map.png` (1.6MB) i `stats.html` wykluczone
+- API (inny origin) nie jest cache'owane — SW nie dotyka fetchy do `VITE_API_BASE_URL` ani SSE
+- Aktualizacja: SW auto-aktywuje nową wersję przy następnym wejściu (autoUpdate, bez prompta)
+
 ## Environment Variables
 
 ```env
