@@ -7,6 +7,7 @@
 import { apiClient } from './apiClient';
 import type {
   FlatTransfer,
+  TransferDetails,
   TransferStatus,
   CreateTransferPayload,
   PyrCodeSuggestion,
@@ -28,7 +29,7 @@ export const createTransferAPI = (payload: CreateTransferPayload) =>
  * Pobiera szczegóły transferu
  */
 export const getTransferDetailsAPI = (transferId: number) =>
-  apiClient.get<FlatTransfer>(`/transfers/${transferId}`);
+  apiClient.get<TransferDetails>(`/transfers/${transferId}`);
 
 /**
  * Pobiera transfery użytkownika według statusu

@@ -44,6 +44,40 @@ export interface Transfer extends BaseTransfer {
   transfer_date: string;
 }
 
+// Pełna odpowiedź GET /transfers/:id (strona szczegółów transferu)
+export interface TransferDetailsAsset {
+  id: number;
+  status: string;
+  pyrcode?: string;
+  origin?: string;
+  category?: { id?: number; label?: string };
+}
+
+export interface TransferDetailsStockItem {
+  id: number;
+  quantity: number;
+  origin?: string;
+  category: { id: number; label?: string };
+}
+
+export interface TransferDeliveryLocation {
+  lat: number;
+  lng: number;
+  timestamp: string;
+}
+
+export interface TransferDetails {
+  id: number;
+  status: TransferStatus | string;
+  transfer_date: string;
+  from_location?: { id?: number; name?: string; pavilion?: string | null };
+  to_location?: { id?: number; name?: string; pavilion?: string | null };
+  users?: TransferUser[];
+  assets?: TransferDetailsAsset[];
+  stock_items?: TransferDetailsStockItem[];
+  delivery_location?: TransferDeliveryLocation | null;
+}
+
 // Interfejs dla transferu z płaską strukturą (używany w API)
 export interface FlatTransfer extends BaseTransfer {
   from_location_id: number;

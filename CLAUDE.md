@@ -27,11 +27,14 @@ PyrHouse to aplikacja React/TypeScript do zarządzania stanami magazynowymi dla 
 src/
 ├── components/
 │   ├── ui/           # Reużywalne komponenty (Button, Card, Container)
-│   ├── layout/       # Layout, Navigation, Breadcrumbs
+│   ├── layout/       # Layout (orchestrator) + SidebarNav, UserMenu, ThemeToggle, navigation (menu defs)
 │   ├── features/     # Strony funkcjonalne (flat files + moduły folderowe)
 │   │   ├── Transfer/           # Moduł transferów (create, details, list + sub-components)
+│   │   │   └── components/     # TransferFormCore + TransferItemsTable/ConfirmDialog, details/ (info, items, users)
 │   │   ├── ServiceDesk/        # Moduł service desk (page, form, views + sub-components)
 │   │   ├── QuestDispatcherMap/ # Mapa dispatch (SVG overlay, sidebar, zones)
+│   │   ├── EquipmentDetails/   # Szczegóły sprzętu (timeline, edytory serial/ilość, action cards)
+│   │   ├── UserDetails/        # Profil użytkownika (profile card, info card, transfery, dialogi)
 │   │   └── *.tsx               # Proste strony (<150 LOC)
 │   ├── common/       # Wspólne (BarcodeScanner, MapComponent)
 │   └── animations/   # Animacje przejść stron + keyframes

@@ -7,7 +7,7 @@ const List = lazy(() => import('../components/features/List'));
 const AddItemPage = lazy(() => import('../components/features/AddItemPage'));
 const TransferPage = lazy(() => import('../components/features/Transfer/TransferCreatePage'));
 const UserManagementPage = lazy(() => import('../components/features/UserManagementPage'));
-const UserDetailsPage = lazy(() => import('../components/features/UserDetailsPage'));
+const UserDetailsPage = lazy(() => import('../components/features/UserDetails'));
 const CategoryManagementPage = lazy(() => import('../components/features/CategoryManagementPage'));
 const OriginsManagementPage = lazy(() => import('../components/features/OriginsManagementPage'));
 const SettingsPage = lazy(() => import('../components/features/SettingsPage'));
