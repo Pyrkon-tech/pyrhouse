@@ -12,7 +12,6 @@ export { usePageVisibility } from './usePageVisibility';
 
 // Domain: Transfer
 export { useTransfers } from './useTransfers';
-export { useTransferDetails } from './useTransferDetails';
 
 // Domain: Quest
 export { useQuests } from './useQuests';
@@ -38,4 +37,3 @@ export { useServiceDeskUsers } from './useServiceDeskUsers';
 export { useDutySchedule } from './useDutySchedule';
 export { useSync } from './useSync';
 export { useSyncStatus } from './useSyncStatus';
-export { useJiraTickets } from './useJiraTickets';

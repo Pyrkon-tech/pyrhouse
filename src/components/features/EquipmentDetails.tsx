@@ -31,7 +31,7 @@ import {
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { deleteAsset } from '../../services/assetService';
 import { BarcodeGenerator } from '../common/BarcodeGenerator';
-import { getApiUrl } from '../../config/api';
+import { apiClient, ApiError } from '../../services/apiClient';
 import { useTheme } from '@mui/material/styles';
 import { locationService } from '../../services/locationService';
 import { APIProvider, Map, AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
@@ -97,29 +97,13 @@ const EquipmentDetails: React.FC = () => {
   const fetchDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        getApiUrl(`/items/${type}/${id}`),
-        {
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch equipment details');
-      }
-
-      const data = await response.json();
-      console.log('EquipmentDetails API response:', data);
+      const data = await apiClient.get<Record<string, unknown>>(`/items/${type}/${id}`);
       // API może zwracać dane pod kluczem type (asset/stock) lub bezpośrednio
-      const itemData = data[type] || data;
+      const itemData = (type && data[type]) || data;
       setDetails(itemData);
-      setLogs(data.assetLogs || data.logs || []);
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Wystąpił błąd podczas pobierania szczegółów sprzętu');
+      setLogs((data.assetLogs || data.logs || []) as typeof logs);
+    } catch (err) {
+      showSnackbar('error', err instanceof ApiError ? err.message : 'Wystąpił błąd podczas pobierania szczegółów sprzętu');
     } finally {
       setLoading(false);
     }
@@ -146,17 +130,14 @@ const EquipmentDetails: React.FC = () => {
       await deleteAsset(Number(id));
       // Jeśli nie rzucono błędu, usunięcie się powiodło
       navigate('/list');
-    } catch (err: any) {
-      if (err.message && typeof err.message === 'object') {
-        if (err.message.details) {
-          showSnackbar('error', err.message.details);
-        } else if (err.message.message) {
-          showSnackbar('error', err.message.message);
-        } else {
-          showSnackbar('error', JSON.stringify(err.message));
-        }
+    } catch (err) {
+      // deleteAsset may throw an Error whose message carries an object payload
+      const message: unknown = err instanceof Error ? err.message : err;
+      if (message && typeof message === 'object') {
+        const m = message as { details?: string; message?: string };
+        showSnackbar('error', m.details || m.message || JSON.stringify(message));
       } else {
-        showSnackbar('error', err.message || 'Wystąpił błąd podczas usuwania zasobu');
+        showSnackbar('error', typeof message === 'string' && message ? message : 'Wystąpił błąd podczas usuwania zasobu');
       }
       setTimeout(() => {
         closeSnackbar();
@@ -318,21 +299,12 @@ const EquipmentDetails: React.FC = () => {
     if (editQuantity == null || editQuantity === details.quantity) return;
     setSavingQuantity(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/stocks/${details.id}`), {
-        method: 'PATCH',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ quantity: editQuantity }),
-      });
-      if (!response.ok) throw new Error('Nie udało się zaktualizować ilości');
+      await apiClient.patch(`/stocks/${details.id}`, { quantity: editQuantity });
       showSnackbar('success', 'Ilość zaktualizowana');
       setIsEditingQuantity(false);
       fetchDetails();
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Błąd podczas aktualizacji ilości');
+    } catch (err) {
+      showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd podczas aktualizacji ilości');
     } finally {
       setSavingQuantity(false);
     }
@@ -362,38 +334,24 @@ const EquipmentDetails: React.FC = () => {
     }
     setSavingSerial(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/assets/${details.id}/serial`), {
-        method: 'PATCH',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ serial: serialInput.trim() }),
-      });
-      if (response.status === 400) {
-        const err = await response.json();
-        showSnackbar('error', err.error || 'Nieprawidłowy numer seryjny');
-        return;
-      }
-      if (response.status === 409) {
-        showSnackbar('error', 'Ten numer seryjny jest już zajęty!');
-        return;
-      }
-      if (response.status === 500) {
-        showSnackbar('error', 'Błąd serwera podczas zapisu numeru seryjnego');
-        return;
-      }
-      if (!response.ok) {
-        showSnackbar('error', 'Nie udało się zapisać numeru seryjnego');
-        return;
-      }
+      await apiClient.patch(`/assets/${details.id}/serial`, { serial: serialInput.trim() });
       showSnackbar('success', 'Numer seryjny został zapisany');
       setIsEditingSerial(false);
       setSerialInput('');
       fetchDetails();
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Błąd podczas zapisu numeru seryjnego');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const message = err.status === 400
+          ? err.message || 'Nieprawidłowy numer seryjny'
+          : err.status === 409
+            ? 'Ten numer seryjny jest już zajęty!'
+            : err.status === 500
+              ? 'Błąd serwera podczas zapisu numeru seryjnego'
+              : 'Nie udało się zapisać numeru seryjnego';
+        showSnackbar('error', message);
+      } else {
+        showSnackbar('error', 'Błąd podczas zapisu numeru seryjnego');
+      }
     } finally {
       setSavingSerial(false);
     }
@@ -407,9 +365,10 @@ const EquipmentDetails: React.FC = () => {
       showSnackbar('success', 'Lokalizacja została zaktualizowana');
       setLocationDialogOpen(false);
       fetchDetails(); // Odśwież dane
-    } catch (err: any) {
-      setLocationError(err.message || 'Wystąpił błąd podczas aktualizacji lokalizacji');
-      showSnackbar('error', err.message || 'Wystąpił błąd podczas aktualizacji lokalizacji');
+    } catch (err) {
+      const message = err instanceof Error && err.message ? err.message : 'Wystąpił błąd podczas aktualizacji lokalizacji';
+      setLocationError(message);
+      showSnackbar('error', message);
     }
   };
 

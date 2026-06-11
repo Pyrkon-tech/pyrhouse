@@ -9,6 +9,8 @@ import { groupQuestsByZone, groupServiceDeskByZone } from './utils/matching';
 import { ZONES } from './constants/zones';
 import { useOnDutyRoster } from '../../../hooks/useOnDutyRoster';
 import { useLocations } from '../../../hooks/useLocations';
+import { useNow } from '../../../hooks/useNow';
+import { DEFAULT_URGENCY_HOURS } from './constants/thresholds';
 import { updateQuestLocationAPI, updateQuestStatusAPI } from '../../../services/questService';
 import MapCanvas from './components/MapCanvas';
 import DispatchSidebar from './components/DispatchSidebar';
@@ -47,7 +49,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
   quests,
   onQuestUpdated,
   serviceDeskRequests = [],
-  urgencyHours = 8,
+  urgencyHours = DEFAULT_URGENCY_HOURS,
   showVolunteerPanel = true,
 }) => {
   const navigate = useNavigate();
@@ -58,6 +60,9 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
     const stored = sessionStorage.getItem('dispatch_sim_time');
     return stored ? new Date(stored) : undefined;
   });
+  // Minute tick so urgency thresholds update without waiting for an SSE event
+  const tick = useNow(60_000);
+  const now = simulatedTime ? simulatedTime.getTime() : tick;
   const { locations, refetch: fetchLocations } = useLocations();
 
   useEffect(() => { fetchLocations(); }, [fetchLocations]);
@@ -192,7 +197,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
             onZoneDispatch={handleZoneDispatch}
             onZoneSdClick={handleZoneSdClick}
             urgencyHours={urgencyHours}
-            simulatedTime={simulatedTime}
+            now={now}
           />
           {IS_DEV && (
             <DevTimeSimulator
@@ -227,6 +232,8 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
           locations={locations}
           onAssignQuestLocation={handleAssignQuestLocation}
           onCollapse={() => setSidebarOpen(false)}
+          urgencyHours={urgencyHours}
+          now={now}
         />
       ) : (
         <Tooltip title="Otwórz panel" placement="left">

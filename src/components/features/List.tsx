@@ -32,7 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
 import { useCategories } from '../../hooks/useCategories';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
-import { getApiUrl } from '../../config/api';
+import { apiClient, ApiError } from '../../services/apiClient';
 import { getAssetDisplayStatus } from '../../utils/assetStatus';
 import WarningIcon from '@mui/icons-material/Warning';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -137,22 +137,8 @@ const EquipmentList: React.FC = () => {
   // Funkcja do pobierania raportu
   const handleDownloadReport = async (type: 'assets' | 'stock') => {
     handleMenuClose();
-    const token = localStorage.getItem('token');
-    const url = type === 'assets'
-      ? getApiUrl('/assets/report')
-      : getApiUrl('/stocks/report');
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
-      });
-      if (!response.ok) {
-        showSnackbar('error', 'Nie udało się pobrać raportu');
-        return;
-      }
-      const blob = await response.blob();
+      const blob = await apiClient.getBlob(type === 'assets' ? '/assets/report' : '/stocks/report');
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
@@ -162,8 +148,8 @@ const EquipmentList: React.FC = () => {
       a.remove();
       window.URL.revokeObjectURL(downloadUrl);
       showSnackbar('success', 'Raport został pobrany');
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Błąd podczas pobierania raportu');
+    } catch (err) {
+      showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd podczas pobierania raportu');
     }
   };
 
@@ -176,29 +162,18 @@ const EquipmentList: React.FC = () => {
       setLoading(true);
       setEquipment([]); // Clear the state before fetching new data
 
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/items'), {
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await apiClient.get<Array<{
+        id: number;
+        category?: { label?: string; type?: 'asset' | 'stock' };
+        quantity?: number;
+        location: LocationWithPavilion;
+        status: string;
+        pyrcode?: string | null;
+        origin: string;
+        serial?: string | null;
+      }>>('/items');
 
-      if (response.status === 400 || response.status === 404) {
-        setEquipment([]);
-        setFilteredEquipment([]);
-        const data = await response.json();
-        showSnackbar('error', data.error || 'Wystąpił błąd podczas pobierania sprzętu');
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch equipment data');
-      }
-
-      const data = await response.json();
-
-      const transformedData = data.map((item: any) => ({
+      const transformedData: Equipment[] = data.map((item) => ({
         id: item.id,
         category: item.category?.label || 'Unknown',
         quantity: item.quantity,
@@ -207,13 +182,17 @@ const EquipmentList: React.FC = () => {
         pyr_code: item.pyrcode || undefined,
         origin: item.origin,
         type: item.category?.type || 'asset',
-        serial: item.serial,
+        serial: item.serial ?? undefined,
       }));
 
       setEquipment(transformedData);
       setFilteredEquipment(transformedData); // Initially show all data
-    } catch (err: any) {
-      showSnackbar('error', err.message || 'Wystąpił błąd podczas pobierania sprzętu');
+    } catch (err) {
+      if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+        setEquipment([]);
+        setFilteredEquipment([]);
+      }
+      showSnackbar('error', err instanceof ApiError ? err.message : 'Wystąpił błąd podczas pobierania sprzętu');
     } finally {
       setLoading(false);
     }
@@ -347,7 +326,7 @@ const EquipmentList: React.FC = () => {
             </TableCell>
             <TableCell>
               <Typography component="div">
-                {typeof item.category === 'string' ? item.category : (item.category as any).label}
+                {typeof item.category === 'string' ? item.category : item.category.label}
               </Typography>
             </TableCell>
             <TableCell>
@@ -413,7 +392,7 @@ const EquipmentList: React.FC = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Kategoria:</Typography>
                   <Typography variant="body2">
-                    {typeof item.category === 'string' ? item.category : (item.category as any).label}
+                    {typeof item.category === 'string' ? item.category : item.category.label}
                   </Typography>
                 </Box>
 

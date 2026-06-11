@@ -1,30 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getApiUrl } from '../config/api';
+import { apiClient, ApiError } from '../services/apiClient';
+import type { ServiceDeskRequest } from '../types/servicedesk.types';
 
 const REQUESTS_API = '/service-desk/requests';
 
 export const useServiceDeskRequests = (status: string, search: string) => {
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<ServiceDeskRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRequests = useCallback(() => {
     setLoading(true);
     setError(null);
-    const token = localStorage.getItem('token');
     const params = new URLSearchParams();
     if (status && status !== 'all') params.append('status', status);
-    fetch(getApiUrl(`${REQUESTS_API}?${params.toString()}`), {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Błąd pobierania zgłoszeń');
-        return res.json();
-      })
-      .then(data => {
-        setRequests(data);
-      })
-      .catch(e => setError(e.message || 'Błąd pobierania zgłoszeń'))
+    apiClient
+      .get<ServiceDeskRequest[]>(`${REQUESTS_API}?${params.toString()}`)
+      .then(setRequests)
+      .catch((e) =>
+        setError(e instanceof ApiError ? e.message : 'Błąd pobierania zgłoszeń')
+      )
       .finally(() => setLoading(false));
   }, [status]);
 
@@ -32,7 +27,7 @@ export const useServiceDeskRequests = (status: string, search: string) => {
 
   // Filtrowanie lokalne:
   const filteredRequests = search
-    ? requests.filter((r: any) =>
+    ? requests.filter((r) =>
         r.title.toLowerCase().includes(search.toLowerCase()) ||
         r.description.toLowerCase().includes(search.toLowerCase()) ||
         (r.location && r.location.toLowerCase().includes(search.toLowerCase()))
@@ -40,4 +35,4 @@ export const useServiceDeskRequests = (status: string, search: string) => {
     : requests;
 
   return { requests: filteredRequests, loading, error, refresh: fetchRequests };
-}; 
+};

@@ -35,8 +35,9 @@ export default [
       ],
       // Empty catch = intentional "ignore this error" (non-critical fetches, parsers)
       'no-empty': ['error', { allowEmptyCatch: true }],
-      // TEMPORARY downgrade to warn: ~150 `any` usages live mostly in legacy fetch
-      // code slated for the apiClient migration (phase 3). Restore to error after it.
+      // TEMPORARY downgrade to warn: ~120 `any` usages remain, spread across UI
+      // components (props, handlers). They get typed during the phase 4 component
+      // decomposition — restore to 'error' once that lands.
       '@typescript-eslint/no-explicit-any': 'warn',
       // `_` prefix = intentionally unused (e.g. destructuring that skips fields)
       '@typescript-eslint/no-unused-vars': [

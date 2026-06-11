@@ -15,10 +15,12 @@ export interface ZoneMetrics {
   inProgress: number;
   completed: number;
   urgent: number;
-  /** Pending quests within 24h window (or same-day if no time specified) — show exclamation */
+  /** Pending quests within ALERT_HOURS of effective deadline — show exclamation */
   alertVisible: number;
-  /** Pending quests within 2h window (or same-day if no time specified) — pulse exclamation */
+  /** Pending quests within PULSE_HOURS of effective deadline — pulse exclamation */
   alertPulsing: number;
+  /** Pending quests past their effective deadline — exclamation turns red */
+  overdue: number;
   /** SD tickets with status 'new' in this zone */
   sdNew: number;
 }

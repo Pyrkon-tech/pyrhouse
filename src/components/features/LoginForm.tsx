@@ -24,7 +24,7 @@ import {
   Lock, 
   Login as LoginIcon 
 } from '@mui/icons-material';
-import { getApiUrl } from '../../config/api';
+import { apiClient, ApiError } from '../../services/apiClient';
 import { useStorage } from '../../hooks/useStorage';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
 import pyrkonLogo from '../../assets/images/p-logo.svg';
@@ -104,37 +104,26 @@ const LoginForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(getApiUrl('/auth'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (response.ok) {
-        const data: { token: string } = await response.json();
-        setToken(data.token);
-        // Dekoduj JWT i zapisz username do storage
-        try {
-          const decoded: any = jwtDecode(data.token);
-          if (decoded && decoded.username) {
-            setStoredUsername(decoded.username);
-          }
-        } catch (err) {
-          // Jeśli nie uda się zdekodować, nie zapisuj username
-          console.error('Błąd dekodowania JWT:', err);
+      // skipAuth: no token yet, and a 401 here means bad credentials, not an expired session
+      const data = await apiClient.post<{ token: string }>('/auth', { username, password }, { skipAuth: true });
+      setToken(data.token);
+      // Dekoduj JWT i zapisz username do storage
+      try {
+        const decoded = jwtDecode<{ username?: string }>(data.token);
+        if (decoded && decoded.username) {
+          setStoredUsername(decoded.username);
         }
-        navigate('/home', { state: { showInitAnimation: prefersAnimations } });
-      } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.error || 'Unknown error';
-        showSnackbar('error', translateError(errorMessage), undefined, null);
-        setIsLoading(false);
+      } catch (err) {
+        // Jeśli nie uda się zdekodować, nie zapisuj username
+        console.error('Błąd dekodowania JWT:', err);
       }
+      navigate('/home', { state: { showInitAnimation: prefersAnimations } });
     } catch (error) {
       console.error('Error:', error);
-      showSnackbar('error', translateError('Network error'), undefined, null);
+      const message = error instanceof ApiError && error.status > 0
+        ? translateError(error.message)
+        : translateError('Network error');
+      showSnackbar('error', message, undefined, null);
       setIsLoading(false);
     }
   };
@@ -156,9 +145,10 @@ const LoginForm: React.FC = () => {
       setUsername('');
       setPassword('');
       showSnackbar('success', 'Zarejestrowano pomyślnie. Możesz się teraz zalogować.');
-    } catch (err: any) {
-      setRegisterError(err.message || 'Wystąpił błąd');
-      showSnackbar('error', err.message || 'Wystąpił błąd');
+    } catch (err) {
+      const message = err instanceof Error && err.message ? err.message : 'Wystąpił błąd';
+      setRegisterError(message);
+      showSnackbar('error', message);
     } finally {
       setRegisterLoading(false);
     }

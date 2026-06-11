@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Box, Typography, Button, TextField, InputAdornment, Tabs, Tab, CircularProgress, Alert, Dialog, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 import { Search as SearchIcon, Refresh as RefreshIcon, OpenInNew as OpenInNewIcon, Task as TaskIcon, ViewModule as ViewModuleIcon, ViewList as ViewListIcon, ViewKanban as ViewKanbanIcon } from '@mui/icons-material';
-import { getApiUrl } from '../../../config/api';
+import { apiClient } from '../../../services/apiClient';
 import ServiceDeskForm from './ServiceDeskForm';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -58,17 +58,8 @@ const ServiceDeskPage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const changeStatus = async (id: string, newStatus: string, onSuccess?: () => void) => {
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(getApiUrl(`/service-desk/requests/${id}/status`), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error('Błąd zmiany statusu');
+      await apiClient.put(`/service-desk/requests/${id}/status`, { status: newStatus });
       showSnackbar('success', 'Status zmieniony pomyślnie');
       onSuccess?.();
     } catch {
@@ -77,17 +68,8 @@ const ServiceDeskPage: React.FC = () => {
   };
 
   const assignUser = async (id: string, assigned_to_id: number, onSuccess?: () => void) => {
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(getApiUrl(`/service-desk/requests/${id}/assign`), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ assigned_to_id }),
-      });
-      if (!res.ok) throw new Error('Błąd przypisywania użytkownika');
+      await apiClient.put(`/service-desk/requests/${id}/assign`, { assigned_to_id });
       showSnackbar('success', 'Użytkownik przypisany pomyślnie');
       onSuccess?.();
     } catch {
@@ -96,7 +78,8 @@ const ServiceDeskPage: React.FC = () => {
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
-    const request = requests.find(r => r.id === id);
+    // Ids arrive as strings from dnd-kit but the API returns numbers
+    const request = requests.find(r => String(r.id) === String(id));
     const assignedUserId = request?.assigned_to_user?.id;
     await changeStatus(id, newStatus, async () => {
       refresh();
@@ -180,17 +163,8 @@ const ServiceDeskPage: React.FC = () => {
   const handleAssignDropdownClose = () => setAssignDropdownOpenId(null);
 
   const changePriority = async (id: string, newPriority: string, onSuccess?: () => void) => {
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(getApiUrl(`/service-desk/requests/${id}/priority`), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ priority: newPriority }),
-      });
-      if (!res.ok) throw new Error('Błąd zmiany priorytetu');
+      await apiClient.put(`/service-desk/requests/${id}/priority`, { priority: newPriority });
       showSnackbar('success', 'Priorytet zmieniony pomyślnie');
       onSuccess?.();
     } catch {

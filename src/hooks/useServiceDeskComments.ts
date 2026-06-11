@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { getApiUrl } from '../config/api';
+import { apiClient, ApiError } from '../services/apiClient';
 
 export interface ServiceDeskComment {
   id: number;
@@ -21,15 +21,10 @@ export const useServiceDeskComments = (requestId: string | number | undefined) =
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(getApiUrl(`/service-desk/requests/${requestId}/comments`), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Błąd pobierania komentarzy');
-      const data = await res.json();
+      const data = await apiClient.get<ServiceDeskComment[]>(`/service-desk/requests/${requestId}/comments`);
       setComments(Array.isArray(data) ? data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : []);
-    } catch (e: any) {
-      setError(e.message || 'Błąd pobierania komentarzy');
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Błąd pobierania komentarzy');
     } finally {
       setLoading(false);
     }
@@ -40,20 +35,11 @@ export const useServiceDeskComments = (requestId: string | number | undefined) =
     setAdding(true);
     setAddError(null);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(getApiUrl(`/service-desk/requests/${requestId}/comments`), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content }),
-      });
-      if (!res.ok) throw new Error('Błąd dodawania komentarza');
+      await apiClient.post(`/service-desk/requests/${requestId}/comments`, { content });
       // Optymistycznie: fetchujemy całą listę po dodaniu
       await fetchComments();
-    } catch (e: any) {
-      setAddError(e.message || 'Błąd dodawania komentarza');
+    } catch (e) {
+      setAddError(e instanceof ApiError ? e.message : 'Błąd dodawania komentarza');
     } finally {
       setAdding(false);
     }
@@ -68,4 +54,4 @@ export const useServiceDeskComments = (requestId: string | number | undefined) =
     addError,
     refreshComments: fetchComments,
   };
-}; 
+};

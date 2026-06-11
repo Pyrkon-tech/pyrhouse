@@ -22,6 +22,7 @@ import type { UserListItem } from '../../../../types/user.types';
 import { formatDate } from '../utils/matching';
 import { getUsersAPI } from '../../../../services/userService';
 import UnknownAgentAvatar from './UnknownAgentAvatar';
+import { dt } from '../constants/dispatchTheme';
 
 const AVATAR_PALETTE = ['#ff9800', '#00acc1', '#66bb6a', '#ffd54f', '#ef5350', '#ab47bc', '#42a5f5'];
 
@@ -127,26 +128,20 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: '#0a1929',
-          border: '1px solid #1a3548',
+          bgcolor: dt.paper.bg,
           borderRadius: 2,
           backgroundImage: 'none',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
         },
       }}
     >
-      <DialogTitle sx={{ pb: 1, borderBottom: '1px solid #152535' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box>
-            <Typography sx={{ color: '#ff9800', fontFamily: 'monospace', fontWeight: 700, fontSize: 15 }}>
-              DISPATCH MISSION
-            </Typography>
-            {zone && (
-              <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11, mt: 0.25 }}>
-                Pawilon {zone.label.replace('\n', ' ')}
-              </Typography>
-            )}
-          </Box>
-          <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11 }}>
+      {/* Solid orange title bar — game-style modal header */}
+      <DialogTitle sx={{ p: 0 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 1.25, bgcolor: dt.action.orange }}>
+          <Typography sx={{ color: dt.action.onOrange, fontFamily: 'monospace', fontWeight: 800, fontSize: 16, letterSpacing: 1 }}>
+            DISPATCH MISSION
+          </Typography>
+          <Typography sx={{ color: dt.action.onOrange, fontWeight: 700, fontSize: 13 }}>
             {quest.recipient}
           </Typography>
         </Box>
@@ -154,45 +149,50 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
 
       <DialogContent sx={{ py: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Quest info row */}
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11 }}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', mt: 1 }}>
+          {zone && (
+            <Typography sx={{ color: dt.paper.text, fontWeight: 700, fontSize: 13 }}>
+              Pawilon {zone.label.replace('\n', ' ')}
+            </Typography>
+          )}
+          <Typography sx={{ color: dt.paper.textSecondary, fontSize: 13 }}>
             {quest.location_name ?? `${quest.destination.pavilion} — ${quest.destination.location}`}
           </Typography>
-          <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11 }}>
+          <Typography sx={{ color: dt.paper.textSecondary, fontFamily: 'monospace', fontSize: 12 }}>
             Termin: {formatDate(quest.delivery_date)}{quest.pickup_time && ` (${quest.pickup_time})`}
           </Typography>
-          <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11 }}>
+          <Typography sx={{ color: dt.paper.textSecondary, fontFamily: 'monospace', fontSize: 12 }}>
             {totalItems} szt.
           </Typography>
         </Box>
 
         {/* Items list */}
         <Box>
-          <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.5, mb: 0.75 }}>
+          <Typography sx={{ color: dt.paper.textMuted, fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, mb: 0.75 }}>
             POZYCJE ({quest.items.length})
           </Typography>
           <Box sx={{
             display: 'flex', flexDirection: 'column', gap: 0.5,
-            p: 1, borderRadius: 1, bgcolor: '#07111e', border: '1px solid #1a3548',
+            p: 1, borderRadius: 1, bgcolor: dt.paper.bgAlt, border: `1px solid ${dt.paper.border}`,
             maxHeight: 160, overflowY: 'auto',
             '&::-webkit-scrollbar': { width: 4 },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#1a3548', borderRadius: 2 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: dt.paper.border, borderRadius: 2 },
           }}>
             {quest.items.map((item, i) => (
               <Box key={i} sx={{
                 py: 0.5, px: 1, borderRadius: 0.5,
-                bgcolor: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
+                bgcolor: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.04)',
               }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}>
-                  <Typography sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontSize: 12 }}>
+                  <Typography sx={{ color: dt.paper.text, fontSize: 13 }}>
                     {item.name}
                   </Typography>
-                  <Typography sx={{ color: '#ff9800', fontFamily: 'monospace', fontSize: 12, fontWeight: 700, minWidth: 32, textAlign: 'right', flexShrink: 0 }}>
+                  <Typography sx={{ color: '#a85e00', fontFamily: 'monospace', fontSize: 13, fontWeight: 800, minWidth: 32, textAlign: 'right', flexShrink: 0 }}>
                     x{item.quantity}
                   </Typography>
                 </Box>
                 {item.notes && (
-                  <Typography sx={{ color: '#2a5a6a', fontFamily: 'monospace', fontSize: 10, whiteSpace: 'pre-wrap', wordBreak: 'break-word', mt: 0.25 }}>
+                  <Typography sx={{ color: dt.paper.textMuted, fontSize: 11, whiteSpace: 'pre-wrap', wordBreak: 'break-word', mt: 0.25 }}>
                     {item.notes}
                   </Typography>
                 )}
@@ -203,14 +203,14 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
 
         {/* Volunteer selection */}
         <Box>
-          <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.5, mb: 0.75 }}>
+          <Typography sx={{ color: dt.paper.textMuted, fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, mb: 0.75 }}>
             PRZYPISZ WOLONTARIUSZY
           </Typography>
 
           <Box sx={{
             display: 'flex', gap: 1, overflowX: 'auto', pb: 0.5,
             '&::-webkit-scrollbar': { height: 4 },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#1a3548', borderRadius: 2 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: dt.paper.border, borderRadius: 2 },
           }}>
             {/* On-duty volunteer cards */}
             {availableVolunteers.map(v => {
@@ -231,10 +231,10 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                     borderRadius: 1.5,
                     overflow: 'hidden',
                     cursor: isBusy ? 'not-allowed' : 'pointer',
-                    border: `2px solid ${isChecked ? '#00acc1' : '#1a3548'}`,
-                    boxShadow: isChecked ? '0 0 14px rgba(0,172,193,0.5)' : 'none',
+                    border: `2px solid ${isChecked ? '#00acc1' : dt.paper.border}`,
+                    boxShadow: isChecked ? '0 0 14px rgba(0,172,193,0.5)' : '0 2px 6px rgba(0,0,0,0.25)',
                     transition: 'all 0.15s ease',
-                    '&:hover': !isBusy ? { borderColor: isChecked ? '#00acc1' : '#2a4a60' } : {},
+                    '&:hover': !isBusy ? { borderColor: isChecked ? '#00acc1' : '#a89674' } : {},
                   }}
                 >
                   {v.is_unlinked ? (
@@ -257,8 +257,8 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                     </Avatar>
                   )}
                   {isBusy && (
-                    <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bgcolor: 'rgba(33,100,180,0.85)', py: 0.25, textAlign: 'center' }}>
-                      <Typography sx={{ color: '#fff', fontFamily: 'monospace', fontSize: 8, fontWeight: 700, letterSpacing: 1.5 }}>
+                    <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bgcolor: dt.action.teal, py: 0.25, textAlign: 'center' }}>
+                      <Typography sx={{ color: dt.action.onTeal, fontSize: 9, fontWeight: 800, letterSpacing: 1.5 }}>
                         BUSY
                       </Typography>
                     </Box>
@@ -331,10 +331,10 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                 sx={{
                   width: 72, height: 72, flexShrink: 0,
                   borderRadius: 1.5,
-                  border: '2px dashed #1a3548',
+                  border: `2px dashed ${dt.paper.border}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer',
-                  color: '#2a5a6a',
+                  color: dt.paper.textMuted,
                   transition: 'all 0.15s ease',
                   '&:hover': { borderColor: '#ab47bc', color: '#ab47bc', bgcolor: 'rgba(171,71,188,0.07)' },
                 }}
@@ -370,20 +370,20 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                     {...params}
                     placeholder="Szukaj po nazwie lub pseudonimie..."
                     sx={{
-                      '& .MuiInputBase-root': { bgcolor: '#07111e', fontFamily: 'monospace', fontSize: 12, color: '#c8e8f5' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#1a3548' },
+                      '& .MuiInputBase-root': { bgcolor: dt.paper.bgInput, fontSize: 13, color: dt.paper.text },
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: dt.paper.border },
                       '& .MuiInputBase-root:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ab47bc' },
-                      '& .MuiInputBase-input::placeholder': { color: '#1a5a6a', opacity: 1 },
-                      '& .MuiAutocomplete-endAdornment .MuiIconButton-root': { color: '#3a7a8a' },
+                      '& .MuiInputBase-input::placeholder': { color: dt.paper.textMuted, opacity: 1 },
+                      '& .MuiAutocomplete-endAdornment .MuiIconButton-root': { color: dt.paper.textSecondary },
                     }}
                   />
                 )}
                 ListboxProps={{
                   sx: {
-                    bgcolor: '#07111e',
-                    border: '1px solid #1a3548',
+                    bgcolor: dt.paper.bgInput,
+                    border: `1px solid ${dt.paper.border}`,
                     '& .MuiAutocomplete-option': {
-                      fontFamily: 'monospace', fontSize: 12, color: '#c8e8f5',
+                      fontSize: 13, color: dt.paper.text,
                       '&:hover': { bgcolor: 'rgba(171,71,188,0.12)' },
                       '&[aria-selected="true"]': { bgcolor: 'rgba(171,71,188,0.2)' },
                     },
@@ -394,7 +394,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
               <IconButton
                 onClick={() => setShowUserSearch(false)}
                 size="small"
-                sx={{ color: '#3a7a8a', '&:hover': { color: '#ef5350' } }}
+                sx={{ color: dt.paper.textSecondary, '&:hover': { color: '#b71c1c' } }}
               >
                 <CloseIcon sx={{ fontSize: 18 }} />
               </IconButton>
@@ -402,19 +402,19 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
           )}
 
           {availableVolunteers.length === 0 && manualUsers.length === 0 && !showUserSearch && (
-            <Typography sx={{ color: '#1a5a6a', fontFamily: 'monospace', textAlign: 'center', fontSize: 11, py: 2 }}>
+            <Typography sx={{ color: dt.paper.textMuted, textAlign: 'center', fontSize: 12, py: 2 }}>
               Brak dostępnych wolontariuszy — użyj + by dodać z listy
             </Typography>
           )}
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 1.5, borderTop: '1px solid #152535' }}>
+      <DialogActions sx={{ px: 3, py: 1.5, borderTop: `1px solid ${dt.paper.divider}` }}>
         <Button
           onClick={onClose}
           sx={{
-            color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11,
-            textTransform: 'none', letterSpacing: 1,
+            color: dt.paper.textSecondary, fontFamily: 'monospace', fontSize: 12,
+            fontWeight: 700, textTransform: 'none', letterSpacing: 1,
           }}
         >
           ANULUJ
@@ -424,16 +424,17 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
           disabled={false}
           onClick={handleDispatch}
           sx={{
-            bgcolor: '#ff9800',
-            color: '#000',
+            bgcolor: dt.action.orange,
+            color: dt.action.onOrange,
             fontFamily: 'monospace',
-            fontWeight: 700,
-            fontSize: 12,
+            fontWeight: 800,
+            fontSize: 13,
             letterSpacing: 1,
             textTransform: 'none',
             px: 3,
-            '&:hover': { bgcolor: '#ffa726' },
-            '&.Mui-disabled': { bgcolor: '#333', color: '#666' },
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            '&:hover': { bgcolor: dt.action.orangeHover },
+            '&.Mui-disabled': { bgcolor: dt.paper.bgAlt, color: dt.paper.textMuted },
           }}
         >
           DISPATCH ({totalSelected})

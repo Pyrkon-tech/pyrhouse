@@ -2,6 +2,7 @@ import type { Quest } from '../../../../types/quest.types';
 import type { ServiceDeskRequest } from '../../../../types/servicedesk.types';
 import type { ZoneMetrics } from '../types';
 import { ZONES } from '../constants/zones';
+import { ALERT_HOURS, DEFAULT_URGENCY_HOURS, PULSE_HOURS } from '../constants/thresholds';
 
 export const matchZone = (pavilion: string): string | null => {
   const p = pavilion.toLowerCase().trim();
@@ -33,40 +34,49 @@ function hasTimeComponent(dateStr: string): boolean {
   return dateStr.length > 10 && dateStr.includes('T');
 }
 
-function isSameDay(dateStr: string, now: number): boolean {
-  const d = new Date(dateStr);
-  const today = new Date(now);
-  return d.getFullYear() === today.getFullYear()
-    && d.getMonth() === today.getMonth()
-    && d.getDate() === today.getDate();
+const H = 3_600_000;
+
+/**
+ * Effective deadline timestamp for a delivery date:
+ * - date with time → that exact moment
+ * - date-only → end of that day in LOCAL time (23:59:59.999); parsing the raw
+ *   string would give midnight UTC, which shifts the deadline to the previous evening
+ *
+ * All urgency metrics derive from this single timeline, so date-only quests get
+ * the same calm → urgent → pulse → overdue escalation as timed ones.
+ */
+export function getEffectiveDeadline(deliveryDate: string): number {
+  if (hasTimeComponent(deliveryDate)) return new Date(deliveryDate).getTime();
+  const [y, m, d] = deliveryDate.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
 }
 
-export function getZoneMetrics(quests: Quest[], urgencyHours = 8, simulatedTime?: Date, sdRequests: ServiceDeskRequest[] = []): ZoneMetrics {
-  const now = simulatedTime ? simulatedTime.getTime() : Date.now();
-  const H = 3_600_000;
+/** Per-quest urgency level — same thresholds as the map zone metrics */
+export type QuestUrgency = 'none' | 'soon' | 'urgent' | 'overdue';
+
+export function getQuestUrgency(quest: Quest, urgencyHours = DEFAULT_URGENCY_HOURS, now = Date.now()): QuestUrgency {
+  if (quest.status !== 'pending') return 'none';
+  const diff = getEffectiveDeadline(quest.delivery_date) - now;
+  if (diff < 0) return 'overdue';
+  if (diff <= urgencyHours * H) return 'urgent';
+  if (diff <= ALERT_HOURS * H) return 'soon';
+  return 'none';
+}
+
+export function getZoneMetrics(quests: Quest[], urgencyHours = DEFAULT_URGENCY_HOURS, now = Date.now(), sdRequests: ServiceDeskRequest[] = []): ZoneMetrics {
+  // Time remaining to effective deadline for each pending quest (negative = overdue)
+  const pendingDiffs = quests
+    .filter(q => q.status === 'pending')
+    .map(q => getEffectiveDeadline(q.delivery_date) - now);
   return {
     total: quests.length,
-    pending: quests.filter(q => q.status === 'pending').length,
+    pending: pendingDiffs.length,
     inProgress: quests.filter(q => q.status === 'in_progress').length,
     completed: quests.filter(q => q.status === 'completed').length,
-    urgent: quests.filter(q =>
-      q.status === 'pending' &&
-      new Date(q.delivery_date).getTime() - now <= urgencyHours * H
-    ).length,
-    alertVisible: quests.filter(q => {
-      if (q.status !== 'pending') return false;
-      const d = q.delivery_date;
-      return hasTimeComponent(d)
-        ? new Date(d).getTime() - now <= 24 * H
-        : isSameDay(d, now);
-    }).length,
-    alertPulsing: quests.filter(q => {
-      if (q.status !== 'pending') return false;
-      const d = q.delivery_date;
-      return hasTimeComponent(d)
-        ? new Date(d).getTime() - now <= 2 * H
-        : isSameDay(d, now);
-    }).length,
+    urgent: pendingDiffs.filter(diff => diff <= urgencyHours * H).length,
+    alertVisible: pendingDiffs.filter(diff => diff <= ALERT_HOURS * H).length,
+    alertPulsing: pendingDiffs.filter(diff => diff <= PULSE_HOURS * H).length,
+    overdue: pendingDiffs.filter(diff => diff < 0).length,
     sdNew: sdRequests.filter(r => r.status === 'new').length,
   };
 }

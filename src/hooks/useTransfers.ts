@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { getApiUrl } from '../config/api';
+import { useState, useCallback } from 'react';
+import { apiClient, ApiError } from '../services/apiClient';
 import { Transfer } from '../types/transfer.types';
 
 export const useTransfers = () => {
@@ -7,22 +7,17 @@ export const useTransfers = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTransfers = async () => {
+  const fetchTransfers = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/transfers'), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to fetch transfers');
-      const data = await response.json();
+      const data = await apiClient.get<Transfer[]>('/transfers');
       setTransfers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof ApiError ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return { transfers, loading, error, refreshTransfers: fetchTransfers };
 };

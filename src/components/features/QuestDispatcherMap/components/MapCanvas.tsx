@@ -4,6 +4,7 @@ import type { Quest } from '../../../../types/quest.types';
 import type { ServiceDeskRequest } from '../../../../types/servicedesk.types';
 import type { Point } from '../types';
 import { ZONES } from '../constants/zones';
+import { DEFAULT_URGENCY_HOURS } from '../constants/thresholds';
 import { getZoneMetrics } from '../utils/matching';
 import { svgCoords, toSvgPoints } from '../utils/geometry';
 import ZoneOverlay from './ZoneOverlay';
@@ -17,11 +18,12 @@ interface MapCanvasProps {
   onZoneSdClick?: (zoneId: string) => void;
   debugMode?: boolean;
   urgencyHours?: number;
-  simulatedTime?: Date;
+  /** Current timestamp (ms) — real or simulated; drives all urgency thresholds */
+  now?: number;
   children?: React.ReactNode;
 }
 
-const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, sdByZone = {}, selectedZoneId, onZoneSelect, onZoneDispatch, onZoneSdClick, debugMode = false, urgencyHours = 8, simulatedTime, children }) => {
+const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, sdByZone = {}, selectedZoneId, onZoneSelect, onZoneDispatch, onZoneSdClick, debugMode = false, urgencyHours = DEFAULT_URGENCY_HOURS, now = Date.now(), children }) => {
 
   // Debug state
   const [debugCoords, setDebugCoords] = useState<{ x: number; y: number } | null>(null);
@@ -105,7 +107,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({ questsByZone, sdByZone = {}, sele
             <ZoneOverlay
               key={zone.id}
               zone={zone}
-              metrics={getZoneMetrics(questsByZone[zone.id] ?? [], urgencyHours, simulatedTime, sdByZone[zone.id] ?? [])}
+              metrics={getZoneMetrics(questsByZone[zone.id] ?? [], urgencyHours, now, sdByZone[zone.id] ?? [])}
               isSelected={selectedZoneId === zone.id}
               onSelect={(id) => onZoneSelect(selectedZoneId === id ? null : id)}
               onDispatch={onZoneDispatch}

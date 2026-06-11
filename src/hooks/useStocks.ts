@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { getApiUrl } from '../config/api';
+import { useState, useCallback } from 'react';
+import { apiClient, ApiError } from '../services/apiClient';
 
 interface Stock {
   id: number;
@@ -21,22 +21,17 @@ export const useStocks = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStocks = async (locationId: string) => {
+  const fetchStocks = useCallback(async (locationId: string) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/stocks?location_id=${locationId}`), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to fetch stocks');
-      const data = await response.json();
+      const data = await apiClient.get<Stock[] | null>(`/stocks?location_id=${locationId}`);
       setStocks(data ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof ApiError ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return { stocks, loading, error, fetchStocks };
 };

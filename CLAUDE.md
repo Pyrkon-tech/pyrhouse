@@ -61,6 +61,7 @@ src/
 | `src/components/features/Transfer/` | Moduł transferów (3 strony + 5 sub-components) |
 | `src/components/features/ServiceDesk/` | Moduł service desk (strona + formularz + 3 widoki) |
 | `src/components/features/QuestDispatcherMap/` | Mapa dispatch MTP z overlayami stref |
+| `QuestDispatcherMap/constants/dispatchTheme.ts` | Tokeny stylu "paper on dark" (inspiracja grą Dispatch): ciemny shell + kremowe karty z litymi paskami statusów; progi urgency w `constants/thresholds.ts` (24h alert / 8h urgent / 2h puls, deadline dat bez godziny = koniec dnia lokalnie) |
 
 ## Routing
 
@@ -149,23 +150,11 @@ try {
 ```
 
 ### Status migracji do apiClient
-**Zmigrowane:**
-- transferService.ts (kompletnie)
-- assetService.ts (kompletnie)
-
-**Do migracji (~20 plików):**
-- Hooks: useCategories, useStocks, useLocations, useTransfers, useDutySchedule, useServiceDeskComments
-- Komponenty: EquipmentDetails, UserDetailsPage, List, Home, QuestBoardPage, ServiceDeskPage
-- Formularze: AddAssetForm, AddStockForm, LoginForm
-
-### Stary sposób (legacy - do migracji)
-```typescript
-import { getApiUrl, getAuthHeaders } from '../config/api';
-
-const response = await fetch(getApiUrl('/endpoint'), {
-  headers: getAuthHeaders(),
-});
-```
+**Migracja zakończona (2026-06).** Wszystkie hooki i komponenty używają `apiClient`;
+`src/config/api.ts` (legacy `getApiUrl`/`getAuthHeaders`) został usunięty.
+Pliki do pobierania (CSV/PDF) używają `apiClient.getBlob(endpoint)`.
+Publiczne endpointy (np. logowanie) używają opcji `{ skipAuth: true }` —
+bez niej 401 czyści token i przekierowuje na /login.
 
 ## Konwencje kodowania
 

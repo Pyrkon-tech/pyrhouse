@@ -7,6 +7,7 @@ import { useServiceDeskComments } from '../../../../hooks/useServiceDeskComments
 import { useAuth } from '../../../../hooks/useAuth';
 import { apiClient } from '../../../../services/apiClient';
 import type { ServiceDeskRequest } from '../../../../types/servicedesk.types';
+import { dt } from '../constants/dispatchTheme';
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Nowe',
@@ -16,16 +17,17 @@ const STATUS_LABELS: Record<string, string> = {
   closed: 'Anulowane',
 };
 
+/** Darker color variants readable on cream paper */
 const STATUS_COLORS: Record<string, string> = {
-  new: '#ff9800',
-  in_progress: '#00acc1',
-  waiting: '#ffd54f',
-  resolved: '#66bb6a',
-  closed: '#78909c',
+  new: '#a85e00',
+  in_progress: '#00798c',
+  waiting: '#9c7400',
+  resolved: '#2e7d32',
+  closed: '#546e7a',
 };
 
 const PRIORITY_LABELS: Record<string, string> = { high: 'Wysoki', medium: 'Średni', low: 'Niski' };
-const PRIORITY_COLORS: Record<string, string> = { high: '#ef5350', medium: '#ffd54f', low: '#66bb6a' };
+const PRIORITY_COLORS: Record<string, string> = { high: '#b71c1c', medium: '#9c7400', low: '#2e7d32' };
 
 interface DispatchSdModalProps {
   request: ServiceDeskRequest | null;
@@ -84,39 +86,21 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: '#0a1929',
-          border: '1px solid #1a3548',
+          bgcolor: dt.paper.bg,
           borderRadius: 2,
           backgroundImage: 'none',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
         },
       }}
     >
-      <DialogTitle sx={{ pb: 1, borderBottom: '1px solid #152535' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ color: '#ff9800', fontFamily: 'monospace', fontWeight: 700, fontSize: 15, letterSpacing: 0.5 }}>
-              SERVICE DESK
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 0.75, mt: 0.5, flexWrap: 'wrap' }}>
-              <Typography sx={{ color: priorityColor, fontFamily: 'monospace', fontSize: 11 }}>
-                {PRIORITY_LABELS[request.priority] ?? request.priority}
-              </Typography>
-              <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11 }}>·</Typography>
-              <Typography sx={{ color: statusColor, fontFamily: 'monospace', fontSize: 11 }}>
-                {STATUS_LABELS[request.status] ?? request.status}
-              </Typography>
-              {request.location && (
-                <>
-                  <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11 }}>·</Typography>
-                  <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11 }}>
-                    {request.location}
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Box>
+      {/* Solid teal title bar — game-style modal header */}
+      <DialogTitle sx={{ p: 0 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 1.25, bgcolor: dt.action.teal }}>
+          <Typography sx={{ color: dt.action.onTeal, fontFamily: 'monospace', fontWeight: 800, fontSize: 16, letterSpacing: 1 }}>
+            SERVICE DESK
+          </Typography>
           {request.created_by && (
-            <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11, flexShrink: 0 }}>
+            <Typography sx={{ color: dt.action.onTeal, fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
               {request.created_by}
             </Typography>
           )}
@@ -124,19 +108,38 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
       </DialogTitle>
 
       <DialogContent sx={{ py: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {/* Meta row */}
+        <Box sx={{ display: 'flex', gap: 0.75, mt: 1, flexWrap: 'wrap' }}>
+          <Typography sx={{ color: priorityColor, fontWeight: 700, fontSize: 12 }}>
+            {PRIORITY_LABELS[request.priority] ?? request.priority}
+          </Typography>
+          <Typography sx={{ color: dt.paper.textMuted, fontSize: 12 }}>·</Typography>
+          <Typography sx={{ color: statusColor, fontWeight: 700, fontSize: 12 }}>
+            {STATUS_LABELS[request.status] ?? request.status}
+          </Typography>
+          {request.location && (
+            <>
+              <Typography sx={{ color: dt.paper.textMuted, fontSize: 12 }}>·</Typography>
+              <Typography sx={{ color: dt.paper.textSecondary, fontSize: 12 }}>
+                {request.location}
+              </Typography>
+            </>
+          )}
+        </Box>
+
         {/* Title */}
-        <Typography sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontWeight: 700, fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>
+        <Typography sx={{ color: dt.paper.text, fontWeight: 700, fontSize: 16, lineHeight: 1.4, wordBreak: 'break-word' }}>
           {request.title}
         </Typography>
 
         {/* Description */}
         {request.description && (
           <Box>
-            <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.5, mb: 0.75 }}>
+            <Typography sx={{ color: dt.paper.textMuted, fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, mb: 0.75 }}>
               OPIS
             </Typography>
-            <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: '#07111e', border: '1px solid #1a3548' }}>
-              <Typography sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: dt.paper.bgAlt, border: `1px solid ${dt.paper.border}` }}>
+              <Typography sx={{ color: dt.paper.text, fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                 {request.description}
               </Typography>
             </Box>
@@ -146,7 +149,7 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
         {/* Status change — mod/admin only */}
         {isMod && isEditable && (
           <Box>
-            <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.5, mb: 0.75 }}>
+            <Typography sx={{ color: dt.paper.textMuted, fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, mb: 0.75 }}>
               ZMIEŃ STATUS
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -156,56 +159,56 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
                 size="small"
                 disabled={saving}
                 sx={{
-                  fontFamily: 'monospace', fontSize: 12, color: statusColor,
-                  bgcolor: '#07111e',
-                  '& .MuiSelect-icon': { color: '#3a7a8a' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#1a3548' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#2a5a6a' },
+                  fontSize: 13, fontWeight: 700, color: statusColor,
+                  bgcolor: dt.paper.bgInput,
+                  '& .MuiSelect-icon': { color: dt.paper.textSecondary },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: dt.paper.border },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#a89674' },
                   minWidth: 160,
                 }}
               >
                 {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                  <MenuItem key={val} value={val} sx={{ fontFamily: 'monospace', fontSize: 12 }}>{label}</MenuItem>
+                  <MenuItem key={val} value={val} sx={{ fontSize: 13 }}>{label}</MenuItem>
                 ))}
               </Select>
-              {saving && <CircularProgress size={16} sx={{ color: '#ff9800' }} />}
+              {saving && <CircularProgress size={16} sx={{ color: '#a85e00' }} />}
             </Box>
           </Box>
         )}
 
         {/* Comments */}
         <Box>
-          <Typography sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.5, mb: 0.75 }}>
+          <Typography sx={{ color: dt.paper.textMuted, fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, mb: 0.75 }}>
             KOMENTARZE {comments.length > 0 && `(${comments.length})`}
           </Typography>
           <Box sx={{
             display: 'flex', flexDirection: 'column', gap: 0.5,
-            p: 1, borderRadius: 1, bgcolor: '#07111e', border: '1px solid #1a3548',
+            p: 1, borderRadius: 1, bgcolor: dt.paper.bgAlt, border: `1px solid ${dt.paper.border}`,
             minHeight: 60, maxHeight: 200, overflowY: 'auto',
             '&::-webkit-scrollbar': { width: 4 },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#1a3548', borderRadius: 2 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: dt.paper.border, borderRadius: 2 },
           }}>
             {commentsLoading ? (
-              <Box sx={{ textAlign: 'center', py: 2 }}><CircularProgress size={18} sx={{ color: '#00acc1' }} /></Box>
+              <Box sx={{ textAlign: 'center', py: 2 }}><CircularProgress size={18} sx={{ color: '#00798c' }} /></Box>
             ) : comments.length === 0 ? (
-              <Typography sx={{ color: '#1a5a6a', fontFamily: 'monospace', fontSize: 11, textAlign: 'center', py: 1 }}>
+              <Typography sx={{ color: dt.paper.textMuted, fontSize: 12, textAlign: 'center', py: 1 }}>
                 Brak komentarzy
               </Typography>
             ) : (
               comments.map((c, i) => (
                 <Box key={c.id} sx={{
                   py: 0.75, px: 1, borderRadius: 0.5,
-                  bgcolor: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
+                  bgcolor: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.04)',
                 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.25 }}>
-                    <Typography sx={{ color: '#00acc1', fontFamily: 'monospace', fontSize: 10, fontWeight: 700 }}>
+                    <Typography sx={{ color: '#00798c', fontSize: 12, fontWeight: 700 }}>
                       {c.user?.username ?? 'użytkownik'}
                     </Typography>
-                    <Typography sx={{ color: '#2a5a6a', fontFamily: 'monospace', fontSize: 10 }}>
+                    <Typography sx={{ color: dt.paper.textMuted, fontFamily: 'monospace', fontSize: 11 }}>
                       {new Date(c.created_at).toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                     </Typography>
                   </Box>
-                  <Typography sx={{ color: '#c8e8f5', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.5, wordBreak: 'break-word' }}>
+                  <Typography sx={{ color: dt.paper.text, fontSize: 13, lineHeight: 1.5, wordBreak: 'break-word' }}>
                     {c.content}
                   </Typography>
                 </Box>
@@ -227,34 +230,35 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
               inputProps={{ maxLength: 1000 }}
               disabled={addingComment}
               sx={{
-                '& .MuiInputBase-root': { bgcolor: '#07111e', fontFamily: 'monospace', fontSize: 12, color: '#c8e8f5' },
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#1a3548' },
-                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#2a5a6a' },
-                '& .MuiInputBase-input::placeholder': { color: '#1a5a6a', opacity: 1 },
+                '& .MuiInputBase-root': { bgcolor: dt.paper.bgInput, fontSize: 13, color: dt.paper.text },
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: dt.paper.border },
+                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#a89674' },
+                '& .MuiInputBase-input::placeholder': { color: dt.paper.textMuted, opacity: 1 },
               }}
             />
             <Button
               type="submit"
               disabled={!commentValue.trim() || addingComment}
               sx={{
-                bgcolor: 'rgba(0,172,193,0.12)', color: '#00acc1',
-                border: '1px solid #1a5a6a', fontFamily: 'monospace',
-                fontSize: 11, fontWeight: 700, letterSpacing: 1,
+                bgcolor: dt.action.teal, color: dt.action.onTeal,
+                fontFamily: 'monospace',
+                fontSize: 12, fontWeight: 800, letterSpacing: 1,
                 px: 2, flexShrink: 0, alignSelf: 'flex-end',
-                '&:hover': { bgcolor: 'rgba(0,172,193,0.22)', borderColor: '#00acc1' },
-                '&.Mui-disabled': { color: '#1a3a4a', borderColor: '#0f2030', bgcolor: 'transparent' },
+                boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                '&:hover': { bgcolor: dt.action.tealHover },
+                '&.Mui-disabled': { color: dt.paper.textMuted, bgcolor: dt.paper.bgAlt },
               }}
             >
-              {addingComment ? <CircularProgress size={13} sx={{ color: '#00acc1' }} /> : 'WYŚLIJ'}
+              {addingComment ? <CircularProgress size={13} sx={{ color: dt.action.onTeal }} /> : 'WYŚLIJ'}
             </Button>
           </Box>
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 1.5, borderTop: '1px solid #152535' }}>
+      <DialogActions sx={{ px: 3, py: 1.5, borderTop: `1px solid ${dt.paper.divider}` }}>
         <Button
           onClick={onClose}
-          sx={{ color: '#3a7a8a', fontFamily: 'monospace', fontSize: 11, textTransform: 'none', letterSpacing: 1 }}
+          sx={{ color: dt.paper.textSecondary, fontFamily: 'monospace', fontSize: 12, fontWeight: 700, textTransform: 'none', letterSpacing: 1 }}
         >
           ZAMKNIJ
         </Button>

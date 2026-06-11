@@ -14,4 +14,15 @@ export interface ServiceDeskRequest {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  assigned_to_user?: {
+    id: number;
+    username?: string;
+    fullname?: string | null;
+  } | null;
+}
+
+/** Request type metadata returned by GET /service-desk/request-types */
+export interface ServiceDeskRequestTypeInfo {
+  id: string;
+  name: string;
 }

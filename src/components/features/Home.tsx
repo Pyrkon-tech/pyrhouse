@@ -27,7 +27,7 @@ import {
   ChevronRight,
   CheckCircle,
 } from '@mui/icons-material';
-import { getApiUrl } from '../../config/api';
+import { apiClient, ApiError } from '../../services/apiClient';
 import { jwtDecode } from 'jwt-decode';
 import { searchGlobalAPI } from '../../services/assetService';
 import type { GlobalSearchAsset, GlobalSearchStock } from '../../services/assetService';
@@ -107,11 +107,7 @@ const HomePage: React.FC = () => {
       try {
         const decoded = jwtDecode(token) as { userID: number };
         setUserTransfersLoading(true);
-        const res = await fetch(
-          getApiUrl(`/transfers/users/${decoded.userID}?status=in_transit`),
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        if (res.ok) setUserTransfers(await res.json());
+        setUserTransfers(await apiClient.get(`/transfers/users/${decoded.userID}?status=in_transit`));
       } catch {
         // ignore
       } finally {
@@ -140,34 +136,32 @@ const HomePage: React.FC = () => {
   const handleSearch = async () => {
     if (!pyrcode.trim()) return;
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(
-        getApiUrl(`/assets/pyrcode/${pyrcode.trim()}`),
-        { headers: { Authorization: `Bearer ${token}` } },
+      const data = await apiClient.get<{ id: number; category: { type?: string } }>(
+        `/assets/pyrcode/${pyrcode.trim()}`
       );
-      if (res.status === 404) { showSnackbar('error', 'Nie znaleziono sprzętu o podanym kodzie Pyrcode.'); return; }
-      if (!res.ok) throw new Error('Nie udało się pobrać szczegółów sprzętu.');
-      const data = await res.json();
       navigate(`/equipment/${data.id}?type=${data.category.type || 'asset'}`);
     } catch (err: unknown) {
-      showSnackbar('error', err instanceof Error ? err.message : 'Wystąpił nieoczekiwany błąd.');
+      if (err instanceof ApiError && err.status === 404) {
+        showSnackbar('error', 'Nie znaleziono sprzętu o podanym kodzie Pyrcode.');
+        return;
+      }
+      showSnackbar('error', 'Nie udało się pobrać szczegółów sprzętu.');
     }
   };
 
   const handleBarcodeScan = async (scannedCode: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(
-        getApiUrl(`/assets/pyrcode/${scannedCode.trim()}`),
-        { headers: { Authorization: `Bearer ${token}` } },
+      const data = await apiClient.get<{ id: number; category: { type?: string } }>(
+        `/assets/pyrcode/${scannedCode.trim()}`
       );
-      if (res.status === 404) { showSnackbar('error', 'Nie znaleziono sprzętu o podanym kodzie.'); return; }
-      if (!res.ok) throw new Error('Nie udało się pobrać szczegółów sprzętu.');
-      const data = await res.json();
       setShowScanner(false);
       navigate(`/equipment/${data.id}?type=${data.category.type || 'asset'}`);
     } catch (err: unknown) {
-      showSnackbar('error', err instanceof Error ? err.message : 'Wystąpił nieoczekiwany błąd.');
+      if (err instanceof ApiError && err.status === 404) {
+        showSnackbar('error', 'Nie znaleziono sprzętu o podanym kodzie.');
+        return;
+      }
+      showSnackbar('error', 'Nie udało się pobrać szczegółów sprzętu.');
     }
   };
 

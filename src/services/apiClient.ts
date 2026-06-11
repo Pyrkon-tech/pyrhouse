@@ -196,6 +196,42 @@ class ApiClient {
   }
 
   /**
+   * GET request zwracający surowy Blob (np. pliki CSV/PDF)
+   */
+  async getBlob(endpoint: string, config?: RequestConfig): Promise<Blob> {
+    const { timeout = this.defaultTimeout, skipAuth = false, ...fetchConfig } = config ?? {};
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...fetchConfig,
+        method: 'GET',
+        headers: {
+          ...(skipAuth ? {} : this.getAuthHeaders()),
+          ...fetchConfig.headers,
+        },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new ApiError(this.getErrorMessage(response.status), response.status);
+      }
+
+      return await response.blob();
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new ApiError('Przekroczono limit czasu żądania', 408);
+      }
+      throw new ApiError(error instanceof Error ? error.message : 'Błąd połączenia z serwerem', 0);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  /**
    * POST request
    */
   post<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {

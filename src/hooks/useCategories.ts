@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getApiUrl } from '../config/api';
+import { apiClient, ApiError } from '../services/apiClient';
 
 // Cache configuration
 const CACHE_KEY = 'categories_cache';
@@ -27,12 +27,17 @@ interface AddCategoryPayload {
   pyr_id?: string;
 }
 
+interface DeleteCategoryError {
+  message: string;
+  details?: string;
+}
+
 export const useCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCategories = async (forceRefresh = false) => {
+  const fetchCategories = useCallback(async (forceRefresh = false) => {
     try {
       // Check cache first (unless force refresh)
       if (!forceRefresh) {
@@ -47,12 +52,7 @@ export const useCategories = () => {
         }
       }
 
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/assets/categories'), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      const data = await response.json();
+      const data = await apiClient.get<Category[]>('/assets/categories');
 
       // Update cache
       localStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -62,67 +62,20 @@ export const useCategories = () => {
 
       setCategories(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof ApiError ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const createCategory = async (category: Omit<Category, 'id'>) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/assets/categories'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(category),
-      });
-      if (!response.ok) throw new Error('Failed to create category');
-      const data = await response.json();
-      // Inwalidacja cache'u żeby inne komponenty dostały świeże dane
-      localStorage.removeItem(CACHE_KEY);
-      setCategories(prev => [...prev, data]);
-      notifyCategoriesChanged();
-      return data;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      throw err;
-    }
-  };
+  // Powiadom inne komponenty o zmianie kategorii
+  const notifyCategoriesChanged = useCallback(() => {
+    window.dispatchEvent(new Event(CATEGORIES_CHANGED_EVENT));
+  }, []);
 
   const updateCategory = async (id: number, category: Partial<Category>) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/assets/categories/${id}`), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(category),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        if (response.status === 400) {
-          throw new Error(errorData.error || 'Nieprawidłowe dane kategorii');
-        }
-        
-        if (response.status === 409) {
-          throw new Error('Nie można zmodyfikować kategorii, ponieważ istnieją już przedmioty z tą kategorią');
-        }
-        
-        if (response.status === 500) {
-          throw new Error('Wystąpił błąd serwera podczas aktualizacji kategorii');
-        }
-        
-        throw new Error(errorData.error || 'Nie udało się zaktualizować kategorii');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.patch<Category>(`/assets/categories/${id}`, category);
       // Inwalidacja cache'u
       localStorage.removeItem(CACHE_KEY);
       // Aktualizacja stanu lokalnego
@@ -131,6 +84,15 @@ export const useCategories = () => {
       notifyCategoriesChanged();
       return data;
     } catch (err) {
+      if (err instanceof ApiError) {
+        const message = err.status === 409
+          ? 'Nie można zmodyfikować kategorii, ponieważ istnieją już przedmioty z tą kategorią'
+          : err.status === 500
+            ? 'Wystąpił błąd serwera podczas aktualizacji kategorii'
+            : err.message;
+        setError(message);
+        throw new Error(message);
+      }
       setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     }
@@ -148,42 +110,19 @@ export const useCategories = () => {
     return () => {
       window.removeEventListener(CATEGORIES_CHANGED_EVENT, handleCategoriesChanged);
     };
-  }, []);
-
-  // Powiadom inne komponenty o zmianie kategorii
-  const notifyCategoriesChanged = useCallback(() => {
-    window.dispatchEvent(new Event(CATEGORIES_CHANGED_EVENT));
-  }, []);
+  }, [fetchCategories]);
 
   const addCategory = async (payload: AddCategoryPayload) => {
     setLoading(true);
     setError(null); // Clear previous errors
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        getApiUrl('/assets/categories'),
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!response.ok) {
-        const errorResponse = await response.json();
-        throw new Error(errorResponse.error || 'Failed to add category');
-      }
-
-      const newCategory: Category = await response.json();
+      const newCategory = await apiClient.post<Category>('/assets/categories', payload);
       // Inwalidacja cache'u żeby inne komponenty dostały świeże dane
       localStorage.removeItem(CACHE_KEY);
       setCategories((prev) => [...prev, newCategory]);
       notifyCategoriesChanged();
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
@@ -193,52 +132,32 @@ export const useCategories = () => {
     setLoading(true);
     setError(null); // Clear previous errors
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        getApiUrl(`/assets/categories/${id}`),
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) {
-        let errorMessage = 'Nie udało się usunąć kategorii.';
-        let errorDetails = '';
-        let errorResponse;
-        try {
-          errorResponse = await response.json();
-        } catch {}
-        if (response.status === 409) {
-          errorMessage = 'Nie można usunąć kategorii, ponieważ jest już powiązana ze sprzętem.';
-          if (errorResponse?.details) {
-            errorDetails = errorResponse.details;
-          }
-        } else if (response.status === 500) {
-          errorMessage = 'Wystąpił błąd serwera podczas usuwania kategorii.';
-        } else if (errorResponse?.error) {
-          errorMessage = errorResponse.error;
-        }
-        // Zwracamy obiekt z message i details (jeśli są)
-        throw { message: errorMessage, details: errorDetails };
-      }
+      await apiClient.delete(`/assets/categories/${id}`);
 
       // Inwalidacja cache'u
       localStorage.removeItem(CACHE_KEY);
       setCategories((prev) => prev.filter((category) => category.id !== id));
       notifyCategoriesChanged();
-    } catch (err: any) {
-      // Obsługa obiektu błędu z message i details
-      if (err && typeof err === 'object' && 'message' in err) {
-        setError(err.message + (err.details ? `\n${err.details}` : ''));
-      } else {
-        setError(err.message || 'Wystąpił nieoczekiwany błąd podczas usuwania kategorii.');
+    } catch (err) {
+      let failure: DeleteCategoryError = { message: 'Nie udało się usunąć kategorii.' };
+      if (err instanceof ApiError) {
+        if (err.status === 409) {
+          failure = {
+            message: 'Nie można usunąć kategorii, ponieważ jest już powiązana ze sprzętem.',
+            details: typeof err.details === 'string' ? err.details : undefined,
+          };
+        } else if (err.status === 500) {
+          failure = { message: 'Wystąpił błąd serwera podczas usuwania kategorii.' };
+        } else {
+          failure = { message: err.message };
+        }
       }
-      throw err;
+      setError(failure.message + (failure.details ? `\n${failure.details}` : ''));
+      throw failure;
     } finally {
       setLoading(false);
     }
   };
 
-  return { categories, loading, error, addCategory, deleteCategory, createCategory, updateCategory, refreshCategories: fetchCategories, setError };
+  return { categories, loading, error, addCategory, deleteCategory, updateCategory, refreshCategories: fetchCategories, setError };
 };

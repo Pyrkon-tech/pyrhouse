@@ -9,7 +9,7 @@ import {
   Dialog,
 } from '@mui/material';
 import { BarcodeGenerator } from '../common/BarcodeGenerator';
-import { getApiUrl } from '../../config/api';
+import { apiClient, ApiError } from '../../services/apiClient';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { OriginSelect } from '../ui/OriginSelect';
@@ -34,7 +34,10 @@ interface Asset {
   origin?: string;
 }
 
-export const AddAssetForm: React.FC<{ categories: any[]; loading: boolean }> = ({ categories }) => {
+export const AddAssetForm: React.FC<{
+  categories: Array<{ id: number; label: string; type: 'asset' | 'stock' }>;
+  loading: boolean;
+}> = ({ categories }) => {
   const [serial, setSerial] = useState('');
   const [origin, setOrigin] = useState('probis');
   const [categoryID, setCategoryID] = useState('');
@@ -55,27 +58,11 @@ export const AddAssetForm: React.FC<{ categories: any[]; loading: boolean }> = (
     const finalOrigin = origin;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl('/assets'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          serial,
-          category_id: categoryID,
-          origin: finalOrigin,
-        }),
+      const responseData = await apiClient.post<Asset>('/assets', {
+        serial,
+        category_id: categoryID,
+        origin: finalOrigin,
       });
-
-      if (!response.ok) {
-        const errorResponse = await response.json();
-        showSnackbar('error', `HTTP ${response.status}: Nie udało się dodać sprzętu`, errorResponse.error, null);
-        return;
-      }
-
-      const responseData = await response.json();
       setCreatedAsset(responseData);
       setShowBarcode(true);
 
@@ -83,8 +70,12 @@ export const AddAssetForm: React.FC<{ categories: any[]; loading: boolean }> = (
       setSerial('');
       setCategoryID('');
       setOrigin('probis');
-    } catch (err: any) {
-      showSnackbar('error', 'Wystąpił nieoczekiwany błąd', err.message || 'Brak szczegółów', null);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        showSnackbar('error', `HTTP ${err.status}: Nie udało się dodać sprzętu`, err.message, null);
+      } else {
+        showSnackbar('error', 'Wystąpił nieoczekiwany błąd', err instanceof Error ? err.message : 'Brak szczegółów', null);
+      }
     } finally {
       setSubmitting(false);
     }

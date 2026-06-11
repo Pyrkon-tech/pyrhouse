@@ -126,12 +126,14 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
         </text>
       )}
 
-      {/* Exclamation circle — visible 24h before delivery (or same day if no time) */}
+      {/* Exclamation circle — visible ALERT_HOURS before effective deadline, red when overdue */}
       {metrics.alertVisible > 0 && (() => {
         const r = 30;
         const px = Math.round(cx + (bb.minX - cx) * 0.55);
         const py = Math.round(cy + (bb.minY - cy) * 0.55);
         const pulsing = metrics.alertPulsing > 0;
+        const isOverdue = metrics.overdue > 0;
+        const alertColor = isOverdue ? '#d32f2f' : '#ff9800';
         return (
           <g
             style={{ cursor: 'pointer' }}
@@ -139,19 +141,19 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
           >
             {/* Outer expanding ring */}
             {pulsing && (
-              <circle cx={px} cy={py} r={r} fill="none" stroke="#ff9800" strokeWidth={3} opacity={0}>
+              <circle cx={px} cy={py} r={r} fill="none" stroke={alertColor} strokeWidth={3} opacity={0}>
                 <animate attributeName="r" values={`${r};${r + 22};${r + 22}`} dur="1.2s" repeatCount="indefinite" />
                 <animate attributeName="opacity" values="0.9;0;0" dur="1.2s" repeatCount="indefinite" />
               </circle>
             )}
             {/* Glow */}
-            <circle cx={px} cy={py} r={r + 8} fill="#ff9800" style={{ filter: 'blur(10px)' }}>
+            <circle cx={px} cy={py} r={r + 8} fill={alertColor} style={{ filter: 'blur(10px)' }}>
               {pulsing
                 ? <animate attributeName="opacity" values="0.6;0.05;0.6" dur="1.2s" repeatCount="indefinite" />
                 : <animate attributeName="opacity" values="0.2;0.35;0.2" dur="2.4s" repeatCount="indefinite" />}
             </circle>
             {/* Circle background */}
-            <circle cx={px} cy={py} r={r} fill="#ff9800" stroke="rgba(255,255,255,0.8)" strokeWidth={2.5}>
+            <circle cx={px} cy={py} r={r} fill={alertColor} stroke="rgba(255,255,255,0.8)" strokeWidth={2.5}>
               {pulsing
                 ? <animate attributeName="opacity" values="1;0.4;1" dur="1.2s" repeatCount="indefinite" />
                 : <animate attributeName="opacity" values="1;0.8;1" dur="2.4s" repeatCount="indefinite" />}
@@ -162,14 +164,14 @@ const ZoneOverlay: React.FC<ZoneOverlayProps> = ({ zone, metrics, isSelected, on
               textAnchor="middle" dominantBaseline="central"
               fill="#fff" fontSize={r * 1.4} fontWeight="bold" fontFamily="monospace"
             >!</text>
-            {/* Counter badge */}
+            {/* Counter badge — inverted colors when the circle itself is red */}
             {metrics.alertVisible > 1 && (
               <>
-                <circle cx={px + r - 2} cy={py - r + 2} r={9} fill="#d32f2f" stroke="rgba(255,255,255,0.5)" strokeWidth={1} />
+                <circle cx={px + r - 2} cy={py - r + 2} r={9} fill={isOverdue ? '#fff' : '#d32f2f'} stroke="rgba(255,255,255,0.5)" strokeWidth={1} />
                 <text
                   x={px + r - 2} y={py - r + 3}
                   textAnchor="middle" dominantBaseline="central"
-                  fill="#fff" fontSize={11} fontWeight="bold" fontFamily="monospace"
+                  fill={isOverdue ? '#d32f2f' : '#fff'} fontSize={11} fontWeight="bold" fontFamily="monospace"
                 >{metrics.alertVisible}</text>
               </>
             )}

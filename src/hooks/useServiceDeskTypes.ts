@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { getApiUrl } from '../config/api';
+import { apiClient, ApiError } from '../services/apiClient';
+import type { ServiceDeskRequestTypeInfo } from '../types/servicedesk.types';
 
 const TYPES_API = '/service-desk/request-types';
 
 export const useServiceDeskTypes = () => {
-  const [types, setTypes] = useState<Record<string, any>>({});
+  const [types, setTypes] = useState<Record<string, ServiceDeskRequestTypeInfo>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,19 +16,18 @@ export const useServiceDeskTypes = () => {
       return;
     }
     setLoading(true);
-    const token = localStorage.getItem('token');
-    fetch(getApiUrl(TYPES_API), {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => res.json())
-      .then((data: any[]) => {
-        const map: Record<string, any> = {};
-        data.forEach((t: any) => { map[t.id] = t; });
+    apiClient
+      .get<ServiceDeskRequestTypeInfo[]>(TYPES_API)
+      .then((data) => {
+        const map: Record<string, ServiceDeskRequestTypeInfo> = {};
+        data.forEach((t) => { map[t.id] = t; });
         setTypes(map);
         sessionStorage.setItem('serviceDeskTypes', JSON.stringify(map));
       })
-      .catch(e => setError(e.message || 'Błąd pobierania typów zgłoszeń'))
+      .catch((e) =>
+        setError(e instanceof ApiError ? e.message : 'Błąd pobierania typów zgłoszeń')
+      )
       .finally(() => setLoading(false));
   }, []);
   return { types, loading, error };
-}; 
+};

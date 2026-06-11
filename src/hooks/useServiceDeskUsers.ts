@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { getUsersAPI } from '../services/userService';
 
+type ServiceDeskUser = Awaited<ReturnType<typeof getUsersAPI>>[number];
+
 export const useServiceDeskUsers = () => {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<ServiceDeskUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -12,8 +14,8 @@ export const useServiceDeskUsers = () => {
       try {
         const data = await getUsersAPI();
         setUsers(data);
-      } catch (e: any) {
-        setError(e.message || 'Błąd pobierania użytkowników');
+      } catch (e) {
+        setError(e instanceof Error && e.message ? e.message : 'Błąd pobierania użytkowników');
       } finally {
         setLoading(false);
       }
@@ -22,4 +24,4 @@ export const useServiceDeskUsers = () => {
   }, []);
 
   return { users, loading, error };
-}; 
+};
