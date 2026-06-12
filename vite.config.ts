@@ -122,4 +122,17 @@ export default defineConfig({
       }
     }
   },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      '@emotion/react',
+      '@emotion/styled',
+      '@mui/material',
+      '@mui/icons-material'
+    ],
+    // Load-bearing on Vite 6: without this exclude the dev optimizer creates a
+    // second emotion/react graph → "Invalid hook call" white page in dev
+    exclude: ['@emotion/cache'],
+  },
 })
