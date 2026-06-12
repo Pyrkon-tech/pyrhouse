@@ -12,12 +12,7 @@ export default defineConfig({
     react({
       jsxImportSource: '@emotion/react',
       babel: {
-        plugins: [
-          ['@babel/plugin-transform-runtime', {
-            regenerator: true
-          }],
-          '@emotion/babel-plugin'
-        ]
+        plugins: ['@emotion/babel-plugin']
       }
     }),
     compression({
@@ -134,20 +129,5 @@ export default defineConfig({
       '@mui/icons-material'
     ],
     exclude: ['@emotion/cache'],
-    esbuildOptions: {
-      target: 'es2015',
-      treeShaking: true,
-      define: {
-        global: 'globalThis'
-    }
-  }
   },
-  esbuild: {
-    jsxFactory: 'React.createElement',
-    jsxFragment: 'React.Fragment',
-    treeShaking: true,
-    minifyWhitespace: true,
-    minifyIdentifiers: true,
-    minifySyntax: true
-  }
 })

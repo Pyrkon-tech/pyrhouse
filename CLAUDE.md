@@ -14,7 +14,7 @@ PyrHouse to aplikacja React/TypeScript do zarządzania stanami magazynowymi dla 
 
 - **Framework**: React 19.2 + TypeScript 5.9
 - **UI**: Material-UI 5.18 + Emotion
-- **Build**: Vite 6.4
+- **Build**: Vite 8 (Rolldown)
 - **Routing**: React Router DOM 7.17
 - **State**: React Context + Custom Hooks
 - **Formularze**: react-hook-form

@@ -233,7 +233,7 @@ const TransferDetailsPage: React.FC = () => {
       },
       (geoError) => {
         console.error('Błąd podczas pobierania lokalizacji:', geoError);
-        let errorMessage = 'Nie udało się pobrać Twojej lokalizacji';
+        let errorMessage: string;
 
         switch (geoError.code) {
           case geoError.PERMISSION_DENIED:

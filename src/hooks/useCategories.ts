@@ -91,7 +91,7 @@ export const useCategories = () => {
             ? 'Wystąpił błąd serwera podczas aktualizacji kategorii'
             : err.message;
         setError(message);
-        throw new Error(message);
+        throw new Error(message, { cause: err });
       }
       setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;

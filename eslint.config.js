@@ -28,7 +28,13 @@ export default [
     rules: {
       ...js.configs.recommended.rules,
       ...eslintPlugin.configs.recommended.rules,
-      ...reactHooks.configs.recommended.rules,
+      // react-hooks v7: only the two classic rules. The recommended preset also
+      // ships React Compiler readiness diagnostics (set-state-in-effect, refs,
+      // purity, immutability, incompatible-library) — they flag patterns this
+      // codebase uses on purpose (fetch-in-effect, ref-prop registries) and only
+      // matter once we adopt the React Compiler. Revisit then.
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
@@ -81,8 +87,14 @@ export default [
   },
   {
     // Context modules intentionally export a provider component alongside its hook;
-    // losing fast-refresh granularity there is an accepted trade-off
-    files: ['src/context/**', 'src/theme/ThemeContext.tsx'],
+    // definition modules (navigation, transferStatus) export lazy-icon maps and
+    // JSX helpers next to constants. Losing fast-refresh granularity there is fine.
+    files: [
+      'src/context/**',
+      'src/theme/ThemeContext.tsx',
+      'src/components/layout/navigation.tsx',
+      'src/components/features/Transfer/components/details/transferStatus.tsx',
+    ],
     rules: {
       'react-refresh/only-export-components': 'off',
     },

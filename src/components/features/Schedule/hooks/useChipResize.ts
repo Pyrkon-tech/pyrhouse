@@ -144,7 +144,7 @@ export function useChipResize(
       const hourSpan = s.maxHour - s.minHour || 1;
 
       let newStartPct = s.origStartPct;
-      let newWidthPct = s.origWidthPct;
+      let newWidthPct: number;
 
       if (s.edge === 'right') {
         newWidthPct = s.origWidthPct + deltaPct;
