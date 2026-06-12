@@ -69,7 +69,9 @@ export default defineConfig({
     }
   },
   preview: {
-    port: 3000,
+    // Must NOT share the dev-server origin: the built app registers a PWA
+    // service worker which would hijack dev requests on the same port
+    port: 4173,
     strictPort: true,
     cors: true,
     headers: {
@@ -110,24 +112,14 @@ export default defineConfig({
     sourcemap: false,
     terserOptions: {
       compress: {
-        drop_console: true,
+        // Keep console.error/warn in prod — a crashing app with a silent console
+        // is undebuggable (drop_console: true stripped errors too)
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']
+        pure_funcs: ['console.log', 'console.info', 'console.debug']
       },
       format: {
         comments: false
       }
     }
-  },
-  optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      '@emotion/react',
-      '@emotion/styled',
-      '@mui/material',
-      '@mui/icons-material'
-    ],
-    exclude: ['@emotion/cache'],
   },
 })

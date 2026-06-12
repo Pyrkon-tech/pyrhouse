@@ -55,20 +55,27 @@ export const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({
     canvas.width = 240;
     canvas.height = 120;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    JsBarcode(canvas, assets[currentIndex].pyrcode, {
-      format: 'CODE128',
-      width: 2,
-      height: 40,
-      displayValue: true,
-      fontSize: 12,
-      margin: 5,
-      background: '#FFFFFF',
-      lineColor: '#000000',
-      textAlign: 'center',
-      textPosition: 'bottom',
-      textMargin: 2,
-      text: assets[currentIndex].pyrcode
-    });
+    try {
+      JsBarcode(canvas, assets[currentIndex].pyrcode, {
+        format: 'CODE128',
+        width: 2,
+        height: 40,
+        displayValue: true,
+        fontSize: 12,
+        margin: 5,
+        background: '#FFFFFF',
+        lineColor: '#000000',
+        textAlign: 'center',
+        textPosition: 'bottom',
+        textMargin: 2,
+        text: assets[currentIndex].pyrcode
+      });
+      setError('');
+    } catch (err) {
+      // Invalid CODE128 input must not crash the whole page
+      console.error('Błąd generowania kodu kreskowego:', err);
+      setError(`Nie udało się wygenerować kodu dla "${assets[currentIndex].pyrcode}"`);
+    }
   }, [assets, currentIndex]);
 
   const generateBarcodeSVGDataUrl = (value: string, options: Record<string, unknown> = {}, isPortrait = false) => {

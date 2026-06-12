@@ -50,6 +50,28 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
               Wystąpił błąd podczas ładowania tej części aplikacji.<br />Spróbuj odświeżyć stronę.
             </Typography>
+            {this.state.error && (
+              <Typography
+                variant="caption"
+                component="pre"
+                sx={{
+                  display: 'block',
+                  textAlign: 'left',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  bgcolor: 'action.hover',
+                  borderRadius: 1,
+                  p: 1,
+                  mb: 2,
+                  maxHeight: 160,
+                  overflow: 'auto',
+                  fontFamily: 'monospace',
+                }}
+              >
+                {this.state.error.message}
+                {this.state.error.stack ? `\n${this.state.error.stack.split('\n').slice(1, 4).join('\n')}` : ''}
+              </Typography>
+            )}
             <Button variant="contained" color="primary" onClick={this.handleReload}>
               Odśwież stronę
             </Button>
