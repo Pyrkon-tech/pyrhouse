@@ -175,7 +175,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                     }}
                   >
                     <ListItemText
-                      primary={item.type === 'pyr_code' 
+                      slotProps={{ secondary: { component: 'div' } }}
+                      primary={item.type === 'pyr_code'
                         ? item.pyrcode
                         : item.category?.label}
                       secondary={
