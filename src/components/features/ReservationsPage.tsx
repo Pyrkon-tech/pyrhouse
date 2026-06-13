@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import JsBarcode from 'jsbarcode';
-import { jsPDF } from 'jspdf';
 import {
   Box,
   Container,
@@ -472,10 +471,12 @@ const ReservationsPage: React.FC = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (selectedReservations.length === 0) return;
     setIsPrinting(true);
     try {
+      // jspdf (~450KB) loads on demand, only when labels are actually printed
+      const { jsPDF } = await import('jspdf');
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [40, 80] });
       for (let i = 0; i < selectedReservations.length; i++) {
         if (i > 0) doc.addPage();

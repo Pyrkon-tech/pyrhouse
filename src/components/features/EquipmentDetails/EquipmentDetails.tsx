@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Box,
   Typography,
@@ -14,7 +14,6 @@ import { CheckCircle, LocationOn, Inventory2 } from '@mui/icons-material';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { deleteAsset } from '../../../services/assetService';
-import { BarcodeGenerator } from '../../common/BarcodeGenerator';
 import { apiClient, ApiError } from '../../../services/apiClient';
 import { locationService, MapPosition } from '../../../services/locationService';
 import { useSnackbarMessage } from '../../../hooks/useSnackbarMessage';
@@ -25,6 +24,12 @@ import AssetLogTimeline from './AssetLogTimeline';
 import BasicInfoSection from './BasicInfoSection';
 import ActionCards from './ActionCards';
 import type { AssetLog, EquipmentDetailsData } from './types';
+
+// jspdf + html2canvas (~650KB) load only when barcodes are actually shown
+const BarcodeGenerator = lazy(() =>
+  import('../../common/BarcodeGenerator').then((m) => ({ default: m.BarcodeGenerator }))
+);
+
 
 const EquipmentDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -292,6 +297,7 @@ const EquipmentDetails: React.FC = () => {
         fullWidth
       >
         <DialogContent>
+          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}>
           <BarcodeGenerator
             assets={[{
               id: details.id,
@@ -304,6 +310,7 @@ const EquipmentDetails: React.FC = () => {
             } as unknown as React.ComponentProps<typeof BarcodeGenerator>['assets'][number]]}
             onClose={() => setShowBarcode(false)}
           />
+          </Suspense>
         </DialogContent>
       </Dialog>
 

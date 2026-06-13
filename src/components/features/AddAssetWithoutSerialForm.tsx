@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import {
   Box,
   Button,
@@ -15,9 +15,14 @@ import {
   Grid
 } from '@mui/material';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
+
+// jspdf + html2canvas (~650KB) load only when barcodes are actually shown
+const BarcodeGenerator = lazy(() =>
+  import('../common/BarcodeGenerator').then((m) => ({ default: m.BarcodeGenerator }))
+);
+
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { addAssetsWithoutSerialAPI } from '../../services/assetService';
-import { BarcodeGenerator } from '../common/BarcodeGenerator';
 import { OriginSelect } from '../ui/OriginSelect';
 
 export const AddAssetWithoutSerialForm: React.FC<{
@@ -162,13 +167,15 @@ export const AddAssetWithoutSerialForm: React.FC<{
         <DialogTitle>Wygenerowane kody kreskowe</DialogTitle>
         <DialogContent>
           {createdAssets.length > 0 ? (
-            <BarcodeGenerator
-              assets={createdAssets}
-              onClose={() => {
-                setShowBarcodes(false);
-                setCreatedAssets([]);
-              }}
-            />
+            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}>
+              <BarcodeGenerator
+                assets={createdAssets}
+                onClose={() => {
+                  setShowBarcodes(false);
+                  setCreatedAssets([]);
+                }}
+              />
+            </Suspense>
           ) : (
             <Typography color="error">
               Brak danych do wygenerowania kodów kreskowych
