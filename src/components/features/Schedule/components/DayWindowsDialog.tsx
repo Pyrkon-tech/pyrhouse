@@ -161,17 +161,20 @@ const DayWindowsDialog: React.FC<DayWindowsDialogProps> = ({
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>Okna montażowe</Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             Czas pracy na dzień montażu/demontażu
           </Typography>
         </Box>
         <IconButton size="small" onClick={onClose}><CloseIcon fontSize="small" /></IconButton>
       </DialogTitle>
-
       <DialogContent dividers sx={{ p: 0 }}>
         {allDates.length === 0 ? (
           <Box sx={{ p: 3 }}>
-            <Typography color="text.secondary" variant="body2">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Brak dni montażu/demontażu w tym harmonogramie.
             </Typography>
           </Box>
@@ -221,7 +224,13 @@ const DayWindowsDialog: React.FC<DayWindowsDialogProps> = ({
             <Divider />
             <Box sx={{ p: 2 }}>
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Regeneracja slotów</Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  display: 'block',
+                  mb: 1.5
+                }}>
                 Usuwa wszystkie sloty montaż/demontaż (i ich przypisania), tworzy nowe 1h sloty według aktualnych okien. Sloty festiwalowe pozostają nienaruszone.
               </Typography>
               {regenerateError && <Alert severity="error" sx={{ mb: 1.5, py: 0.5 }}>{regenerateError}</Alert>}
@@ -238,7 +247,12 @@ const DayWindowsDialog: React.FC<DayWindowsDialogProps> = ({
                 </Button>
               ) : (
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                  <Typography variant="caption" color="warning.main" sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "warning.main",
+                      fontWeight: 600
+                    }}>
                     Na pewno? Przypisania montażowe zostaną wyczyszczone.
                   </Typography>
                   <Button size="small" color="warning" variant="contained" onClick={handleRegenerate} disabled={regenerating}>
@@ -254,7 +268,6 @@ const DayWindowsDialog: React.FC<DayWindowsDialogProps> = ({
           </>
         )}
       </DialogContent>
-
       <DialogActions sx={{ px: 2, py: 1.5 }}>
         <Button onClick={onClose} size="small">Zamknij</Button>
       </DialogActions>

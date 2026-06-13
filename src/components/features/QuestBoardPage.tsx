@@ -227,7 +227,9 @@ const QuestBoardPage: React.FC = () => {
             <Typography variant="h5" sx={{ fontWeight: 700, color }}>
               {stats[key]}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               {label}
             </Typography>
           </Paper>
@@ -296,15 +298,17 @@ const QuestBoardPage: React.FC = () => {
         placeholder="Szukaj po odbiorcy, lokalizacji..."
         defaultValue={searchQuery}
         onChange={(e) => debouncedSearch(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <Suspense fallback={null}>
-              <SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} />
-            </Suspense>
-          ),
-          sx: { borderRadius: 1 },
-        }}
         sx={{ minWidth: 200, flex: 2 }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <Suspense fallback={null}>
+                <SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} />
+              </Suspense>
+            ),
+            sx: { borderRadius: 1 },
+          }
+        }}
       />
       <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
         <Select
@@ -368,7 +372,9 @@ const QuestBoardPage: React.FC = () => {
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
                   {quest.destination.pavilion}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>
                   {quest.destination.location}
                 </Typography>
               </TableCell>
@@ -376,7 +382,12 @@ const QuestBoardPage: React.FC = () => {
               <TableCell>
                 {formatDate(quest.delivery_date)}
                 {quest.pickup_time && (
-                  <Typography variant="caption" display="block" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: "block",
+                      color: "text.secondary"
+                    }}>
                     {quest.pickup_time}
                   </Typography>
                 )}
@@ -462,20 +473,30 @@ const QuestBoardPage: React.FC = () => {
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Odbiorca:</Typography>
-                  <Typography variant="body2" fontWeight="bold">{quest.recipient}</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Odbiorca:</Typography>
+                  <Typography variant="body2" sx={{
+                    fontWeight: "bold"
+                  }}>{quest.recipient}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Data dostawy:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Data dostawy:</Typography>
                   <Typography variant="body2">{formatDate(quest.delivery_date)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Przedmioty:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Przedmioty:</Typography>
                   <Typography variant="body2">{quest.items.length} poz.</Typography>
                 </Box>
                 {quest.transfers.length > 0 && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
-                    <Typography variant="body2" color="text.secondary">Transfery:</Typography>
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>Transfery:</Typography>
                     <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                       {quest.transfers.map(t => (
                         <Chip
@@ -531,7 +552,9 @@ const QuestBoardPage: React.FC = () => {
         >
           Poprzednia
         </Button>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           Strona {page + 1} z {totalPages}
         </Typography>
         <Button
@@ -635,23 +658,18 @@ const QuestBoardPage: React.FC = () => {
           </Button>
         )}
       </Box>
-
       {/* Sync info */}
       {renderSyncInfo()}
-
       {/* Stats */}
       {!loading && renderStatsBar()}
-
       {/* Error */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-
       {/* ── List View ── */}
       {renderFilters()}
-
       {loading ? (
         <LoadingSkeleton />
       ) : filteredQuests.length === 0 ? (
@@ -665,10 +683,17 @@ const QuestBoardPage: React.FC = () => {
             borderColor: 'divider',
           }}
         >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{
+            color: "text.secondary"
+          }}>
             Brak zamówień
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mb: 3
+            }}>
             {hasActiveFilters
               ? 'Spróbuj zmienić kryteria wyszukiwania'
               : 'Brak zamówień do wyświetlenia. Uruchom synchronizację z Google Sheets.'}
@@ -682,7 +707,6 @@ const QuestBoardPage: React.FC = () => {
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}
-
       {!loading && renderPagination()}
     </Box>
   );

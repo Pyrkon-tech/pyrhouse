@@ -262,7 +262,9 @@ const CategoryManagementPage: React.FC = () => {
               </Typography>
             </TableCell>
             <TableCell>
-              <Typography component="div" color="text.secondary">
+              <Typography component="div" sx={{
+                color: "text.secondary"
+              }}>
                 {category.pyr_id || '-'}
               </Typography>
             </TableCell>
@@ -333,18 +335,24 @@ const CategoryManagementPage: React.FC = () => {
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Label:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Label:</Typography>
                   <Typography variant="body2">{category.label}</Typography>
                 </Box>
                 {category.name && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Name:</Typography>
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>Name:</Typography>
                     <Typography variant="body2">{category.name}</Typography>
                   </Box>
                 )}
                 {category.pyr_id && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">PyrID:</Typography>
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>PyrID:</Typography>
                     <Typography variant="body2">{category.pyr_id}</Typography>
                   </Box>
                 )}
@@ -412,7 +420,6 @@ const CategoryManagementPage: React.FC = () => {
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-
       <PageHeader
         title="Kategorie"
         subtitle={`${filteredCategories.length} kategorii`}
@@ -424,7 +431,6 @@ const CategoryManagementPage: React.FC = () => {
           ) : undefined
         }
       />
-
       <Box sx={{ mb: 3 }}>
         <SearchBar
           value={searchQuery}
@@ -433,7 +439,6 @@ const CategoryManagementPage: React.FC = () => {
           width="100%"
         />
       </Box>
-
       {loading ? (
         <PageLoader message="Ładowanie kategorii..." />
       ) : filteredCategories.length === 0 ? (
@@ -445,14 +450,15 @@ const CategoryManagementPage: React.FC = () => {
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}
-
       <Dialog
         open={dialogs.addOpen}
         onClose={handleCloseAddModal}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            minWidth: { xs: '90%', sm: 400 }
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              minWidth: { xs: '90%', sm: 400 }
+            }
           }
         }}
       >
@@ -520,7 +526,6 @@ const CategoryManagementPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <ConfirmDialog
         open={dialogs.isDeleteOpen}
         title="Potwierdź usunięcie"
@@ -531,15 +536,16 @@ const CategoryManagementPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onClose={dialogs.closeDelete}
       />
-
       <Dialog
         open={dialogs.isEditOpen}
         onClose={handleCloseEditModal}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            maxWidth: '500px',
-            width: '100%'
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              maxWidth: '500px',
+              width: '100%'
+            }
           }
         }}
       >

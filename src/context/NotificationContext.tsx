@@ -127,7 +127,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         autoHideDuration={notification?.autoHideDuration}
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        TransitionComponent={SlideTransition}
+        slots={{
+          transition: SlideTransition
+        }}
       >
         {notification ? (
           <Alert

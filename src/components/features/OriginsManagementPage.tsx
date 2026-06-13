@@ -160,7 +160,12 @@ const OriginsManagementPage: React.FC = () => {
           <Card sx={{ opacity: origin.active ? 1 : 0.6, borderRadius: 2 }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant="body1" fontFamily="monospace" fontWeight="bold">
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontFamily: "monospace",
+                    fontWeight: "bold"
+                  }}>
                   {origin.slug}
                 </Typography>
                 <Chip
@@ -176,15 +181,21 @@ const OriginsManagementPage: React.FC = () => {
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">Label:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Label:</Typography>
                   <Typography variant="body2">{origin.label}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">Sort Order:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Sort Order:</Typography>
                   <Typography variant="body2">{origin.sort_order}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">Allow Suffix:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Allow Suffix:</Typography>
                   <Chip
                     label={origin.allow_suffix ? 'Tak' : 'Nie'}
                     size="small"
@@ -235,7 +246,9 @@ const OriginsManagementPage: React.FC = () => {
           origins.map((origin) => (
             <TableRow key={origin.id} sx={{ opacity: origin.active ? 1 : 0.5 }}>
               <TableCell>
-                <Typography variant="body2" fontFamily="monospace">
+                <Typography variant="body2" sx={{
+                  fontFamily: "monospace"
+                }}>
                   {origin.slug}
                 </Typography>
               </TableCell>
@@ -322,7 +335,12 @@ const OriginsManagementPage: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : origins.length === 0 ? (
-          <Typography color="text.secondary" textAlign="center" sx={{ mt: 4 }}>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              textAlign: "center",
+              mt: 4
+            }}>
             Brak originów
           </Typography>
         ) : (
@@ -381,12 +399,22 @@ const OriginsManagementPage: React.FC = () => {
           <>
             <Typography>
               Czy na pewno chcesz usunąć origin{' '}
-              <Typography component="span" fontFamily="monospace" fontWeight="bold">
+              <Typography
+                component="span"
+                sx={{
+                  fontFamily: "monospace",
+                  fontWeight: "bold"
+                }}>
                 {dialogs.deleteItem?.slug}
               </Typography>
               ?
             </Typography>
-            <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "warning.main",
+                mt: 1
+              }}>
               Operacja jest nieodwracalna. Jeśli origin ma przypisany sprzęt, usunięcie zostanie zablokowane (409).
             </Typography>
           </>
@@ -401,7 +429,12 @@ const OriginsManagementPage: React.FC = () => {
       <Dialog open={dialogs.isEditOpen} onClose={dialogs.closeEdit} maxWidth="sm" fullWidth>
         <DialogTitle>
           Edytuj origin:{' '}
-          <Typography component="span" fontFamily="monospace" color="text.secondary">
+          <Typography
+            component="span"
+            sx={{
+              fontFamily: "monospace",
+              color: "text.secondary"
+            }}>
             {dialogs.editItem?.slug}
           </Typography>
         </DialogTitle>

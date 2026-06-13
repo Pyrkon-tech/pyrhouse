@@ -47,7 +47,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <Typography variant="h5" color="primary" gutterBottom>
               Coś poszło nie tak :(
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "text.secondary",
+                mb: 2
+              }}>
               Wystąpił błąd podczas ładowania tej części aplikacji.<br />Spróbuj odświeżyć stronę.
             </Typography>
             {this.state.error && (

@@ -308,7 +308,9 @@ const TransferDetailsPage: React.FC = () => {
           gap: 2
         }}>
           <CircularProgress size={60} />
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" sx={{
+            color: "text.secondary"
+          }}>
             Ładowanie szczegółów quest'a...
           </Typography>
         </Box>
@@ -376,7 +378,6 @@ const TransferDetailsPage: React.FC = () => {
           Status Transferu #{id}
         </Typography>
       </Box>
-
       <Paper sx={{ p: { xs: 1.5, sm: 3 }, mb: 3 }}>
         <Box sx={{ overflowX: 'auto', display: 'flex', flexDirection: { xs: 'column' }, justifyContent: 'center' }}>
           {!isMobile ? (
@@ -403,7 +404,9 @@ const TransferDetailsPage: React.FC = () => {
         </Box>
         {transfer.status === 'in_transit' && hasAdminAccess && (
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            <Typography variant="subtitle2" gutterBottom sx={{
+              color: "text.secondary"
+            }}>
               Akcje transferu
             </Typography>
             <Divider sx={{ mb: 3 }} />
@@ -455,7 +458,6 @@ const TransferDetailsPage: React.FC = () => {
           </Box>
         )}
       </Paper>
-
       <TransferInfoSection
         transfer={transfer}
         loading={loading}
@@ -476,9 +478,7 @@ const TransferDetailsPage: React.FC = () => {
           </Suspense>
         }
       />
-
       <TransferItemsSection transfer={transfer} onRestoreClick={handleRestoreClick} />
-
       {restoreDialogOpen && selectedItem && (
         <Suspense fallback={<CircularProgress />}>
           <RestoreDialog
@@ -495,7 +495,6 @@ const TransferDetailsPage: React.FC = () => {
           />
         </Suspense>
       )}
-
       <Dialog
         open={cancelDialogOpen}
         onClose={() => setCancelDialogOpen(false)}
@@ -532,15 +531,16 @@ const TransferDetailsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={locationDialogOpen}
         onClose={() => setLocationDialogOpen(false)}
         maxWidth="md"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+            }
           }
         }}
       >
@@ -564,7 +564,6 @@ const TransferDetailsPage: React.FC = () => {
           </Suspense>
         </DialogContent>
       </Dialog>
-
       <EditUsersDialog
         open={editUsersDialogOpen}
         saving={loading}

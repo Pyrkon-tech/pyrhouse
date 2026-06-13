@@ -53,7 +53,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     onClose={() => !loading && onClose()}
     maxWidth="xs"
     fullWidth
-    PaperProps={{ sx: { borderRadius: 2 } }}
+    slotProps={{
+      paper: { sx: { borderRadius: 2 } }
+    }}
   >
     <DialogTitle>{title}</DialogTitle>
     <DialogContent>

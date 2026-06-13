@@ -116,9 +116,11 @@ export const AddAssetWithoutSerialForm: React.FC<{
             onChange={handleQuantityChange}
             onFocus={handleQuantityFocus}
             onBlur={handleQuantityBlur}
-            inputProps={{ min: 1 }}
             fullWidth
             required
+            slotProps={{
+              htmlInput: { min: 1 }
+            }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>

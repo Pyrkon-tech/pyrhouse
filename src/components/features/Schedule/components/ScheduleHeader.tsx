@@ -168,7 +168,13 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
             </Tooltip>
           </>
         )}
-        <Typography variant="h5" fontWeight={700} sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 700,
+            flex: 1,
+            minWidth: 0
+          }}>
           {schedule.name}
         </Typography>
         {displayValidation && (
@@ -274,7 +280,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
           )}
         </Menu>
       </Box>
-
       {/* Delete schedule dialog */}
       <Dialog open={deleteOpen} onClose={() => { setDeleteOpen(false); cancelHold(); }} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700, color: 'error.main' }}>
@@ -284,7 +289,13 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
           <Typography variant="body2" sx={{ mb: 2 }}>
             Usunięcie <strong>{schedule.name}</strong> skasuje wszystkie sloty, wolontariuszy i przypisania. Operacja jest nieodwracalna.
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: 'block',
+              mb: 1
+            }}>
             Przytrzymaj przycisk poniżej przez 2.5 sekundy, żeby potwierdzić:
           </Typography>
           <Box sx={{ position: 'relative' }}>
@@ -316,7 +327,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
           <Button size="small" onClick={() => { setDeleteOpen(false); cancelHold(); }}>Anuluj</Button>
         </DialogActions>
       </Dialog>
-
       {/* Phase filter tabs + sync status */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>

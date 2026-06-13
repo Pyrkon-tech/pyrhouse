@@ -4,7 +4,7 @@ import type { SelectChangeEvent } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import { useSendPublicServiceDeskRequest } from '../../../services/serviceDeskPublicService';
 import { useLocations } from '../../../hooks/useLocations';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import { StyledPaper, StyledTextField, StyledSelect, StyledButton, StyledFormControl } from './ServiceDeskForm.styles';
 import type { Location } from '../../../types/location.types';
 
@@ -93,7 +93,13 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
             mb: 2,
           }}>
             <CheckCircleOutlineIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
-            <Typography variant="h5" fontWeight={700} sx={{ color: '#2e7d32', mb: 0.5 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 700,
+                color: '#2e7d32',
+                mb: 0.5
+              }}>
               Dziękujemy za zgłoszenie!
             </Typography>
             <Typography variant="body1" sx={{ color: '#333', mb: 3, maxWidth: 320, mx: 'auto' }}>
@@ -107,9 +113,19 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
       ) : (
         <StyledPaper isPublic={hidePriority} className={className}>
           <Box sx={{ mb: { xs: 0, sm: 1 } }}>
-            <Typography variant="h5" fontWeight={700} color="primary.main">{title}</Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 700,
+                color: "primary.main"
+              }}>{title}</Typography>
             {subtitle && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{subtitle}</Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  mt: 1
+                }}>{subtitle}</Typography>
             )}
           </Box>
           <form onSubmit={async (e) => {
@@ -151,7 +167,7 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
                 fullWidth
                 required
                 margin="normal"
-                inputProps={{ maxLength: 60, minLength: 2 }}
+                slotProps={{ htmlInput: { maxLength: 60, minLength: 2 } }}
                 error={!!form.created_by && form.created_by.length < 2}
               />
             )}
@@ -164,7 +180,7 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
               fullWidth
               required
               margin="normal"
-              inputProps={{ maxLength: 80 }}
+              slotProps={{ htmlInput: { maxLength: 80 } }}
             />
             <StyledTextField
               isPublic={hidePriority}
@@ -176,7 +192,7 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
               margin="normal"
               multiline
               minRows={3}
-              inputProps={{ maxLength: 500 }}
+              slotProps={{ htmlInput: { maxLength: 500 } }}
               placeholder="np. co dokładnie nie działa, dodatkowe szczegóły..."
             />
             <StyledFormControl isPublic={hidePriority} fullWidth margin="normal" required>
@@ -237,9 +253,12 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
                   margin="normal"
                   required
                   placeholder="Wpisz lub wybierz z listy..."
-                  inputProps={{
-                    ...params.inputProps,
-                    maxLength: 60,
+                  slotProps={{
+                    ...params.slotProps,
+                    htmlInput: {
+                      ...params.slotProps.htmlInput,
+                      maxLength: 60,
+                    },
                   }}
                   helperText={locationId !== null ? '✓ Wybrano z listy' : undefined}
                 />

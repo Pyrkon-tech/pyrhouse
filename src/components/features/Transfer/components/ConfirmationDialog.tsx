@@ -40,10 +40,12 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 1,
-          p: 0.5
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 1,
+            p: 0.5
+          }
         }
       }}
     >
@@ -59,7 +61,6 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           Potwierdź szczegóły questa
         </Typography>
       </DialogTitle>
-
       <DialogContent sx={{ mt: 1 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {/* Lokalizacje */}
@@ -75,12 +76,20 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               <Typography variant="subtitle1">Lokalizacje</Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box flex={1}>
-                <Typography variant="body2" color="text.secondary">Z lokalizacji</Typography>
+              <Box sx={{
+                flex: 1
+              }}>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>Z lokalizacji</Typography>
                 <Typography>{locations.find(l => l.id === formData.fromLocation)?.name}</Typography>
               </Box>
-              <Box flex={1}>
-                <Typography variant="body2" color="text.secondary">Do lokalizacji</Typography>
+              <Box sx={{
+                flex: 1
+              }}>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>Do lokalizacji</Typography>
                 <Typography>{locations.find(l => l.id === parseInt(formData.toLocation?.toString() || ''))?.name}</Typography>
               </Box>
             </Box>
@@ -193,7 +202,6 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           </Box>
         </Box>
       </DialogContent>
-
       <DialogActions sx={{ 
         borderTop: '1px solid',
         borderColor: 'divider',

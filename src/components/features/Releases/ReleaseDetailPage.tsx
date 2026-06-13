@@ -329,7 +329,6 @@ const ReleaseDetailPage: React.FC = () => {
       }} />
       {/* Print view (hidden on screen, shown only when printing) */}
       <PrintView release={release} />
-
       <Box
         sx={{
           margin: '0 auto',
@@ -370,7 +369,9 @@ const ReleaseDetailPage: React.FC = () => {
                 />
               </Box>
               {release.origin_label && (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   {release.origin_label}
                 </Typography>
               )}
@@ -424,24 +425,37 @@ const ReleaseDetailPage: React.FC = () => {
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
             {release.origin_label && (
               <Box>
-                <Typography variant="caption" color="text.secondary">Pochodzenie</Typography>
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>Pochodzenie</Typography>
                 <Typography variant="body1">{release.origin_label}</Typography>
               </Box>
             )}
             {release.created_by_name && (
               <Box>
-                <Typography variant="caption" color="text.secondary">Wystawił</Typography>
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>Wystawił</Typography>
                 <Typography variant="body1">{release.created_by_name}</Typography>
               </Box>
             )}
             <Box>
-              <Typography variant="caption" color="text.secondary">Utworzone</Typography>
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>Utworzone</Typography>
               <Typography variant="body1">{formatDate(release.created_at)}</Typography>
             </Box>
             {release.completed_at && (
               <Box>
-                <Typography variant="caption" color="text.secondary">Potwierdzone</Typography>
-                <Typography variant="body1" color="success.main" sx={{ fontWeight: 600 }}>
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>Potwierdzone</Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "success.main",
+                    fontWeight: 600
+                  }}>
                   {formatDate(release.completed_at)}
                 </Typography>
               </Box>
@@ -450,7 +464,9 @@ const ReleaseDetailPage: React.FC = () => {
           {release.notes && (
             <>
               <Divider sx={{ my: 1.5 }} />
-              <Typography variant="caption" color="text.secondary">Notatki</Typography>
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>Notatki</Typography>
               <Typography variant="body2">{release.notes}</Typography>
             </>
           )}
@@ -462,7 +478,13 @@ const ReleaseDetailPage: React.FC = () => {
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5 }}>
               Sprzęt seryjny ({editMode ? displayAssets.length : release.summary.total_assets})
               {editMode && release.assets.length > 0 && (
-                <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    ml: 1
+                  }}>
                   (odznacz aby usunąć z wydania)
                 </Typography>
               )}
@@ -520,7 +542,13 @@ const ReleaseDetailPage: React.FC = () => {
                 ? Array.from(editedStockQty.values()).reduce((s, v) => s + v, 0)
                 : release.summary.total_stock_quantity} szt.)
               {editMode && (
-                <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    ml: 1
+                  }}>
                   (ustaw 0 aby usunąć)
                 </Typography>
               )}
@@ -552,8 +580,10 @@ const ReleaseDetailPage: React.FC = () => {
                                 return next;
                               });
                             }}
-                            inputProps={{ min: 0 }}
                             sx={{ width: 80 }}
+                            slotProps={{
+                              htmlInput: { min: 0 }
+                            }}
                           />
                         </Tooltip>
                       ) : (
@@ -568,7 +598,6 @@ const ReleaseDetailPage: React.FC = () => {
           </Box>
         )}
       </Box>
-
       {/* Confirm release dialog */}
       <ConfirmDialog
         open={confirmDialog}
@@ -591,7 +620,6 @@ const ReleaseDetailPage: React.FC = () => {
         loading={confirming}
         onConfirm={handleConfirm}
       />
-
       {/* Delete dialog */}
       <ConfirmDialog
         open={deleteDialog}

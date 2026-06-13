@@ -101,9 +101,14 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
         )}
         <Typography
           variant="body2"
-          fontWeight={700}
-          sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 14 }}
-        >
+          sx={{
+            fontWeight: 700,
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontSize: 14
+          }}>
           {req.title}
         </Typography>
         <Tooltip title="Szczegóły">
@@ -116,16 +121,19 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
           </IconButton>
         </Tooltip>
       </Box>
-
       {/* Description */}
       <Typography
         variant="caption"
-        color="text.secondary"
-        sx={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: 12 }}
-      >
+        sx={{
+          color: "text.secondary",
+          overflow: 'hidden',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          fontSize: 12
+        }}>
         {req.description}
       </Typography>
-
       {/* Chips row */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
         {req.priority && (
@@ -157,7 +165,6 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
           />
         )}
       </Box>
-
       {/* Footer: assigned (primary/left) + reporter (secondary/right) */}
       <Box
         sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pt: 0.5, borderTop: '1px solid', borderColor: 'divider' }}
@@ -170,7 +177,12 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
           <Avatar sx={{ width: 20, height: 20, bgcolor: 'background.default', color: 'text.primary', fontSize: 11 }}>
             {req.assigned_to_user ? req.assigned_to_user.username[0]?.toUpperCase() : <PersonAddIcon sx={{ fontSize: 14 }} />}
           </Avatar>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              fontSize: 11
+            }}>
             {req.assigned_to_user ? req.assigned_to_user.username : '—'}
           </Typography>
         </Box>
@@ -178,7 +190,12 @@ const KanbanCardContent: React.FC<KanbanCardProps> = ({
           <Avatar sx={{ width: 20, height: 20, fontSize: 11, bgcolor: 'background.default', color: 'text.primary' }}>
             {req.created_by_user?.username?.[0] || '?'}
           </Avatar>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              fontSize: 11
+            }}>
             {req.created_by_user?.username || req.created_by}
           </Typography>
         </Box>
@@ -252,7 +269,12 @@ const KanbanColumnView: React.FC<{
           borderColor: 'divider',
         }}
       >
-        <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 700,
+            flex: 1
+          }}>
           {column.label}
         </Typography>
         <Badge
@@ -261,7 +283,6 @@ const KanbanColumnView: React.FC<{
           sx={{ '& .MuiBadge-badge': { bgcolor: column.color, color: '#fff', fontSize: 11, minWidth: 20, height: 20 } }}
         />
       </Box>
-
       {/* Cards area */}
       <Box
         ref={setNodeRef}
@@ -279,7 +300,13 @@ const KanbanColumnView: React.FC<{
         }}
       >
         {cards.length === 0 ? (
-          <Typography variant="caption" color="text.disabled" sx={{ textAlign: 'center', mt: 2 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.disabled",
+              textAlign: 'center',
+              mt: 2
+            }}>
             Brak zgłoszeń
           </Typography>
         ) : (

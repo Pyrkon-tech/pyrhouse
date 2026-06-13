@@ -42,14 +42,20 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions
     <Box>
       <Typography
         variant="h5"
-        fontWeight={700}
-        color="primary.main"
-        sx={{ lineHeight: 1.2 }}
-      >
+        sx={{
+          fontWeight: 700,
+          color: "primary.main",
+          lineHeight: 1.2
+        }}>
         {title}
       </Typography>
       {subtitle && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mt: 0.25
+          }}>
           {subtitle}
         </Typography>
       )}

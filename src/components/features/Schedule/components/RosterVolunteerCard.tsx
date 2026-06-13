@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import type { ScheduleVolunteer, ScheduleSlot } from '../../../../types/schedule.types';
 import { SLOT_TYPE_CONFIG } from '../constants';
 
@@ -140,7 +140,6 @@ const RosterVolunteerCard: React.FC<RosterVolunteerCardProps> = ({
           )}
         </Box>
       </Tooltip>
-
       <Dialog open={confirmOpen} onClose={handleDialogClose} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700 }}>
           Usuń wolontariusza
@@ -149,7 +148,13 @@ const RosterVolunteerCard: React.FC<RosterVolunteerCardProps> = ({
           <Typography variant="body2" sx={{ mb: 1.5 }}>
             Usunięcie <strong>{volunteer.nickname}</strong> skasuje wszystkie jego przypisania do slotów. Nie da się cofnąć.
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: 'block',
+              mb: 0.75
+            }}>
             Wpisz ksywkę wolontariusza, żeby potwierdzić:
           </Typography>
           <TextField

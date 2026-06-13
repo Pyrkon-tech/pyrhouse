@@ -149,19 +149,33 @@ const RosterSidebar: React.FC<RosterSidebarProps> = ({
                 value={rosterSearch}
                 onChange={(e) => onSearchChange(e.target.value)}
                 fullWidth
-                InputProps={{ sx: { fontSize: '0.7rem', height: 24 } }}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 0.75 } }}
+                slotProps={{
+                  input: { sx: { fontSize: '0.7rem', height: 24 } }
+                }}
               />
             </Box>
 
             {/* Volunteer list */}
             <Box sx={{ flex: 1, overflowY: 'auto', px: 0.5, pb: 0.25 }}>
               {allVolunteers.length === 0 ? (
-                <Typography variant="caption" color="text.disabled" sx={{ fontSize: 10, p: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.disabled",
+                    fontSize: 10,
+                    p: 0.5
+                  }}>
                   Brak wolontariuszy.
                 </Typography>
               ) : volunteers.length === 0 ? (
-                <Typography variant="caption" color="text.disabled" sx={{ fontSize: 10, p: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.disabled",
+                    fontSize: 10,
+                    p: 0.5
+                  }}>
                   Brak wyników dla "{rosterSearch}"
                 </Typography>
               ) : (
@@ -189,7 +203,12 @@ const RosterSidebar: React.FC<RosterSidebarProps> = ({
 
             {/* Footer stats */}
             <Box sx={{ px: 1, py: 0.75, borderTop: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  fontSize: 10
+                }}>
                 Przypisania łącznie: {totalAssigned}
               </Typography>
             </Box>

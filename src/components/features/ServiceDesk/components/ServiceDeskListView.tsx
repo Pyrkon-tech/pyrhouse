@@ -61,7 +61,9 @@ const ServiceDeskListView: React.FC<ServiceDeskListViewProps> = ({
               sx={{ cursor: 'pointer', '&:hover': { bgcolor: theme => theme.palette.action.hover } }}
             >
               <TableCell>
-                <Typography variant="body2" fontWeight={500}>
+                <Typography variant="body2" sx={{
+                  fontWeight: 500
+                }}>
                   {req.title}
                 </Typography>
               </TableCell>
@@ -123,7 +125,12 @@ const ServiceDeskListView: React.FC<ServiceDeskListViewProps> = ({
                     <Avatar sx={{ width: 28, height: 28, bgcolor: 'background.default', color: 'text.primary', fontWeight: 600 }}>
                       {req.assigned_to_user ? req.assigned_to_user.username[0]?.toUpperCase() : <PersonAddIcon fontSize="small" />}
                     </Avatar>
-                    <Typography variant="body2" fontWeight={500} color="text.secondary">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                        color: "text.secondary"
+                      }}>
                       {req.assigned_to_user ? req.assigned_to_user.username : 'Nie przypisano'}
                     </Typography>
                   </Box>
@@ -134,7 +141,7 @@ const ServiceDeskListView: React.FC<ServiceDeskListViewProps> = ({
                   onClose={handleAssignDropdownClose}
                   anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                   transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  PaperProps={{ sx: { minWidth: menuWidth } }}
+                  slotProps={{ paper: { sx: { minWidth: menuWidth } } }}
                 >
                   {users.map(user => (
                     <MenuItem

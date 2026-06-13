@@ -353,7 +353,6 @@ const QuestDetailPage: React.FC = () => {
           </Menu>
         </Box>
       </Box>
-
       {/* Transfer managed banner */}
       {hasActiveTransfer && (
         <Alert severity="info" sx={{ mb: 3 }}>
@@ -361,7 +360,6 @@ const QuestDetailPage: React.FC = () => {
           Zmiany statusu następują automatycznie po aktualizacji transferu.
         </Alert>
       )}
-
       {/* Quest info */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3}>
@@ -369,7 +367,9 @@ const QuestDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Suspense fallback={null}><PlaceIcon color="primary" /></Suspense>
               <Box>
-                <Typography variant="caption" color="text.secondary">Cel dostawy</Typography>
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>Cel dostawy</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {quest.destination.pavilion} — {quest.destination.location}
                 </Typography>
@@ -393,7 +393,9 @@ const QuestDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Suspense fallback={null}><PersonIcon color="primary" /></Suspense>
               <Box>
-                <Typography variant="caption" color="text.secondary">Odbiorca</Typography>
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>Odbiorca</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {quest.recipient}
                 </Typography>
@@ -405,7 +407,9 @@ const QuestDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Suspense fallback={null}><CalendarTodayIcon color="primary" /></Suspense>
               <Box>
-                <Typography variant="caption" color="text.secondary">Data dostawy</Typography>
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>Data dostawy</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {formatDate(quest.delivery_date)}
                   {quest.pickup_time && ` (odbiór: ${quest.pickup_time})`}
@@ -419,7 +423,9 @@ const QuestDetailPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Suspense fallback={null}><AccountBalanceWalletIcon color="primary" /></Suspense>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">Odpowiedzialna za budżet</Typography>
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>Odpowiedzialna za budżet</Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
                     {quest.budget_owner}
                   </Typography>
@@ -430,7 +436,6 @@ const QuestDetailPage: React.FC = () => {
 
         </Grid>
       </Paper>
-
       {/* Location resolution banner */}
       {!quest.location_resolved && (
         <Alert
@@ -441,7 +446,13 @@ const QuestDetailPage: React.FC = () => {
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
             Lokalizacja nieprzypisana — wymagane ręczne przypisanie przed wydaniem sprzętu
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: 'block',
+              mb: 1.5
+            }}>
             Formularz: <strong>{quest.destination.pavilion}</strong> / <strong>{quest.destination.location}</strong> — nie pasuje do żadnej lokalizacji w systemie
           </Typography>
           {hasAdminAccess && (
@@ -480,7 +491,6 @@ const QuestDetailPage: React.FC = () => {
           )}
         </Alert>
       )}
-
       {/* Action buttons */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         {/* Issue button - only for pending quests without a transfer and with resolved location */}
@@ -509,7 +519,6 @@ const QuestDetailPage: React.FC = () => {
         )}
 
       </Box>
-
       {/* Items table */}
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
         Przedmioty ({quest.items.length} poz., {totalItems} szt.)
@@ -541,17 +550,28 @@ const QuestDetailPage: React.FC = () => {
                   {getCategoryMatchChip(item.category_match, item.category_match_confidence)}
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     {item.budget_owner || quest.budget_owner || '—'}
                   </Typography>
                 </TableCell>
                 <TableCell sx={{ maxWidth: 240, wordBreak: 'break-word', '&&': { whiteSpace: 'pre-wrap', overflow: 'visible', textOverflow: 'clip' } }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: item.notes ? 'italic' : 'normal' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      fontStyle: item.notes ? 'italic' : 'normal'
+                    }}>
                     {item.notes || '—'}
                   </Typography>
                 </TableCell>
                 {hasTransfer && (() => {
-                  if (!item.category_id) return <TableCell align="center"><Typography variant="body2" color="text.secondary">—</Typography></TableCell>;
+                  if (!item.category_id) return (
+                    <TableCell align="center"><Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>—</Typography></TableCell>
+                  );
                   const sent = sentByCategory.get(item.category_id) ?? 0;
                   const needed = item.quantity;
                   const done = sent >= needed;
@@ -598,7 +618,6 @@ const QuestDetailPage: React.FC = () => {
           </Box>
         );
       })()}
-
       {/* Inline Transfer Form */}
       {canCreateTransfer && (
         <Box sx={{ mb: 3, display: showTransferForm ? 'block' : 'none' }}>
@@ -618,7 +637,6 @@ const QuestDetailPage: React.FC = () => {
           />
         </Box>
       )}
-
       {/* Linked Transfers */}
       {hasTransfer && (
         <Paper
@@ -656,7 +674,9 @@ const QuestDetailPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {getTransferStatusChip(t.status)}
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{
+                        color: "text.secondary"
+                      }}>
                         {new Date(t.created_at).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' })}
                       </Typography>
                     </Box>
@@ -679,7 +699,12 @@ const QuestDetailPage: React.FC = () => {
                     </Box>
                   )}
                   {itemSummary === null && (
-                    <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>Ładowanie…</Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        pl: 1
+                      }}>Ładowanie…</Typography>
                   )}
                 </Box>
               );
@@ -687,21 +712,25 @@ const QuestDetailPage: React.FC = () => {
           </Box>
         </Paper>
       )}
-
       {/* Metadata */}
       <Divider sx={{ mb: 2 }} />
       <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{
+          color: "text.secondary"
+        }}>
           ID: {quest.id}
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{
+          color: "text.secondary"
+        }}>
           Wiersze źródłowe: {quest.source_rows.join(', ')}
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{
+          color: "text.secondary"
+        }}>
           Ostatnia synchronizacja: {formatDateTime(quest.last_synced)}
         </Typography>
       </Box>
-
       {/* Status change confirmation dialog */}
       <Dialog open={pendingStatus !== null} onClose={() => setPendingStatus(null)}>
         <DialogTitle>Zmiana statusu zamówienia</DialogTitle>

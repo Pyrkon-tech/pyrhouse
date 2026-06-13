@@ -69,14 +69,16 @@ const RestoreDialog: React.FC<RestoreDialogProps> = ({
             label="Ilość do zwrócenia"
             value={quantity}
             onChange={handleQuantityChange}
-            inputProps={{ 
-              inputMode: 'numeric',
-              pattern: '[0-9]*',
-              min: 1,
-              max: currentQuantity
-            }}
             helperText={`Maksymalna dostępna ilość: ${currentQuantity}`}
             sx={{ mt: 2 }}
+            slotProps={{
+              htmlInput: { 
+                inputMode: 'numeric',
+                pattern: '[0-9]*',
+                min: 1,
+                max: currentQuantity
+              }
+            }}
           />
         )}
       </DialogContent>

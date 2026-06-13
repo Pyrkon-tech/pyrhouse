@@ -95,19 +95,21 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
       maxWidth="lg"
       fullWidth
       fullScreen={isMobile}
-      PaperProps={{
-        sx: theme => ({
-          borderRadius: isMobile ? 0 : 4,
-          background: theme.palette.mode === 'dark' ? 'rgba(32,32,40,0.98)' : 'rgba(255,255,255,0.98)',
-          color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.text.primary,
-          backdropFilter: 'blur(10px)',
-          boxShadow: isMobile ? 0 : 24,
-          p: 0,
-          maxWidth: isMobile ? '100vw' : 1100,
-          mx: 'auto',
-          overflow: 'visible',
-          minHeight: isMobile ? '100vh' : 600,
-        })
+      slotProps={{
+        paper: {
+          sx: theme => ({
+            borderRadius: isMobile ? 0 : 4,
+            background: theme.palette.mode === 'dark' ? 'rgba(32,32,40,0.98)' : 'rgba(255,255,255,0.98)',
+            color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.text.primary,
+            backdropFilter: 'blur(10px)',
+            boxShadow: isMobile ? 0 : 24,
+            p: 0,
+            maxWidth: isMobile ? '100vw' : 1100,
+            mx: 'auto',
+            overflow: 'visible',
+            minHeight: isMobile ? '100vh' : 600,
+          })
+        }
       }}
     >
       <Box sx={{ minHeight: isMobile ? '100vh' : 400, display: 'flex', flexDirection: 'column', height: isMobile ? '100dvh' : 'auto', position: 'relative' }}>
@@ -129,8 +131,8 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
           }}>
             <Typography
               variant="h6"
-              fontWeight={700}
               sx={{
+                fontWeight: 700,
                 fontSize: 20,
                 color: 'primary.main',
                 flex: 1,
@@ -142,9 +144,8 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
-                maxHeight: 56,
-              }}
-            >
+                maxHeight: 56
+              }}>
               {request.title}
             </Typography>
             <IconButton onClick={onClose} aria-label="Zamknij" sx={{ ml: 1, width: 36, height: 36, p: 0, borderRadius: '50%' }}>
@@ -241,11 +242,13 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                     fullWidth
                     multiline
                     maxRows={4}
-                    inputProps={{ maxLength: 1000 }}
                     sx={{ flex: 1, bgcolor: 'background.paper', borderRadius: 2 }}
                     disabled={addingComment}
                     onFocus={e => e.target.placeholder = ''}
                     onBlur={e => e.target.placeholder = 'Dodaj komentarz...'}
+                    slotProps={{
+                      htmlInput: { maxLength: 1000 }
+                    }}
                   />
                   <Button
                     type="submit"
@@ -315,7 +318,12 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
               </Box>
               {/* Przypisany */}
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, pl: 0, pr: 0 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 90 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    minWidth: 90
+                  }}>
                   Przypisany
                 </Typography>
                 <Box
@@ -340,7 +348,12 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                   <Avatar sx={{ width: 32, height: 32, bgcolor: 'background.default', color: 'text.primary', fontWeight: 600 }}>
                     {request.assigned_to_user ? request.assigned_to_user.username[0]?.toUpperCase() : <PersonAddIcon fontSize="small" />}
                   </Avatar>
-                  <Typography variant="body2" fontWeight={500} color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      color: "text.secondary"
+                    }}>
                     {request.assigned_to_user ? request.assigned_to_user.username : 'Nie przypisano'}
                   </Typography>
                 </Box>
@@ -350,7 +363,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                   onClose={handleAssignDropdownClose}
                   anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                   transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  PaperProps={{ sx: { minWidth: menuWidth } }}
+                  slotProps={{ paper: { sx: { minWidth: menuWidth } } }}
                 >
                   {users.map(user => (
                     <MenuItem
@@ -370,21 +383,30 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
               </Box>
               {/* Zgłaszający */}
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, pl: 0, pr: 0 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 90 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    minWidth: 90
+                  }}>
                   Zgłaszający
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Avatar sx={{ width: 32, height: 32, bgcolor: 'background.default', color: 'text.primary', fontWeight: 600 }}>
                     {request.created_by_user?.username?.[0]?.toUpperCase() || '?'}
                   </Avatar>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant="body2" sx={{
+                    fontWeight: 500
+                  }}>
                     {request.created_by_user?.username || request.created_by}
                   </Typography>
                 </Box>
               </Box>
               {/* Pozostałe szczegóły ... */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">Priorytet</Typography>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>Priorytet</Typography>
                 <Chip
                   label={request.priority === 'high' ? 'Wysoki' : request.priority === 'medium' ? 'Średni' : 'Niski'}
                   color={request.priority === 'high' ? 'error' : request.priority === 'medium' ? 'warning' : 'default'}
@@ -405,7 +427,9 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                 </Menu>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">Status</Typography>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>Status</Typography>
                 {(userRole === 'moderator' || userRole === 'admin' || userRole === 'dispatcher') ? (
                   <Select
                     value={request.status}
@@ -442,25 +466,41 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                 )}
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">Typ</Typography>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>Typ</Typography>
                 {request.type && types[request.type] && (
                   <Chip label={types[request.type].name} size="small" variant="outlined" />
                 )}
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">Lokalizacja</Typography>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>Lokalizacja</Typography>
                 <Typography variant="body2">{request.location || 'Brak'}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">Data utworzenia</Typography>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>Data utworzenia</Typography>
                 <Typography variant="body2">{new Date(request.created_at).toLocaleString('pl-PL')}</Typography>
               </Box>
             </>
           ) : (
-            <Grid container spacing={0} alignItems="flex-start" wrap="nowrap">
+            <Grid container spacing={0} wrap="nowrap" sx={{
+              alignItems: "flex-start"
+            }}>
               {/* Lewa kolumna: tytuł, opis, aktywność */}
               <Grid size={{ xs: 12, md: 7 }} sx={{ pr: 4, minWidth: 0 }}>
-                <Typography variant="h5" fontWeight={700} sx={{ mb: 2, color: 'primary.main', wordBreak: 'break-word', fontSize: { xs: 20, sm: 24 } }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    color: 'primary.main',
+                    wordBreak: 'break-word',
+                    fontSize: { xs: 20, sm: 24 }
+                  }}>
                   {request.title}
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 4, color: 'text.primary', wordBreak: 'break-word', fontSize: 16 }}>
@@ -478,11 +518,13 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                       fullWidth
                       multiline
                       maxRows={4}
-                      inputProps={{ maxLength: 1000 }}
                       sx={{ flex: 1, bgcolor: 'background.paper', borderRadius: 2 }}
                       disabled={addingComment}
                       onFocus={e => e.target.placeholder = ''}
                       onBlur={e => e.target.placeholder = 'Dodaj komentarz...'}
+                      slotProps={{
+                        htmlInput: { maxLength: 1000 }
+                      }}
                     />
                     <Button
                       type="submit"
@@ -557,12 +599,25 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
               </Grid>
               {/* Prawa kolumna: szczegóły zgłoszenia */}
               <Grid size={{ xs: 12, md: 5 }} sx={{ pl: 4, minWidth: 0, flex: 1 }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: 'text.secondary', letterSpacing: 1, fontSize: 16 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 600,
+                    mb: 2,
+                    color: 'text.secondary',
+                    letterSpacing: 1,
+                    fontSize: 16
+                  }}>
                   Szczegóły
                 </Typography>
                 {/* Przypisany */}
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, pl: 0, pr: 0 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ minWidth: 90 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      minWidth: 90
+                    }}>
                     Przypisany
                   </Typography>
                   <Box
@@ -587,7 +642,12 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                     <Avatar sx={{ width: 32, height: 32, bgcolor: 'background.default', color: 'text.primary', fontWeight: 600 }}>
                       {request.assigned_to_user ? request.assigned_to_user.username[0]?.toUpperCase() : <PersonAddIcon fontSize="small" />}
                     </Avatar>
-                    <Typography variant="body2" fontWeight={500} color="text.secondary">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                        color: "text.secondary"
+                      }}>
                       {request.assigned_to_user ? request.assigned_to_user.username : 'Nie przypisano'}
                     </Typography>
                   </Box>
@@ -597,7 +657,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                     onClose={handleAssignDropdownClose}
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                     transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                    PaperProps={{ sx: { minWidth: menuWidth } }}
+                    slotProps={{ paper: { sx: { minWidth: menuWidth } } }}
                   >
                     {users.map(user => (
                       <MenuItem
@@ -617,21 +677,30 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                 </Box>
                 {/* Zgłaszający */}
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, pl: 0, pr: 0 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ minWidth: 90 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      minWidth: 90
+                    }}>
                     Zgłaszający
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Avatar sx={{ width: 32, height: 32, bgcolor: 'background.default', color: 'text.primary', fontWeight: 600 }}>
                       {request.created_by_user?.username?.[0]?.toUpperCase() || '?'}
                     </Avatar>
-                    <Typography variant="body2" fontWeight={500}>
+                    <Typography variant="body2" sx={{
+                      fontWeight: 500
+                    }}>
                       {request.created_by_user?.username || request.created_by}
                     </Typography>
                   </Box>
                 </Box>
                 {/* Pozostałe szczegóły ... */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">Priorytet</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Priorytet</Typography>
                   <Chip
                     label={request.priority === 'high' ? 'Wysoki' : request.priority === 'medium' ? 'Średni' : 'Niski'}
                     color={request.priority === 'high' ? 'error' : request.priority === 'medium' ? 'warning' : 'default'}
@@ -652,7 +721,9 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                   </Menu>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">Status</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Status</Typography>
                   {(userRole === 'moderator' || userRole === 'admin') ? (
                     <Select
                       value={request.status}
@@ -689,17 +760,23 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                   )}
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">Typ</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Typ</Typography>
                   {request.type && types[request.type] && (
                     <Chip label={types[request.type].name} size="small" variant="outlined" />
                   )}
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">Lokalizacja</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Lokalizacja</Typography>
                   <Typography variant="body2">{request.location || 'Brak'}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">Data utworzenia</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Data utworzenia</Typography>
                   <Typography variant="body2">{new Date(request.created_at).toLocaleString('pl-PL')}</Typography>
                 </Box>
               </Grid>

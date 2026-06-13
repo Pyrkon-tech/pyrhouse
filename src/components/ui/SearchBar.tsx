@@ -42,19 +42,21 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     size={size}
     disabled={disabled}
     sx={{ flex: width ? undefined : 1, width }}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start">
-          <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-        </InputAdornment>
-      ),
-      endAdornment: value ? (
-        <InputAdornment position="end">
-          <IconButton size="small" onClick={() => onChange('')} edge="end" aria-label="Wyczyść">
-            <ClearIcon fontSize="small" />
-          </IconButton>
-        </InputAdornment>
-      ) : undefined,
+    slotProps={{
+      input: {
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+          </InputAdornment>
+        ),
+        endAdornment: value ? (
+          <InputAdornment position="end">
+            <IconButton size="small" onClick={() => onChange('')} edge="end" aria-label="Wyczyść">
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          </InputAdornment>
+        ) : undefined,
+      }
     }}
   />
 );

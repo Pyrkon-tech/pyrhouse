@@ -8,7 +8,7 @@ import {
   MenuItem,
   Divider,
 } from '@mui/material';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import type { ScheduleSlot, SlotType } from '../../../../types/schedule.types';
 import { SLOT_TYPE_CONFIG } from '../constants';
 import { parseAsLocal } from '../utils';
@@ -144,7 +144,9 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
         onChange={(e) => setSlotType(e.target.value as SlotType)}
         fullWidth
         sx={{ mb: 1.5 }}
-        InputProps={{ sx: { fontSize: '0.8rem' } }}
+        slotProps={{
+          input: { sx: { fontSize: '0.8rem' } }
+        }}
       >
         {Object.entries(SLOT_TYPE_CONFIG).map(([key, val]) => (
           <MenuItem key={key} value={key}>
@@ -155,7 +157,6 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
           </MenuItem>
         ))}
       </TextField>
-
       {/* Label */}
       <TextField
         size="small"
@@ -164,9 +165,10 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
         onChange={(e) => setLabel(e.target.value)}
         fullWidth
         sx={{ mb: 1.5 }}
-        InputProps={{ sx: { fontSize: '0.8rem' } }}
+        slotProps={{
+          input: { sx: { fontSize: '0.8rem' } }
+        }}
       />
-
       {/* Time range */}
       <Box sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
         <TextField
@@ -175,8 +177,10 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
           type="time"
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
-          InputProps={{ sx: { fontSize: '0.8rem' } }}
           sx={{ flex: 1 }}
+          slotProps={{
+            input: { sx: { fontSize: '0.8rem' } }
+          }}
         />
         <TextField
           size="small"
@@ -184,10 +188,12 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
           type="time"
           value={endTime}
           onChange={(e) => setEndTime(e.target.value)}
-          InputProps={{ sx: { fontSize: '0.8rem' } }}
           sx={{
             flex: 1,
             '& .MuiOutlinedInput-root': isCrossMidnight ? { borderColor: 'warning.main' } : {},
+          }}
+          slotProps={{
+            input: { sx: { fontSize: '0.8rem' } }
           }}
         />
       </Box>
@@ -204,16 +210,13 @@ const SlotEditor: React.FC<SlotEditorProps> = ({ slot, anchorEl, onClose, onUpda
           ? `⏱ ${durationLabel(startTime, endTime)} · przekracza północ`
           : `⏱ ${durationLabel(startTime, endTime)}`}
       </Typography>
-
       {/* Info: assigned volunteers */}
       {filled > 0 && (
         <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.65rem', mb: 1 }}>
           Przypisanych: {filled} wolontariusz{filled === 1 ? '' : filled < 5 ? 'y' : 'ów'}
         </Typography>
       )}
-
       <Divider sx={{ mb: 1 }} />
-
       {/* Actions */}
       {confirmDelete ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>

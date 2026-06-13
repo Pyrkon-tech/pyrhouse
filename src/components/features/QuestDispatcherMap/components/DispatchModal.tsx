@@ -126,13 +126,15 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: dt.paper.bg,
-          borderRadius: 2,
-          backgroundImage: 'none',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: dt.paper.bg,
+            borderRadius: 2,
+            backgroundImage: 'none',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
+          },
+        }
       }}
     >
       {/* Solid orange title bar — game-style modal header */}
@@ -146,7 +148,6 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
           </Typography>
         </Box>
       </DialogTitle>
-
       <DialogContent sx={{ py: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Quest info row */}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', mt: 1 }}>
@@ -378,18 +379,20 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                     }}
                   />
                 )}
-                ListboxProps={{
-                  sx: {
-                    bgcolor: dt.paper.bgInput,
-                    border: `1px solid ${dt.paper.border}`,
-                    '& .MuiAutocomplete-option': {
-                      fontSize: 13, color: dt.paper.text,
-                      '&:hover': { bgcolor: 'rgba(171,71,188,0.12)' },
-                      '&[aria-selected="true"]': { bgcolor: 'rgba(171,71,188,0.2)' },
-                    },
-                  },
-                }}
                 sx={{ flex: 1 }}
+                slotProps={{
+                  listbox: {
+                    sx: {
+                      bgcolor: dt.paper.bgInput,
+                      border: `1px solid ${dt.paper.border}`,
+                      '& .MuiAutocomplete-option': {
+                        fontSize: 13, color: dt.paper.text,
+                        '&:hover': { bgcolor: 'rgba(171,71,188,0.12)' },
+                        '&[aria-selected="true"]': { bgcolor: 'rgba(171,71,188,0.2)' },
+                      },
+                    },
+                  }
+                }}
               />
               <IconButton
                 onClick={() => setShowUserSearch(false)}
@@ -408,7 +411,6 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
           )}
         </Box>
       </DialogContent>
-
       <DialogActions sx={{ px: 3, py: 1.5, borderTop: `1px solid ${dt.paper.divider}` }}>
         <Button
           onClick={onClose}

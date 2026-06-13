@@ -49,8 +49,10 @@ export const PasswordDialog: React.FC<PasswordDialogProps> = ({ open, updating, 
         required
         fullWidth
         onKeyDown={e => { if (e.key === 'Enter') onSubmit(); if (e.key === 'Escape') onClose(); }}
-        inputProps={{ minLength: 6 }}
         disabled={updating}
+        slotProps={{
+          htmlInput: { minLength: 6 }
+        }}
       />
       <TextField
         label="Potwierdź nowe hasło"
@@ -62,8 +64,10 @@ export const PasswordDialog: React.FC<PasswordDialogProps> = ({ open, updating, 
         required
         fullWidth
         onKeyDown={e => { if (e.key === 'Enter') onSubmit(); if (e.key === 'Escape') onClose(); }}
-        inputProps={{ minLength: 6 }}
         disabled={updating}
+        slotProps={{
+          htmlInput: { minLength: 6 }
+        }}
       />
     </DialogContent>
     <DialogActions sx={{ flexDirection: { xs: 'column', sm: 'row' }, gap: 1, p: 2 }}>
@@ -100,8 +104,10 @@ export const PointsDialog: React.FC<PointsDialogProps> = ({ open, loading, value
         value={value}
         onChange={onChange}
         fullWidth
-        inputProps={{ step: 1 }}
         disabled={loading}
+        slotProps={{
+          htmlInput: { step: 1 }
+        }}
       />
       <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
         -100 oznacza odjęcie 100 punktów a 100 oznacza dodanie 100 punktów.
@@ -196,7 +202,9 @@ export const MergeDiscordDialog: React.FC<MergeDiscordDialogProps> = ({
                     </Box>
                   }
                   secondary={
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{
+                      color: "text.secondary"
+                    }}>
                       ID: {ghost.id} {ghost.fullname ? `· ${ghost.fullname}` : ''}
                     </Typography>
                   }

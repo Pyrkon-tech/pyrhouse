@@ -58,13 +58,15 @@ const ActiveQuestModal: React.FC<ActiveQuestModalProps> = ({ quest, onClose, onC
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: dt.paper.bg,
-          borderRadius: 2,
-          backgroundImage: 'none',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: dt.paper.bg,
+            borderRadius: 2,
+            backgroundImage: 'none',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
+          },
+        }
       }}
     >
       {/* Solid teal title bar — game-style modal header */}
@@ -85,7 +87,6 @@ const ActiveQuestModal: React.FC<ActiveQuestModalProps> = ({ quest, onClose, onC
           </IconButton>
         </Box>
       </DialogTitle>
-
       <DialogContent sx={{ py: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Typography sx={{ color: dt.paper.text, fontWeight: 700, fontSize: 17, mt: 1 }}>
           {quest.recipient}
@@ -168,7 +169,6 @@ const ActiveQuestModal: React.FC<ActiveQuestModalProps> = ({ quest, onClose, onC
         )}
 
       </DialogContent>
-
       <DialogActions sx={{ px: 3, py: 1.5, borderTop: `1px solid ${dt.paper.divider}`, gap: 1 }}>
         <Button
           onClick={handleNavigateToDetail}

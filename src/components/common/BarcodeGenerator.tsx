@@ -243,7 +243,9 @@ export const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({
   return (
     <Box sx={{ p: 2 }}>
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center">
+        <Grid container spacing={2} sx={{
+          alignItems: "center"
+        }}>
           <Grid size={{ xs: 12 }}>
             <Typography variant="h5" sx={{ mb: 3, textAlign: 'center' }}>
               Generowanie kodów kreskowych

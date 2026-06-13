@@ -94,7 +94,12 @@ const ReleasesListPage: React.FC = () => {
           <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: 'primary.main' }}>
             Demontażkon
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 0.5
+            }}>
             Trwałe wydania sprzętu do dostawców po zakończeniu eventu
           </Typography>
         </Box>
@@ -110,7 +115,6 @@ const ReleasesListPage: React.FC = () => {
           </Button>
         )}
       </Box>
-
       {/* Filters */}
       <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
         <FormControl size="small" sx={{ minWidth: 160 }}>
@@ -125,13 +129,11 @@ const ReleasesListPage: React.FC = () => {
           </Select>
         </FormControl>
       </Box>
-
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
           <CircularProgress />
@@ -147,10 +149,17 @@ const ReleasesListPage: React.FC = () => {
             borderColor: 'divider',
           }}
         >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{
+            color: "text.secondary"
+          }}>
             Brak wydań
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mb: 3
+            }}>
             {statusFilter ? 'Brak wydań o wybranym statusie.' : 'Utwórz pierwsze wydanie sprzętu do dostawcy.'}
           </Typography>
           {canCreate && (
@@ -190,21 +199,29 @@ const ReleasesListPage: React.FC = () => {
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                     {release.origin_label && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">Pochodzenie:</Typography>
+                        <Typography variant="body2" sx={{
+                          color: "text.secondary"
+                        }}>Pochodzenie:</Typography>
                         <Chip label={release.origin_label} size="small" variant="outlined" />
                       </Box>
                     )}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{
+                        color: "text.secondary"
+                      }}>
                         {release.status === 'completed' ? 'Potwierdzone:' : 'Utworzone:'}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{
+                        color: "text.secondary"
+                      }}>
                         {formatDate(release.completed_at ?? release.created_at)}
                       </Typography>
                     </Box>
                     {release.created_by_name && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">Autor:</Typography>
+                        <Typography variant="body2" sx={{
+                          color: "text.secondary"
+                        }}>Autor:</Typography>
                         <Typography variant="body2">{release.created_by_name}</Typography>
                       </Box>
                     )}

@@ -43,7 +43,9 @@ export const PageLoader: React.FC<PageLoaderProps> = ({
   >
     <CircularProgress size={size} />
     {message && (
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         {message}
       </Typography>
     )}

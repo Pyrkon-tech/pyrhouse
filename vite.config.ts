@@ -82,6 +82,15 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
+    server: {
+      deps: {
+        // MUI v9's Transition.mjs does a directory import of
+        // react-transition-group/TransitionGroupContext that Node's ESM
+        // resolver rejects under Vitest. Inline the MUI packages (and rtg) so
+        // Vite transforms those .mjs files and rewrites the inner import.
+        inline: [/@mui\//, 'react-transition-group'],
+      },
+    },
   },
   build: {
     target: 'es2020',

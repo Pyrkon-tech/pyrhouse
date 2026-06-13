@@ -7,7 +7,7 @@ import {
   History,
   LocalShipping,
   RemoveCircle,
-  CheckCircleOutline,
+  CheckCircleOutlined,
   Warehouse,
   GpsFixed,
   Navigation,
@@ -65,7 +65,7 @@ const getActionLabel = (action: string, log: AssetLog) => {
 const getTimelineIcon = (action: string, log: AssetLog) => {
   if (isWarehouseReturn(log)) return <Warehouse sx={{ fontSize: 20 }} />;
   switch (action.toUpperCase()) {
-    case 'DELIVERED': return <CheckCircleOutline sx={{ fontSize: 20 }} />;
+    case 'DELIVERED': return <CheckCircleOutlined sx={{ fontSize: 20 }} />;
     case 'IN_TRANSFER': return <LocalShipping sx={{ fontSize: 20 }} />;
     case 'REMOVE': return <RemoveCircle sx={{ fontSize: 20 }} />;
     case 'CREATE': return <AddCircle sx={{ fontSize: 20 }} />;
@@ -183,7 +183,6 @@ const AssetLogTimeline: React.FC<{ logs: AssetLog[] }> = ({ logs }) => {
           <Chip size="small" label={`${logs.length} zdarzeń`} variant="outlined" />
         )}
       </Box>
-
       {logs.length > 0 ? (
         <Box>
           {sortedLogs.map((log, index) => {
@@ -214,7 +213,6 @@ const AssetLogTimeline: React.FC<{ logs: AssetLog[] }> = ({ logs }) => {
                     <Box sx={{ width: 2, flex: 1, bgcolor: 'divider', mt: 0.5, mb: 0.5, minHeight: 24 }} />
                   )}
                 </Box>
-
                 {/* Event card */}
                 <Box sx={{ flex: 1, pb: isLast ? 0 : 2.5 }}>
                   <Box sx={{
@@ -240,7 +238,12 @@ const AssetLogTimeline: React.FC<{ logs: AssetLog[] }> = ({ logs }) => {
                       <Typography variant="subtitle2" sx={{ fontWeight: 700, color: actionColor }}>
                         {getActionLabel(log.action, log)}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          flexShrink: 0
+                        }}>
                         {new Date(log.created_at).toLocaleString('pl-PL')}
                       </Typography>
                     </Box>
@@ -271,7 +274,9 @@ const AssetLogTimeline: React.FC<{ logs: AssetLog[] }> = ({ logs }) => {
 
                       {/* Message */}
                       {log.data?.msg && (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{
+                          color: "text.secondary"
+                        }}>
                           {log.data.msg}
                         </Typography>
                       )}
@@ -308,7 +313,9 @@ const AssetLogTimeline: React.FC<{ logs: AssetLog[] }> = ({ logs }) => {
           borderColor: 'divider',
         }}>
           <History sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Brak historii dla tego elementu
           </Typography>
         </Box>

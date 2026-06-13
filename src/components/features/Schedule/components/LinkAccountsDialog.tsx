@@ -64,7 +64,9 @@ const LinkAccountsDialog: React.FC<LinkAccountsDialogProps> = ({
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 0.5 }}>
             {volunteers.length === 0 && (
-              <Typography variant="body2" color="text.secondary">Brak wolontariuszy w harmonogramie.</Typography>
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>Brak wolontariuszy w harmonogramie.</Typography>
             )}
             {volunteers.map((vol) => {
               const linkedUser = users.find((u) => u.id === vol.user_id);
@@ -90,12 +92,10 @@ const LinkAccountsDialog: React.FC<LinkAccountsDialogProps> = ({
                       {vol.assigned_hours}h / {vol.target_hours}h
                     </Typography>
                   </Box>
-
                   {/* Link icon */}
                   <Box sx={{ color: vol.user_id ? 'success.main' : 'text.disabled', flexShrink: 0 }}>
                     {vol.user_id ? <LinkIcon sx={{ fontSize: 16 }} /> : <LinkOffIcon sx={{ fontSize: 16 }} />}
                   </Box>
-
                   {/* User picker */}
                   <Autocomplete
                     size="small"
@@ -111,13 +111,17 @@ const LinkAccountsDialog: React.FC<LinkAccountsDialogProps> = ({
                       <TextField
                         {...params}
                         placeholder="Brak powiązania"
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: isSaving
-                            ? <CircularProgress size={14} color="inherit" />
-                            : params.InputProps.endAdornment,
-                        }}
                         sx={{ '& .MuiInputBase-root': { fontSize: '0.78rem' } }}
+                        slotProps={{
+                          ...params.slotProps,
+
+                          input: {
+                            ...params.slotProps.input,
+                            endAdornment: isSaving
+                              ? <CircularProgress size={14} color="inherit" />
+                              : params.slotProps.input.endAdornment,
+                          }
+                        }}
                       />
                     )}
                     renderOption={(props, u) => (

@@ -39,7 +39,12 @@ const UserTransfersList: React.FC<{
 }> = ({ transfers, loading, emptyMessage, onNavigate }) => {
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" p={3}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          p: 3
+        }}>
         <CircularProgress />
       </Box>
     );
@@ -96,15 +101,32 @@ const UserTransfersList: React.FC<{
                 <Chip label={status.label} color={status.color} size="small" sx={{ ml: { xs: 'auto', sm: 2 } }} />
               </Box>
               <Box sx={{ width: '100%', mt: { xs: 1, sm: 0 }, pl: { xs: 0, sm: 7 } }}>
-                <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 0.5
+                  }}>
                   <LocationOn fontSize="small" color="action" />
                   <Typography variant="body2">Z: {transfer.FromLocationName}</Typography>
                 </Box>
-                <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 0.5
+                  }}>
                   <LocationOn fontSize="small" color="action" />
                   <Typography variant="body2">Do: {transfer.ToLocationName}</Typography>
                 </Box>
-                <Typography variant="caption" display="block" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "block",
+                    color: "text.secondary"
+                  }}>
                   Utworzono: {formattedDate}
                 </Typography>
               </Box>

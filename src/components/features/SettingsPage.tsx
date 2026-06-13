@@ -162,19 +162,27 @@ const SettingsPage: React.FC = () => {
             <CardContent>
               <Typography
                 variant="body2"
-                fontFamily="monospace"
-                fontWeight="bold"
-                sx={{ mb: 0.5 }}
-              >
+                sx={{
+                  fontFamily: "monospace",
+                  fontWeight: "bold",
+                  mb: 0.5
+                }}>
                 {setting.key}
               </Typography>
               <Divider sx={{ my: 1 }} />
               {setting.description && (
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    mb: 1
+                  }}>
                   {setting.description}
                 </Typography>
               )}
-              <Typography variant="caption" color="text.disabled">
+              <Typography variant="caption" sx={{
+                color: "text.disabled"
+              }}>
                 Ostatnia zmiana: {new Date(setting.updated_at).toLocaleString('pl-PL')}
               </Typography>
             </CardContent>
@@ -196,7 +204,6 @@ const SettingsPage: React.FC = () => {
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-
       <Box
         sx={{
           display: 'flex',
@@ -207,7 +214,9 @@ const SettingsPage: React.FC = () => {
           mb: 3,
         }}
       >
-        <Typography variant="h5" fontWeight="bold">
+        <Typography variant="h5" sx={{
+          fontWeight: "bold"
+        }}>
           Ustawienia aplikacji
         </Typography>
         {!isMobile && (
@@ -236,14 +245,18 @@ const SettingsPage: React.FC = () => {
           </Box>
         )}
       </Box>
-
       {isMobile ? (
         loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
           </Box>
         ) : settings.length === 0 ? (
-          <Typography color="text.secondary" textAlign="center" sx={{ mt: 4 }}>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              textAlign: "center",
+              mt: 4
+            }}>
             Brak ustawień
           </Typography>
         ) : (
@@ -270,17 +283,29 @@ const SettingsPage: React.FC = () => {
                 return (
                   <TableRow key={setting.key}>
                     <TableCell>
-                      <Typography variant="body2" fontFamily="monospace" fontSize="0.8rem">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "monospace",
+                          fontSize: "0.8rem"
+                        }}>
                         {setting.key}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{
+                        color: "text.secondary"
+                      }}>
                         {setting.description}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: "0.75rem"
+                        }}>
                         {new Date(setting.updated_at).toLocaleString('pl-PL')}
                       </Typography>
                     </TableCell>
@@ -356,7 +381,6 @@ const SettingsPage: React.FC = () => {
           </TableBody>
         </DataTable>
       )}
-
       {/* Dialog potwierdzenia zapisu ustawienia */}
       <Dialog
         open={!!confirmSaveKey}
@@ -368,7 +392,12 @@ const SettingsPage: React.FC = () => {
         <DialogContent>
           <DialogContentText>
             Czy na pewno chcesz zmienić wartość ustawienia{' '}
-            <Typography component="span" fontFamily="monospace" fontWeight="bold">
+            <Typography
+              component="span"
+              sx={{
+                fontFamily: "monospace",
+                fontWeight: "bold"
+              }}>
               {confirmSaveKey}
             </Typography>
             ?

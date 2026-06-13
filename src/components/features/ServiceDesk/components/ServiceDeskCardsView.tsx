@@ -55,7 +55,18 @@ const ServiceDeskCardsView: React.FC<ServiceDeskCardsViewProps> = ({
           >
             <Box sx={{ p: 0.5, pb: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.2 }}>
-                <Typography variant="h6" fontWeight={800} sx={{ flex: 1, color: theme => theme.palette.text.primary, fontSize: 18, lineHeight: 1.2, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{req.title}</Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    flex: 1,
+                    color: theme => theme.palette.text.primary,
+                    fontSize: 18,
+                    lineHeight: 1.2,
+                    textOverflow: 'ellipsis',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap'
+                  }}>{req.title}</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0 }}>
                 <Typography variant="caption" sx={{ color: theme => theme.palette.text.secondary, fontStyle: 'italic', fontSize: 12 }}>
@@ -101,7 +112,13 @@ const ServiceDeskCardsView: React.FC<ServiceDeskCardsViewProps> = ({
                   <Avatar sx={{ width: 22, height: 22, bgcolor: 'background.default', color: 'text.primary', fontWeight: 600, fontSize: 12 }}>
                     {req.assigned_to_user ? req.assigned_to_user.username[0]?.toUpperCase() : <PersonAddIcon fontSize="small" />}
                   </Avatar>
-                  <Typography variant="body2" fontWeight={500} color="text.secondary" sx={{ fontSize: 12 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      color: "text.secondary",
+                      fontSize: 12
+                    }}>
                     {req.assigned_to_user ? req.assigned_to_user.username : 'Nie przypisano'}
                   </Typography>
                 </Box>

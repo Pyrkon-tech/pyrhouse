@@ -128,17 +128,23 @@ const QuickAssignPopover: React.FC<QuickAssignPopoverProps> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           fullWidth
-          InputProps={{ sx: { fontSize: '0.75rem', height: 30 } }}
           sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+          slotProps={{
+            input: { sx: { fontSize: '0.75rem', height: 30 } }
+          }}
         />
       </Box>
       <Box sx={{ overflowY: 'auto', maxHeight: 260 }}>
         {filtered.length === 0 ? (
           <Typography
             variant="caption"
-            color="text.disabled"
-            sx={{ display: 'block', p: 2, textAlign: 'center', fontSize: '0.7rem' }}
-          >
+            sx={{
+              color: "text.disabled",
+              display: 'block',
+              p: 2,
+              textAlign: 'center',
+              fontSize: '0.7rem'
+            }}>
             Brak wyników
           </Typography>
         ) : (

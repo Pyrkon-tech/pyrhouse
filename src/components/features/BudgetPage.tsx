@@ -83,13 +83,26 @@ const SummaryCard: React.FC<{
       pointerEvents: 'none',
     } : {},
   }}>
-    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', fontWeight: 700, fontSize: '0.6rem', letterSpacing: '0.1em' }}>
+    <Typography
+      variant="caption"
+      sx={{
+        color: "text.secondary",
+        textTransform: 'uppercase',
+        fontWeight: 700,
+        fontSize: '0.6rem',
+        letterSpacing: '0.1em'
+      }}>
       {label}
     </Typography>
     <Typography variant="h5" sx={{ fontWeight: 800, color: color ?? 'text.primary', my: 0.75, lineHeight: 1 }}>
       {value}
     </Typography>
-    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>{sub}</Typography>
+    <Typography
+      variant="caption"
+      sx={{
+        color: "text.secondary",
+        fontSize: '0.7rem'
+      }}>{sub}</Typography>
   </Paper>
 );
 
@@ -172,12 +185,15 @@ const PriceDrawer: React.FC<{
   const sortedItems = Object.keys(grouped).sort();
 
   return (
-    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: '100%', sm: 540 }, p: 3 } }}>
+    <Drawer anchor="right" open={open} onClose={onClose} slotProps={{
+      paper: { sx: { width: { xs: '100%', sm: 540 }, p: 3 } }
+    }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6" fontWeight={700}>Cennik</Typography>
+        <Typography variant="h6" sx={{
+          fontWeight: 700
+        }}>Cennik</Typography>
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </Box>
-
       <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
         <Button variant="outline" onClick={handleSync} disabled={syncing} style={{ flex: 1 }}>
           {syncing ? <CircularProgress size={16} sx={{ mr: 1 }} /> : <SyncIcon sx={{ mr: 1, fontSize: 18 }} />}
@@ -188,7 +204,6 @@ const PriceDrawer: React.FC<{
           Dodaj cenę
         </Button>
       </Box>
-
       {editing && (
         <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'primary.main' }}>
           <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
@@ -221,7 +236,9 @@ const PriceDrawer: React.FC<{
               value={editing.unit_price}
               onChange={e => setEditing(prev => prev && ({ ...prev, unit_price: e.target.value === '' ? '' : Number(e.target.value) }))}
               sx={{ flex: '1 1 120px' }}
-              inputProps={{ min: 0, step: 1 }}
+              slotProps={{
+                htmlInput: { min: 0, step: 1 }
+              }}
             />
           </Box>
           <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
@@ -232,7 +249,6 @@ const PriceDrawer: React.FC<{
           </Box>
         </Paper>
       )}
-
       <TableContainer>
         <Table size="small">
           <TableHead>
@@ -430,8 +446,15 @@ const BudgetPage: React.FC = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         <Box>
-          <Typography variant="h5" fontWeight={700}>Zapotrzebowanie techniczne</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography variant="h5" sx={{
+            fontWeight: 700
+          }}>Zapotrzebowanie techniczne</Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 0.5
+            }}>
             Wybierz osobę odpowiedzialną za budżet — zobaczysz jej zamówienia i wyceny od dostawców.
           </Typography>
         </Box>
@@ -446,7 +469,6 @@ const BudgetPage: React.FC = () => {
           </Button>
         </Box>
       </Box>
-
       {/* Controls */}
       <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <FormControl size="small" sx={{ minWidth: 240, flex: 1 }}>
@@ -478,9 +500,7 @@ const BudgetPage: React.FC = () => {
           <ToggleButton value="comparison" sx={{ px: 2 }}>Porównanie dostawców</ToggleButton>
         </ToggleButtonGroup>
       </Paper>
-
       {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>}
-
       {!loading && summary && (
         <>
           {/* Summary cards */}
@@ -591,7 +611,12 @@ const BudgetPage: React.FC = () => {
                             <TableCell key={`${s}-unit`} sx={{ display: visible }} />,
                             <TableCell key={`${s}-total`} align="right" sx={{ fontWeight: 700, color, display: visible }}>
                               {st ? fmtMoney(st.total, vatEnabled) : '—'}
-                              <Typography variant="caption" color="text.secondary" display="block">{vatLabel}</Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "text.secondary",
+                                  display: "block"
+                                }}>{vatLabel}</Typography>
                             </TableCell>,
                           ];
                         })}
@@ -608,13 +633,17 @@ const BudgetPage: React.FC = () => {
             <>
               {sortedByTotal.length >= 2 && savings > 0 && (
                 <Alert severity="success" sx={{ mb: 3 }} icon={<span>✅</span>}>
-                  <Typography variant="body2" fontWeight={600}>
+                  <Typography variant="body2" sx={{
+                    fontWeight: 600
+                  }}>
                     Tańszy dostawca: {cheapest.supplier}
                   </Typography>
                   <Typography variant="body2">
                     Oszczędność: ~{savings.toLocaleString('pl-PL')} zł {vatLabel} vs {mostExpensive.supplier} (ok. {savingsPct}% mniej)
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>
                     ⚠ Szacunek — uwzględnia tylko pozycje z ceną u danego dostawcy.
                   </Typography>
                 </Alert>
@@ -630,10 +659,20 @@ const BudgetPage: React.FC = () => {
                     <Box key={st.supplier} sx={{ flex: '1 1 260px', minWidth: 0 }}>
                       <Paper sx={{ p: 2, height: '100%' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                          <Typography variant="h6" fontWeight={700} sx={{ color }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              color
+                            }}>
                             📦 {st.supplier}
                           </Typography>
-                          <Typography variant="h6" fontWeight={700} sx={{ color }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              color
+                            }}>
                             {fmtMoney(st.total, vatEnabled)}
                           </Typography>
                         </Box>
@@ -641,13 +680,23 @@ const BudgetPage: React.FC = () => {
                         {items.map(item => (
                           <Box key={item.name} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
                             <Typography variant="body2">{item.name} × {item.qty}</Typography>
-                            <Typography variant="body2" fontWeight={600} sx={{ color }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 600,
+                                color
+                              }}>
                               {fmtMoney(item.price!.total, vatEnabled)}
                             </Typography>
                           </Box>
                         ))}
                         {items.length === 0 && (
-                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "text.secondary",
+                              fontStyle: 'italic'
+                            }}>
                             Brak wycen
                           </Typography>
                         )}
@@ -660,7 +709,6 @@ const BudgetPage: React.FC = () => {
           )}
         </>
       )}
-
       <PriceDrawer
         open={priceDrawerOpen}
         onClose={() => setPriceDrawerOpen(false)}

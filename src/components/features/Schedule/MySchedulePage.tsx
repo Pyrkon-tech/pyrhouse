@@ -154,10 +154,17 @@ const MySchedulePage: React.FC = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3, gap: 2, flexWrap: 'wrap' }}>
         <Box>
-          <Typography variant="h5" fontWeight={700} sx={{ mb: 0.5 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              mb: 0.5
+            }}>
             Mój grafik dyżurów
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             {volunteer.nickname}
           </Typography>
         </Box>
@@ -182,7 +189,6 @@ const MySchedulePage: React.FC = () => {
           )}
         </Box>
       </Box>
-
       {/* Slots by day */}
       {slots.length === 0 ? (
         <Alert severity="info">Nie masz jeszcze żadnych przypisanych dyżurów.</Alert>
