@@ -108,7 +108,7 @@ export const AddAssetWithoutSerialForm: React.FC<{
         autoHideDuration={snackbar.autoHideDuration}
       />
       <Grid container spacing={2}>
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <TextField
             label="Ilość"
             type="text"
@@ -121,7 +121,7 @@ export const AddAssetWithoutSerialForm: React.FC<{
             required
           />
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth required>
             <InputLabel>Kategoria</InputLabel>
             <Select
@@ -137,7 +137,7 @@ export const AddAssetWithoutSerialForm: React.FC<{
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <OriginSelect
             value={origin}
             onChange={setOrigin}

@@ -350,7 +350,7 @@ const EquipmentList: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {filteredEquipment.map((item) => (
-        <Grid item xs={12} key={`${item.id}-${item.type}`}>
+        <Grid size={{ xs: 12 }} key={`${item.id}-${item.type}`}>
           <Card 
             sx={{ 
               borderRadius: 2,

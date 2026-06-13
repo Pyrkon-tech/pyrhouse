@@ -157,7 +157,7 @@ const SettingsPage: React.FC = () => {
   const renderMobileReadOnly = () => (
     <Grid container spacing={2}>
       {settings.map((setting) => (
-        <Grid item xs={12} key={setting.key}>
+        <Grid size={{ xs: 12 }} key={setting.key}>
           <Card sx={{ borderRadius: 2 }}>
             <CardContent>
               <Typography

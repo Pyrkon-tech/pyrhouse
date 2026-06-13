@@ -265,7 +265,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
                   />
                 )}
               />
-              <Grid item xs={3}>
+              <Grid size={{ xs: 3 }}>
                 <TextField
                   fullWidth
                   type="number"
@@ -277,7 +277,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
                   error={!!errors.items?.[index]?.quantity}
                 />
               </Grid>
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton 
                   onClick={() => remove(index)}
                   disabled={fields.length === 1}

@@ -217,7 +217,7 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
       />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth>
             <InputLabel>Kategoria</InputLabel>
             <Select
@@ -233,7 +233,7 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <OriginSelect
             value={origin}
             onChange={setOrigin}

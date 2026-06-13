@@ -208,7 +208,7 @@ const QuestBoardPage: React.FC = () => {
         { key: 'completed', label: 'Zrealizowane', color: theme.palette.success.main },
         { key: 'cancelled', label: 'Anulowane', color: theme.palette.error.main },
       ] as const).map(({ key, label, color }) => (
-        <Grid item xs={6} sm={3} key={key}>
+        <Grid size={{ xs: 6, sm: 3 }} key={key}>
           <Paper
             sx={{
               p: 1.5,
@@ -441,7 +441,7 @@ const QuestBoardPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {filteredQuests.map((quest) => (
-        <Grid item xs={12} key={quest.id}>
+        <Grid size={{ xs: 12 }} key={quest.id}>
           <Card
             sx={{
               borderRadius: 2,

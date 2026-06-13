@@ -309,7 +309,7 @@ const UserManagementPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {filteredUsers.map((user) => (
-        <Grid item xs={12} key={user.id}>
+        <Grid size={{ xs: 12 }} key={user.id}>
           <Card
             onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
             sx={{

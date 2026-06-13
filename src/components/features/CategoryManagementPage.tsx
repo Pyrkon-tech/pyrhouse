@@ -306,7 +306,7 @@ const CategoryManagementPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {filteredCategories.map((category) => (
-        <Grid item xs={12} key={category.id}>
+        <Grid size={{ xs: 12 }} key={category.id}>
           <Card
             sx={{
               borderRadius: 2,

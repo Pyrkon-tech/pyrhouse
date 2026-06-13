@@ -293,7 +293,7 @@ const HomePage: React.FC = () => {
       {/* Stats strip */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((stat) => (
-          <Grid item xs={6} sm={3} key={stat.label}>
+          <Grid size={{ xs: 6, sm: 3 }} key={stat.label}>
             <Paper
               onClick={() => navigate(stat.href)}
               sx={{
@@ -332,7 +332,7 @@ const HomePage: React.FC = () => {
       {/* Main grid */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Pending quests */}
-        {!isMobile && <Grid item xs={12} md={7}>
+        {!isMobile && <Grid size={{ xs: 12, md: 7 }}>
           <Paper sx={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{
               px: 2.5, py: 1.75,
@@ -419,7 +419,7 @@ const HomePage: React.FC = () => {
         </Grid>}
 
         {/* My active transfers */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Paper sx={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{
               px: 2.5, py: 1.75,

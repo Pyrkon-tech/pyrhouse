@@ -31,9 +31,9 @@ const ServiceDeskCardsView: React.FC<ServiceDeskCardsViewProps> = ({
   return (
     <Grid container spacing={1.5}>
       {requests.length === 0 ? (
-        <Grid item xs={12}><Typography variant="body2">Brak zgłoszeń.</Typography></Grid>
+        <Grid size={{ xs: 12 }}><Typography variant="body2">Brak zgłoszeń.</Typography></Grid>
       ) : requests.map(req => (
-        <Grid item xs={12} sm={6} md={3} key={req.id}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={req.id}>
           <Card 
             sx={{ 
               display: 'flex',

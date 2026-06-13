@@ -162,7 +162,7 @@ const ReleasesListPage: React.FC = () => {
       ) : (
         <Grid container spacing={2}>
           {releases.map((release) => (
-            <Grid item xs={12} sm={6} md={4} key={release.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={release.id}>
               <Card
                 sx={{
                   cursor: 'pointer',

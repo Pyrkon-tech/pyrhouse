@@ -154,7 +154,7 @@ const LocationPage: React.FC = () => {
     return (
       <Grid container spacing={2}>
         {filteredAssets.map((asset) => (
-          <Grid item xs={12} key={asset.id}>
+          <Grid size={{ xs: 12 }} key={asset.id}>
             <Card
               onClick={() => navigate(`/assets/${asset.id}`)}
               sx={{ borderRadius: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
@@ -168,23 +168,23 @@ const LocationPage: React.FC = () => {
                 </Box>
                 <Divider sx={{ my: 1 }} />
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Typography variant="body2" color="text.secondary">Typ:</Typography>
                     <Typography variant="body1">{asset.type}</Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Typography variant="body2" color="text.secondary">Ilość:</Typography>
                     <Typography variant="body1">{asset.quantity}</Typography>
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Typography variant="body2" color="text.secondary">Lokalizacja:</Typography>
                     <Typography variant="body1">{asset.location?.name || '-'}</Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Typography variant="body2" color="text.secondary">PYR_CODE:</Typography>
                     <Typography variant="body1">{asset.pyr_code || '-'}</Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Typography variant="body2" color="text.secondary">Origin:</Typography>
                     <Typography variant="body1">{asset.origin || '-'}</Typography>
                   </Grid>
@@ -289,20 +289,20 @@ const LocationPage: React.FC = () => {
         </Box>
         <CardContent sx={{ p: 3 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>ID:</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>{location.id}</Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>Nazwa:</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>{location.name}</Typography>
               </Box>
             </Grid>
             {location.details && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>Szczegóły:</Typography>
                   <Typography variant="body1">{location.details}</Typography>

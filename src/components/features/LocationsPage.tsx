@@ -235,7 +235,7 @@ const LocationsPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {filteredLocations.map((location) => (
-        <Grid item xs={12} key={location.id}>
+        <Grid size={{ xs: 12 }} key={location.id}>
           <Card
             sx={{
               borderRadius: 2,

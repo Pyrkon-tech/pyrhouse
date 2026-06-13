@@ -365,7 +365,7 @@ const QuestDetailPage: React.FC = () => {
       {/* Quest info */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Suspense fallback={null}><PlaceIcon color="primary" /></Suspense>
               <Box>
@@ -389,7 +389,7 @@ const QuestDetailPage: React.FC = () => {
             </Box>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Suspense fallback={null}><PersonIcon color="primary" /></Suspense>
               <Box>
@@ -401,7 +401,7 @@ const QuestDetailPage: React.FC = () => {
             </Box>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Suspense fallback={null}><CalendarTodayIcon color="primary" /></Suspense>
               <Box>
@@ -415,7 +415,7 @@ const QuestDetailPage: React.FC = () => {
           </Grid>
 
           {quest.budget_owner && (
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Suspense fallback={null}><AccountBalanceWalletIcon color="primary" /></Suspense>
                 <Box>

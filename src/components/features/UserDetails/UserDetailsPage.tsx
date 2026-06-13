@@ -314,7 +314,7 @@ const UserDetailsPage: React.FC = () => {
         </Typography>
       </Box>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <ProfileCard
             user={user}
             isAdmin={isAdmin}
@@ -329,7 +329,7 @@ const UserDetailsPage: React.FC = () => {
           />
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <UserInfoCard
             user={user}
             editedUser={editedUser}

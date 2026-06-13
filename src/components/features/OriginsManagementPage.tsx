@@ -156,7 +156,7 @@ const OriginsManagementPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {origins.map((origin) => (
-        <Grid item xs={12} key={origin.id}>
+        <Grid size={{ xs: 12 }} key={origin.id}>
           <Card sx={{ opacity: origin.active ? 1 : 0.6, borderRadius: 2 }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>

@@ -123,7 +123,7 @@ const UserInfoCard: React.FC<UserInfoCardProps> = ({
         </Box>
       ) : (
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="subtitle2" color="text.secondary">Imię i nazwisko</Typography>
             <Typography
               variant="body1"
@@ -132,21 +132,21 @@ const UserInfoCard: React.FC<UserInfoCardProps> = ({
               {user.fullname || 'Nie ustawiono'}
             </Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="subtitle2" color="text.secondary">Nazwa użytkownika</Typography>
             <Typography variant="body1">{user.username}</Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="subtitle2" color="text.secondary">Rola</Typography>
             <Chip label={user.role.toUpperCase()} color={getRoleColor(user.role)} size="small" />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="subtitle2" color="text.secondary">Status konta</Typography>
             <Chip label={user.active ? 'Aktywne' : 'Nieaktywne'} color={user.active ? 'success' : 'default'} size="small" variant="outlined" />
           </Grid>
 
           {/* Discord info w szczegółach */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="subtitle2" color="text.secondary">Discord</Typography>
             {hasDiscord ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -162,7 +162,7 @@ const UserInfoCard: React.FC<UserInfoCardProps> = ({
             )}
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="subtitle2" color="text.secondary">Metoda logowania</Typography>
             <Typography variant="body1">
               {user.auth_provider === 'discord' ? 'Discord OAuth' : 'Hasło'}
@@ -170,7 +170,7 @@ const UserInfoCard: React.FC<UserInfoCardProps> = ({
           </Grid>
 
           {isAdmin && user.discord_id && (
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="subtitle2" color="text.secondary">Discord ID</Typography>
               <Typography variant="body1" sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
                 {user.discord_id}

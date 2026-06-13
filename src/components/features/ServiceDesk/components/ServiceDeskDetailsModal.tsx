@@ -459,7 +459,7 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
           ) : (
             <Grid container spacing={0} alignItems="flex-start" wrap="nowrap">
               {/* Lewa kolumna: tytuł, opis, aktywność */}
-              <Grid item xs={12} md={7} sx={{ pr: 4, minWidth: 0 }}>
+              <Grid size={{ xs: 12, md: 7 }} sx={{ pr: 4, minWidth: 0 }}>
                 <Typography variant="h5" fontWeight={700} sx={{ mb: 2, color: 'primary.main', wordBreak: 'break-word', fontSize: { xs: 20, sm: 24 } }}>
                   {request.title}
                 </Typography>
@@ -552,11 +552,11 @@ const ServiceDeskDetailsModal: React.FC<ServiceDeskDetailsModalProps> = ({
                 </Box>
               </Grid>
               {/* Divider pionowy */}
-              <Grid item sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'stretch' }}>
+              <Grid sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'stretch' }}>
                 <Divider orientation="vertical" flexItem sx={{ height: '100%', minHeight: 320, mx: 0 }} />
               </Grid>
               {/* Prawa kolumna: szczegóły zgłoszenia */}
-              <Grid item xs={12} md={5} sx={{ pl: 4, minWidth: 0, flex: 1 }}>
+              <Grid size={{ xs: 12, md: 5 }} sx={{ pl: 4, minWidth: 0, flex: 1 }}>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: 'text.secondary', letterSpacing: 1, fontSize: 16 }}>
                   Szczegóły
                 </Typography>

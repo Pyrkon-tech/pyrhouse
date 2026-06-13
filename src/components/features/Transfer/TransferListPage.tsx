@@ -220,7 +220,7 @@ const TransfersListPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {sortedTransfers.map((transfer) => (
-        <Grid item xs={12} key={transfer.id}>
+        <Grid size={{ xs: 12 }} key={transfer.id}>
           <Card
             sx={{
               borderRadius: 2,
