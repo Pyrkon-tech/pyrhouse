@@ -68,7 +68,7 @@ interface Equipment {
 type SemanticFilter = 'in_transit' | 'no_serial';
 
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
-const ErrorOutlineIcon = lazy(() => import('@mui/icons-material/ErrorOutline'));
+const ErrorOutlineIcon = lazy(() => import('@mui/icons-material/ErrorOutlined'));
 const LocalShippingIcon = lazy(() => import('@mui/icons-material/LocalShipping'));
 const HomeIcon = lazy(() => import('@mui/icons-material/Home'));
 const Inventory2Icon = lazy(() => import('@mui/icons-material/Inventory2'));
@@ -277,7 +277,12 @@ const EquipmentList: React.FC = () => {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Suspense fallback={null}><Inventory2Icon sx={{ color: iconColor }} /></Suspense>
-          <Typography component="div" fontWeight="bold" sx={{ color: iconColor }}>
+          <Typography
+            component="div"
+            sx={{
+              fontWeight: "bold",
+              color: iconColor
+            }}>
             {item.quantity ?? '-'}
           </Typography>
         </Box>
@@ -350,7 +355,7 @@ const EquipmentList: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {filteredEquipment.map((item) => (
-        <Grid item xs={12} key={`${item.id}-${item.type}`}>
+        <Grid size={{ xs: 12 }} key={`${item.id}-${item.type}`}>
           <Card 
             sx={{ 
               borderRadius: 2,
@@ -390,26 +395,34 @@ const EquipmentList: React.FC = () => {
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Kategoria:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Kategoria:</Typography>
                   <Typography variant="body2">
                     {typeof item.category === 'string' ? item.category : item.category.label}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Lokalizacja:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Lokalizacja:</Typography>
                   <Typography variant="body2">{item.location.name} {item.location.pavilion ? `(${item.location.pavilion})` : ''}</Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     {item.type === 'stock' ? 'Ilość:' : 'Status:'}
                   </Typography>
                   {renderStatusOrQuantity(item)}
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Pochodzenie:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Pochodzenie:</Typography>
                   <Typography variant="body2">{item.origin}</Typography>
                 </Box>
               </Box>
@@ -466,7 +479,6 @@ const EquipmentList: React.FC = () => {
           </>
         }
       />
-
       {/* Filtry — wiersz 1: szukajka + lokalizacja + kategoria + wyczyść */}
       <Box
         sx={{
@@ -486,14 +498,16 @@ const EquipmentList: React.FC = () => {
           placeholder="Szukaj po PYR code, kodzie lub pochodzeniu..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <Suspense fallback={null}><SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} /></Suspense>
-            ),
-            sx: { borderRadius: 1 },
-          }}
           sx={{ flex: 2, minWidth: 200, maxWidth: 320 }}
           aria-label="Wyszukaj sprzęt"
+          slotProps={{
+            input: {
+              startAdornment: (
+                <Suspense fallback={null}><SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} /></Suspense>
+              ),
+              sx: { borderRadius: 1 },
+            }
+          }}
         />
         <FormControl size="small" sx={{ flex: 1, minWidth: 150, maxWidth: 260 }}>
           <InputLabel id="location-select-label">Lokalizacja</InputLabel>
@@ -534,15 +548,19 @@ const EquipmentList: React.FC = () => {
               {...params}
               label="Kategoria"
               variant="outlined"
-              InputProps={{
-                ...params.InputProps,
-                sx: { borderRadius: 1 },
-                endAdornment: (
-                  <>
-                    {categoriesLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
+              slotProps={{
+                ...params.slotProps,
+
+                input: {
+                  ...params.slotProps.input,
+                  sx: { borderRadius: 1 },
+                  endAdornment: (
+                    <>
+                      {categoriesLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.slotProps.input.endAdornment}
+                    </>
+                  ),
+                }
               }}
             />
           )}
@@ -564,7 +582,6 @@ const EquipmentList: React.FC = () => {
           </Button>
         )}
       </Box>
-
       {/* Filtry — wiersz 2: szybkie filtry */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
         <Chip
@@ -608,7 +625,6 @@ const EquipmentList: React.FC = () => {
           aria-label="Filtr: Brak numeru seryjnego"
         />
       </Box>
-
       {loading ? (
         <PageLoader message="Ładowanie danych..." />
       ) : filteredEquipment.length === 0 ? (

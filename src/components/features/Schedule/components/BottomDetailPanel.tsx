@@ -3,7 +3,7 @@ import { Box, Typography, Chip, IconButton, Tooltip, Divider, Avatar } from '@mu
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import type { ScheduleSlot, ScheduleVolunteer, ValidationIssue } from '../../../../types/schedule.types';
 import { SLOT_TYPE_CONFIG, CELL_STATUS_COLORS, ISSUE_TYPE_LABEL } from '../constants';
 import { avatarColor, parseAsLocal } from '../utils';

@@ -33,7 +33,9 @@ export const AppSnackbar: React.FC<AppSnackbarProps> = ({
     autoHideDuration={autoHideDuration}
     onClose={onClose}
     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-    TransitionComponent={SlideLeft}
+    slots={{
+      transition: SlideLeft
+    }}
   >
     <Alert
       severity={type}
@@ -48,10 +50,17 @@ export const AppSnackbar: React.FC<AppSnackbarProps> = ({
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-        <Typography variant="subtitle2" fontWeight={600} lineHeight={1.3}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 600,
+            lineHeight: 1.3
+          }}>
           {TITLES[type]}
         </Typography>
-        <Typography variant="body2" lineHeight={1.4}>
+        <Typography variant="body2" sx={{
+          lineHeight: 1.4
+        }}>
           {message}
         </Typography>
         {details && (

@@ -220,7 +220,7 @@ const TransfersListPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {sortedTransfers.map((transfer) => (
-        <Grid item xs={12} key={transfer.id}>
+        <Grid size={{ xs: 12 }} key={transfer.id}>
           <Card
             sx={{
               borderRadius: 2,
@@ -243,15 +243,25 @@ const TransfersListPage: React.FC = () => {
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Z lokalizacji:</Typography>
-                  <Typography variant="body2" fontWeight="bold">{transfer.from_location.name}</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Z lokalizacji:</Typography>
+                  <Typography variant="body2" sx={{
+                    fontWeight: "bold"
+                  }}>{transfer.from_location.name}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Do lokalizacji:</Typography>
-                  <Typography variant="body2" fontWeight="bold">{transfer.to_location.name}</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Do lokalizacji:</Typography>
+                  <Typography variant="body2" sx={{
+                    fontWeight: "bold"
+                  }}>{transfer.to_location.name}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Data:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Data:</Typography>
                   <Typography variant="body2">
                     {new Date(transfer.transfer_date).toLocaleString('pl-PL')}
                   </Typography>
@@ -281,7 +291,6 @@ const TransfersListPage: React.FC = () => {
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-
       <PageHeader
         title="Transfery"
         actions={
@@ -294,7 +303,6 @@ const TransfersListPage: React.FC = () => {
           </Button>
         }
       />
-
       {/* Filtry */}
       <Box
         sx={{
@@ -314,13 +322,15 @@ const TransfersListPage: React.FC = () => {
           variant="outlined"
           placeholder="Szukaj po ID, lokalizacji lub statusie..."
           onChange={e => debouncedSearch(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} />
-            ),
-            sx: { borderRadius: 1 },
-          }}
           sx={{ minWidth: 150, maxWidth: 220, flex: 2 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <SearchIcon sx={{ color: 'action.active', mr: 1, fontSize: 20 }} />
+              ),
+              sx: { borderRadius: 1 },
+            }
+          }}
         />
         <Autocomplete
           size="small"
@@ -385,7 +395,6 @@ const TransfersListPage: React.FC = () => {
           </Button>
         )}
       </Box>
-
       {loading ? (
         <LoadingSkeleton />
       ) : sortedTransfers.length === 0 ? (

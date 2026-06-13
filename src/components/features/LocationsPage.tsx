@@ -195,7 +195,9 @@ const LocationsPage: React.FC = () => {
               </Typography>
             </TableCell>
             <TableCell>
-              <Typography component="div" color="text.secondary">
+              <Typography component="div" sx={{
+                color: "text.secondary"
+              }}>
                 {location.details ? (
                   location.details.length > 48
                     ? `${location.details.substring(0, 48)}...`
@@ -235,7 +237,7 @@ const LocationsPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {filteredLocations.map((location) => (
-        <Grid item xs={12} key={location.id}>
+        <Grid size={{ xs: 12 }} key={location.id}>
           <Card
             sx={{
               borderRadius: 2,
@@ -257,12 +259,18 @@ const LocationsPage: React.FC = () => {
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Nazwa:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Nazwa:</Typography>
                   <Typography variant="body2">{location.name}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Szczegóły:</Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Szczegóły:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     {location.details ? (
                       location.details.length > 48
                         ? `${location.details.substring(0, 48)}...`
@@ -317,7 +325,6 @@ const LocationsPage: React.FC = () => {
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-
       <PageHeader
         title="Lokalizacje"
         actions={
@@ -328,7 +335,6 @@ const LocationsPage: React.FC = () => {
           ) : undefined
         }
       />
-
       <Box sx={{ mb: 3 }}>
         <SearchBar
           value={searchQuery}
@@ -337,7 +343,6 @@ const LocationsPage: React.FC = () => {
           width="100%"
         />
       </Box>
-
       {loading ? (
         <PageLoader message="Ładowanie lokalizacji..." />
       ) : filteredLocations.length === 0 ? (
@@ -349,12 +354,13 @@ const LocationsPage: React.FC = () => {
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}
-
       {/* Add / Edit Dialog */}
       <Dialog
         open={dialogs.addOpen || dialogs.isEditOpen}
         onClose={handleCloseDialog}
-        PaperProps={{ sx: { borderRadius: 2, maxWidth: '500px', width: '100%' } }}
+        slotProps={{
+          paper: { sx: { borderRadius: 2, maxWidth: '500px', width: '100%' } }
+        }}
       >
         <DialogTitle>
           {dialogs.editItem ? 'Edytuj lokalizację' : 'Dodaj nową lokalizację'}
@@ -376,9 +382,11 @@ const LocationsPage: React.FC = () => {
               onChange={handlePavilionChange}
               fullWidth
               size="small"
-              inputProps={{ maxLength: 3 }}
               error={!!pavilionError}
               helperText={pavilionError || 'Maksymalnie 3 znaki'}
+              slotProps={{
+                htmlInput: { maxLength: 3 }
+              }}
             />
             <TextField
               label="Szczegóły (opcjonalne)"
@@ -410,7 +418,6 @@ const LocationsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Delete Confirmation */}
       <ConfirmDialog
         open={dialogs.isDeleteOpen}

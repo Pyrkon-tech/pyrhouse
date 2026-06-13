@@ -52,9 +52,11 @@ const EditUsersDialog: React.FC<EditUsersDialogProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+          }
         }
       }}
     >
@@ -71,7 +73,9 @@ const EditUsersDialog: React.FC<EditUsersDialogProps> = ({
           </Box>
         ) : (
           <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
+            <Typography variant="body2" gutterBottom sx={{
+              color: "text.secondary"
+            }}>
               Wybierz Gżdaczy, którzy brali udział w transferze:
             </Typography>
             <List sx={{ width: '100%', maxHeight: '300px', minHeight: '600px', overflow: 'auto' }}>
@@ -95,7 +99,9 @@ const EditUsersDialog: React.FC<EditUsersDialogProps> = ({
                   <ListItemText
                     primary={user.username}
                     secondary={user.fullname}
-                    primaryTypographyProps={{ fontWeight: 500 }}
+                    slotProps={{
+                      primary: { sx: { fontWeight: 500 } }
+                    }}
                   />
                 </ListItem>
               ))}

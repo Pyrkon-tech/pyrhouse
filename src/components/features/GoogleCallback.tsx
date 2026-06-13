@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, CircularProgress, Alert } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import { jwtDecode } from 'jwt-decode';
 import { googleAuthService } from '../../services/googleAuthService';
 import { linkGoogleAPI } from '../../services/userService';

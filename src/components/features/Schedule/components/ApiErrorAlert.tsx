@@ -3,7 +3,7 @@ import { Alert, Box, Button, Typography } from '@mui/material';
 import type { ApiErrorState } from '../types';
 import { extractDetailItems } from '../utils';
 
-const ErrorOutlineIcon = lazy(() => import('@mui/icons-material/ErrorOutline'));
+const ErrorOutlineIcon = lazy(() => import('@mui/icons-material/ErrorOutlined'));
 
 const ApiErrorAlert: React.FC<{
   error: ApiErrorState;
@@ -19,11 +19,22 @@ const ApiErrorAlert: React.FC<{
       icon={<Suspense fallback={null}><ErrorOutlineIcon /></Suspense>}
       sx={{ mb: 2, '& .MuiAlert-message': { flex: 1, minWidth: 0 } }}
     >
-      <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.4 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{
+          fontWeight: 700,
+          lineHeight: 1.4
+        }}>
         {error.operation}: {error.message}
       </Typography>
       {error.status > 0 && (
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            display: 'block',
+            mt: 0.25
+          }}>
           HTTP {error.status}
         </Typography>
       )}

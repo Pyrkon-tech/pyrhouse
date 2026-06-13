@@ -59,7 +59,6 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
           Podstawowe informacje
         </Typography>
       </Box>
-
       {/* Główne informacje */}
       <Box sx={{
         display: 'grid',
@@ -70,7 +69,13 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
         <Box sx={columnSx}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  mb: 0.5,
+                  display: 'block'
+                }}>
                 Identyfikator
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.main' }}>
@@ -78,7 +83,13 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
               </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  mb: 0.5,
+                  display: 'block'
+                }}>
                 Kategoria
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -86,7 +97,13 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
               </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  mb: 0.5,
+                  display: 'block'
+                }}>
                 Lokalizacja
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -102,7 +119,13 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
         <Box sx={columnSx}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  mb: 0.5,
+                  display: 'block'
+                }}>
                 Pochodzenie
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -112,7 +135,13 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             {type === 'asset' && (
               <Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      mb: 0.5,
+                      display: 'block'
+                    }}>
                     PYR Code
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -120,7 +149,13 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                   </Typography>
                 </Box>
                 <Box sx={{ mt: 1 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      mb: 0.5,
+                      display: 'block'
+                    }}>
                     Numer seryjny
                   </Typography>
                   <SerialNumberEditor

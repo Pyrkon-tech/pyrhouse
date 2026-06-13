@@ -222,7 +222,6 @@ const HomePage: React.FC = () => {
       {showAnimation && <SystemInitAnimation onComplete={() => setShowAnimation(false)} />}
       <AppSnackbar open={snackbar.open} type={snackbar.type} message={snackbar.message} onClose={closeSnackbar} />
       {scannerComponent}
-
       {/* Search */}
       <Paper
         sx={{
@@ -261,13 +260,17 @@ const HomePage: React.FC = () => {
                 placeholder="Wprowadź PYR code (np. PYR-001)..."
                 size="small"
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: 'text.secondary', fontSize: '1rem' }} />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  ...params.slotProps,
+
+                  input: {
+                    ...params.slotProps.input,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: 'text.secondary', fontSize: '1rem' }} />
+                      </InputAdornment>
+                    ),
+                  }
                 }}
               />
             )}
@@ -289,11 +292,10 @@ const HomePage: React.FC = () => {
           </Tooltip>
         </Box>
       </Paper>
-
       {/* Stats strip */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((stat) => (
-          <Grid item xs={6} sm={3} key={stat.label}>
+          <Grid size={{ xs: 6, sm: 3 }} key={stat.label}>
             <Paper
               onClick={() => navigate(stat.href)}
               sx={{
@@ -320,7 +322,13 @@ const HomePage: React.FC = () => {
                     ? <CircularProgress size={18} sx={{ color: stat.color }} />
                     : stat.value}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  sx={{
+                    color: "text.secondary",
+                    display: 'block'
+                  }}>
                   {stat.label}
                 </Typography>
               </Box>
@@ -328,11 +336,10 @@ const HomePage: React.FC = () => {
           </Grid>
         ))}
       </Grid>
-
       {/* Main grid */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Pending quests */}
-        {!isMobile && <Grid item xs={12} md={7}>
+        {!isMobile && <Grid size={{ xs: 12, md: 7 }}>
           <Paper sx={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{
               px: 2.5, py: 1.75,
@@ -372,7 +379,9 @@ const HomePage: React.FC = () => {
               ) : pendingQuests.length === 0 ? (
                 <Box sx={{ px: 2.5, py: 5, textAlign: 'center' }}>
                   <CheckCircle sx={{ fontSize: '2rem', color: 'success.main', mb: 1, opacity: 0.6 }} />
-                  <Typography color="text.secondary" variant="body2">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Brak oczekujących zamówień
                   </Typography>
                 </Box>
@@ -401,12 +410,16 @@ const HomePage: React.FC = () => {
                       <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.2 }} noWrap>
                         {quest.destination?.pavilion} — {quest.destination?.location}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap>
+                      <Typography variant="caption" noWrap sx={{
+                        color: "text.secondary"
+                      }}>
                         {formatQuestItems(quest.items)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{
+                        color: "text.secondary"
+                      }}>
                         {formatDate(quest.delivery_date)}
                       </Typography>
                       <ChevronRight sx={{ fontSize: '1rem', color: 'text.disabled' }} />
@@ -419,7 +432,7 @@ const HomePage: React.FC = () => {
         </Grid>}
 
         {/* My active transfers */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Paper sx={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{
               px: 2.5, py: 1.75,
@@ -455,7 +468,9 @@ const HomePage: React.FC = () => {
               ) : userTransfers.length === 0 ? (
                 <Box sx={{ px: 2.5, py: 5, textAlign: 'center' }}>
                   <LocalShipping sx={{ fontSize: '2rem', color: 'text.disabled', mb: 1 }} />
-                  <Typography color="text.secondary" variant="body2">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     Brak aktywnych wydań
                   </Typography>
                 </Box>
@@ -488,7 +503,9 @@ const HomePage: React.FC = () => {
                         <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.2 }}>
                           Transfer #{id}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary" noWrap>
+                        <Typography variant="caption" noWrap sx={{
+                          color: "text.secondary"
+                        }}>
                           {from} → {to}
                         </Typography>
                       </Box>

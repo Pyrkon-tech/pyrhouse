@@ -761,7 +761,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   if (days.length === 0) {
     return (
       <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography color="text.disabled" variant="body2">
+        <Typography variant="body2" sx={{
+          color: "text.disabled"
+        }}>
           Brak slotów do wyświetlenia
         </Typography>
       </Box>

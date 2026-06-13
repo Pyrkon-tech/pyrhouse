@@ -79,10 +79,16 @@ const DispatchPage: React.FC = () => {
         textAlign: 'center',
       }}>
         <MapIcon sx={{ fontSize: 80, color: 'text.disabled' }} />
-        <Typography variant="h5" fontWeight={700}>
+        <Typography variant="h5" sx={{
+          fontWeight: 700
+        }}>
           Mapa Dispatch
         </Typography>
-        <Typography color="text.secondary" maxWidth={360}>
+        <Typography
+          sx={{
+            color: "text.secondary",
+            maxWidth: 360
+          }}>
           Ten widok jest przeznaczony dla ekranów o szerokości minimum 960px
           (tablet poziomo, laptop, desktop).
         </Typography>

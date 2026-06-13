@@ -148,13 +148,15 @@ const LocationPage: React.FC = () => {
     if (loading) return <PageLoader message="Ładowanie assetów..." />;
     if (filteredAssets.length === 0) return (
       <Box sx={{ textAlign: 'center', p: 4, bgcolor: 'background.default', borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
-        <Typography color="text.secondary">Brak assetów spełniających kryteria wyszukiwania</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Brak assetów spełniających kryteria wyszukiwania</Typography>
       </Box>
     );
     return (
       <Grid container spacing={2}>
         {filteredAssets.map((asset) => (
-          <Grid item xs={12} key={asset.id}>
+          <Grid size={{ xs: 12 }} key={asset.id}>
             <Card
               onClick={() => navigate(`/assets/${asset.id}`)}
               sx={{ borderRadius: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
@@ -168,24 +170,34 @@ const LocationPage: React.FC = () => {
                 </Box>
                 <Divider sx={{ my: 1 }} />
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">Typ:</Typography>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>Typ:</Typography>
                     <Typography variant="body1">{asset.type}</Typography>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">Ilość:</Typography>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>Ilość:</Typography>
                     <Typography variant="body1">{asset.quantity}</Typography>
                   </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="body2" color="text.secondary">Lokalizacja:</Typography>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>Lokalizacja:</Typography>
                     <Typography variant="body1">{asset.location?.name || '-'}</Typography>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">PYR_CODE:</Typography>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>PYR_CODE:</Typography>
                     <Typography variant="body1">{asset.pyr_code || '-'}</Typography>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">Origin:</Typography>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>Origin:</Typography>
                     <Typography variant="body1">{asset.origin || '-'}</Typography>
                   </Grid>
                 </Grid>
@@ -238,12 +250,16 @@ const LocationPage: React.FC = () => {
           <WarehouseIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           Lokalizacje
         </Link>
-        <Typography sx={{ display: 'flex', alignItems: 'center' }} color="text.primary">
+        <Typography
+          sx={{
+            color: "text.primary",
+            display: 'flex',
+            alignItems: 'center'
+          }}>
           <InventoryIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           {location.name}
         </Typography>
       </Breadcrumbs>
-
       {/* Header */}
       <Box sx={{
         display: 'flex',
@@ -257,11 +273,21 @@ const LocationPage: React.FC = () => {
         borderColor: 'divider',
       }}>
         <Box>
-          <Typography variant="h5" fontWeight={700} color="primary.main">
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              color: "primary.main"
+            }}>
             {location.name}
           </Typography>
           {location.details && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mt: 0.25
+              }}>
               {location.details}
             </Typography>
           )}
@@ -281,7 +307,6 @@ const LocationPage: React.FC = () => {
           </Button>
         </Box>
       </Box>
-
       {/* Location details card */}
       <Card sx={{ mb: 4, borderRadius: 2 }}>
         <Box sx={{ p: 2, backgroundColor: 'primary.light', color: 'primary.contrastText' }}>
@@ -289,22 +314,28 @@ const LocationPage: React.FC = () => {
         </Box>
         <CardContent sx={{ p: 3 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>ID:</Typography>
+                <Typography variant="body2" gutterBottom sx={{
+                  color: "text.secondary"
+                }}>ID:</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>{location.id}</Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>Nazwa:</Typography>
+                <Typography variant="body2" gutterBottom sx={{
+                  color: "text.secondary"
+                }}>Nazwa:</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>{location.name}</Typography>
               </Box>
             </Grid>
             {location.details && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>Szczegóły:</Typography>
+                  <Typography variant="body2" gutterBottom sx={{
+                    color: "text.secondary"
+                  }}>Szczegóły:</Typography>
                   <Typography variant="body1">{location.details}</Typography>
                 </Box>
               </Grid>
@@ -312,7 +343,6 @@ const LocationPage: React.FC = () => {
           </Grid>
         </CardContent>
       </Card>
-
       {/* Assets section */}
       <Box sx={{
         display: 'flex',
@@ -323,11 +353,15 @@ const LocationPage: React.FC = () => {
         gap: 2,
       }}>
         <Box>
-          <Typography variant="h6" fontWeight={600}>
+          <Typography variant="h6" sx={{
+            fontWeight: 600
+          }}>
             Assety ({assets.length})
           </Typography>
           {searchQuery && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Pokazano {filteredAssets.length} z {assets.length}
             </Typography>
           )}
@@ -339,9 +373,7 @@ const LocationPage: React.FC = () => {
           width={280}
         />
       </Box>
-
       {isMobile ? renderMobileCards() : renderTable()}
-
       <AppSnackbar
         open={snackbar.open}
         type={snackbar.type}

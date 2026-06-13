@@ -205,14 +205,18 @@ const TransferItemsTable: React.FC<TransferItemsTableProps> = ({
                           variant="outlined"
                           fullWidth
                           inputRef={index === fields.length - 1 ? lastInputRef : undefined}
-                          InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                              <React.Fragment>
-                                {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                {params.InputProps.endAdornment}
-                              </React.Fragment>
-                            ),
+                          slotProps={{
+                            ...params.slotProps,
+
+                            input: {
+                              ...params.slotProps.input,
+                              endAdornment: (
+                                <React.Fragment>
+                                  {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                  {params.slotProps.input.endAdornment}
+                                </React.Fragment>
+                              ),
+                            }
                           }}
                         />
                       )}
@@ -301,22 +305,24 @@ const TransferItemsTable: React.FC<TransferItemsTableProps> = ({
                             Number(field.value) > maxQuantity
                           }
                           helperText=""
-                          inputProps={{
-                            min: 1,
-                            max: maxQuantity,
-                            inputMode: 'numeric',
-                            pattern: '[0-9]*'
-                          }}
-                          InputProps={{
-                            endAdornment:
-                              (!/^[1-9][0-9]*$/.test(field.value?.toString()) || Number(field.value) > maxQuantity)
-                                ? <ErrorIcon color="error" fontSize="small" />
-                                : null
-                          }}
                           onChange={(e) => {
                             field.onChange(e.target.value);
                           }}
-                        />
+                          slotProps={{
+                            input: {
+                              endAdornment:
+                                (!/^[1-9][0-9]*$/.test(field.value?.toString()) || Number(field.value) > maxQuantity)
+                                  ? <ErrorIcon color="error" fontSize="small" />
+                                  : null
+                            },
+
+                            htmlInput: {
+                              min: 1,
+                              max: maxQuantity,
+                              inputMode: 'numeric',
+                              pattern: '[0-9]*'
+                            }
+                          }} />
                       </Tooltip>
                     );
                   }}
@@ -332,7 +338,9 @@ const TransferItemsTable: React.FC<TransferItemsTableProps> = ({
               {items[index].status === 'success' && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CheckCircleIcon color="success" />
-                  <Typography variant="body2" color="success.main">Dostępny</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "success.main"
+                  }}>Dostępny</Typography>
                 </Box>
               )}
               {items[index].status === 'failure' && (

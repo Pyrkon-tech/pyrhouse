@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import JsBarcode from 'jsbarcode';
-import { jsPDF } from 'jspdf';
 import {
   Box,
   Container,
@@ -234,7 +233,13 @@ const ClaimDialog: React.FC<ClaimDialogProps> = ({
           </Alert>
         )}
 
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            mb: 1,
+            display: 'block'
+          }}>
           Skanuj kod PYR ze stickera → Enter → skanuj numer seryjny → Enter (automatycznie przejdzie do następnego wiersza)
         </Typography>
 
@@ -472,10 +477,12 @@ const ReservationsPage: React.FC = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (selectedReservations.length === 0) return;
     setIsPrinting(true);
     try {
+      // jspdf (~450KB) loads on demand, only when labels are actually printed
+      const { jsPDF } = await import('jspdf');
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [40, 80] });
       for (let i = 0; i < selectedReservations.length; i++) {
         if (i > 0) doc.addPage();
@@ -523,7 +530,6 @@ const ReservationsPage: React.FC = () => {
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
         <Typography variant="h4">Rezerwacje PYR kodów</Typography>
         <Tooltip title="Odśwież">
@@ -534,7 +540,6 @@ const ReservationsPage: React.FC = () => {
           </span>
         </Tooltip>
       </Box>
-
       {/* Filters */}
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -566,7 +571,6 @@ const ReservationsPage: React.FC = () => {
           </Select>
         </FormControl>
       </Box>
-
       {/* Selection action bar */}
       {selected.size > 0 && (
         <Paper
@@ -632,7 +636,6 @@ const ReservationsPage: React.FC = () => {
           </Button>
         </Paper>
       )}
-
       {/* Table */}
       <TableContainer component={Paper} sx={{ '& .MuiTableCell-root': { fontSize: '0.9375rem' } }}>
         <Table size="small">
@@ -700,22 +703,32 @@ const ReservationsPage: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          mt: 1,
+          display: 'block'
+        }}>
         {!loading && `${reservations.length} rekordów`}
       </Typography>
-
       <Divider sx={{ my: 3 }} />
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         Nowe rezerwacje tworzysz w{' '}
         <strong>Dodaj przedmiot → Masowa dostawa</strong>.
       </Typography>
-
       {/* Print barcodes dialog */}
       <Dialog open={printDialogOpen} onClose={() => setPrintDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Drukuj etykiety ({selected.size})</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mb: 2
+            }}>
             Każda etykieta zostanie wydrukowana na osobnej stronie jako kod kreskowy CODE128.
           </Typography>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>Orientacja strony</Typography>
@@ -748,7 +761,6 @@ const ReservationsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Delete confirmation dialog */}
       <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Usuń rezerwacje</DialogTitle>
@@ -757,7 +769,12 @@ const ReservationsPage: React.FC = () => {
             Czy na pewno chcesz usunąć <strong>{selected.size}</strong>{' '}
             {selected.size === 1 ? 'rezerwację' : 'rezerwacje'}?
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mt: 1
+            }}>
             {selectedReservations.map((r) => r.pyr_code).join(', ')}
           </Typography>
         </DialogContent>
@@ -768,7 +785,6 @@ const ReservationsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <ClaimDialog
         open={claimOpen}
         initialRows={claimInitialRows}

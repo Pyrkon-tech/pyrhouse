@@ -260,7 +260,11 @@ const UserManagementPage: React.FC = () => {
       );
     }
     if (!canManageVolunteers) {
-      return <Typography variant="body2" color="text.disabled">—</Typography>;
+      return (
+        <Typography variant="body2" sx={{
+          color: "text.disabled"
+        }}>—</Typography>
+      );
     }
     return (
       <Chip
@@ -309,7 +313,7 @@ const UserManagementPage: React.FC = () => {
   const renderMobileCards = () => (
     <Grid container spacing={2}>
       {filteredUsers.map((user) => (
-        <Grid item xs={12} key={user.id}>
+        <Grid size={{ xs: 12 }} key={user.id}>
           <Card
             onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
             sx={{
@@ -334,17 +338,23 @@ const UserManagementPage: React.FC = () => {
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Nazwa użytkownika / Pseudonim:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Nazwa użytkownika / Pseudonim:</Typography>
                   <Typography variant="body2">{user.username}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Nazwa:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Nazwa:</Typography>
                   <Typography variant="body2" sx={{ color: user.fullname ? 'text.primary' : 'text.disabled', fontStyle: user.fullname ? 'normal' : 'italic' }}>
                     {user.fullname || '—'}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">Discord:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Discord:</Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                     {(user.discord_username || user.auth_provider === 'discord') ? (
                       <Chip
@@ -361,11 +371,15 @@ const UserManagementPage: React.FC = () => {
                   </Box>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-                  <Typography variant="body2" color="text.secondary">Wolontariusz:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Wolontariusz:</Typography>
                   {renderVolunteerCell(user)}
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">Aktywny:</Typography>
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Aktywny:</Typography>
                   {isAdmin || isModerator ? (
                     <Switch
                       checked={user.active}
@@ -373,7 +387,9 @@ const UserManagementPage: React.FC = () => {
                       disabled={user.id === currentUserId || loadingIds.includes(user.id)}
                       onClick={e => e.stopPropagation()}
                       onChange={() => handleToggleActive(user)}
-                      inputProps={{ 'aria-label': 'toggle active' }}
+                      slotProps={{
+                        input: { 'aria-label': 'toggle active' }
+                      }}
                     />
                   ) : (
                     <Chip
@@ -429,7 +445,11 @@ const UserManagementPage: React.FC = () => {
         {filteredUsers.length === 0 ? (
           <TableRow>
             <TableCell colSpan={7} align="center" sx={{ py: 6, border: 0 }}>
-              <Typography color="text.secondary" sx={{ mb: 1 }}>
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                  mb: 1
+                }}>
                 {searchQuery || hasActiveFilters ? 'Brak wyników dla wybranych filtrów' : 'Brak użytkowników'}
               </Typography>
               {(searchQuery || hasActiveFilters) && (
@@ -490,7 +510,9 @@ const UserManagementPage: React.FC = () => {
                         disabled={user.id === currentUserId || loadingIds.includes(user.id)}
                         onClick={e => e.stopPropagation()}
                         onChange={() => handleToggleActive(user)}
-                        inputProps={{ 'aria-label': 'toggle active' }}
+                        slotProps={{
+                          input: { 'aria-label': 'toggle active' }
+                        }}
                       />
                     </span>
                   </Tooltip>
@@ -531,7 +553,6 @@ const UserManagementPage: React.FC = () => {
           </Button>
         }
       />
-
       <Box sx={{ mb: 1.5 }}>
         <SearchBar
           value={searchQuery}
@@ -543,7 +564,12 @@ const UserManagementPage: React.FC = () => {
       </Box>
       <Box sx={{ mb: 1.5, minHeight: 32, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
         {hasActiveFilters && (
-          <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>Filtry:</Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              mr: 0.5
+            }}>Filtry:</Typography>
         )}
         {roleFilter.map(role => (
           <Chip
@@ -565,7 +591,6 @@ const UserManagementPage: React.FC = () => {
           />
         )}
       </Box>
-
       {loading ? (
         <PageLoader message="Ładowanie użytkowników..." />
       ) : isMobile ? (
@@ -579,7 +604,6 @@ const UserManagementPage: React.FC = () => {
       ) : (
         renderTable()
       )}
-
       <Menu
         anchorEl={roleMenuAnchor}
         open={Boolean(roleMenuAnchor)}
@@ -603,7 +627,6 @@ const UserManagementPage: React.FC = () => {
           </MenuItem>
         ))}
       </Menu>
-
       <Menu
         anchorEl={activeMenuAnchor}
         open={Boolean(activeMenuAnchor)}
@@ -619,7 +642,6 @@ const UserManagementPage: React.FC = () => {
           Nieaktywni
         </MenuItem>
       </Menu>
-
       <Popover
         open={Boolean(linkPopover)}
         anchorEl={linkPopover?.anchorEl ?? null}
@@ -627,7 +649,13 @@ const UserManagementPage: React.FC = () => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
         <Box sx={{ p: 1.5, width: 300, maxWidth: 'calc(100vw - 32px)' }} onClick={(e) => e.stopPropagation()}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: 'block',
+              mb: 1
+            }}>
             Powiąż wolontariusza z kontem <strong>{linkPopover?.user.username}</strong>
           </Typography>
           <Autocomplete
@@ -656,11 +684,12 @@ const UserManagementPage: React.FC = () => {
           />
         </Box>
       </Popover>
-
       <Dialog
         open={dialogs.addOpen}
         onClose={handleCloseAddUserModal}
-        PaperProps={{ sx: { borderRadius: 2, minWidth: { xs: '90%', sm: 400 } } }}
+        slotProps={{
+          paper: { sx: { borderRadius: 2, minWidth: { xs: '90%', sm: 400 } } }
+        }}
       >
         <DialogTitle>Dodaj Nowego Użytkownika</DialogTitle>
         <DialogContent>
@@ -705,7 +734,6 @@ const UserManagementPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <AppSnackbar
         open={snackbar.open}
         type={snackbar.type}

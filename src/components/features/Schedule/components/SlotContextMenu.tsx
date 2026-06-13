@@ -58,30 +58,35 @@ const SlotContextMenu: React.FC<SlotContextMenuProps> = ({
     >
       <MenuItem onClick={handleEdit} dense>
         <ListItemIcon><EditIcon sx={{ fontSize: 16 }} /></ListItemIcon>
-        <ListItemText primaryTypographyProps={{ fontSize: '0.8rem' }}>Edytuj slot</ListItemText>
+        <ListItemText slotProps={{
+          primary: { sx: { fontSize: '0.8rem' } }
+        }}>Edytuj slot</ListItemText>
       </MenuItem>
-
       {!isFestival && (
         <MenuItem onClick={handleDuplicate} dense>
           <ListItemIcon><ContentCopyIcon sx={{ fontSize: 16 }} /></ListItemIcon>
-          <ListItemText primaryTypographyProps={{ fontSize: '0.8rem' }}>Duplikuj slot</ListItemText>
+          <ListItemText slotProps={{
+            primary: { sx: { fontSize: '0.8rem' } }
+          }}>Duplikuj slot</ListItemText>
         </MenuItem>
       )}
-
       {state.assignmentId != null && [
         <Divider key="div" />,
         <MenuItem key="remove" onClick={handleRemove} dense>
           <ListItemIcon><PersonRemoveIcon sx={{ fontSize: 16, color: 'warning.main' }} /></ListItemIcon>
-          <ListItemText primaryTypographyProps={{ fontSize: '0.8rem', color: 'warning.main' }}>Usuń przypisanie</ListItemText>
+          <ListItemText slotProps={{
+            primary: { sx: { fontSize: '0.8rem', color: 'warning.main' } }
+          }}>Usuń przypisanie</ListItemText>
         </MenuItem>,
       ]}
-
       {!isFestival && (
         <>
           <Divider />
           <MenuItem onClick={handleDelete} dense>
             <ListItemIcon><DeleteIcon sx={{ fontSize: 16, color: 'error.main' }} /></ListItemIcon>
-            <ListItemText primaryTypographyProps={{ fontSize: '0.8rem', color: 'error.main' }}>Usuń slot</ListItemText>
+            <ListItemText slotProps={{
+              primary: { sx: { fontSize: '0.8rem', color: 'error.main' } }
+            }}>Usuń slot</ListItemText>
           </MenuItem>
         </>
       )}

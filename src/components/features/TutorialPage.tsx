@@ -58,20 +58,32 @@ const TUTORIAL_STEPS = [
     label: 'Zarządzanie dostawą',
     description: (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           Jako uczestnik questa masz dostęp do wielu funkcji ułatwiających zarządzanie dostawą:
         </Typography>
         
         <Stack spacing={2}>
           {/* Sekcja Aktualizacji Lokalizacji */}
           <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default' }}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                alignItems: "center",
+                mb: 1
+              }}>
               <Suspense fallback={null}><MyLocation /></Suspense>
-              <Typography variant="subtitle2" fontWeight="600">
+              <Typography variant="subtitle2" sx={{
+                fontWeight: "600"
+              }}>
                 Aktualizacja Lokalizacji
               </Typography>
             </Stack>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               W szczegółach transferu użyj przycisku "Aktualizuj lokalizację" aby zaznaczyć aktualną pozycję sprzętu na mapie.
             </Typography>
             <Paper 
@@ -86,7 +98,9 @@ const TUTORIAL_STEPS = [
                 borderRadius: 1
               }}
             >
-              <Stack direction="row" spacing={1} alignItems="flex-start">
+              <Stack direction="row" spacing={1} sx={{
+                alignItems: "flex-start"
+              }}>
                 <Suspense fallback={null}><Info /></Suspense>
                 <Typography variant="body2">
                   System może poprosić o dostęp do Twojej lokalizacji - pomoże to w dokładniejszym określeniu pozycji sprzętu. Nie martw się, nie zbieramy ani nie przechowujemy tych danych.
@@ -117,13 +131,23 @@ const TUTORIAL_STEPS = [
 
           {/* Sekcja Śledzenia Dostaw */}
           <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default' }}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                alignItems: "center",
+                mb: 1
+              }}>
               <Suspense fallback={null}><HistoryIcon /></Suspense>
-              <Typography variant="subtitle2" fontWeight="600">
+              <Typography variant="subtitle2" sx={{
+                fontWeight: "600"
+              }}>
                 Śledzenie Dostaw
               </Typography>
             </Stack>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Monitoruj swoje aktywne questy w dwóch wygodnych miejscach:
             </Typography>
             <Stack spacing={1} sx={{ mt: 1 }}>
@@ -144,13 +168,23 @@ const TUTORIAL_STEPS = [
 
           {/* Sekcja Historii */}
           <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default' }}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                alignItems: "center",
+                mb: 1
+              }}>
               <Suspense fallback={null}><Update /></Suspense>
-              <Typography variant="subtitle2" fontWeight="600">
+              <Typography variant="subtitle2" sx={{
+                fontWeight: "600"
+              }}>
                 Historia i Status
               </Typography>
             </Stack>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Śledź historię lokalizacji i postęp dostawy w czasie rzeczywistym. System automatycznie zapisuje wszystkie aktualizacje i zmiany statusu.
             </Typography>
           </Paper>
@@ -164,7 +198,9 @@ const TUTORIAL_STEPS = [
     label: 'Skanowanie kodów kreskowych',
     description: (
       <Box>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
+        <Typography variant="body2" gutterBottom sx={{
+          color: "text.secondary"
+        }}>
           Skanuj kody kreskowe sprzętu, aby błyskawicznie wyszukać lub uzupełnić dane:
         </Typography>
         <ul>
@@ -175,7 +211,12 @@ const TUTORIAL_STEPS = [
             <b>Uzupełnianie numeru seryjnego:</b> W szczegółach sprzętu kliknij "Uzupełnij", zeskanuj kod i zatwierdź.
           </li>
         </ul>
-        <Typography variant="body2" color="warning.main" sx={{ mt: 2 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "warning.main",
+            mt: 2
+          }}>
           Tryb "Wybuchło – bez numeru seryjnego" jest awaryjny! Sprzęt dodany w ten sposób wymaga późniejszego uzupełnienia numeru seryjnego przez skanowanie lub ręcznie.
         </Typography>
       </Box>
@@ -187,10 +228,17 @@ const TUTORIAL_STEPS = [
     label: 'Dodawanie nowego sprzętu',
     description: (
       <Box>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
+        <Typography variant="body2" gutterBottom sx={{
+          color: "text.secondary"
+        }}>
           Dodaj nowy sprzęt do systemu skanując jego numer seryjny lub wpisując go ręcznie. System automatycznie generuje PYRcode. Możesz dodać wiele przedmiotów naraz.
         </Typography>
-        <Typography variant="body2" color="warning.main" sx={{ mt: 2 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "warning.main",
+            mt: 2
+          }}>
           Jeśli nie masz numeru seryjnego (np. sprzęt "wybuchł" lub jest awaria), użyj trybu awaryjnego "Dodaj sprzęt bez numeru seryjnego". Taki sprzęt będzie wymagał późniejszego uzupełnienia serialu w szczegółach sprzętu (np. przez skanowanie).
         </Typography>
       </Box>
@@ -214,7 +262,9 @@ const TUTORIAL_STEPS = [
     label: 'Service Desk i zgłaszanie problemów',
     description: (
       <Box>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
+        <Typography variant="body2" gutterBottom sx={{
+          color: "text.secondary"
+        }}>
           Jeśli napotkasz problem techniczny, awarię sprzętu lub potrzebujesz wsparcia – skorzystaj z modułu <b>Service Desk</b>.
         </Typography>
         <ul>
@@ -314,7 +364,7 @@ const TutorialPage: React.FC = () => {
         </Box>
 
         <Grid container spacing={4}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card
               elevation={0}
               sx={{
@@ -328,9 +378,6 @@ const TutorialPage: React.FC = () => {
                   {TUTORIAL_STEPS.map((step, index) => (
                     <Step key={step.label}>
                       <StepLabel
-                        StepIconProps={{
-                          icon: step.icon,
-                        }}
                         onClick={() => handleStepClick(index)}
                         sx={{
                           cursor: 'pointer',
@@ -338,6 +385,11 @@ const TutorialPage: React.FC = () => {
                             typography: 'body1',
                             fontWeight: activeStep === index ? 600 : 400,
                           },
+                        }}
+                        slotProps={{
+                          stepIcon: {
+                            icon: step.icon,
+                          }
                         }}
                       >
                         {step.label}
@@ -369,7 +421,7 @@ const TutorialPage: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Box
               sx={{
                 height: '100%',

@@ -19,11 +19,17 @@ import {
   TableRow,
   TableCell,
   Paper,
+  CircularProgress,
 } from '@mui/material';
 import { bulkAddAssetsAPI } from '../../services/assetService';
-import { BarcodeGenerator } from '../common/BarcodeGenerator';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
+
+// jspdf + html2canvas (~650KB) load only when barcodes are actually shown
+const BarcodeGenerator = lazy(() =>
+  import('../common/BarcodeGenerator').then((m) => ({ default: m.BarcodeGenerator }))
+);
+
 import { OriginSelect } from '../ui/OriginSelect';
 
 interface AssetEntry {
@@ -211,7 +217,7 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
       />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth>
             <InputLabel>Kategoria</InputLabel>
             <Select
@@ -227,7 +233,7 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <OriginSelect
             value={origin}
             onChange={setOrigin}
@@ -312,13 +318,15 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
       >
         <DialogContent>
           {createdAssets.length > 0 ? (
-            <BarcodeGenerator
-              assets={createdAssets}
-              onClose={() => {
-                setShowBarcodes(false);
-                setCreatedAssets([]);
-              }}
-            />
+            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}>
+              <BarcodeGenerator
+                assets={createdAssets}
+                onClose={() => {
+                  setShowBarcodes(false);
+                  setCreatedAssets([]);
+                }}
+              />
+            </Suspense>
           ) : (
             <Typography color="error">
               Brak danych do wygenerowania kodów kreskowych

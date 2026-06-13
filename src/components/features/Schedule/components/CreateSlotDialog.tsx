@@ -87,7 +87,9 @@ const CreateSlotDialog: React.FC<CreateSlotDialogProps> = ({ open, onClose, onCr
           value={date}
           onChange={(e) => setDate(e.target.value)}
           fullWidth
-          InputLabelProps={{ shrink: true }}
+          slotProps={{
+            inputLabel: { shrink: true }
+          }}
         />
 
         {/* Time range */}
@@ -98,20 +100,22 @@ const CreateSlotDialog: React.FC<CreateSlotDialogProps> = ({ open, onClose, onCr
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            InputProps={{ inputProps: { step: 1800 } }}
-            InputLabelProps={{ shrink: true }}
             sx={{ flex: 1 }}
-          />
+            slotProps={{
+              input: { inputProps: { step: 1800 } },
+              inputLabel: { shrink: true }
+            }} />
           <TextField
             size="small"
             label="Do"
             type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            InputProps={{ inputProps: { step: 1800 } }}
-            InputLabelProps={{ shrink: true }}
             sx={{ flex: 1 }}
-          />
+            slotProps={{
+              input: { inputProps: { step: 1800 } },
+              inputLabel: { shrink: true }
+            }} />
         </Box>
 
         {isTooLong && (
@@ -130,7 +134,6 @@ const CreateSlotDialog: React.FC<CreateSlotDialogProps> = ({ open, onClose, onCr
           placeholder="Auto-generowana jeśli puste"
         />
       </DialogContent>
-
       <DialogActions>
         <Button onClick={onClose} size="small">Anuluj</Button>
         <Button

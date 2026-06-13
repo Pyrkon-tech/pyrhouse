@@ -184,83 +184,89 @@ const ServiceDeskPage: React.FC = () => {
 
   return (
     <Box sx={{ maxWidth: viewMode === 'kanban' ? 'none' : 1200, mx: 'auto', p: { xs: 0.5, sm: 1, md: 4 } }}>
-    <Box sx={{ 
-        display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        justifyContent: 'space-between',
-        mb: 2,
-        gap: { xs: 1, sm: 2 },
-      }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="h4" fontWeight={700} color="primary.main" sx={{ fontSize: { xs: 26, sm: 32 } }}>
-              Service Desk
-            </Typography>
-            <Tooltip title={sseConnected ? 'Aktualizacje real-time aktywne' : 'Łączenie z real-time...'}>
-              <Box
+      <Box sx={{ 
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          mb: 2,
+          gap: { xs: 1, sm: 2 },
+        }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                variant="h4"
                 sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  bgcolor: sseConnected ? 'success.main' : 'warning.main',
-                  flexShrink: 0,
-                  transition: 'background-color 0.3s ease',
+                  fontWeight: 700,
+                  color: "primary.main",
+                  fontSize: { xs: 26, sm: 32 }
+                }}>
+                Service Desk
+              </Typography>
+              <Tooltip title={sseConnected ? 'Aktualizacje real-time aktywne' : 'Łączenie z real-time...'}>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    bgcolor: sseConnected ? 'success.main' : 'warning.main',
+                    flexShrink: 0,
+                    transition: 'background-color 0.3s ease',
+                  }}
+                />
+              </Tooltip>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              <OpenInNewIcon sx={{ color: theme => theme.palette.primary.main, fontSize: 20 }} />
+              <a
+                href="/servicedesk/request"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: 'inherit',
+                  fontWeight: 500,
+                  fontSize: '1rem',
+                  letterSpacing: 0.1,
+                  cursor: 'pointer',
+                  transition: 'color 0.2s, text-decoration 0.2s',
+                  textDecoration: 'none',
                 }}
-              />
-            </Tooltip>
+                onMouseOver={e => (e.currentTarget.style.textDecoration = 'underline')}
+                onMouseOut={e => (e.currentTarget.style.textDecoration = 'none')}
+              >
+                Otwórz publiczny formularz
+              </a>
+            </Box>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-            <OpenInNewIcon sx={{ color: theme => theme.palette.primary.main, fontSize: 20 }} />
-            <a
-              href="/servicedesk/request"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: 'inherit',
-                fontWeight: 500,
-                fontSize: '1rem',
-                letterSpacing: 0.1,
-                cursor: 'pointer',
-                transition: 'color 0.2s, text-decoration 0.2s',
-                textDecoration: 'none',
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1.5, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
+            <Button variant="contained" color="primary" onClick={() => setOpenForm(true)}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                fontSize: { xs: '1rem', sm: '0.98rem' },
+                py: { xs: 0.9, sm: 0.7 },
+                borderRadius: 1,
+                fontWeight: 600,
+                minWidth: 160,
+                boxShadow: 'none',
               }}
-              onMouseOver={e => (e.currentTarget.style.textDecoration = 'underline')}
-              onMouseOut={e => (e.currentTarget.style.textDecoration = 'none')}
             >
-              Otwórz publiczny formularz
-            </a>
+              + Nowe zgłoszenie
+            </Button>
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={refresh} disabled={loading}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                fontSize: { xs: '1rem', sm: '0.98rem' },
+                py: { xs: 0.8, sm: 0.6 },
+                borderRadius: 1,
+                fontWeight: 500,
+                minWidth: 120,
+                boxShadow: 'none',
+              }}
+            >
+              Odśwież
+            </Button>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1.5, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
-          <Button variant="contained" color="primary" onClick={() => setOpenForm(true)}
-            sx={{
-              width: { xs: '100%', sm: 'auto' },
-              fontSize: { xs: '1rem', sm: '0.98rem' },
-              py: { xs: 0.9, sm: 0.7 },
-              borderRadius: 1,
-              fontWeight: 600,
-              minWidth: 160,
-              boxShadow: 'none',
-            }}
-          >
-            + Nowe zgłoszenie
-          </Button>
-          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={refresh} disabled={loading}
-            sx={{
-              width: { xs: '100%', sm: 'auto' },
-              fontSize: { xs: '1rem', sm: '0.98rem' },
-              py: { xs: 0.8, sm: 0.6 },
-              borderRadius: 1,
-              fontWeight: 500,
-              minWidth: 120,
-              boxShadow: 'none',
-            }}
-          >
-            Odśwież
-          </Button>
-        </Box>
-      </Box>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, mt: { xs: 0.5, sm: 0 }, pr: { xs: 0, sm: 0.5 } }}>
         <ToggleButtonGroup
           value={viewMode}
@@ -303,8 +309,10 @@ const ServiceDeskPage: React.FC = () => {
         placeholder="Szukaj po tytule, opisie lub lokalizacji..."
         value={search}
         onChange={e => setSearch(e.target.value)}
-        InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
         sx={{ mb: 3, fontSize: { xs: 16, sm: 18 } }}
+        slotProps={{
+          input: { startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }
+        }}
       />
       {typesError && <Alert severity="error">{typesError}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
@@ -402,30 +410,32 @@ const ServiceDeskPage: React.FC = () => {
         onClose={() => setOpenForm(false)} 
         maxWidth="sm" 
         fullWidth
-        PaperProps={{
-          sx: theme => ({
-            borderRadius: 4,
-            background: theme.palette.mode === 'dark' ? 'rgba(32,32,40,0.98)' : 'rgba(255,255,255,0.98)',
-            color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.text.primary,
-            backdropFilter: 'blur(10px)',
-            boxShadow: 24,
-            p: { xs: 2, sm: 4 },
-            maxWidth: 520,
-            mx: 'auto',
-            overflow: 'visible',
-            maxHeight: '100dvh',
-            overflowY: 'auto',
-            minHeight: 0,
-          })
-        }}
-            sx={{ 
-          '& .MuiDialog-container': {
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(30,30,40,0.45)',
-            backdropFilter: 'blur(2px)',
-          }
-        }}
+        sx={{ 
+      '& .MuiDialog-container': {
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(30,30,40,0.45)',
+        backdropFilter: 'blur(2px)',
+      }
+    }}
+            slotProps={{
+              paper: {
+                sx: theme => ({
+                  borderRadius: 4,
+                  background: theme.palette.mode === 'dark' ? 'rgba(32,32,40,0.98)' : 'rgba(255,255,255,0.98)',
+                  color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.text.primary,
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: 24,
+                  p: { xs: 2, sm: 4 },
+                  maxWidth: 520,
+                  mx: 'auto',
+                  overflow: 'visible',
+                  maxHeight: '100dvh',
+                  overflowY: 'auto',
+                  minHeight: 0,
+                })
+              }
+            }}
       >
         <Box sx={{
           p: 0,
@@ -439,7 +449,12 @@ const ServiceDeskPage: React.FC = () => {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <TaskIcon color="warning" sx={{ fontSize: 24, mr: 1 }} />
-            <Typography variant="h6" fontWeight={600} color="primary.main">
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                color: "primary.main"
+              }}>
               Nowe zgłoszenie
           </Typography>
         </Box>

@@ -219,12 +219,13 @@ const ReleaseCreatePage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
             Nowe wydanie sprzętu
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             Trwałe wydanie do dostawcy po zakończeniu eventu
           </Typography>
         </Box>
       </Box>
-
       {/* Krok 1: Parametry */}
       <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
@@ -286,7 +287,6 @@ const ReleaseCreatePage: React.FC = () => {
           </Alert>
         )}
       </Paper>
-
       {/* Krok 2: Lista sprzętu */}
       {hasSuggestions && (
         <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: 2 }}>
@@ -347,7 +347,9 @@ const ReleaseCreatePage: React.FC = () => {
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>
                             {asset.category_name ?? '—'}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" sx={{
+                            color: "text.secondary"
+                          }}>
                             {asset.pyr_code ?? ''}
                             {asset.item_serial ? ` · SN: ${asset.item_serial}` : ''}
                             {asset.location_name ? ` · ${asset.location_name}` : ''}
@@ -410,7 +412,9 @@ const ReleaseCreatePage: React.FC = () => {
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
                               {stock.category_name ?? '—'}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" sx={{
+                              color: "text.secondary"
+                            }}>
                               {stock.location_name ?? ''} · dostępne: {stock.quantity}
                             </Typography>
                           </Box>
@@ -421,11 +425,15 @@ const ReleaseCreatePage: React.FC = () => {
                               value={selected?.quantity ?? 0}
                               disabled={!selected}
                               onChange={(e) => updateStockQty(stock.id, Number(e.target.value))}
-                              inputProps={{ min: 1, max: stock.quantity }}
                               sx={{ width: 80 }}
+                              slotProps={{
+                                htmlInput: { min: 1, max: stock.quantity }
+                              }}
                             />
                           </Tooltip>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" sx={{
+                            color: "text.secondary"
+                          }}>
                             / {stock.quantity}
                           </Typography>
                         </Box>
@@ -438,7 +446,6 @@ const ReleaseCreatePage: React.FC = () => {
           )}
         </Paper>
       )}
-
       {/* Krok 3: Dane wydania */}
       {hasSuggestions && (
         <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: 2 }}>
@@ -458,12 +465,13 @@ const ReleaseCreatePage: React.FC = () => {
           />
         </Paper>
       )}
-
       {/* Podsumowanie + akcje */}
       {hasSuggestions && (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <Box>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Wybrano:{' '}
               <strong>{selectedAssetIds.size} seryjnych</strong>
               {selectedStocks.size > 0 && (

@@ -92,7 +92,9 @@ const TransferInfoSection: React.FC<TransferInfoSectionProps> = ({
     <Divider sx={{ mb: 3 }} />
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
       <Box>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        <Typography variant="subtitle2" gutterBottom sx={{
+          color: "text.secondary"
+        }}>
           Lokalizacja źródłowa
         </Typography>
         <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: { xs: '1rem', sm: '1.1rem' } }}>
@@ -101,7 +103,9 @@ const TransferInfoSection: React.FC<TransferInfoSectionProps> = ({
         </Typography>
       </Box>
       <Box>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        <Typography variant="subtitle2" gutterBottom sx={{
+          color: "text.secondary"
+        }}>
           Lokalizacja docelowa
         </Typography>
         <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: { xs: '1rem', sm: '1.1rem' } }}>
@@ -110,7 +114,9 @@ const TransferInfoSection: React.FC<TransferInfoSectionProps> = ({
         </Typography>
       </Box>
       <Box>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        <Typography variant="subtitle2" gutterBottom sx={{
+          color: "text.secondary"
+        }}>
           Status
         </Typography>
         <Chip
@@ -121,7 +127,9 @@ const TransferInfoSection: React.FC<TransferInfoSectionProps> = ({
         />
       </Box>
       <Box>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        <Typography variant="subtitle2" gutterBottom sx={{
+          color: "text.secondary"
+        }}>
           Data transferu
         </Typography>
         <Typography variant="body1" sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}>
@@ -129,11 +137,15 @@ const TransferInfoSection: React.FC<TransferInfoSectionProps> = ({
         </Typography>
       </Box>
       <Box>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
+        <Typography
+          variant="subtitle2"
+          gutterBottom
+          sx={{
+            color: "text.secondary",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
           <span>Gżdacze</span>
           {hasAdminAccess && (
             <Tooltip title="Edytuj listę Gżdaczy">
@@ -168,7 +180,9 @@ const TransferInfoSection: React.FC<TransferInfoSectionProps> = ({
               />
             ))
           ) : (
-            <Typography color="text.secondary">Brak przypisanych Gżdaczy</Typography>
+            <Typography sx={{
+              color: "text.secondary"
+            }}>Brak przypisanych Gżdaczy</Typography>
           )}
         </Box>
       </Box>
@@ -176,7 +190,9 @@ const TransferInfoSection: React.FC<TransferInfoSectionProps> = ({
 
     {(transfer.status === 'in_transit' || transfer.status === 'completed') && transfer.delivery_location && (
       <Box sx={{ mt: 3 }}>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        <Typography variant="subtitle2" gutterBottom sx={{
+          color: "text.secondary"
+        }}>
           {transfer.status === 'in_transit' ? 'Aktualna lokalizacja dostawy' : 'Lokalizacja dostawy'}
         </Typography>
         <Box sx={{
@@ -193,7 +209,13 @@ const TransferInfoSection: React.FC<TransferInfoSectionProps> = ({
         }}>
           {mapContent}
         </Box>
-        <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            display: "block",
+            mt: 1
+          }}>
           Ostatnia aktualizacja: {new Date(transfer.delivery_location.timestamp).toLocaleString()}
         </Typography>
       </Box>

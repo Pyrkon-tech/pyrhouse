@@ -197,15 +197,19 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                         !/^[1-9][0-9]*$/.test(stockQuantities[stockId]?.toString() || '') ||
                         Number(stockQuantities[stockId]) > Number(stockItem?.quantity || 1)
                       }
-                      inputProps={{
-                        min: 1,
-                        max: stockItem?.quantity || 1,
-                        inputMode: 'numeric',
-                        pattern: '[0-9]*'
-                      }}
                       sx={{ width: 100 }}
+                      slotProps={{
+                        htmlInput: {
+                          min: 1,
+                          max: stockItem?.quantity || 1,
+                          inputMode: 'numeric',
+                          pattern: '[0-9]*'
+                        }
+                      }}
                     />
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{
+                      color: "text.secondary"
+                    }}>
                       (dostępne: {stockItem?.quantity || 0})
                     </Typography>
                   </Box>

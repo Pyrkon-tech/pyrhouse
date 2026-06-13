@@ -48,11 +48,18 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <Box sx={{ color: 'text.disabled', mb: 1.5, '& svg': { fontSize: '2.5rem' } }}>
       {icon ?? <InboxIcon />}
     </Box>
-    <Typography variant="h6" color="text.secondary" gutterBottom>
+    <Typography variant="h6" gutterBottom sx={{
+      color: "text.secondary"
+    }}>
       {message}
     </Typography>
     {description && (
-      <Typography variant="body2" color="text.disabled" sx={{ mb: action ? 2.5 : 0 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.disabled",
+          mb: action ? 2.5 : 0
+        }}>
         {description}
       </Typography>
     )}

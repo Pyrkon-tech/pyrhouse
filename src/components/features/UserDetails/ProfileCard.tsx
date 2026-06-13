@@ -86,7 +86,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, p: 1, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider', gap: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Suspense fallback={null}><StarIcon /></Suspense>
-                <Typography variant="body1" fontWeight="bold">
+                <Typography variant="body1" sx={{
+                  fontWeight: "bold"
+                }}>
                   EXP: {user.points ?? 0}
                 </Typography>
               </Box>
@@ -107,7 +109,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <DiscordIcon />
-              <Typography variant="body2" fontWeight="bold" sx={{ color: DISCORD_COLOR }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: "bold",
+                  color: DISCORD_COLOR
+                }}>
                 Discord
               </Typography>
               <Chip
@@ -171,7 +178,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <GoogleIcon />
-                <Typography variant="body2" fontWeight="bold" sx={{ color: GOOGLE_COLOR }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: "bold",
+                    color: GOOGLE_COLOR
+                  }}>
                   Google
                 </Typography>
                 <Chip

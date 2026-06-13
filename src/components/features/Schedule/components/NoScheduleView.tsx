@@ -38,25 +38,47 @@ const NoScheduleView: React.FC<{ onCreated: () => void }> = ({ onCreated }) => {
 
   return (
     <Box sx={{ maxWidth: 520, mx: 'auto', mt: 8, p: 4, border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
-      <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>Brak aktywnego harmonogramu</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: 700,
+          mb: 0.5
+        }}>Brak aktywnego harmonogramu</Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          mb: 3
+        }}>
         Utwórz nowy — poprzedni zostanie automatycznie zarchiwizowany.
       </Typography>
-
       {createError && (
         <ApiErrorAlert error={createError} onDismiss={() => setCreateError(null)} />
       )}
-
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField label="Nazwa harmonogramu" value={form.name} onChange={set('name')} fullWidth autoFocus placeholder="np. Pyrkon 2026" />
 
-        <Typography variant="caption" color="text.secondary" sx={{ mb: -1 }}>Zakres eventu (montaż + festiwal + demontaż)</Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            mb: -1
+          }}>Zakres eventu (montaż + festiwal + demontaż)</Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-          <TextField label="Początek eventu" type="date" value={form.event_start} onChange={set('event_start')} InputLabelProps={{ shrink: true }} />
-          <TextField label="Koniec eventu" type="date" value={form.event_end} onChange={set('event_end')} InputLabelProps={{ shrink: true }} />
+          <TextField label="Początek eventu" type="date" value={form.event_start} onChange={set('event_start')} slotProps={{
+            inputLabel: { shrink: true }
+          }} />
+          <TextField label="Koniec eventu" type="date" value={form.event_end} onChange={set('event_end')} slotProps={{
+            inputLabel: { shrink: true }
+          }} />
         </Box>
 
-        <Typography variant="caption" color="text.secondary" sx={{ mb: -1 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            mb: -1
+          }}>
           Faza festiwalowa — podaj z godzinami (wpływa na sloty solver-a)
         </Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
@@ -65,16 +87,20 @@ const NoScheduleView: React.FC<{ onCreated: () => void }> = ({ onCreated }) => {
             type="datetime-local"
             value={form.festival_start}
             onChange={set('festival_start')}
-            InputLabelProps={{ shrink: true }}
             helperText='np. "2026-06-19T10:00"'
+            slotProps={{
+              inputLabel: { shrink: true }
+            }}
           />
           <TextField
             label="Koniec festiwalu"
             type="datetime-local"
             value={form.festival_end}
             onChange={set('festival_end')}
-            InputLabelProps={{ shrink: true }}
             helperText='np. "2026-06-21T20:00"'
+            slotProps={{
+              inputLabel: { shrink: true }
+            }}
           />
         </Box>
 

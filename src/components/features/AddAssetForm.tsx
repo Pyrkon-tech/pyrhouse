@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import {
   Box,
   Button,
@@ -8,11 +8,16 @@ import {
   CircularProgress,
   Dialog,
 } from '@mui/material';
-import { BarcodeGenerator } from '../common/BarcodeGenerator';
 import { apiClient, ApiError } from '../../services/apiClient';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { OriginSelect } from '../ui/OriginSelect';
+
+// jspdf + html2canvas (~650KB) load only when barcodes are actually shown
+const BarcodeGenerator = lazy(() =>
+  import('../common/BarcodeGenerator').then((m) => ({ default: m.BarcodeGenerator }))
+);
+
 
 interface Asset {
   id: number;
@@ -143,10 +148,12 @@ export const AddAssetForm: React.FC<{
         fullWidth
       >
         {createdAsset && (
-          <BarcodeGenerator
-            assets={[createdAsset]}
-            onClose={() => setShowBarcode(false)}
-          />
+          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}>
+            <BarcodeGenerator
+              assets={[createdAsset]}
+              onClose={() => setShowBarcode(false)}
+            />
+          </Suspense>
         )}
       </Dialog>
     </Box>

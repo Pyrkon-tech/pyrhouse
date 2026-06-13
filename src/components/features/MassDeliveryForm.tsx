@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import JsBarcode from 'jsbarcode';
-import { jsPDF } from 'jspdf';
 import { createReservationsAPI } from '../../services/assetService';
 import type { AssetReservation } from '../../types/asset.types';
 import { AppSnackbar } from '../ui/AppSnackbar';
@@ -98,10 +97,12 @@ export const MassDeliveryForm: React.FC<MassDeliveryFormProps> = ({ categories }
     return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (reservations.length === 0) return;
     setIsGenerating(true);
     try {
+      // jspdf (~450KB) loads on demand, only when labels are actually printed
+      const { jsPDF } = await import('jspdf');
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [40, 80] });
       for (let i = 0; i < reservations.length; i++) {
         if (i > 0) doc.addPage();
@@ -187,11 +188,14 @@ export const MassDeliveryForm: React.FC<MassDeliveryFormProps> = ({ categories }
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          mb: 3
+        }}>
         Wygeneruj kody PYR z wyprzedzeniem, wydrukuj naklejki, a potem przypisz numery seryjne podczas odbierania sprzętu.
       </Typography>
-
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: 3 }}>
         <FormControl size="small" sx={{ minWidth: 220 }}>
           <InputLabel>Kategoria</InputLabel>
@@ -215,9 +219,11 @@ export const MassDeliveryForm: React.FC<MassDeliveryFormProps> = ({ categories }
           size="small"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
-          inputProps={{ min: 1, max: 9999 }}
           sx={{ width: 120 }}
           disabled={reservations.length > 0}
+          slotProps={{
+            htmlInput: { min: 1, max: 9999 }
+          }}
         />
 
         <Button
@@ -230,7 +236,6 @@ export const MassDeliveryForm: React.FC<MassDeliveryFormProps> = ({ categories }
           {isSubmitting ? 'Rezerwuję...' : 'Zarezerwuj kody'}
         </Button>
       </Box>
-
       {reservations.length > 0 && (
         <>
           <Divider sx={{ my: 2 }} />

@@ -89,8 +89,8 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
               {showFullNav && (
                 <Typography
                   variant="subtitle2"
-                  color="text.secondary"
                   sx={{
+                    color: "text.secondary",
                     px: 2.5,
                     py: 0.4,
                     fontSize: '0.65rem',
@@ -99,9 +99,8 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
                     textTransform: 'uppercase',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.75,
-                  }}
-                >
+                    gap: 0.75
+                  }}>
                   <LazyIcon>{item.icon}</LazyIcon>
                   {item.label}
                 </Typography>
@@ -122,11 +121,15 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
                   {showFullNav && (
                     <ListItemText
                       primary={item.label}
-                      primaryTypographyProps={{
-                        fontWeight: activeItem === item.path ? 600 : 400,
-                        fontSize: '0.875rem',
-                        letterSpacing: '0.01em',
-                        noWrap: true,
+                      slotProps={{
+                        primary: {
+                          noWrap: true,
+                          sx: {
+                            fontWeight: activeItem === item.path ? 600 : 400,
+                            fontSize: '0.875rem',
+                            letterSpacing: '0.01em',
+                          },
+                        }
                       }}
                     />
                   )}
@@ -136,15 +139,14 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
           )
         ))}
       </List>
-
       {adminItems.length > 0 && (
         <>
           <Divider sx={{ my: showFullNav ? 0.75 : 0.5, mx: showFullNav ? 1.5 : 0.75 }} />
           {showFullNav && (
             <Typography
               variant="subtitle2"
-              color="text.secondary"
               sx={{
+                color: "text.secondary",
                 px: 2.5,
                 py: 0.4,
                 fontSize: '0.65rem',
@@ -153,9 +155,8 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
                 textTransform: 'uppercase',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 0.75,
-              }}
-            >
+                gap: 0.75
+              }}>
               <LazyIcon>
                 <Icons.AdminPanelSettings sx={{ fontSize: '1rem' }} />
               </LazyIcon>
@@ -178,11 +179,15 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
                     {showFullNav && (
                       <ListItemText
                         primary={item.label}
-                        primaryTypographyProps={{
-                          fontWeight: activeItem === item.path ? 600 : 400,
-                          fontSize: '0.875rem',
-                          letterSpacing: '0.01em',
-                          noWrap: true,
+                        slotProps={{
+                          primary: {
+                            noWrap: true,
+                            sx: {
+                              fontWeight: activeItem === item.path ? 600 : 400,
+                              fontSize: '0.875rem',
+                              letterSpacing: '0.01em',
+                            },
+                          }
                         }}
                       />
                     )}

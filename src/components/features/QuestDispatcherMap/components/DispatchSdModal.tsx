@@ -84,13 +84,15 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: dt.paper.bg,
-          borderRadius: 2,
-          backgroundImage: 'none',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: dt.paper.bg,
+            borderRadius: 2,
+            backgroundImage: 'none',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
+          },
+        }
       }}
     >
       {/* Solid teal title bar — game-style modal header */}
@@ -106,7 +108,6 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
           )}
         </Box>
       </DialogTitle>
-
       <DialogContent sx={{ py: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Meta row */}
         <Box sx={{ display: 'flex', gap: 0.75, mt: 1, flexWrap: 'wrap' }}>
@@ -227,13 +228,15 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
               fullWidth
               multiline
               maxRows={3}
-              inputProps={{ maxLength: 1000 }}
               disabled={addingComment}
               sx={{
                 '& .MuiInputBase-root': { bgcolor: dt.paper.bgInput, fontSize: 13, color: dt.paper.text },
                 '& .MuiOutlinedInput-notchedOutline': { borderColor: dt.paper.border },
                 '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#a89674' },
                 '& .MuiInputBase-input::placeholder': { color: dt.paper.textMuted, opacity: 1 },
+              }}
+              slotProps={{
+                htmlInput: { maxLength: 1000 }
               }}
             />
             <Button
@@ -254,7 +257,6 @@ const DispatchSdModal: React.FC<DispatchSdModalProps> = ({ request, onClose, onU
           </Box>
         </Box>
       </DialogContent>
-
       <DialogActions sx={{ px: 3, py: 1.5, borderTop: `1px solid ${dt.paper.divider}` }}>
         <Button
           onClick={onClose}

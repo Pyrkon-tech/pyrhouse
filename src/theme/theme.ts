@@ -86,40 +86,11 @@ const createCriticalComponents = (mode: 'light' | 'dark'): Components<Omit<Theme
           outlineOffset: '2px',
         },
       },
-      // Contained Primary - orange z glow
-      containedPrimary: {
-        background: designTokens.gradients.primary,
-        boxShadow: designTokens.shadows.primary,
-        '&:hover': {
-          background: designTokens.gradients.hero,
-          boxShadow: designTokens.glow.orange,
-          transform: 'translateY(-2px) scale(1.02)',
-        },
-      },
-      // Contained Secondary
-      containedSecondary: {
-        '&:hover': {
-          boxShadow: '0 4px 14px rgba(216, 67, 21, 0.35)',
-        },
-      },
       // Outlined variant - orange border
       outlined: {
         borderWidth: '1.5px',
         '&:hover': {
           borderWidth: '1.5px',
-          backgroundColor: 'rgba(255, 152, 0, 0.08)',
-        },
-      },
-      outlinedPrimary: {
-        borderColor: designTokens.colors.primary[500],
-        '&:hover': {
-          borderColor: designTokens.colors.primary[600],
-          backgroundColor: 'rgba(255, 152, 0, 0.08)',
-        },
-      },
-      // Text variant
-      textPrimary: {
-        '&:hover': {
           backgroundColor: 'rgba(255, 152, 0, 0.08)',
         },
       },
@@ -132,7 +103,48 @@ const createCriticalComponents = (mode: 'light' | 'dark'): Components<Omit<Theme
         padding: '6px 16px',
         fontSize: designTokens.typography.fontSize.sm,
       },
-    }
+    },
+    // v9 removed ${variant}${Color} style slots — use the component variants API
+    variants: [
+      {
+        props: { variant: 'contained', color: 'primary' },
+        style: {
+          background: designTokens.gradients.primary,
+          boxShadow: designTokens.shadows.primary,
+          '&:hover': {
+            background: designTokens.gradients.hero,
+            boxShadow: designTokens.glow.orange,
+            transform: 'translateY(-2px) scale(1.02)',
+          },
+        },
+      },
+      {
+        props: { variant: 'contained', color: 'secondary' },
+        style: {
+          '&:hover': {
+            boxShadow: '0 4px 14px rgba(216, 67, 21, 0.35)',
+          },
+        },
+      },
+      {
+        props: { variant: 'outlined', color: 'primary' },
+        style: {
+          borderColor: designTokens.colors.primary[500],
+          '&:hover': {
+            borderColor: designTokens.colors.primary[600],
+            backgroundColor: 'rgba(255, 152, 0, 0.08)',
+          },
+        },
+      },
+      {
+        props: { variant: 'text', color: 'primary' },
+        style: {
+          '&:hover': {
+            backgroundColor: 'rgba(255, 152, 0, 0.08)',
+          },
+        },
+      },
+    ],
   },
   MuiPaper: {
     styleOverrides: {
@@ -208,11 +220,18 @@ const createCriticalComponents = (mode: 'light' | 'dark'): Components<Omit<Theme
         marginLeft: '8px',
         marginRight: '-4px',
       },
-      iconSmall: {
-        marginLeft: '6px',
-        marginRight: '-4px',
+    },
+    variants: [
+      {
+        props: { size: 'small' },
+        style: {
+          '& .MuiChip-icon': {
+            marginLeft: '6px',
+            marginRight: '-4px',
+          },
+        },
       },
-    }
+    ],
   },
   MuiListItem: {
     styleOverrides: {
@@ -238,23 +257,37 @@ const createCriticalComponents = (mode: 'light' | 'dark'): Components<Omit<Theme
       root: {
         borderRadius: designTokens.borderRadius.lg,
       },
-      standardSuccess: {
-        backgroundColor: 'rgba(46, 125, 50, 0.1)',
-        borderLeft: `4px solid ${designTokens.colors.success.main}`,
-      },
-      standardError: {
-        backgroundColor: 'rgba(211, 47, 47, 0.1)',
-        borderLeft: `4px solid ${designTokens.colors.error.main}`,
-      },
-      standardWarning: {
-        backgroundColor: 'rgba(255, 152, 0, 0.15)',
-        borderLeft: `4px solid ${designTokens.colors.primary[500]}`,  // Orange primary
-      },
-      standardInfo: {
-        backgroundColor: 'rgba(0, 172, 193, 0.1)',  // Teal accent
-        borderLeft: `4px solid ${designTokens.colors.accent[500]}`,
-      },
     },
+    variants: [
+        {
+          props: { severity: 'success', variant: 'standard' },
+          style: {
+            backgroundColor: 'rgba(46, 125, 50, 0.1)',
+            borderLeft: `4px solid ${designTokens.colors.success.main}`,
+          },
+        },
+        {
+          props: { severity: 'error', variant: 'standard' },
+          style: {
+            backgroundColor: 'rgba(211, 47, 47, 0.1)',
+            borderLeft: `4px solid ${designTokens.colors.error.main}`,
+          },
+        },
+        {
+          props: { severity: 'warning', variant: 'standard' },
+          style: {
+            backgroundColor: 'rgba(255, 152, 0, 0.15)',
+            borderLeft: `4px solid ${designTokens.colors.primary[500]}`,  // Orange primary
+          },
+        },
+        {
+          props: { severity: 'info', variant: 'standard' },
+          style: {
+            backgroundColor: 'rgba(0, 172, 193, 0.1)',  // Teal accent
+            borderLeft: `4px solid ${designTokens.colors.accent[500]}`,
+          },
+        },
+    ],
   },
   MuiTooltip: {
     styleOverrides: {

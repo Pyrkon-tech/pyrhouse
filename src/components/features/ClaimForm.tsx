@@ -129,14 +129,17 @@ export const ClaimForm: React.FC = () => {
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          mb: 3
+        }}>
         Skanuj kod PYR ze stickera → Enter → skanuj numer seryjny → Enter → automatycznie przechodzi do następnego wiersza.
       </Typography>
-
       <Box sx={{ mb: 3, minWidth: 220, maxWidth: 300 }}>
         <OriginSelect value={origin} onChange={setOrigin} required />
       </Box>
-
       {successCount !== null && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessCount(null)}>
           Utworzono {successCount} assetów. Możesz kontynuować skanowanie.
@@ -152,7 +155,6 @@ export const ClaimForm: React.FC = () => {
           ))}
         </Alert>
       )}
-
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
           <TableHead>
@@ -181,7 +183,9 @@ export const ClaimForm: React.FC = () => {
                       autoFocus={i === 0}
                       error={!!errorEntry}
                       helperText={errorEntry ? (reasonTranslations[errorEntry.reason] ?? errorEntry.reason) : ''}
-                      inputProps={{ style: { fontFamily: 'monospace' } }}
+                      slotProps={{
+                        htmlInput: { style: { fontFamily: 'monospace' } }
+                      }}
                     />
                   </TableCell>
                   <TableCell sx={{ py: 0.5 }}>
@@ -206,7 +210,6 @@ export const ClaimForm: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
-
       <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
         <Button
           variant="contained"

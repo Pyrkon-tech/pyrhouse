@@ -253,7 +253,9 @@ const LocationDetailsPage: React.FC = () => {
             {filteredItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={isAsset ? 5 : 4} align="center" sx={{ py: 4 }}>
-                  <Typography variant="body1" color="text.secondary">
+                  <Typography variant="body1" sx={{
+                    color: "text.secondary"
+                  }}>
                     Nie znaleziono elementów
                   </Typography>
                 </TableCell>
@@ -377,12 +379,18 @@ const LocationDetailsPage: React.FC = () => {
             {isAsset ? (item as Asset).category.label : (item as StockItem).category.label}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              ID: <Typography component="span" color="text.primary">{item.id}</Typography>
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
+              ID: <Typography component="span" sx={{
+              color: "text.primary"
+            }}>{item.id}</Typography>
             </Typography>
             {isAsset ? (
               <>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Status: {(() => {
                     const { label, color } = getAssetDisplayStatus(
                       (item as Asset).status,
@@ -391,13 +399,21 @@ const LocationDetailsPage: React.FC = () => {
                     return <Chip size="small" label={label} color={color} />;
                   })()}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  PYR Code: <Typography component="span" color="text.primary">{(item as Asset).pyrcode || '-'}</Typography>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
+                  PYR Code: <Typography component="span" sx={{
+                  color: "text.primary"
+                }}>{(item as Asset).pyrcode || '-'}</Typography>
                 </Typography>
               </>
             ) : (
-              <Typography variant="body2" color="text.secondary">
-                Ilość: <Typography component="span" color="text.primary">{(item as StockItem).quantity}</Typography>
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
+                Ilość: <Typography component="span" sx={{
+                color: "text.primary"
+              }}>{(item as StockItem).quantity}</Typography>
               </Typography>
             )}
           </Box>
@@ -478,7 +494,6 @@ const LocationDetailsPage: React.FC = () => {
           </Typography>
         </Box>
       </Box>
-
       {/* Informacje o lokalizacji */}
       <Box 
         sx={{ 
@@ -533,7 +548,13 @@ const LocationDetailsPage: React.FC = () => {
             }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      mb: 0.5,
+                      display: 'block'
+                    }}>
                     Identyfikator
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.main' }}>
@@ -541,7 +562,13 @@ const LocationDetailsPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      mb: 0.5,
+                      display: 'block'
+                    }}>
                     Nazwa lokalizacji
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -560,7 +587,13 @@ const LocationDetailsPage: React.FC = () => {
               borderColor: 'divider'
             }}>
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    mb: 0.5,
+                    display: 'block'
+                  }}>
                   Pawilon
                 </Typography>
                 <Typography 
@@ -574,7 +607,13 @@ const LocationDetailsPage: React.FC = () => {
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    mb: 0.5,
+                    display: 'block'
+                  }}>
                   Szczegóły
                 </Typography>
                 <Typography 
@@ -609,7 +648,9 @@ const LocationDetailsPage: React.FC = () => {
               borderColor: 'divider'
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Liczba sprzętu
                 </Typography>
               </Box>
@@ -632,7 +673,9 @@ const LocationDetailsPage: React.FC = () => {
               borderColor: 'divider'
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   Liczba zasobów
                 </Typography>
               </Box>
@@ -646,7 +689,6 @@ const LocationDetailsPage: React.FC = () => {
           </Box>
         </Box>
       </Box>
-
       {/* Sprzęt i Zasoby w zakładkach */}
       <Box sx={{ mt: 4 }}>
         {locationDetails?.assets && locationDetails.assets.length > 0 && (
@@ -696,12 +738,14 @@ const LocationDetailsPage: React.FC = () => {
                   flexGrow: 1,
                   maxWidth: 300
                 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="action" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }
                 }}
               />
               <Button
@@ -760,7 +804,6 @@ const LocationDetailsPage: React.FC = () => {
           </Box>
         )}
       </Box>
-
       {/* Zaznaczone elementy - sticky footer */}
       {(selectedItems.assetIds.length > 0 || selectedItems.stockIds.length > 0) && (
         <Box 
@@ -837,7 +880,6 @@ const LocationDetailsPage: React.FC = () => {
           </Button>
         </Box>
       )}
-
       {/* Modal transferu */}
       <TransferModal
         open={transferModalOpen}

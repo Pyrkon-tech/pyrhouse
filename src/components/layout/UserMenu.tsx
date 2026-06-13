@@ -101,12 +101,11 @@ const UserMenu: React.FC<UserMenuProps> = ({ username, userRole, userId, onLogou
           </Box>
         </IconButton>
       </Tooltip>
-
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        PaperProps={{
+        slotProps={{ paper: {
           sx: {
             width: 300,
             maxWidth: '100%',
@@ -120,7 +119,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ username, userRole, userId, onLogou
               : '1px solid rgba(0, 0, 0, 0.08)',
             boxShadow: designTokens.shadows.xl,
           }
-        }}
+        } }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
@@ -133,7 +132,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ username, userRole, userId, onLogou
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                 {displayName}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 {ROLE_LABELS[userRole ?? ''] ?? 'Użytkownik'}
               </Typography>
             </Box>
@@ -158,8 +159,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ username, userRole, userId, onLogou
             <ListItemText
               primary="Mój profil"
               secondary="Zarządzaj swoim kontem"
-              secondaryTypographyProps={{
-                sx: { color: 'primary.contrastText', opacity: 0.8 }
+              slotProps={{
+                secondary: {
+                  sx: { color: 'primary.contrastText', opacity: 0.8 }
+                }
               }}
             />
           </MenuItem>
@@ -182,8 +185,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ username, userRole, userId, onLogou
             <ListItemText
               primary="Przewodnik po systemie"
               secondary="Poznaj podstawy obsługi aplikacji"
-              secondaryTypographyProps={{
-                sx: { color: 'text.secondary' }
+              slotProps={{
+                secondary: {
+                  sx: { color: 'text.secondary' }
+                }
               }}
             />
           </MenuItem>
@@ -207,7 +212,13 @@ const UserMenu: React.FC<UserMenuProps> = ({ username, userRole, userId, onLogou
 
           {isMobile && (
             <Box sx={{ px: 1, py: 0.5, mb: 0.5 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  display: 'block',
+                  mb: 0.5
+                }}>
                 Motyw
               </Typography>
               <ThemeToggle variant="menu" />

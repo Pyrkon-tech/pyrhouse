@@ -52,7 +52,7 @@ interface TransferFormProps {
   usersLoading: boolean;
 }
 
-const StyledForm = styled(Box)(({ theme }) => ({
+const StyledForm = styled('form')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(3),
@@ -179,7 +179,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
 
   return (
     <>
-      <StyledForm component="form" onSubmit={handleSubmit(handleFormSubmit)}>
+      <StyledForm onSubmit={handleSubmit(handleFormSubmit)}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -265,7 +265,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
                   />
                 )}
               />
-              <Grid item xs={3}>
+              <Grid size={{ xs: 3 }}>
                 <TextField
                   fullWidth
                   type="number"
@@ -277,7 +277,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
                   error={!!errors.items?.[index]?.quantity}
                 />
               </Grid>
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton 
                   onClick={() => remove(index)}
                   disabled={fields.length === 1}
@@ -319,23 +319,27 @@ const TransferForm: React.FC<TransferFormProps> = ({
                     size="small"
                     label="Uczestnicy transferu"
                     fullWidth
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <>
-                          {usersLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </>
-                      ),
+                    slotProps={{
+                      ...params.slotProps,
+
+                      input: {
+                        ...params.slotProps.input,
+                        endAdornment: (
+                          <>
+                            {usersLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.slotProps.input.endAdornment}
+                          </>
+                        ),
+                      }
                     }}
                   />
                 )}
-                renderTags={(value, getTagProps) =>
+                renderValue={(value, getItemProps) =>
                   value.map((option, index) => (
                     <Chip
                       size="small"
                       label={`${option.username}`}
-                      {...getTagProps({ index })}
+                      {...getItemProps({ index })}
                       sx={{ maxWidth: { xs: '150px', sm: 'none' } }}
                     />
                   ))
@@ -345,7 +349,12 @@ const TransferForm: React.FC<TransferFormProps> = ({
           />
         </FormSection>
 
-        <Box display="flex" gap={2} justifyContent="flex-end">
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            justifyContent: "flex-end"
+          }}>
           <Button
             variant="outlined"
             onClick={onCancel}
@@ -362,7 +371,6 @@ const TransferForm: React.FC<TransferFormProps> = ({
           </StyledButton>
         </Box>
       </StyledForm>
-
       <Dialog 
         open={showConfirmation} 
         onClose={() => setShowConfirmation(false)}

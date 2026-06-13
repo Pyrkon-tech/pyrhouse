@@ -75,7 +75,9 @@ export const DataTableEmptyRow: React.FC<DataTableEmptyRowProps> = ({
 }) => (
   <TableRow>
     <TableCell colSpan={colSpan} align="center" sx={{ py: 4, border: 'none' }}>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>
         {message}
       </Typography>
     </TableCell>

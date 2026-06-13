@@ -59,8 +59,10 @@ const QuantityEditor: React.FC<QuantityEditorProps> = ({ quantity, canEdit, onSa
               size="small"
               value={value ?? ''}
               onChange={e => setValue(Number(e.target.value))}
-              inputProps={{ min: 0, style: { textAlign: 'center', width: 60 } }}
               disabled={saving}
+              slotProps={{
+                htmlInput: { min: 0, style: { textAlign: 'center', width: 60 } }
+              }}
             />
             <Button
               variant="outlined"
@@ -95,7 +97,9 @@ const QuantityEditor: React.FC<QuantityEditorProps> = ({ quantity, canEdit, onSa
           </Box>
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body1" fontWeight="bold">
+            <Typography variant="body1" sx={{
+              fontWeight: "bold"
+            }}>
               {quantity}
             </Typography>
             <Button
@@ -109,7 +113,9 @@ const QuantityEditor: React.FC<QuantityEditorProps> = ({ quantity, canEdit, onSa
           </Box>
         )
       ) : (
-        <Typography variant="body1" fontWeight="bold">
+        <Typography variant="body1" sx={{
+          fontWeight: "bold"
+        }}>
           {quantity}
         </Typography>
       )}

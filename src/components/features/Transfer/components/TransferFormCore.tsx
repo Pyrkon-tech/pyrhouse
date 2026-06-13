@@ -385,7 +385,13 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
 
         {itemSummary.length > 0 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.5, p: 1.25, borderRadius: 1, bgcolor: 'action.hover' }}>
-            <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center', mr: 0.5 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                alignSelf: 'center',
+                mr: 0.5
+              }}>
               W koszyku:
             </Typography>
             {itemSummary.map(([label, qty]) => (
@@ -493,20 +499,24 @@ const TransferFormCore: React.FC<TransferFormCoreProps> = ({ questId, questLocat
                       size="small"
                       label="Uczestnicy transferu"
                       fullWidth
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {usersLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
+                      slotProps={{
+                        ...params.slotProps,
+
+                        input: {
+                          ...params.slotProps.input,
+                          endAdornment: (
+                            <>
+                              {usersLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                              {params.slotProps.input.endAdornment}
+                            </>
+                          ),
+                        }
                       }}
                     />
                   )}
-                  renderTags={(value, getTagProps) =>
+                  renderValue={(value, getItemProps) =>
                     value.map((option, index) => {
-                      const { key, ...chipProps } = getTagProps({ index });
+                      const { key, ...chipProps } = getItemProps({ index });
                       return (
                         <Chip
                           key={key}
