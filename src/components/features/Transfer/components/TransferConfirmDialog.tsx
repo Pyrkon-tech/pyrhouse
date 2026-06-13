@@ -146,6 +146,7 @@ const TransferConfirmDialog: React.FC<TransferConfirmDialogProps> = ({
                     }}
                   >
                     <ListItemText
+                      slotProps={{ secondary: { component: 'div' } }}
                       primary={item.type === 'pyr_code'
                         ? item.pyrcode
                         : stocks.find(s => s.id === parseInt(item.id))?.category.label}

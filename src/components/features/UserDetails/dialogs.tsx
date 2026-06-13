@@ -184,6 +184,7 @@ export const MergeDiscordDialog: React.FC<MergeDiscordDialogProps> = ({
                 sx={{ borderRadius: 1 }}
               >
                 <ListItemText
+                  slotProps={{ primary: { component: 'div' }, secondary: { component: 'div' } }}
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                       <Typography variant="body1" sx={{ fontWeight: 500 }}>

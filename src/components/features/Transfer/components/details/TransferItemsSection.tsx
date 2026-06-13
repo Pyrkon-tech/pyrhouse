@@ -57,6 +57,7 @@ const TransferItemsSection: React.FC<TransferItemsSectionProps> = ({ transfer, o
                 />
               </ListItemAvatar>
               <ListItemText
+                slotProps={{ primary: { component: 'div' }, secondary: { component: 'div' } }}
                 primary={<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}>{`${asset.category?.label || 'N/A'} ${asset.pyrcode}`}</Typography>}
                 secondary={<Typography sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }}>{`Pochodzenie: ${asset.origin || 'N/A'}`}</Typography>}
                 sx={{ ml: 1 }}
@@ -106,6 +107,7 @@ const TransferItemsSection: React.FC<TransferItemsSectionProps> = ({ transfer, o
                 />
               </ListItemAvatar>
               <ListItemText
+                slotProps={{ primary: { component: 'div' }, secondary: { component: 'div' } }}
                 primary={<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}>{`${stock.category?.label || 'N/A'}`}</Typography>}
                 secondary={<Typography sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }}>{`Pochodzenie: ${stock.origin || 'N/A'}`}</Typography>}
                 sx={{ ml: 1 }}
