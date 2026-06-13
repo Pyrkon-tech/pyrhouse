@@ -52,7 +52,7 @@ interface TransferFormProps {
   usersLoading: boolean;
 }
 
-const StyledForm = styled(Box)(({ theme }) => ({
+const StyledForm = styled('form')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(3),
@@ -179,7 +179,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
 
   return (
     <>
-      <StyledForm component="form" onSubmit={handleSubmit(handleFormSubmit)}>
+      <StyledForm onSubmit={handleSubmit(handleFormSubmit)}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}

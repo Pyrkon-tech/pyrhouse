@@ -313,7 +313,6 @@ const UserDetailsPage: React.FC = () => {
           Profil użytkownika
         </Typography>
       </Box>
-
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <ProfileCard
@@ -350,7 +349,6 @@ const UserDetailsPage: React.FC = () => {
           />
         </Grid>
       </Grid>
-
       {/* Transfery */}
       <Box sx={{ mt: 3 }}>
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
@@ -374,7 +372,6 @@ const UserDetailsPage: React.FC = () => {
           </Card>
         </Box>
       </Box>
-
       <PasswordDialog
         open={isPasswordDialogOpen}
         updating={isPasswordUpdating}
@@ -383,7 +380,6 @@ const UserDetailsPage: React.FC = () => {
         onClose={handlePasswordDialogClose}
         onSubmit={handlePasswordUpdate}
       />
-
       <PointsDialog
         open={isPointsDialogOpen}
         loading={isPointsLoading}
@@ -392,7 +388,6 @@ const UserDetailsPage: React.FC = () => {
         onClose={handleClosePointsDialog}
         onSubmit={handleSubmitPoints}
       />
-
       <MergeDiscordDialog
         open={isMergeDialogOpen}
         merging={isMerging}
@@ -404,7 +399,6 @@ const UserDetailsPage: React.FC = () => {
         onClose={handleCloseMergeDialog}
         onMerge={handleMerge}
       />
-
       <AppSnackbar open={snackbar.open} type={snackbar.type} message={snackbar.message} details={snackbar.details} onClose={closeSnackbar} autoHideDuration={snackbar.autoHideDuration} />
     </Box>
   );

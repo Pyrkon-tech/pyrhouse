@@ -294,7 +294,6 @@ const OriginsManagementPage: React.FC = () => {
         onClose={closeSnackbar}
         autoHideDuration={snackbar.autoHideDuration}
       />
-
       <PageHeader
         title="Zarządzanie Originami"
         actions={
@@ -312,13 +311,11 @@ const OriginsManagementPage: React.FC = () => {
           </>
         }
       />
-
       {error && (
         <Typography color="error" sx={{ mb: 2 }}>
           {error}
         </Typography>
       )}
-
       {isMobile ? (
         loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -334,7 +331,6 @@ const OriginsManagementPage: React.FC = () => {
       ) : (
         renderTable()
       )}
-
       {/* Add Dialog */}
       <Dialog open={dialogs.addOpen} onClose={dialogs.closeAdd} maxWidth="sm" fullWidth>
         <DialogTitle>Dodaj origin</DialogTitle>
@@ -377,7 +373,6 @@ const OriginsManagementPage: React.FC = () => {
           <Button variant="primary" onClick={handleCreate} loading={addSaving}>Dodaj</Button>
         </DialogActions>
       </Dialog>
-
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         open={dialogs.isDeleteOpen}
@@ -402,7 +397,6 @@ const OriginsManagementPage: React.FC = () => {
         onConfirm={handleDeleteConfirm}
         onClose={dialogs.closeDelete}
       />
-
       {/* Edit Dialog */}
       <Dialog open={dialogs.isEditOpen} onClose={dialogs.closeEdit} maxWidth="sm" fullWidth>
         <DialogTitle>
