@@ -62,13 +62,13 @@ const formatDate = (dateStr: string) => {
   }
 };
 
-const formatQuestItems = (items: Array<{ name: string; quantity: number }>) => {
+const formatQuestItems = (items: Array<{ name: string; quantity: number | null }>) => {
   if (!items?.length) return '—';
   const first = items[0];
   const rest = items.length - 1;
   return rest > 0
-    ? `${first.name} (${first.quantity}) +${rest} więcej`
-    : `${first.name} (${first.quantity})`;
+    ? `${first.name} (${first.quantity ?? '?'}) +${rest} więcej`
+    : `${first.name} (${first.quantity ?? '?'})`;
 };
 
 const HomePage: React.FC = () => {

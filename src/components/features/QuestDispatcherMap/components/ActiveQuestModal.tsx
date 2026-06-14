@@ -35,7 +35,7 @@ const ActiveQuestModal: React.FC<ActiveQuestModalProps> = ({ quest, onClose, onC
 
   if (!quest) return null;
 
-  const totalItems = quest.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = quest.items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
 
   const handleComplete = async () => {
     setCompleting(true);
@@ -132,7 +132,7 @@ const ActiveQuestModal: React.FC<ActiveQuestModalProps> = ({ quest, onClose, onC
                     {item.name}
                   </Typography>
                   <Typography sx={{ color: '#a85e00', fontFamily: 'monospace', fontSize: 13, fontWeight: 800, minWidth: 32, textAlign: 'right', flexShrink: 0 }}>
-                    ×{item.quantity}
+                    ×{item.quantity ?? '?'}
                   </Typography>
                 </Box>
                 {item.notes && (

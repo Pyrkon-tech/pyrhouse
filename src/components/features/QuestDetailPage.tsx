@@ -26,6 +26,7 @@ import {
   TextField,
   Menu,
   MenuItem,
+  Tooltip,
 } from '@mui/material';
 import { useNavigate, useParams, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useQuestDetail } from '../../hooks/useQuestDetail';
@@ -33,7 +34,7 @@ import { useQuestStream } from '../../hooks/useQuestStream';
 import { useLocations } from '../../hooks/useLocations';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../context/NotificationContext';
-import { updateQuestLocationAPI } from '../../services/questService';
+import { updateQuestLocationAPI, triggerSyncAPI } from '../../services/questService';
 import { getPricesAPI } from '../../services/budgetService';
 import { getTransferDetailsAPI } from '../../services/transferService';
 import type { QuestEvent } from '../../types/quest.types';
@@ -136,6 +137,7 @@ const QuestDetailPage: React.FC = () => {
 
   const [pendingStatus, setPendingStatus] = useState<QuestStatus | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<HTMLElement | null>(null);
   const [priceMap, setPriceMap] = useState<Map<string, number>>(new Map());
   const [transferDetails, setTransferDetails] = useState<Map<number, TransferDetails>>(new Map());
@@ -177,6 +179,19 @@ const QuestDetailPage: React.FC = () => {
   useEffect(() => {
     if (questId != null) fetchLocations();
   }, [questId, fetchLocations]);
+
+  const handleSyncNow = async () => {
+    try {
+      setSyncing(true);
+      await triggerSyncAPI();
+      showSuccess('Synchronizacja zakończona');
+      await refreshQuest();
+    } catch {
+      showError('Błąd podczas synchronizacji');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleAssignLocation = async () => {
     if (!quest || selectedLocationId == null) return;
@@ -298,7 +313,8 @@ const QuestDetailPage: React.FC = () => {
     );
   }
 
-  const totalItems = quest.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = quest.items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
+  const unknownQtyCount = quest.items.filter((item) => item.quantity == null).length;
 
   return (
     <Box
@@ -491,6 +507,35 @@ const QuestDetailPage: React.FC = () => {
           )}
         </Alert>
       )}
+      {/* Unknown-quantity banner */}
+      {unknownQtyCount > 0 && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          action={
+            hasAdminAccess ? (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={handleSyncNow}
+                disabled={syncing}
+                startIcon={syncing ? <CircularProgress size={14} color="inherit" /> : null}
+              >
+                {syncing ? 'Synchronizuję…' : 'Synchronizuj teraz'}
+              </Button>
+            ) : undefined
+          }
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Pozycje do doprecyzowania: {unknownQtyCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+            W arkuszu nie podano ilości — sprawdź, czy pozycję wysłać (mogła już zostać wydana
+            lub mieć specjalne wymaganie). Ewentualnie uzupełnij ilość w Google Sheet i zsynchronizuj,
+            albo podaj ją przy wydaniu.
+          </Typography>
+        </Alert>
+      )}
       {/* Action buttons */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         {/* Issue button - only for pending quests without a transfer and with resolved location */}
@@ -521,7 +566,8 @@ const QuestDetailPage: React.FC = () => {
       </Box>
       {/* Items table */}
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-        Przedmioty ({quest.items.length} poz., {totalItems} szt.)
+        Przedmioty ({quest.items.length} poz., {totalItems} szt.
+        {unknownQtyCount > 0 && ` + ${unknownQtyCount} bez ilości`})
       </Typography>
       <TableContainer
         component={Paper}
@@ -544,7 +590,13 @@ const QuestDetailPage: React.FC = () => {
               <TableRow key={index}>
                 <TableCell sx={{ fontWeight: 500 }}>{item.name}</TableCell>
                 <TableCell align="center">
-                  <Chip label={item.quantity} size="small" color="primary" variant="outlined" />
+                  {item.quantity == null ? (
+                    <Tooltip title="Ilość do doprecyzowania — w arkuszu nie podano liczby. Sprawdź, czy pozycję wysłać; ewentualnie uzupełnij w Google Sheet i zsynchronizuj.">
+                      <Chip label="ilość: ?" size="small" color="warning" variant="outlined" />
+                    </Tooltip>
+                  ) : (
+                    <Chip label={item.quantity} size="small" color="primary" variant="outlined" />
+                  )}
                 </TableCell>
                 <TableCell>
                   {getCategoryMatchChip(item.category_match, item.category_match_confidence)}
@@ -574,11 +626,11 @@ const QuestDetailPage: React.FC = () => {
                   );
                   const sent = sentByCategory.get(item.category_id) ?? 0;
                   const needed = item.quantity;
-                  const done = sent >= needed;
+                  const done = needed != null && sent >= needed;
                   return (
                     <TableCell align="center">
                       <Chip
-                        label={transferDetails.size > 0 ? `${sent}/${needed}` : '…'}
+                        label={transferDetails.size > 0 ? `${sent}/${needed ?? '?'}` : '…'}
                         size="small"
                         color={transferDetails.size === 0 ? 'default' : done ? 'success' : sent > 0 ? 'warning' : 'default'}
                         variant={sent > 0 ? 'filled' : 'outlined'}
@@ -588,7 +640,7 @@ const QuestDetailPage: React.FC = () => {
                 })()}
                 {isAdmin && (() => {
                   const minPrice = priceMap.get(item.name.toLowerCase().trim());
-                  const total = minPrice != null ? minPrice * item.quantity : null;
+                  const total = minPrice != null && item.quantity != null ? minPrice * item.quantity : null;
                   return (
                     <TableCell align="right">
                       <Typography variant="body2" sx={{ color: total != null ? '#ff9800' : 'text.disabled', fontWeight: total != null ? 600 : 400 }}>
@@ -607,7 +659,7 @@ const QuestDetailPage: React.FC = () => {
         let hasAny = false;
         quest.items.forEach(item => {
           const minPrice = priceMap.get(item.name.toLowerCase().trim());
-          if (minPrice != null) { total += minPrice * item.quantity; hasAny = true; }
+          if (minPrice != null && item.quantity != null) { total += minPrice * item.quantity; hasAny = true; }
         });
         return (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 3, px: 1 }}>

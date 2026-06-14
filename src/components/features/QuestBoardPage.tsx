@@ -50,6 +50,8 @@ const LIMIT = 100;
 
 const STATUS_ORDER: Record<string, number> = { in_progress: 0, pending: 1, completed: 2, cancelled: 3 };
 
+const questHasUnknownQty = (quest: Quest) => quest.items.some((i) => i.quantity == null);
+
 const getStatusChip = (status: QuestStatus) => {
   switch (status) {
     case 'pending':
@@ -99,6 +101,7 @@ const QuestBoardPage: React.FC = () => {
   );
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [showUnresolvedOnly, setShowUnresolvedOnly] = useState(false);
+  const [showMissingQtyOnly, setShowMissingQtyOnly] = useState(false);
   const [page, setPage] = useState(0);
 
   // Sync status (scheduler info)
@@ -160,6 +163,9 @@ const QuestBoardPage: React.FC = () => {
     if (showUnresolvedOnly) {
       result = result.filter((quest) => !quest.location_resolved);
     }
+    if (showMissingQtyOnly) {
+      result = result.filter(questHasUnknownQty);
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -171,10 +177,14 @@ const QuestBoardPage: React.FC = () => {
       );
     }
     return [...result].sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9));
-  }, [quests, searchQuery, showUnresolvedOnly]);
+  }, [quests, searchQuery, showUnresolvedOnly, showMissingQtyOnly]);
 
   const unresolvedLocationCount = useMemo(
     () => quests.filter(q => !q.location_resolved).length,
+    [quests],
+  );
+  const missingQtyCount = useMemo(
+    () => quests.filter(questHasUnknownQty).length,
     [quests],
   );
   const handleSync = async () => {
@@ -195,10 +205,11 @@ const QuestBoardPage: React.FC = () => {
     setStatusFilter('');
     setSearchQuery('');
     setShowUnresolvedOnly(false);
+    setShowMissingQtyOnly(false);
     setPage(0);
   };
 
-  const hasActiveFilters = statusFilter || searchQuery || showUnresolvedOnly;
+  const hasActiveFilters = statusFilter || searchQuery || showUnresolvedOnly || showMissingQtyOnly;
 
   const renderStatsBar = () => (
     <Grid container spacing={1.5} sx={{ mb: 2 }}>
@@ -341,7 +352,7 @@ const QuestBoardPage: React.FC = () => {
   );
 
   const getItemsSummary = (quest: Quest) => {
-    const items = quest.items.map((i) => `${i.name} (${i.quantity})`);
+    const items = quest.items.map((i) => `${i.name} (${i.quantity ?? '?'})`);
     if (items.length <= 3) return items.join(', ');
     return `${items.slice(0, 2).join(', ')} +${items.length - 2}`;
   };
@@ -396,6 +407,9 @@ const QuestBoardPage: React.FC = () => {
                 <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
                   {getItemsSummary(quest)}
                 </Typography>
+                {questHasUnknownQty(quest) && (
+                  <Chip label="⚠ bez ilości" size="small" color="warning" variant="outlined" sx={{ mt: 0.5, height: 20 }} />
+                )}
               </TableCell>
               <TableCell>{getStatusChip(quest.status)}</TableCell>
               <TableCell align="center">
@@ -490,7 +504,12 @@ const QuestBoardPage: React.FC = () => {
                   <Typography variant="body2" sx={{
                     color: "text.secondary"
                   }}>Przedmioty:</Typography>
-                  <Typography variant="body2">{quest.items.length} poz.</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography variant="body2">{quest.items.length} poz.</Typography>
+                    {questHasUnknownQty(quest) && (
+                      <Chip label="⚠ bez ilości" size="small" color="warning" variant="outlined" sx={{ height: 20 }} />
+                    )}
+                  </Box>
                 </Box>
                 {quest.transfers.length > 0 && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
@@ -623,6 +642,18 @@ const QuestBoardPage: React.FC = () => {
                 color="warning"
                 variant={showUnresolvedOnly ? 'filled' : 'outlined'}
                 onClick={() => setShowUnresolvedOnly((prev) => !prev)}
+                sx={{ cursor: 'pointer' }}
+              />
+            </Tooltip>
+          )}
+          {missingQtyCount > 0 && (
+            <Tooltip title={showMissingQtyOnly ? 'Kliknij aby anulować filtr' : 'Pokaż tylko questy z pozycjami bez określonej ilości'}>
+              <Chip
+                label={`⚠ ${missingQtyCount} bez ilości`}
+                size="small"
+                color="warning"
+                variant={showMissingQtyOnly ? 'filled' : 'outlined'}
+                onClick={() => setShowMissingQtyOnly((prev) => !prev)}
                 sx={{ cursor: 'pointer' }}
               />
             </Tooltip>

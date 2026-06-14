@@ -117,7 +117,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
 
   if (!quest) return null;
 
-  const totalItems = quest.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = quest.items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
   const totalSelected = selectedIds.length + manualUsers.length;
 
   return (
@@ -189,7 +189,7 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ open, quest, zone, volunt
                     {item.name}
                   </Typography>
                   <Typography sx={{ color: '#a85e00', fontFamily: 'monospace', fontSize: 13, fontWeight: 800, minWidth: 32, textAlign: 'right', flexShrink: 0 }}>
-                    x{item.quantity}
+                    x{item.quantity ?? '?'}
                   </Typography>
                 </Box>
                 {item.notes && (

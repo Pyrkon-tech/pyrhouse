@@ -9,7 +9,8 @@ export interface QuestDestination {
 
 export interface QuestItem {
   name: string;
-  quantity: number;
+  /** null = quantity not specified in the source sheet ("do ustalenia"); dispatcher fills it in at issue time */
+  quantity: number | null;
   category_id?: number;
   category_match: CategoryMatchType;
   category_match_confidence?: number;
@@ -214,7 +215,8 @@ export interface ResolvedStockItem {
 
 export interface UnresolvedItem {
   item_name: string;
-  quantity: number;
+  /** null when the reason is a missing quantity (reason: "quantity not specified in sheet") */
+  quantity: number | null;
   category_id?: number | null;
   reason: string;
 }
