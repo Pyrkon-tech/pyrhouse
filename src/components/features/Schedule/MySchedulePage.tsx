@@ -5,6 +5,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { getMyVolunteerScheduleAPI } from '../../../services/scheduleService';
 import type { MyScheduleResponse, MyScheduleSlot, SlotType } from '../../../types/schedule.types';
 import { ApiError } from '../../../services/apiClient';
+import { parseAsLocal } from './utils';
 
 // ---- ICS generation ---------------------------------------------------------
 
@@ -28,8 +29,24 @@ function mergeConsecutiveSlots(slots: MyScheduleSlot[]): MyScheduleSlot[][] {
   return blocks;
 }
 
-function icsDate(iso: string): string {
-  return iso.replace(/[-:]/g, '').replace('.000', '').replace('Z', 'Z').slice(0, 16) + 'Z';
+/**
+ * Format a backend datetime as an ICS floating local time `YYYYMMDDTHHMMSS` (no `Z`).
+ * Backend sends Polish local times with a misleading `Z` suffix; emitting them as
+ * floating local makes calendar apps show the slot at its real wall-clock time
+ * instead of shifting it by the viewer's UTC offset.
+ */
+function icsLocal(iso: string): string {
+  return iso.replace('Z', '').replace(/\.\d+/, '').replace(/[-:]/g, '');
+}
+
+/** Current time as an ICS UTC timestamp `YYYYMMDDTHHMMSSZ` (for DTSTAMP). */
+function icsStamp(date: Date): string {
+  return date.toISOString().replace(/\.\d+/, '').replace(/[-:]/g, '');
+}
+
+/** Escape ICS TEXT values (backslashes, commas, semicolons, newlines). */
+function escapeICS(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/([,;])/g, '\\$1').replace(/\n/g, '\\n');
 }
 
 function generateICS(nickname: string, blocks: MyScheduleSlot[][]): string {
@@ -41,22 +58,23 @@ function generateICS(nickname: string, blocks: MyScheduleSlot[][]): string {
     'METHOD:PUBLISH',
   ];
 
+  const dtstamp = icsStamp(new Date());
+
   blocks.forEach((block, idx) => {
     const start = block[0].start_time;
     const end = block[block.length - 1].end_time;
     const totalHours = block.reduce((s, sl) => s + sl.credit_hours, 0);
     const label = block.map((sl) => sl.label ?? slotTypeLabel(sl.slot_type)).join(' + ');
     const summary = `Dyżur Pyrkon — ${nickname} (${totalHours}h)`;
-    const description = label;
 
     lines.push(
       'BEGIN:VEVENT',
-      `UID:pyrhouse-${idx}-${start}@pyrhouse`,
-      `DTSTAMP:${icsDate(new Date().toISOString())}`,
-      `DTSTART:${icsDate(start)}`,
-      `DTEND:${icsDate(end)}`,
-      `SUMMARY:${summary}`,
-      `DESCRIPTION:${description}`,
+      `UID:pyrhouse-${idx}-${icsLocal(start)}@pyrhouse`,
+      `DTSTAMP:${dtstamp}`,
+      `DTSTART:${icsLocal(start)}`,
+      `DTEND:${icsLocal(end)}`,
+      `SUMMARY:${escapeICS(summary)}`,
+      `DESCRIPTION:${escapeICS(label)}`,
       'END:VEVENT',
     );
   });
@@ -87,13 +105,15 @@ function slotTypeLabel(type: SlotType): string {
   return type === 'festival' ? 'Festiwal' : type === 'montage' ? 'Montaż' : 'Demontaż';
 }
 
+// Backend sends Polish local times with a UTC `Z` suffix; strip it before
+// parsing so the browser timezone doesn't shift the displayed time (see parseAsLocal).
 function formatTime(iso: string): string {
-  const d = new Date(iso);
+  const d = parseAsLocal(iso);
   return d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatDate(iso: string): string {
-  const d = new Date(iso);
+  const d = parseAsLocal(iso);
   return d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
