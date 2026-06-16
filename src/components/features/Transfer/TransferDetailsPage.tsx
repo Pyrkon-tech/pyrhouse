@@ -68,7 +68,7 @@ const TransferDetailsPage: React.FC = () => {
 
   const numericId = Number(id);
 
-  const hasAdminAccess = userRole === 'admin' || userRole === 'moderator';
+  const hasAdminAccess = userRole === 'admin' || userRole === 'moderator' || userRole === 'dispatcher';
 
   const fetchTransferDetails = useCallback(async () => {
     setLoading(true);
