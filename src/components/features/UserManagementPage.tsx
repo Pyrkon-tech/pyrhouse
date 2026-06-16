@@ -5,6 +5,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
   Dialog,
   DialogTitle,
@@ -65,6 +66,8 @@ const UserManagementPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [roleMenuAnchor, setRoleMenuAnchor] = useState<null | HTMLElement>(null);
   const [activeMenuAnchor, setActiveMenuAnchor] = useState<null | HTMLElement>(null);
+  const [sortBy, setSortBy] = useState<'id' | 'volunteer'>('id');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -213,6 +216,31 @@ const UserManagementPage: React.FC = () => {
     [volunteers]
   );
 
+  const sortedUsers = useMemo(() => {
+    const arr = [...filteredUsers];
+    arr.sort((a, b) => {
+      let cmp: number;
+      if (sortBy === 'volunteer') {
+        const aLinked = volunteersByUserId.has(a.id) ? 1 : 0;
+        const bLinked = volunteersByUserId.has(b.id) ? 1 : 0;
+        cmp = aLinked - bLinked || a.id - b.id; // tiebreak by id
+      } else {
+        cmp = a.id - b.id;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [filteredUsers, sortBy, sortDir, volunteersByUserId]);
+
+  const handleSort = (column: 'id' | 'volunteer') => {
+    if (sortBy === column) {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(column);
+      setSortDir('asc');
+    }
+  };
+
   const handleLinkVolunteer = async (volunteer: ScheduleVolunteer, user: UserListItem) => {
     setLinkSavingId(volunteer.id);
     try {
@@ -312,7 +340,7 @@ const UserManagementPage: React.FC = () => {
 
   const renderMobileCards = () => (
     <Grid container spacing={2}>
-      {filteredUsers.map((user) => (
+      {sortedUsers.map((user) => (
         <Grid size={{ xs: 12 }} key={user.id}>
           <Card
             onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
@@ -412,7 +440,15 @@ const UserManagementPage: React.FC = () => {
     <DataTable  size="medium">
       <TableHead>
         <TableRow>
-          <TableCell>ID</TableCell>
+          <TableCell sortDirection={sortBy === 'id' ? sortDir : false}>
+            <TableSortLabel
+              active={sortBy === 'id'}
+              direction={sortBy === 'id' ? sortDir : 'asc'}
+              onClick={() => handleSort('id')}
+            >
+              ID
+            </TableSortLabel>
+          </TableCell>
           <TableCell>Pseudonim</TableCell>
           <TableCell>Nazwa</TableCell>
           <TableCell
@@ -427,7 +463,15 @@ const UserManagementPage: React.FC = () => {
             </Box>
           </TableCell>
           <TableCell>Discord</TableCell>
-          <TableCell>Wolontariusz</TableCell>
+          <TableCell sortDirection={sortBy === 'volunteer' ? sortDir : false}>
+            <TableSortLabel
+              active={sortBy === 'volunteer'}
+              direction={sortBy === 'volunteer' ? sortDir : 'asc'}
+              onClick={() => handleSort('volunteer')}
+            >
+              Wolontariusz
+            </TableSortLabel>
+          </TableCell>
           <TableCell
             onClick={(e) => setActiveMenuAnchor(e.currentTarget)}
             sx={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
@@ -458,7 +502,7 @@ const UserManagementPage: React.FC = () => {
             </TableCell>
           </TableRow>
         ) : (
-          filteredUsers.map((user) => (
+          sortedUsers.map((user) => (
             <TableRow
               key={user.id}
               onClick={() => navigate(`/users/${user.id}`, { state: { from: '/users' } })}
