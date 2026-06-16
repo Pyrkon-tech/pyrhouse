@@ -62,7 +62,7 @@ interface Equipment {
   pyr_code?: string;
   origin: string;
   type: 'asset' | 'stock';
-  serial?: string;
+  serial?: string | null;
 }
 
 type SemanticFilter = 'in_transit' | 'no_serial';
@@ -182,7 +182,9 @@ const EquipmentList: React.FC = () => {
         pyr_code: item.pyrcode || undefined,
         origin: item.origin,
         type: item.category?.type || 'asset',
-        serial: item.serial ?? undefined,
+        // Preserve null (asset flagged as missing serial) vs undefined (stock — no serial concept).
+        // `?? undefined` here collapsed null→undefined and broke every `serial === null` check.
+        serial: item.serial,
       }));
 
       setEquipment(transformedData);
