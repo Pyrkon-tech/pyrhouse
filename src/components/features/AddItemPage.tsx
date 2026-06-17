@@ -67,7 +67,14 @@ const AddItemPage: React.FC = () => {
         </Button>
       </Box>
 
-      <Tabs value={currentTab} onChange={(_e, v) => setCurrentTab(v)} sx={{ mt: 2 }}>
+      <Tabs
+        value={currentTab}
+        onChange={(_e, v) => setCurrentTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        sx={{ mt: 2 }}
+      >
         <Tab
           icon={<LazyIcon><Suspense fallback={null}><Laptop /></Suspense></LazyIcon>}
           label="Sprzęt z kodem PYR"
