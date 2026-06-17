@@ -1,24 +1,45 @@
-import React, { useEffect, useRef } from 'react';
-import { Box, Dialog, DialogTitle, IconButton, Typography } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { Box, Button, Dialog, DialogTitle, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import Quagga from '@ericblade/quagga2';
+import Quagga, { type QuaggaJSCodeReader } from '@ericblade/quagga2';
+
+// In continuous mode, ignore the same code if re-read within this window
+// (Quagga fires many detections per second; this dedupes a sticker still in view).
+const CONTINUOUS_COOLDOWN_MS = 2500;
 
 interface BarcodeScannerProps {
   onClose: () => void;
   onScan: (code: string) => void;
   title?: string;
   subtitle?: string;
+  /**
+   * Quagga 1D readers to enable. Defaults to Code 128 only (PYR codes).
+   * Pass a broader set when scanning arbitrary device serials (Code 39, EAN, …).
+   */
+  readers?: QuaggaJSCodeReader[];
+  /**
+   * Keep the camera open after each scan and emit every code via onScan
+   * (the parent closes the scanner with the "Gotowe" button). For bulk
+   * serial/PYR entry where you scan many items in a row.
+   */
+  continuous?: boolean;
 }
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ 
-  onClose, 
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
+  onClose,
   onScan,
   title = 'Skaner kodów kreskowych',
-  subtitle = 'Umieść kod w polu widzenia kamery'
+  subtitle = 'Umieść kod w polu widzenia kamery',
+  readers = ['code_128_reader'],
+  continuous = false
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
   const scanBufferRef = useRef<{ [key: string]: number }>({});
+  // Continuous mode: timestamp of last accept per code, for cooldown dedupe
+  const recentRef = useRef<{ [key: string]: number }>({});
+  const [scanCount, setScanCount] = useState(0);
+  const [lastCode, setLastCode] = useState('');
 
   const stopCamera = () => {
     try {
@@ -39,28 +60,43 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     } catch {}
   };
 
+  const acceptCode = (code: string) => {
+    if (continuous) {
+      // Keep scanning; dedupe the same code within the cooldown window.
+      const now = Date.now();
+      if (now - (recentRef.current[code] || 0) < CONTINUOUS_COOLDOWN_MS) {
+        return;
+      }
+      recentRef.current[code] = now;
+      scanBufferRef.current = {};
+      console.log('✅ Zeskanowano (ciągły):', code);
+      onScan(code);
+      setScanCount((c) => c + 1);
+      setLastCode(code);
+      try { navigator.vibrate?.(50); } catch {}
+      return;
+    }
+    // Single-shot: emit once and close.
+    stopQuagga();
+    stopCamera();
+    onScan(code);
+    handleClose();
+  };
+
   const handleDetected = (result: { codeResult?: { code?: string | null } }) => {
     if (!result?.codeResult?.code) {
       return;
     }
     const code = result.codeResult.code;
-    
+
     if (code.includes('PYR')) {
-      console.log('✅ Wykryto kod PYR:', code);
-      stopQuagga();
-      stopCamera();
-      onScan(code);
-      handleClose();
+      acceptCode(code);
       return;
     }
 
     scanBufferRef.current[code] = (scanBufferRef.current[code] || 0) + 1;
     if (scanBufferRef.current[code] >= 3) {
-      console.log('✅ Potwierdzono kod:', code);
-      stopQuagga();
-      stopCamera();
-      onScan(code);
-      handleClose();
+      acceptCode(code);
     }
   };
 
@@ -93,7 +129,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           willReadFrequently: true
         },
         decoder: {
-          readers: ['code_128_reader'],
+          readers,
           multiple: false
         },
         locate: true,
@@ -117,6 +153,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       stopQuagga();
       stopCamera();
       scanBufferRef.current = {};
+      recentRef.current = {};
     };
     // Intentionally mount-only: camera/Quagga lifecycle must init and tear down
     // exactly once; handleDetected/stopQuagga are stable for the component's lifetime
@@ -175,6 +212,24 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               left: 0
             }}
           />
+          {continuous && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 1,
+                backgroundColor: 'rgba(255, 152, 0, 0.9)',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              Zeskanowano: {scanCount}
+            </Box>
+          )}
           <Typography
             variant="body2"
             sx={{
@@ -188,9 +243,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               padding: 1,
             }}
           >
-            {subtitle}
+            {continuous && lastCode ? `Ostatni: ${lastCode}` : subtitle}
           </Typography>
         </Box>
+        {continuous && (
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            size="large"
+            onClick={handleClose}
+            sx={{ mt: 2 }}
+          >
+            Gotowe{scanCount > 0 ? ` (${scanCount})` : ''}
+          </Button>
+        )}
       </Box>
     </Dialog>
   );

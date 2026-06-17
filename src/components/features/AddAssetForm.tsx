@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Dialog,
 } from '@mui/material';
+import QrCodeScanner from '@mui/icons-material/QrCodeScanner';
 import { apiClient, ApiError } from '../../services/apiClient';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
@@ -17,6 +18,9 @@ import { OriginSelect } from '../ui/OriginSelect';
 const BarcodeGenerator = lazy(() =>
   import('../common/BarcodeGenerator').then((m) => ({ default: m.BarcodeGenerator }))
 );
+
+// Quagga (~kamera) load only when the scanner is actually opened
+const BarcodeScanner = lazy(() => import('../common/BarcodeScanner'));
 
 
 interface Asset {
@@ -49,6 +53,7 @@ export const AddAssetForm: React.FC<{
   const [submitting, setSubmitting] = useState(false);
   const [createdAsset, setCreatedAsset] = useState<Asset | null>(null);
   const [showBarcode, setShowBarcode] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
 
   // Filter categories to only include type "asset"
@@ -98,15 +103,24 @@ export const AddAssetForm: React.FC<{
         autoHideDuration={snackbar.autoHideDuration}
       />
 
-      {/* Serial Input */}
-      <TextField
-        label="Numer Seryjny"
-        value={serial}
-        onChange={(e) => setSerial(e.target.value)}
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-      />
+      {/* Serial Input — z opcją skanowania kodu na mobile */}
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', mb: 2 }}>
+        <TextField
+          label="Numer Seryjny"
+          value={serial}
+          onChange={(e) => setSerial(e.target.value)}
+          fullWidth
+          required
+        />
+        <Button
+          variant="outlined"
+          onClick={() => setShowScanner(true)}
+          sx={{ minWidth: 0, px: 1.5, height: 56, display: { xs: 'inline-flex', sm: 'none' } }}
+          aria-label="Skanuj numer seryjny"
+        >
+          <QrCodeScanner />
+        </Button>
+      </Box>
 
       {/* Category Select */}
       <Select
@@ -139,6 +153,35 @@ export const AddAssetForm: React.FC<{
       <Button variant="contained" color="primary" type="submit" disabled={submitting}>
         {submitting ? <CircularProgress size={24} /> : 'Dodaj sprzęt'}
       </Button>
+
+      {/* Barcode Scanner — skanowanie numeru seryjnego z urządzenia.
+          Szerszy zestaw czytników 1D niż domyślny PYR (Code 128), bo serial
+          producenta bywa zakodowany różnymi symbolikami (Code 39, EAN, …). */}
+      {showScanner && (
+        <Suspense fallback={null}>
+          <BarcodeScanner
+            onClose={() => setShowScanner(false)}
+            onScan={(code) => {
+              setSerial(code);
+              setShowScanner(false);
+            }}
+            title="Skanuj numer seryjny"
+            subtitle="Zeskanuj kod kreskowy z urządzenia"
+            readers={[
+              'code_128_reader',
+              'code_39_reader',
+              'code_39_vin_reader',
+              'code_93_reader',
+              'ean_reader',
+              'ean_8_reader',
+              'upc_reader',
+              'upc_e_reader',
+              'codabar_reader',
+              'i2of5_reader',
+            ]}
+          />
+        </Suspense>
+      )}
 
       {/* Barcode Dialog */}
       <Dialog

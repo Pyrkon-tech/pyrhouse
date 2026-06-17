@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import {
   TableBody,
   TableCell,
@@ -24,6 +24,7 @@ import {
   ListItemText,
   InputLabel,
   FormControl,
+  Dialog,
 } from '@mui/material';
 import { DataTable } from '../ui/DataTable';
 import { Button } from '../ui/Button';
@@ -74,6 +75,14 @@ const HomeIcon = lazy(() => import('@mui/icons-material/Home'));
 const Inventory2Icon = lazy(() => import('@mui/icons-material/Inventory2'));
 const ClearAllIcon = lazy(() => import('@mui/icons-material/ClearAll'));
 const SearchIcon = lazy(() => import('@mui/icons-material/Search'));
+const PrintIcon = lazy(() => import('@mui/icons-material/Print'));
+// jsbarcode + jspdf (~650KB) load only when labels are actually printed
+const BarcodeGenerator = lazy(() =>
+  import('../common/BarcodeGenerator').then((m) => ({ default: m.BarcodeGenerator }))
+);
+
+// Labels can only be printed for assets that carry a PYR code.
+const isPrintable = (item: Equipment) => item.type === 'asset' && !!item.pyr_code;
 
 const EquipmentList: React.FC = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -104,6 +113,56 @@ const EquipmentList: React.FC = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  // Zaznaczanie do druku etykiet (tylko assety z kodem PYR)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showLabels, setShowLabels] = useState(false);
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Printable rows currently visible (respects active filters).
+  const printableVisible = useMemo(
+    () => filteredEquipment.filter(isPrintable),
+    [filteredEquipment]
+  );
+
+  const allVisibleSelected =
+    printableVisible.length > 0 && printableVisible.every(i => selectedIds.has(i.id));
+  const someVisibleSelected =
+    printableVisible.some(i => selectedIds.has(i.id)) && !allVisibleSelected;
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allVisibleSelected) printableVisible.forEach(i => next.delete(i.id));
+      else printableVisible.forEach(i => next.add(i.id));
+      return next;
+    });
+  };
+
+  // Map selected assets into the shape BarcodeGenerator expects (pyrcode drives the label).
+  const selectedAssets = useMemo(
+    () =>
+      equipment
+        .filter(e => isPrintable(e) && selectedIds.has(e.id))
+        .map(e => ({
+          id: e.id,
+          serial: e.serial ?? '',
+          location: { id: e.location.id, name: e.location.name, details: null },
+          category: { id: 0, label: typeof e.category === 'string' ? e.category : e.category.label },
+          status: e.state,
+          pyrcode: e.pyr_code as string,
+          origin: e.origin,
+        })),
+    [equipment, selectedIds]
+  );
 
   const toggleQuickFilter = (key: SemanticFilter) => {
     setActiveQuickFilters(prev => {
@@ -305,6 +364,19 @@ const EquipmentList: React.FC = () => {
     <DataTable>
       <TableHead>
         <TableRow>
+          <TableCell padding="checkbox">
+            <Tooltip title="Zaznacz wszystkie do druku etykiet">
+              <span>
+                <Checkbox
+                  checked={allVisibleSelected}
+                  indeterminate={someVisibleSelected}
+                  disabled={printableVisible.length === 0}
+                  onChange={toggleSelectAllVisible}
+                  slotProps={{ input: { 'aria-label': 'Zaznacz wszystkie do druku etykiet' } }}
+                />
+              </span>
+            </Tooltip>
+          </TableCell>
           {['PYR CODE', 'KATEGORIA', 'LOKALIZACJA', 'STATUS / ILOŚĆ', 'POCHODZENIE'].map((field) => (
             <TableCell key={field}>{field}</TableCell>
           ))}
@@ -321,6 +393,18 @@ const EquipmentList: React.FC = () => {
             onClick={() => navigate(`/equipment/${item.id}?type=${item.type}`)}
             aria-label={`Szczegóły dla elementu ${item.pyr_code || item.id}`}
           >
+            <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+              <Tooltip title={isPrintable(item) ? '' : 'Brak kodu PYR — etykieta niedostępna'} disableHoverListener={isPrintable(item)}>
+                <span>
+                  <Checkbox
+                    checked={selectedIds.has(item.id)}
+                    disabled={!isPrintable(item)}
+                    onChange={() => toggleSelect(item.id)}
+                    slotProps={{ input: { 'aria-label': `Zaznacz ${item.pyr_code || item.id} do druku etykiety` } }}
+                  />
+                </span>
+              </Tooltip>
+            </TableCell>
             <TableCell>
               <Typography component="div" sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {item.type === 'asset' ? (item.pyr_code || '—') : '—'}
@@ -469,6 +553,16 @@ const EquipmentList: React.FC = () => {
                   <MenuItem onClick={() => handleDownloadReport('stock')}>Raport zapasów</MenuItem>
                 </Menu>
               </>
+            )}
+            {!isMobile && selectedIds.size > 0 && (
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<Suspense fallback={null}><PrintIcon /></Suspense>}
+                onClick={() => setShowLabels(true)}
+              >
+                Drukuj etykiety ({selectedIds.size})
+              </Button>
             )}
             <Button
               variant="outline"
@@ -638,6 +732,15 @@ const EquipmentList: React.FC = () => {
       ) : (
         isMobile ? renderMobileCards() : renderTable()
       )}
+
+      {/* Druk etykiet (kodów kreskowych) dla zaznaczonych assetów */}
+      <Dialog open={showLabels} onClose={() => setShowLabels(false)} maxWidth="md" fullWidth>
+        {selectedAssets.length > 0 && (
+          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}>
+            <BarcodeGenerator assets={selectedAssets} onClose={() => setShowLabels(false)} />
+          </Suspense>
+        )}
+      </Dialog>
     </Box>
   );
 };

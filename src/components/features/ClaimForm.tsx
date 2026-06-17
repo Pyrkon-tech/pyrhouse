@@ -28,6 +28,8 @@ import type { ClaimItem } from '../../types/asset.types';
 
 const DeleteIcon = lazy(() => import('@mui/icons-material/Delete'));
 const CheckIcon = lazy(() => import('@mui/icons-material/Check'));
+const QrCodeScanner = lazy(() => import('@mui/icons-material/QrCodeScanner'));
+const BarcodeScanner = lazy(() => import('../common/BarcodeScanner'));
 
 interface ClaimRow {
   id: string;
@@ -49,6 +51,7 @@ export const ClaimForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [claimErrors, setClaimErrors] = useState<{ pyr_code: string; reason: string }[]>([]);
   const [successCount, setSuccessCount] = useState<number | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   const pyrRefs = useRef<(HTMLInputElement | null)[]>([]);
   const serialRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -80,6 +83,26 @@ export const ClaimForm: React.FC = () => {
     if (rows.length === 1) { setRows([makeRow()]); return; }
     setRows((prev) => prev.filter((_, i) => i !== index));
   };
+
+  // Continuous camera scan: each scanned PYR code fills the next empty row
+  // (or appends one), so equipment can be added in a streak without closing
+  // the camera. Stable identity — the scanner mounts once per session.
+  const handleContinuousScan = useCallback((code: string) => {
+    const trimmed = code.trim();
+    if (!trimmed) return;
+    setRows((prev) => {
+      if (prev.some((r) => r.pyr_code.trim() === trimmed)) return prev; // skip duplicates
+      const emptyIdx = prev.findIndex((r) => !r.pyr_code.trim());
+      if (emptyIdx >= 0) {
+        const copy = [...prev];
+        copy[emptyIdx] = { ...copy[emptyIdx], pyr_code: trimmed };
+        return copy;
+      }
+      return [...prev, { ...makeRow(), pyr_code: trimmed }];
+    });
+    setSuccessCount((prev) => (prev !== null ? null : prev));
+    setClaimErrors((prev) => (prev.length > 0 ? [] : prev));
+  }, []);
 
   const handlePyrKeyDown = (e: React.KeyboardEvent, index: number) => {
     if (e.key === 'Enter') { e.preventDefault(); focusSerial(index); }
@@ -136,10 +159,36 @@ export const ClaimForm: React.FC = () => {
           mb: 3
         }}>
         Skanuj kod PYR ze stickera → Enter → skanuj numer seryjny → Enter → automatycznie przechodzi do następnego wiersza.
+        Na telefonie użyj „Skanuj ciągiem", aby kamerą dodawać kolejne kody PYR bez przerwy.
       </Typography>
-      <Box sx={{ mb: 3, minWidth: 220, maxWidth: 300 }}>
-        <OriginSelect value={origin} onChange={setOrigin} required />
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Box sx={{ minWidth: 220, maxWidth: 300, flex: { xs: '1 1 100%', sm: '0 0 auto' } }}>
+          <OriginSelect value={origin} onChange={setOrigin} required />
+        </Box>
+        <Button
+          variant="outlined"
+          onClick={() => setShowScanner(true)}
+          startIcon={<Suspense fallback={null}><QrCodeScanner /></Suspense>}
+          sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}
+        >
+          Skanuj ciągiem
+        </Button>
       </Box>
+
+      {showScanner && (
+        <Suspense fallback={null}>
+          <BarcodeScanner
+            continuous
+            onClose={() => {
+              setShowScanner(false);
+              setTimeout(() => pyrRefs.current[0]?.focus(), 60);
+            }}
+            onScan={handleContinuousScan}
+            title="Skanuj kody PYR"
+            subtitle="Skanuj kolejne kody — kamera zostaje otwarta"
+          />
+        </Suspense>
+      )}
       {successCount !== null && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessCount(null)}>
           Utworzono {successCount} assetów. Możesz kontynuować skanowanie.
