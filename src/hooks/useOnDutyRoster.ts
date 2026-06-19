@@ -4,6 +4,20 @@ import { getOnDutyAPI } from '../services/scheduleService';
 import { useDispatchStream } from './useDispatchStream';
 import type { VolunteerStatusChangedEvent, DutyRosterChangedEvent } from './useDispatchStream';
 
+/**
+ * Format a Date's local wall-clock components as a `Z`-suffixed ISO string.
+ *
+ * The schedule stores Polish wall-clock times with a fake `Z` suffix (see parseAsLocal:
+ * "10:00:00Z" means 10:00 Polish time). The on-duty matcher compares `at` against those
+ * stored values literally, so `at` must carry wall-clock time — NOT real UTC. Sending
+ * `new Date().toISOString()` would be UTC, which lags wall-clock by the local offset
+ * (2h in CEST), matching the slot from ~2h ago.
+ */
+const toWallClockZ = (d: Date): string => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}Z`;
+};
+
 interface UseOnDutyRosterResult {
   roster: OnDutyVolunteer[];
   loading: boolean;
@@ -34,7 +48,10 @@ export const useOnDutyRoster = (simulatedTime?: Date): UseOnDutyRosterResult => 
   const fetchRoster = useCallback(async (overrideTime?: Date) => {
     const generation = ++fetchGenRef.current;
     const t = overrideTime ?? simulatedTimeRef.current;
-    const at = t ? t.toISOString() : undefined;
+    // Simulated time is already stored as a wall-clock-as-UTC instant (built from `value + 'Z'`),
+    // so toISOString() yields the correct wall-clock `Z` string. For real "now" we must convert
+    // local wall-clock into a `Z` string, otherwise the backend matches the slot ~offset hours ago.
+    const at = t ? t.toISOString() : toWallClockZ(new Date());
     setLoading(true);
     setError(null);
     try {
