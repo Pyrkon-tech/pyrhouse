@@ -174,6 +174,8 @@ const QuestDetailPage: React.FC = () => {
   const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
   const [saveMapping, setSaveMapping] = useState(true);
   const [assigningLocation, setAssigningLocation] = useState(false);
+  // Allow re-assigning the location even when one is already resolved
+  const [showLocationEdit, setShowLocationEdit] = useState(false);
 
   const questId = quest?.id;
   useEffect(() => {
@@ -199,6 +201,7 @@ const QuestDetailPage: React.FC = () => {
       setAssigningLocation(true);
       await updateQuestLocationAPI(quest.id, { location_id: selectedLocationId, save_mapping: saveMapping });
       showSuccess('Lokalizacja przypisana pomyślnie');
+      setShowLocationEdit(false);
       await refreshQuest();
     } catch {
       showError('Błąd podczas przypisywania lokalizacji');
@@ -316,6 +319,42 @@ const QuestDetailPage: React.FC = () => {
   const totalItems = quest.items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
   const unknownQtyCount = quest.items.filter((item) => item.quantity == null).length;
 
+  // Shared location picker — used both for the "unassigned" banner and for re-assigning a resolved location
+  const locationPicker = (
+    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap', mt: 1 }}>
+      <Autocomplete
+        size="small"
+        options={locations}
+        getOptionLabel={(opt) => `${opt.pavilion ? `Paw. ${opt.pavilion} — ` : ''}${opt.name}`}
+        value={locations.find(l => l.id === selectedLocationId) ?? null}
+        onChange={(_, val) => setSelectedLocationId(val?.id ?? null)}
+        renderInput={(params) => (
+          <TextField {...params} label="Wybierz lokalizację" sx={{ minWidth: 280 }} />
+        )}
+        isOptionEqualToValue={(opt, val) => opt.id === val.id}
+      />
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={saveMapping}
+            onChange={(e) => setSaveMapping(e.target.checked)}
+            size="small"
+          />
+        }
+        label={<Typography variant="caption">Zapisz jako mapping</Typography>}
+      />
+      <Button
+        variant="contained"
+        size="small"
+        disabled={selectedLocationId == null || assigningLocation}
+        onClick={handleAssignLocation}
+        startIcon={assigningLocation ? <CircularProgress size={14} color="inherit" /> : null}
+      >
+        Przypisz
+      </Button>
+    </Box>
+  );
+
   return (
     <Box
       sx={{
@@ -388,18 +427,29 @@ const QuestDetailPage: React.FC = () => {
                 }}>Cel dostawy</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {quest.destination.pavilion} — {quest.destination.location}
+                  {quest.location_resolved && quest.location_name && (
+                    <Box component="span" sx={{ color: 'success.main' }}>
+                      {' | '}{quest.location_name}
+                    </Box>
+                  )}
                 </Typography>
-                {quest.location_resolved && quest.location_name && (
-                  <Chip
-                    label={quest.location_name}
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                    sx={{ mt: 0.5 }}
-                  />
-                )}
                 {!quest.location_resolved && (
                   <Chip label="Nieprzypisana" size="small" color="warning" variant="outlined" sx={{ mt: 0.5 }} />
+                )}
+                {quest.location_resolved && hasAdminAccess && (
+                  <Box sx={{ mt: 0.5 }}>
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => {
+                        setSelectedLocationId(quest.location_id);
+                        setShowLocationEdit(v => !v);
+                      }}
+                      sx={{ p: 0, minWidth: 0, textTransform: 'none' }}
+                    >
+                      {showLocationEdit ? 'Anuluj' : 'Zmień lokalizację'}
+                    </Button>
+                  </Box>
                 )}
               </Box>
             </Box>
@@ -471,40 +521,19 @@ const QuestDetailPage: React.FC = () => {
             }}>
             Formularz: <strong>{quest.destination.pavilion}</strong> / <strong>{quest.destination.location}</strong> — nie pasuje do żadnej lokalizacji w systemie
           </Typography>
-          {hasAdminAccess && (
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap', mt: 1 }}>
-              <Autocomplete
-                size="small"
-                options={locations}
-                getOptionLabel={(opt) => `${opt.pavilion ? `Paw. ${opt.pavilion} — ` : ''}${opt.name}`}
-                value={locations.find(l => l.id === selectedLocationId) ?? null}
-                onChange={(_, val) => setSelectedLocationId(val?.id ?? null)}
-                renderInput={(params) => (
-                  <TextField {...params} label="Wybierz lokalizację" sx={{ minWidth: 280 }} />
-                )}
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={saveMapping}
-                    onChange={(e) => setSaveMapping(e.target.checked)}
-                    size="small"
-                  />
-                }
-                label={<Typography variant="caption">Zapisz jako mapping</Typography>}
-              />
-              <Button
-                variant="contained"
-                size="small"
-                disabled={selectedLocationId == null || assigningLocation}
-                onClick={handleAssignLocation}
-                startIcon={assigningLocation ? <CircularProgress size={14} color="inherit" /> : null}
-              >
-                Przypisz
-              </Button>
-            </Box>
-          )}
+          {hasAdminAccess && locationPicker}
+        </Alert>
+      )}
+      {/* Re-assign location even when already resolved */}
+      {quest.location_resolved && showLocationEdit && hasAdminAccess && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Zmień przypisaną lokalizację
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+            Obecna: <strong>{quest.location_name}</strong>
+          </Typography>
+          {locationPicker}
         </Alert>
       )}
       {/* Unknown-quantity banner */}
