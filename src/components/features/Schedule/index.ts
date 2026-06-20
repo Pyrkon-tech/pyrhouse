@@ -1,1 +1,1 @@
-export { default } from './ScheduleDetailPage';
+export { default } from './ScheduleViewGate';
