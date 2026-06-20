@@ -4,6 +4,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
   Box,
   TextField,
@@ -68,6 +69,36 @@ interface Equipment {
 
 type SemanticFilter = 'in_transit' | 'no_serial';
 
+type SortField = 'pyr_code' | 'category' | 'location' | 'state' | 'origin';
+type SortOrder = 'asc' | 'desc';
+
+const SORT_COLUMNS: { field: SortField; label: string }[] = [
+  { field: 'pyr_code', label: 'PYR CODE' },
+  { field: 'category', label: 'KATEGORIA' },
+  { field: 'location', label: 'LOKALIZACJA' },
+  { field: 'state', label: 'STATUS / ILOŚĆ' },
+  { field: 'origin', label: 'POCHODZENIE' },
+];
+
+const categoryLabel = (item: Equipment) =>
+  typeof item.category === 'string' ? item.category : item.category.label;
+
+// Sort key per column; location combines pavilion + name so rows group by hall.
+const sortValue = (item: Equipment, field: SortField): string | number => {
+  switch (field) {
+    case 'pyr_code':
+      return item.pyr_code?.toLowerCase() ?? '';
+    case 'category':
+      return categoryLabel(item).toLowerCase();
+    case 'location':
+      return `${item.location.pavilion ?? ''} ${item.location.name}`.toLowerCase();
+    case 'state':
+      return item.type === 'stock' ? (item.quantity ?? 0) : item.state.toLowerCase();
+    case 'origin':
+      return item.origin?.toLowerCase() ?? '';
+  }
+};
+
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
 const ErrorOutlineIcon = lazy(() => import('@mui/icons-material/ErrorOutlined'));
 const LocalShippingIcon = lazy(() => import('@mui/icons-material/LocalShipping'));
@@ -93,7 +124,18 @@ const EquipmentList: React.FC = () => {
   const [categoryType, setCategoryType] = useState<'asset' | 'stock' | ''>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [activeQuickFilters, setActiveQuickFilters] = useState<Set<SemanticFilter>>(new Set());
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const navigate = useNavigate();
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
   const { locations, refetch: fetchLocations } = useLocations();
   const { categories, loading: categoriesLoading } = useCategories();
@@ -301,23 +343,29 @@ const EquipmentList: React.FC = () => {
       filtered = filtered.filter(item => item.serial === null);
     }
 
-    // Default sort by ID descending (previously a separate effect that raced
-    // with this one and sorted a stale snapshot of filteredEquipment)
-    filtered.sort((a, b) => b.id - a.id);
+    if (sortField) {
+      const dir = sortOrder === 'asc' ? 1 : -1;
+      filtered.sort((a, b) => {
+        const va = sortValue(a, sortField);
+        const vb = sortValue(b, sortField);
+        if (va < vb) return -1 * dir;
+        if (va > vb) return 1 * dir;
+        return b.id - a.id; // stable tie-break by newest
+      });
+    } else {
+      // Default sort by ID descending (previously a separate effect that raced
+      // with this one and sorted a stale snapshot of filteredEquipment)
+      filtered.sort((a, b) => b.id - a.id);
+    }
 
     setFilteredEquipment(filtered);
-  }, [equipment, selectedLocations, selectedCategory, categoryType, filter, activeQuickFilters]);
+  }, [equipment, selectedLocations, selectedCategory, categoryType, filter, activeQuickFilters, sortField, sortOrder]);
 
   useEffect(() => {
     fetchEquipment();
     // Intentionally mount-only: data is fetched once, filtering is client-side
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // const handleSort = (field: string) =>
-      // setSortField(field
-      // setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc')
-    // };
 
   const getStatusIcon = (status: string, location: { id: number; name: string }) => {
     if (status === 'in_transit') return <Suspense fallback={null}><LocalShippingIcon color="warning" /></Suspense>;
@@ -377,8 +425,16 @@ const EquipmentList: React.FC = () => {
               </span>
             </Tooltip>
           </TableCell>
-          {['PYR CODE', 'KATEGORIA', 'LOKALIZACJA', 'STATUS / ILOŚĆ', 'POCHODZENIE'].map((field) => (
-            <TableCell key={field}>{field}</TableCell>
+          {SORT_COLUMNS.map(({ field, label }) => (
+            <TableCell key={field} sortDirection={sortField === field ? sortOrder : false}>
+              <TableSortLabel
+                active={sortField === field}
+                direction={sortField === field ? sortOrder : 'asc'}
+                onClick={() => handleSort(field)}
+              >
+                {label}
+              </TableSortLabel>
+            </TableCell>
           ))}
         </TableRow>
       </TableHead>
