@@ -36,10 +36,11 @@ import {
   confirmShopOrderAPI,
   getShopOrderAPI,
   getShopOrdersAPI,
+  getShopProductsAPI,
   patchShopOrderAPI,
   rejectShopOrderAPI,
 } from '../../../services/shopAdminService';
-import type { ShopOrder, ShopOrderDetail, ShopOrderStatus } from '../../../types/shop.types';
+import type { ShopOrder, ShopOrderDetail, ShopOrderStatus, ShopProduct } from '../../../types/shop.types';
 import ShopAdminTabs from './ShopAdminTabs';
 import {
   fmtDateTime,
@@ -96,6 +97,7 @@ const ShopOrdersPage: React.FC = () => {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [locationOpen, setLocationOpen] = useState(false);
+  const [itemsOpen, setItemsOpen] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -268,6 +270,7 @@ const ShopOrdersPage: React.FC = () => {
                 onConfirm={confirm}
                 onReject={() => setRejectOpen(true)}
                 onChangeLocation={() => setLocationOpen(true)}
+                onEditItems={() => setItemsOpen(true)}
               />
             ) : (
               <Typography color="text.secondary">Nie znaleziono zamówienia.</Typography>
@@ -316,6 +319,22 @@ const ShopOrdersPage: React.FC = () => {
           }}
         />
       )}
+
+      {detail && (
+        <ItemsDialog
+          open={itemsOpen}
+          order={detail}
+          busy={busy}
+          onClose={() => setItemsOpen(false)}
+          onSave={async (items) => {
+            const ok = await act(
+              (o) => patchShopOrderAPI(o.id, { version: o.version, items }),
+              'Pozycje poprawione',
+            );
+            if (ok) setItemsOpen(false);
+          }}
+        />
+      )}
     </Box>
   );
 };
@@ -327,13 +346,14 @@ interface OrderDetailProps {
   onConfirm: () => void;
   onReject: () => void;
   onChangeLocation: () => void;
+  onEditItems: () => void;
 }
 
 const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>{children}</Typography>
 );
 
-const OrderDetail: React.FC<OrderDetailProps> = ({ order, busy, onClose, onConfirm, onReject, onChangeLocation }) => {
+const OrderDetail: React.FC<OrderDetailProps> = ({ order, busy, onClose, onConfirm, onReject, onChangeLocation, onEditItems }) => {
   const st = orderStatusView(order);
   const name = organizerName(order);
   const canDecide = order.status === 'submitted';
@@ -393,6 +413,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, busy, onClose, onConfi
         )}
       </Paper>
 
+      {canDecide && (
+        <Button size="small" variant="text" onClick={onEditItems} disabled={busy} sx={{ alignSelf: 'flex-end', mb: -1 }}>
+          Popraw pozycje
+        </Button>
+      )}
       <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
         {order.items.map((it) => (
           <Box component="li" key={it.product_id} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
@@ -499,6 +524,94 @@ const LocationDialog: React.FC<LocationDialogProps> = ({ open, order, busy, onCl
         <Button onClick={onClose} disabled={busy}>Anuluj</Button>
         <Button variant="contained" onClick={() => onSave(locationId, note.trim() || null)} disabled={busy}>
           Zapisz
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface ItemsDialogProps {
+  open: boolean;
+  order: ShopOrderDetail;
+  busy: boolean;
+  onClose: () => void;
+  onSave: (items: { product_id: number; quantity: number }[]) => void;
+}
+
+/** Warehouse correction of a submitted order's items (may use inactive products and exceed limits). */
+const ItemsDialog: React.FC<ItemsDialogProps> = ({ open, order, busy, onClose, onSave }) => {
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [lines, setLines] = useState<{ product_id: number; name: string; quantity: number }[]>([]);
+  const [adding, setAdding] = useState<ShopProduct | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setLines(order.items.map((i) => ({ product_id: i.product_id, name: i.product_name, quantity: i.quantity })));
+    getShopProductsAPI().then(setProducts).catch(() => setProducts([]));
+  }, [open, order]);
+
+  const available = products.filter((p) => !lines.some((l) => l.product_id === p.id));
+  const setQty = (id: number, quantity: number) =>
+    setLines((prev) => prev.map((l) => (l.product_id === id ? { ...l, quantity: Math.max(1, quantity) } : l)));
+
+  return (
+    <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="sm">
+      <DialogTitle>Popraw pozycje — {order.number}</DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: '8px !important' }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Organizator zobaczy poprawione pozycje w sklepie. Możesz użyć produktu ukrytego i przekroczyć limit.
+        </Typography>
+        {lines.map((l) => (
+          <Box key={l.product_id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography sx={{ flexGrow: 1 }}>{l.name}</Typography>
+            <TextField
+              type="number"
+              size="small"
+              value={l.quantity}
+              onChange={(e) => setQty(l.product_id, Number(e.target.value))}
+              sx={{ width: 90 }}
+              slotProps={{ htmlInput: { min: 1, 'aria-label': `Ilość: ${l.name}` } }}
+            />
+            <IconButton
+              aria-label={`Usuń: ${l.name}`}
+              onClick={() => setLines((prev) => prev.filter((x) => x.product_id !== l.product_id))}
+              disabled={lines.length === 1}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        ))}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Autocomplete
+            sx={{ flexGrow: 1 }}
+            size="small"
+            options={available}
+            getOptionLabel={(p) => (p.active ? p.name : `${p.name} (ukryty)`)}
+            value={adding}
+            onChange={(_, v) => setAdding(v)}
+            renderInput={(p) => <TextField {...p} label="Dodaj produkt" />}
+          />
+          <Button
+            variant="outlined"
+            disabled={!adding}
+            onClick={() => {
+              if (!adding) return;
+              setLines((prev) => [...prev, { product_id: adding.id, name: adding.name, quantity: 1 }]);
+              setAdding(null);
+            }}
+          >
+            Dodaj
+          </Button>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={busy}>Anuluj</Button>
+        <Button
+          variant="contained"
+          disabled={busy || lines.length === 0}
+          onClick={() => onSave(lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity })))}
+        >
+          Zapisz pozycje
         </Button>
       </DialogActions>
     </Dialog>

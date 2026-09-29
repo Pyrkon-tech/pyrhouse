@@ -63,7 +63,8 @@ const WindowsSection: React.FC = () => {
   const { showSuccess, showError } = useNotification();
   const [windows, setWindows] = useState<ShopWindow[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [dialogKind, setDialogKind] = useState<ShopWindowKind | null>(null);
+  // New window of a kind, or an existing one to edit
+  const [dialog, setDialog] = useState<{ kind: ShopWindowKind; window?: ShopWindow } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -104,15 +105,6 @@ const WindowsSection: React.FC = () => {
     await load();
   };
 
-  const reactivate = async (w: ShopWindow) => {
-    try {
-      await updateShopWindowAPI(w.id, { kind: w.kind, starts_at: w.starts_at, ends_at: w.ends_at, label: w.label, active: true });
-      await load();
-    } catch (err) {
-      showError(shopErrorMessage(err, 'Nie udało się przywrócić okna'));
-    }
-  };
-
   const renderKind = (kind: ShopWindowKind) => {
     const days = byDay(kind);
     if (days.length === 0) {
@@ -136,9 +128,9 @@ const WindowsSection: React.FC = () => {
                   </Typography>
                 </span>
               }
-              onClick={w.active ? undefined : () => reactivate(w)}
+              onClick={() => setDialog({ kind: w.kind, window: w })}
               onDelete={w.active ? () => remove(w) : undefined}
-              title={w.active ? undefined : 'Kliknij, aby przywrócić'}
+              title="Kliknij, aby edytować"
             />
           ))}
         </Box>
@@ -151,7 +143,7 @@ const WindowsSection: React.FC = () => {
       {error && <Alert severity="error">{error}</Alert>}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6">Okna dostaw</Typography>
-        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => setDialogKind('delivery')}>Dodaj okno</Button>
+        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => setDialog({ kind: 'delivery' })}>Dodaj okno</Button>
       </Box>
       {renderKind('delivery')}
       <Divider />
@@ -160,15 +152,15 @@ const WindowsSection: React.FC = () => {
           Okna zwrotu{' '}
           <Typography component="span" variant="body2" sx={{ color: 'text.secondary' }}>(organizator wybiera jedno)</Typography>
         </Typography>
-        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => setDialogKind('return')}>Dodaj okno</Button>
+        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => setDialog({ kind: 'return' })}>Dodaj okno</Button>
       </Box>
       {renderKind('return')}
 
       <WindowDialog
-        kind={dialogKind}
-        onClose={() => setDialogKind(null)}
+        target={dialog}
+        onClose={() => setDialog(null)}
         onSaved={async () => {
-          setDialogKind(null);
+          setDialog(null);
           await load();
         }}
       />
@@ -177,19 +169,24 @@ const WindowsSection: React.FC = () => {
 };
 
 interface WindowDialogProps {
-  kind: ShopWindowKind | null;
+  target: { kind: ShopWindowKind; window?: ShopWindow } | null;
   onClose: () => void;
   onSaved: () => void;
 }
 
-const WindowDialog: React.FC<WindowDialogProps> = ({ kind, onClose, onSaved }) => {
+const WindowDialog: React.FC<WindowDialogProps> = ({ target, onClose, onSaved }) => {
   const { showError, showSuccess } = useNotification();
-  const [form, setForm] = useState({ kind: 'delivery' as ShopWindowKind, date: '', from: '16:00', to: '20:00', label: '' });
+  const [form, setForm] = useState({ kind: 'delivery' as ShopWindowKind, date: '', from: '16:00', to: '20:00', label: '', active: true });
   const [saving, setSaving] = useState(false);
+  const editing = target?.window;
 
   useEffect(() => {
-    if (kind) setForm((f) => ({ ...f, kind, label: '' }));
-  }, [kind]);
+    if (!target) return;
+    const w = target.window;
+    setForm(w
+      ? { kind: w.kind, date: dayKey(w.starts_at), from: timeOf(w.starts_at), to: timeOf(w.ends_at), label: w.label, active: w.active }
+      : { kind: target.kind, date: '', from: '16:00', to: '20:00', label: '', active: true });
+  }, [target]);
 
   const preview = useMemo(() => {
     if (!form.date || !form.from || !form.to) return null;
@@ -204,19 +201,25 @@ const WindowDialog: React.FC<WindowDialogProps> = ({ kind, onClose, onSaved }) =
     if (!preview) return;
     setSaving(true);
     try {
-      await createShopWindowAPI({ kind: form.kind, starts_at: preview.start, ends_at: preview.end, label: form.label.trim() });
-      showSuccess('Okno dodane');
+      const input = { kind: form.kind, starts_at: preview.start, ends_at: preview.end, label: form.label.trim(), active: form.active };
+      if (editing) {
+        await updateShopWindowAPI(editing.id, input);
+        showSuccess('Okno zapisane');
+      } else {
+        await createShopWindowAPI(input);
+        showSuccess('Okno dodane');
+      }
       onSaved();
     } catch (err) {
-      showError(shopErrorMessage(err, 'Nie udało się dodać okna'));
+      showError(shopErrorMessage(err, 'Nie udało się zapisać okna'));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Dialog open={kind !== null} onClose={() => !saving && onClose()} fullWidth maxWidth="xs">
-      <DialogTitle>Nowe okno</DialogTitle>
+    <Dialog open={target !== null} onClose={() => !saving && onClose()} fullWidth maxWidth="xs">
+      <DialogTitle>{editing ? 'Edycja okna' : 'Nowe okno'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '8px !important' }}>
         <TextField select label="Rodzaj" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as ShopWindowKind })}>
           <MenuItem value="delivery">Dostawa</MenuItem>
@@ -228,6 +231,18 @@ const WindowDialog: React.FC<WindowDialogProps> = ({ kind, onClose, onSaved }) =
           <TextField type="time" label="Do" value={form.to} onChange={(e) => setForm({ ...form, to: e.target.value })} slotProps={{ inputLabel: { shrink: true } }} />
         </Box>
         <TextField label="Etykieta (opcjonalnie)" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} slotProps={{ htmlInput: { maxLength: 255 } }} />
+        {editing && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="body2">Widoczne dla nowych zamówień</Typography>
+            <Switch checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} slotProps={{ input: { 'aria-label': 'Okno aktywne' } }} />
+          </Box>
+        )}
+        {editing && (editing.orders_count ?? 0) > 0 && (
+          <Alert severity="info">
+            Okno jest w {editing.orders_count} zamówieniach — zmiana godzin dotyczy także ich (potwierdzone zapotrzebowania
+            mają już swoją datę).
+          </Alert>
+        )}
         {preview && (
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             {fmtWindow({ starts_at: preview.start, ends_at: preview.end })} (czas polski)
@@ -236,7 +251,7 @@ const WindowDialog: React.FC<WindowDialogProps> = ({ kind, onClose, onSaved }) =
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>Anuluj</Button>
-        <Button variant="contained" onClick={save} disabled={saving || !preview}>Dodaj</Button>
+        <Button variant="contained" onClick={save} disabled={saving || !preview}>{editing ? 'Zapisz' : 'Dodaj'}</Button>
       </DialogActions>
     </Dialog>
   );
