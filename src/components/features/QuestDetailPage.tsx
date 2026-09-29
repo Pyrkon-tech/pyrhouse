@@ -39,7 +39,7 @@ import type { QuestEvent } from '../../types/quest.types';
 import type { TransferDetails } from '../../types/transfer.types';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import TransferFormCore from './Transfer/components/TransferFormCore';
-import type { QuestStatus, CategoryMatchType } from '../../types/quest.types';
+import type { QuestStatus } from '../../types/quest.types';
 
 const ArrowBackIcon = lazy(() => import('@mui/icons-material/ArrowBack'));
 const HourglassEmptyIcon = lazy(() => import('@mui/icons-material/HourglassEmpty'));
@@ -82,28 +82,6 @@ const getTransferStatusChip = (status: string) => {
   }
 };
 
-const getCategoryMatchChip = (matchType: CategoryMatchType, confidence?: number) => {
-  switch (matchType) {
-    case 'exact':
-      return <Chip label="Dokładne" color="success" size="small" variant="outlined" />;
-    case 'fuzzy':
-      return (
-        <Chip
-          label={`Przybliżone${confidence ? ` (${Math.round(confidence * 100)}%)` : ''}`}
-          color="warning"
-          size="small"
-          variant="outlined"
-        />
-      );
-    case 'manual':
-      return <Chip label="Ręczne" color="info" size="small" variant="outlined" />;
-    case 'none':
-      return <Chip label="Brak" color="default" size="small" variant="outlined" />;
-    default:
-      return null;
-  }
-};
-
 const formatDate = (dateStr: string) => {
   try {
     return new Date(dateStr).toLocaleDateString('pl-PL', {
@@ -111,14 +89,6 @@ const formatDate = (dateStr: string) => {
       month: 'long',
       day: 'numeric',
     });
-  } catch {
-    return dateStr;
-  }
-};
-
-const formatDateTime = (dateStr: string) => {
-  try {
-    return new Date(dateStr).toLocaleString('pl-PL');
   } catch {
     return dateStr;
   }
@@ -453,6 +423,11 @@ const QuestDetailPage: React.FC = () => {
                   {formatDate(quest.delivery_date)}
                   {quest.pickup_time && ` (odbiór: ${quest.pickup_time})`}
                 </Typography>
+                {quest.return_date && (
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Zwrot: {formatDate(quest.return_date)}
+                  </Typography>
+                )}
               </Box>
             </Box>
           </Grid>
@@ -563,7 +538,7 @@ const QuestDetailPage: React.FC = () => {
             <TableRow sx={{ backgroundColor: 'primary.light' }}>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Nazwa</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }} align="center">Ilość</TableCell>
-              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Dopasowanie kategorii</TableCell>
+              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Kategoria</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Właściciel budżetu</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }}>Notatki</TableCell>
               {hasTransfer && <TableCell sx={{ color: 'primary.contrastText', fontWeight: 600 }} align="center">Wysłano</TableCell>}
@@ -584,7 +559,13 @@ const QuestDetailPage: React.FC = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  {getCategoryMatchChip(item.category_match, item.category_match_confidence)}
+                  {item.category_id != null ? (
+                    <Typography variant="body2">{item.category_name ?? `#${item.category_id}`}</Typography>
+                  ) : (
+                    <Tooltip title="Pozycja z arkusza bez dopasowanej kategorii — wybierz sprzęt ręcznie przy wydaniu.">
+                      <Chip label="Brak" size="small" variant="outlined" />
+                    </Tooltip>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" sx={{
@@ -760,12 +741,7 @@ const QuestDetailPage: React.FC = () => {
         <Typography variant="caption" sx={{
           color: "text.secondary"
         }}>
-          Wiersze źródłowe: {quest.source_rows.join(', ')}
-        </Typography>
-        <Typography variant="caption" sx={{
-          color: "text.secondary"
-        }}>
-          Ostatnia synchronizacja: {formatDateTime(quest.last_synced)}
+          Źródło: {quest.source === 'shop' ? 'Sklep' : 'Arkusz Google'}
         </Typography>
       </Box>
       {/* Status change confirmation dialog */}

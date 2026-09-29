@@ -1,6 +1,7 @@
 export type QuestStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
-export type CategoryMatchType = 'exact' | 'fuzzy' | 'manual' | 'none';
+/** 'sheet' = historic Google Sheets import, 'shop' = confirmed organizer shop order */
+export type QuestSource = 'sheet' | 'shop';
 
 export interface QuestDestination {
   pavilion: string;
@@ -9,11 +10,11 @@ export interface QuestDestination {
 
 export interface QuestItem {
   name: string;
-  /** null = quantity not specified in the source sheet ("do ustalenia"); dispatcher fills it in at issue time */
+  /** null = quantity unknown (historic sheet items, "do ustalenia"); dispatcher fills it in at issue time */
   quantity: number | null;
+  /** Missing only for historic sheet items that matched no category */
   category_id?: number;
-  category_match: CategoryMatchType;
-  category_match_confidence?: number;
+  category_name?: string | null;
   budget_owner?: string;
   notes?: string;
 }
@@ -35,6 +36,9 @@ export interface Quest {
   destination: QuestDestination;
   recipient: string;
   delivery_date: string;
+  /** YYYY-MM-DD; null for sheet quests */
+  return_date: string | null;
+  source: QuestSource;
   pickup_time?: string;
   budget_owner: string;
   items: QuestItem[];
@@ -43,8 +47,6 @@ export interface Quest {
   location_id: number | null;
   location_name: string | null;
   location_resolved: boolean;
-  source_rows: number[];
-  last_synced: string;
   /** Wolontariusze przypisani do transferów questa. Pustа tablica gdy brak transferów. */
   assigned_volunteers: QuestVolunteer[];
 }

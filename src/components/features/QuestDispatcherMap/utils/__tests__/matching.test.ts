@@ -19,8 +19,8 @@ function makeQuest(deliveryDate: string, status: QuestStatus = 'pending'): Quest
     location_id: null,
     location_name: null,
     location_resolved: false,
-    source_rows: [],
-    last_synced: '2026-06-10T00:00:00Z',
+    source: 'sheet',
+    return_date: null,
     assigned_volunteers: [],
   } as Quest;
 }
