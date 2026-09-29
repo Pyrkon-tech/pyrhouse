@@ -39,6 +39,8 @@ export interface Quest {
   /** YYYY-MM-DD; null for sheet quests */
   return_date: string | null;
   source: QuestSource;
+  /** Shop order this quest was confirmed from (source 'shop') */
+  shop_order_id: number | null;
   pickup_time?: string;
   budget_owner: string;
   items: QuestItem[];

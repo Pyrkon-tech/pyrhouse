@@ -21,6 +21,7 @@ function makeQuest(deliveryDate: string, status: QuestStatus = 'pending'): Quest
     location_resolved: false,
     source: 'sheet',
     return_date: null,
+    shop_order_id: null,
     assigned_volunteers: [],
   } as Quest;
 }
