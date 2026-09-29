@@ -7,7 +7,7 @@ import parser from '@typescript-eslint/parser'
 
 export default [
   {
-    ignores: ['dist'],
+    ignores: ['dist', 'dist-shop'],
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
@@ -54,6 +54,19 @@ export default [
     },
   },
   {
+    // The organizer shop is a separate app (docs/shop/PLAN.md): it must not pull in warehouse code.
+    // Shared on purpose: theme/, components/ui/, types/, config/env.
+    files: ['src/shop/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['**/components/features/**', '**/components/layout/**', '**/context/**', '**/hooks/**', '**/services/**', '**/routes/**'],
+          message: 'The shop must not import warehouse code — use src/shop/ or the shared theme/, components/ui/, types/, config/.',
+        }],
+      }],
+    },
+  },
+  {
     // TypeScript itself catches undefined identifiers (including DOM types and the
     // global `google.maps`) — no-undef on TS files only produces false positives
     files: ['**/*.{ts,tsx}'],
@@ -92,6 +105,9 @@ export default [
     files: [
       'src/context/**',
       'src/theme/ThemeContext.tsx',
+      'src/shop/ShopSession.tsx',
+      'src/shop/Cart.tsx',
+      'src/shop/Catalog.tsx',
       'src/components/layout/navigation.tsx',
       'src/components/features/Transfer/components/details/transferStatus.tsx',
     ],

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:shop": "vite --config vite.shop.config.ts",
     "build": "tsc && vite build",
+    "build:shop": "tsc && vite build --config vite.shop.config.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",

@@ -167,6 +167,28 @@ export interface CreatedShopInvite {
   url?: string;
 }
 
+/** GET /shop/config — what organizers may do right now */
+export interface ShopConfig {
+  show_prices: boolean;
+  /** Deadline already applied */
+  orders_open: boolean;
+  orders_open_until: string | null;
+}
+
+/** Organizer order body (POST /shop/orders, PUT adds version) */
+export interface ShopOrderInput {
+  location_id: number;
+  location_note?: string | null;
+  contact_name?: string;
+  budget_owner?: string | null;
+  delivery_window_id: number;
+  return_window_id: number;
+  return_date?: string | null;
+  notes?: string | null;
+  items: { product_id: number; quantity: number }[];
+  version?: number;
+}
+
 export interface ShopSettings {
   show_prices: boolean;
   orders_open: boolean;

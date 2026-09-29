@@ -80,6 +80,8 @@ export const env = {
   // === Organizer shop ===
   /** Organizer shop URL (e.g. https://shop.pyrhouse.space) — "Otwórz sklep" link; optional */
   SHOP_URL: import.meta.env.VITE_SHOP_URL ?? '',
+  /** Google OAuth client ID (public) — the shop builds the Google login URL itself, with PKCE */
+  GOOGLE_CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '',
 
   // === App ===
   /** Nazwa aplikacji */

@@ -94,6 +94,19 @@ src/
   `docs/shop/PLAN.md` D28). Kod: `src/components/features/ShopAdmin/`, serwis `shopAdminService.ts`, typy `shop.types.ts`.
   Daty okien i zwrotów liczone w strefie Europe/Warsaw (`shopFormat.ts`: `warsawToISO`, `fmtWindow`).
 
+## Sklep dla organizatorów (`src/shop/`) — osobna aplikacja
+
+Druga aplikacja w tym repo (`shop.pyrhouse.space`, `docs/shop/PLAN.md` w workspace): entry `shop.html` →
+`src/shop/main.tsx`, config `vite.shop.config.ts`, `npm run dev:shop` (:3001), `npm run build:shop` → `dist-shop/`
+(bez PWA, własny `shop/public/`). ESLint zabrania importów z kodu magazynu (`components/features|layout`, `context`,
+`hooks`, `services`, `routes`); wspólne są `theme/`, `components/ui/`, `types/`, `config/`, `utils/shopFormat.ts`.
+
+- Własny klient HTTP `src/shop/api.ts` i token pod kluczem `shop_token` (nie `token`) — 401 prowadzi do logowania sklepu.
+- Logowanie Google z PKCE + `state` (`src/shop/auth.ts`); backend odrzuca exchange bez `code_verifier`.
+  Wymaga `VITE_GOOGLE_CLIENT_ID` i redirect URI `<origin sklepu>/auth/google/callback` w Google Console.
+- Konteksty: `ShopSession` (konto + `/shop/config`), `Catalog`, `Cart` (localStorage per konto).
+- Strony: login / `/invite/:token` / callback, katalog, koszyk (drawer), `/checkout` (także `?edit=ID`), `/orders`.
+
 ## Design System
 
 ### Design Tokens (`designTokens.ts`)
