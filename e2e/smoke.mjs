@@ -15,9 +15,10 @@ import { chromium } from 'playwright';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:4173';
 
-// Unsigned JWT — the app only decodes it (jwt-decode), never verifies the signature
+// Unsigned JWT — the app only decodes it (jwt-decode), never verifies the signature. Against a real backend, pass
+// one it accepts in SMOKE_TOKEN.
 const b64url = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
-const fakeToken = [
+const fakeToken = process.env.SMOKE_TOKEN || [
   b64url({ alg: 'none', typ: 'JWT' }),
   b64url({ role: 'admin', userID: 1, username: 'ci-smoke', exp: Math.floor(Date.now() / 1000) + 3600 }),
   'sig',
