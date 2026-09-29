@@ -30,7 +30,7 @@ import {
 import { DataTable } from '../ui/DataTable';
 import { Button } from '../ui/Button';
 import { AppSnackbar, PageHeader, PageLoader, EmptyState } from '../ui';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
 import { useCategories } from '../../hooks/useCategories';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
@@ -68,6 +68,13 @@ interface Equipment {
 }
 
 type SemanticFilter = 'in_transit' | 'no_serial';
+
+const QUICK_FILTERS: SemanticFilter[] = ['in_transit', 'no_serial'];
+
+// Filters live in the URL query string so the browser/phone "back" button
+// restores them after viewing equipment details (instead of resetting to all).
+const parseIds = (value: string | null): number[] =>
+  value ? value.split(',').map(Number).filter((n) => !Number.isNaN(n)) : [];
 
 type SortField = 'pyr_code' | 'category' | 'location' | 'state' | 'origin';
 type SortOrder = 'asc' | 'desc';
@@ -116,14 +123,27 @@ const BarcodeGenerator = lazy(() =>
 const isPrintable = (item: Equipment) => item.type === 'asset' && !!item.pyr_code;
 
 const EquipmentList: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState<Equipment[]>([]); // For local filtering
-  const [filter, setFilter] = useState<string>('');
-  const [selectedLocations, setSelectedLocations] = useState<Location[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [categoryType, setCategoryType] = useState<'asset' | 'stock' | ''>('');
+  // Filter state is seeded from the URL so it survives back-navigation from details.
+  const [filter, setFilter] = useState<string>(() => searchParams.get('q') ?? '');
+  const [selectedLocationIds, setSelectedLocationIds] = useState<number[]>(() => parseIds(searchParams.get('loc')));
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(() => {
+    const cat = searchParams.get('cat');
+    return cat ? Number(cat) : null;
+  });
+  const [categoryType, setCategoryType] = useState<'asset' | 'stock' | ''>(() => {
+    const type = searchParams.get('type');
+    return type === 'asset' || type === 'stock' ? type : '';
+  });
   const [loading, setLoading] = useState<boolean>(false);
-  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<SemanticFilter>>(new Set());
+  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<SemanticFilter>>(() => {
+    const quick = searchParams.get('quick');
+    const requested = quick ? quick.split(',') : [];
+    return new Set(requested.filter((q): q is SemanticFilter => QUICK_FILTERS.includes(q as SemanticFilter)));
+  });
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const navigate = useNavigate();
@@ -140,6 +160,27 @@ const EquipmentList: React.FC = () => {
   const { locations, refetch: fetchLocations } = useLocations();
   const { categories, loading: categoriesLoading } = useCategories();
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();
+
+  // Resolve IDs to full objects once locations/categories are loaded (for display + label matching).
+  const selectedLocations = useMemo<Location[]>(
+    () => locations.filter((loc) => selectedLocationIds.includes(loc.id)),
+    [locations, selectedLocationIds]
+  );
+  const selectedCategory = useMemo<Category | null>(
+    () => categories.find((cat) => cat.id === selectedCategoryId) ?? null,
+    [categories, selectedCategoryId]
+  );
+
+  // Mirror active filters into the URL (replace, so each keystroke doesn't pollute history).
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filter.trim()) params.set('q', filter);
+    if (selectedLocationIds.length > 0) params.set('loc', selectedLocationIds.join(','));
+    if (selectedCategoryId != null) params.set('cat', String(selectedCategoryId));
+    if (categoryType) params.set('type', categoryType);
+    if (activeQuickFilters.size > 0) params.set('quick', [...activeQuickFilters].join(','));
+    setSearchParams(params, { replace: true });
+  }, [filter, selectedLocationIds, selectedCategoryId, categoryType, activeQuickFilters, setSearchParams]);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -221,8 +262,8 @@ const EquipmentList: React.FC = () => {
 
   const clearAllFilters = () => {
     setFilter('');
-    setSelectedLocations([]);
-    setSelectedCategory(null);
+    setSelectedLocationIds([]);
+    setSelectedCategoryId(null);
     setCategoryType('');
     setActiveQuickFilters(new Set());
   };
@@ -666,11 +707,8 @@ const EquipmentList: React.FC = () => {
           <Select
             labelId="location-select-label"
             multiple
-            value={selectedLocations.map(l => l.id)}
-            onChange={e => {
-              const ids = e.target.value as number[];
-              setSelectedLocations(locations.filter(loc => ids.includes(loc.id)));
-            }}
+            value={selectedLocationIds}
+            onChange={e => setSelectedLocationIds(e.target.value as number[])}
             label="Lokalizacja"
             renderValue={(selected) => {
               const ids = selected as number[];
@@ -691,7 +729,7 @@ const EquipmentList: React.FC = () => {
           getOptionLabel={(option: Category) => option.label}
           value={selectedCategory}
           loading={categoriesLoading}
-          onChange={(_, value) => setSelectedCategory(value)}
+          onChange={(_, value) => setSelectedCategoryId(value?.id ?? null)}
           size="small"
           isOptionEqualToValue={(option: Category | null, value: Category | null) => option?.id === value?.id}
           sx={{ flex: 1, minWidth: 150, maxWidth: 260 }}
