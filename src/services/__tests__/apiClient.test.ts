@@ -74,6 +74,32 @@ describe('apiClient', () => {
     });
   });
 
+  describe('getList', () => {
+    it('returns the array as-is', async () => {
+      fetchMock.mockResolvedValue(jsonResponse([{ id: 1 }, { id: 2 }]));
+
+      const data = await apiClient.getList<{ id: number }>('/schedule/volunteers');
+
+      expect(data).toEqual([{ id: 1 }, { id: 2 }]);
+    });
+
+    it('returns [] when the backend serializes an empty slice as null', async () => {
+      fetchMock.mockResolvedValue(jsonResponse(null));
+
+      const data = await apiClient.getList('/schedule/volunteers');
+
+      expect(data).toEqual([]);
+    });
+
+    it('returns [] for a non-JSON (204) response', async () => {
+      fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+      const data = await apiClient.getList('/schedule/volunteers');
+
+      expect(data).toEqual([]);
+    });
+  });
+
   describe('error handling', () => {
     it('throws ApiError with server-provided message', async () => {
       fetchMock.mockResolvedValue(jsonResponse({ error: 'Kategoria zajęta' }, 409));

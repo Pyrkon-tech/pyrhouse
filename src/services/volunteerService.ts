@@ -7,5 +7,5 @@ const USE_MOCK = false;
 
 export async function getVolunteersAPI(): Promise<Volunteer[]> {
   if (USE_MOCK) return Promise.resolve([...MOCK_VOLUNTEERS]);
-  return apiClient.get<Volunteer[]>('/dispatch/volunteers');
+  return apiClient.getList<Volunteer>('/dispatch/volunteers');
 }

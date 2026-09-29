@@ -19,15 +19,43 @@ import type {
   SetDayWindowPayload,
 } from '../types/schedule.types';
 
+// ---- Nil-slice normalization ------------------------------------------------
+
+/**
+ * The Go backend serializes empty/nil slices as JSON `null`, not `[]`. Nested
+ * arrays (a slot with nobody assigned, a schedule with no issues) therefore
+ * arrive as `null` while still typed as arrays, and blow up far from the fetch
+ * — typically inside a `useMemo` in the Schedule module. Normalize on arrival.
+ */
+const arr = <T,>(v: T[] | null | undefined): T[] => (Array.isArray(v) ? v : []);
+
+const normalizeSlot = (s: ScheduleSlot): ScheduleSlot => ({
+  ...s,
+  volunteers: arr(s.volunteers),
+});
+
+const normalizeValidation = (v: ValidationResult): ValidationResult => ({
+  ...v,
+  issues: arr(v.issues),
+});
+
+const normalizeScheduleDetail = (d: ScheduleDetail): ScheduleDetail => ({
+  ...d,
+  slots: arr(d.slots).map(normalizeSlot),
+  volunteers: arr(d.volunteers).map((v) => ({ ...v, slots: arr(v.slots) })),
+  day_windows: d.day_windows == null ? d.day_windows : arr(d.day_windows),
+  validation: d.validation == null ? d.validation : normalizeValidation(d.validation),
+});
+
 // ---- Active schedule (singular — only one active at a time) ----------------
 
 /** GET /schedule — 404 means no active schedule */
 export const getScheduleDetailAPI = () =>
-  apiClient.get<ScheduleDetail>('/schedule');
+  apiClient.get<ScheduleDetail>('/schedule').then(normalizeScheduleDetail);
 
 /** POST /schedule — creates new active schedule, archives previous one */
 export const createScheduleAPI = (payload: CreateSchedulePayload) =>
-  apiClient.post<ScheduleDetail>('/schedule', payload);
+  apiClient.post<ScheduleDetail>('/schedule', payload).then(normalizeScheduleDetail);
 
 // ---- Volunteers ------------------------------------------------------------
 
@@ -41,7 +69,7 @@ export const importVolunteersAPI = (payload: ImportVolunteersPayload) =>
 
 /** GET /schedule/volunteers — list all volunteers in active schedule */
 export const getVolunteersAPI = () =>
-  apiClient.get<ScheduleVolunteer[]>('/schedule/volunteers');
+  apiClient.getList<ScheduleVolunteer>('/schedule/volunteers');
 
 /**
  * PATCH /schedule/volunteers/:vid — update volunteer metadata.
@@ -56,7 +84,10 @@ export const deleteVolunteerAPI = (vid: number) =>
 
 /** GET /schedule/volunteers/me — current user's volunteer record + assigned slots (JWT-based) */
 export const getMyVolunteerScheduleAPI = () =>
-  apiClient.get<MyScheduleResponse>('/schedule/volunteers/me');
+  apiClient.get<MyScheduleResponse>('/schedule/volunteers/me').then((r) => ({
+    ...r,
+    slots: arr(r.slots),
+  }));
 
 // ---- Assignments -----------------------------------------------------------
 
@@ -83,11 +114,11 @@ export const swapAssignmentsAPI = (payload: SwapAssignmentPayload) =>
 
 /** POST /schedule/slots — create a new slot */
 export const createSlotAPI = (payload: CreateSlotPayload) =>
-  apiClient.post<ScheduleSlot>('/schedule/slots', payload);
+  apiClient.post<ScheduleSlot>('/schedule/slots', payload).then(normalizeSlot);
 
 /** PATCH /schedule/slots/:sid — update slot (partial) */
 export const updateSlotAPI = (slotId: number, payload: UpdateSlotPayload) =>
-  apiClient.patch<ScheduleSlot>(`/schedule/slots/${slotId}`, payload);
+  apiClient.patch<ScheduleSlot>(`/schedule/slots/${slotId}`, payload).then(normalizeSlot);
 
 /** DELETE /schedule/slots/:sid — delete slot + cascade assignments */
 export const deleteSlotAPI = (slotId: number) =>
@@ -106,7 +137,12 @@ export const deleteScheduleAPI = (scheduleId: number) =>
  * Returns full ScheduleDetail + temp_id→real_id mapping + validation.
  */
 export const saveDraftAPI = (payload: DraftPayload) =>
-  apiClient.put<DraftResponse>('/schedule/draft', payload);
+  apiClient.put<DraftResponse>('/schedule/draft', payload).then((r) => ({
+    ...r,
+    schedule: normalizeScheduleDetail(r.schedule),
+    created_slots: arr(r.created_slots),
+    validation: normalizeValidation(r.validation),
+  }));
 
 // ---- Generation & validation -----------------------------------------------
 
@@ -116,20 +152,20 @@ export const saveDraftAPI = (payload: DraftPayload) =>
  * Returns full ScheduleDetail with new assignments.
  */
 export const generateScheduleAPI = () =>
-  apiClient.post<ScheduleDetail>('/schedule/generate', {});
+  apiClient.post<ScheduleDetail>('/schedule/generate', {}).then(normalizeScheduleDetail);
 
 /**
  * GET /schedule/validate — explicit validation of current server state.
  * Note: validation is also embedded inline in GET /schedule response.
  */
 export const validateScheduleAPI = () =>
-  apiClient.get<ValidationResult>('/schedule/validate');
+  apiClient.get<ValidationResult>('/schedule/validate').then(normalizeValidation);
 
 // ---- Publishing & export ---------------------------------------------------
 
 /** PATCH /schedule/publish — publish schedule (admin only) */
 export const publishScheduleAPI = () =>
-  apiClient.patch<ScheduleDetail>('/schedule/publish', {});
+  apiClient.patch<ScheduleDetail>('/schedule/publish', {}).then(normalizeScheduleDetail);
 
 /**
  * POST /schedule/export/sheets — push schedule to Google Sheets.
@@ -150,7 +186,7 @@ export const importFromSheetAPI = (sheetId: string, sheetName: string) =>
   apiClient.post<{ imported: number; updated: number; skipped: number; errors: string[] }>(
     '/schedule/volunteers/import-sheet',
     { sheet_id: sheetId, sheet_name: sheetName },
-  );
+  ).then((r) => ({ ...r, errors: arr(r.errors) }));
 
 // ---- Day windows -----------------------------------------------------------
 
@@ -178,7 +214,7 @@ export const deleteDayWindowAPI = (date: string) =>
  * Requires admin role.
  */
 export const regenerateSlotsAPI = () =>
-  apiClient.post<ScheduleDetail>('/schedule/regenerate-slots', {});
+  apiClient.post<ScheduleDetail>('/schedule/regenerate-slots', {}).then(normalizeScheduleDetail);
 
 // ---- Dispatch integration --------------------------------------------------
 
@@ -188,4 +224,4 @@ export const regenerateSlotsAPI = () =>
  * at is optional — omit for server-side "now".
  */
 export const getOnDutyAPI = (at?: string): Promise<OnDutyVolunteer[]> =>
-  apiClient.get<OnDutyVolunteer[]>(`/schedule/on-duty${at ? `?at=${encodeURIComponent(at)}` : ''}`);
+  apiClient.getList<OnDutyVolunteer>(`/schedule/on-duty${at ? `?at=${encodeURIComponent(at)}` : ''}`);

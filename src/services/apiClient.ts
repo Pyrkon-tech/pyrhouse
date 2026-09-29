@@ -196,6 +196,18 @@ class ApiClient {
   }
 
   /**
+   * GET request for list endpoints — always resolves to an array.
+   *
+   * The Go backend serializes an empty/nil slice as JSON `null`, not `[]`.
+   * A plain `get<T[]>()` would hand that `null` back typed as an array and
+   * blow up at the first `.map`/`.forEach` far away from the fetch.
+   */
+  async getList<T>(endpoint: string, config?: RequestConfig): Promise<T[]> {
+    const data = await this.request<T[] | null>(endpoint, { ...config, method: 'GET' });
+    return Array.isArray(data) ? data : [];
+  }
+
+  /**
    * GET request zwracający surowy Blob (np. pliki CSV/PDF)
    */
   async getBlob(endpoint: string, config?: RequestConfig): Promise<Blob> {

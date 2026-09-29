@@ -80,7 +80,7 @@ const UserManagementPage: React.FC = () => {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiClient.get<UserListItem[]>('/users');
+      const data = await apiClient.getList<UserListItem>('/users');
       setUsers(data);
     } catch (err) {
       showSnackbar('error', 'Błąd podczas pobierania użytkowników', err instanceof ApiError ? err.message : String(err));

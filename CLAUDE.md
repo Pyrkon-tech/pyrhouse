@@ -139,6 +139,9 @@ import { apiClient, ApiError } from '../services/apiClient';
 // GET
 const data = await apiClient.get<User>('/users/1');
 
+// GET listy — ZAWSZE getList, nigdy get<T[]>
+const users = await apiClient.getList<UserListItem>('/users');
+
 // POST
 const result = await apiClient.post<Transfer>('/transfers', payload);
 
@@ -156,6 +159,20 @@ try {
 **Migracja zakończona (2026-06).** Wszystkie hooki i komponenty używają `apiClient`;
 `src/config/api.ts` (legacy `getApiUrl`/`getAuthHeaders`) został usunięty.
 Pliki do pobierania (CSV/PDF) używają `apiClient.getBlob(endpoint)`.
+
+**KRYTYCZNE — endpointy listowe:** backend (Go) serializuje pustą/nil slice jako
+JSON `null`, nie `[]`. `apiClient.get<T[]>()` odda wtedy `null` zatypowane jako
+tablica — TypeScript tego nie wyłapie, a crash (`Cannot read properties of null`
+/ `X is not iterable`) pojawi się dopiero przy pierwszym `.map`/`.forEach`/`for...of`,
+często w `useMemo` daleko od fetcha. Dla list zawsze używaj
+`apiClient.getList<T>(endpoint)` — gwarantuje tablicę.
+
+To dotyczy też **tablic zagnieżdżonych w obiektach**, gdzie `getList` nie pomoże —
+np. `ScheduleDetail.slots`, `ScheduleSlot.volunteers` (slot bez przydziału),
+`ValidationResult.issues` (harmonogram bez błędów), `errors` z importu. Wzorzec:
+normalizator w warstwie service, patrz `normalizeScheduleDetail` w
+`src/services/scheduleService.ts`. Sam guard `if (obj)` NIE wystarcza — obiekt jest
+prawdziwy, `null` siedzi w jego polu.
 Publiczne endpointy (np. logowanie) używają opcji `{ skipAuth: true }` —
 bez niej 401 czyści token i przekierowuje na /login.
 
