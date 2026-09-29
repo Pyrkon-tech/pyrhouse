@@ -39,47 +39,60 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     window.location.reload();
   };
 
+  handleHome = () => {
+    window.location.assign('/');
+  };
+
   render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <Paper elevation={3} sx={{ p: 4, maxWidth: 400, textAlign: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', p: 2 }}>
+          <Paper elevation={3} sx={{ p: 4, maxWidth: 440, textAlign: 'center' }}>
+            <Typography sx={{ fontSize: 56, lineHeight: 1, mb: 1 }} aria-hidden="true">
+              🐭🔧
+            </Typography>
             <Typography variant="h5" color="primary" gutterBottom>
-              Coś poszło nie tak :(
+              Apka w przebudowie
             </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: "text.secondary",
-                mb: 2
-              }}>
-              Wystąpił błąd podczas ładowania tej części aplikacji.<br />Spróbuj odświeżyć stronę.
+            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
+              Techniczna nornica grzebie w kodzie i coś się jej rozsypało.
+              <br />
+              Odśwież stronę — jeśli wraca, daj znać działowi technicznemu.
             </Typography>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: this.state.error ? 2 : 0 }}>
+              <Button variant="contained" color="primary" onClick={this.handleReload}>
+                Odśwież stronę
+              </Button>
+              <Button variant="outlined" onClick={this.handleHome}>
+                Wróć na start
+              </Button>
+            </Box>
             {this.state.error && (
-              <Typography
-                variant="caption"
-                component="pre"
-                sx={{
-                  display: 'block',
-                  textAlign: 'left',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  bgcolor: 'action.hover',
-                  borderRadius: 1,
-                  p: 1,
-                  mb: 2,
-                  maxHeight: 160,
-                  overflow: 'auto',
-                  fontFamily: 'monospace',
-                }}
-              >
-                {this.state.error.message}
-                {this.state.error.stack ? `\n${this.state.error.stack.split('\n').slice(1, 4).join('\n')}` : ''}
-              </Typography>
+              <Box component="details" sx={{ textAlign: 'left' }}>
+                <Typography component="summary" variant="caption" sx={{ color: 'text.secondary', cursor: 'pointer' }}>
+                  Szczegóły dla nornicy
+                </Typography>
+                <Typography
+                  variant="caption"
+                  component="pre"
+                  sx={{
+                    display: 'block',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    bgcolor: 'action.hover',
+                    borderRadius: 1,
+                    p: 1,
+                    mt: 1,
+                    maxHeight: 160,
+                    overflow: 'auto',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  {this.state.error.message}
+                  {this.state.error.stack ? `\n${this.state.error.stack.split('\n').slice(1, 4).join('\n')}` : ''}
+                </Typography>
+              </Box>
             )}
-            <Button variant="contained" color="primary" onClick={this.handleReload}>
-              Odśwież stronę
-            </Button>
           </Paper>
         </Box>
       );
