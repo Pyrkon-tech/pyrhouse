@@ -152,7 +152,7 @@ const QuestDispatcherMap: React.FC<QuestDispatcherMapProps> = ({
   }, []);
 
   const handleAssignQuestLocation = useCallback(async (questId: string, locationId: number) => {
-    await updateQuestLocationAPI(questId, { location_id: locationId, save_mapping: true });
+    await updateQuestLocationAPI(questId, { location_id: locationId });
     onQuestUpdated?.();
   }, [onQuestUpdated]);
 

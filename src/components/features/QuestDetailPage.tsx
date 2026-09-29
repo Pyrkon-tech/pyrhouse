@@ -20,8 +20,6 @@ import {
   DialogContentText,
   DialogActions,
   Divider,
-  FormControlLabel,
-  Checkbox,
   Autocomplete,
   TextField,
   Menu,
@@ -34,7 +32,7 @@ import { useQuestStream } from '../../hooks/useQuestStream';
 import { useLocations } from '../../hooks/useLocations';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../context/NotificationContext';
-import { updateQuestLocationAPI, triggerSyncAPI } from '../../services/questService';
+import { updateQuestLocationAPI } from '../../services/questService';
 import { getPricesAPI } from '../../services/budgetService';
 import { getTransferDetailsAPI } from '../../services/transferService';
 import type { QuestEvent } from '../../types/quest.types';
@@ -137,7 +135,6 @@ const QuestDetailPage: React.FC = () => {
 
   const [pendingStatus, setPendingStatus] = useState<QuestStatus | null>(null);
   const [updating, setUpdating] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<HTMLElement | null>(null);
   const [priceMap, setPriceMap] = useState<Map<string, number>>(new Map());
   const [transferDetails, setTransferDetails] = useState<Map<number, TransferDetails>>(new Map());
@@ -172,7 +169,6 @@ const QuestDetailPage: React.FC = () => {
   // Location resolution
   const { locations, refetch: fetchLocations } = useLocations();
   const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
-  const [saveMapping, setSaveMapping] = useState(true);
   const [assigningLocation, setAssigningLocation] = useState(false);
   // Allow re-assigning the location even when one is already resolved
   const [showLocationEdit, setShowLocationEdit] = useState(false);
@@ -182,24 +178,11 @@ const QuestDetailPage: React.FC = () => {
     if (questId != null) fetchLocations();
   }, [questId, fetchLocations]);
 
-  const handleSyncNow = async () => {
-    try {
-      setSyncing(true);
-      await triggerSyncAPI();
-      showSuccess('Synchronizacja zakończona');
-      await refreshQuest();
-    } catch {
-      showError('Błąd podczas synchronizacji');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const handleAssignLocation = async () => {
     if (!quest || selectedLocationId == null) return;
     try {
       setAssigningLocation(true);
-      await updateQuestLocationAPI(quest.id, { location_id: selectedLocationId, save_mapping: saveMapping });
+      await updateQuestLocationAPI(quest.id, { location_id: selectedLocationId });
       showSuccess('Lokalizacja przypisana pomyślnie');
       setShowLocationEdit(false);
       await refreshQuest();
@@ -332,16 +315,6 @@ const QuestDetailPage: React.FC = () => {
           <TextField {...params} label="Wybierz lokalizację" sx={{ minWidth: 280 }} />
         )}
         isOptionEqualToValue={(opt, val) => opt.id === val.id}
-      />
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={saveMapping}
-            onChange={(e) => setSaveMapping(e.target.checked)}
-            size="small"
-          />
-        }
-        label={<Typography variant="caption">Zapisz jako mapping</Typography>}
       />
       <Button
         variant="contained"
@@ -538,30 +511,13 @@ const QuestDetailPage: React.FC = () => {
       )}
       {/* Unknown-quantity banner */}
       {unknownQtyCount > 0 && (
-        <Alert
-          severity="warning"
-          sx={{ mb: 3 }}
-          action={
-            hasAdminAccess ? (
-              <Button
-                color="inherit"
-                size="small"
-                onClick={handleSyncNow}
-                disabled={syncing}
-                startIcon={syncing ? <CircularProgress size={14} color="inherit" /> : null}
-              >
-                {syncing ? 'Synchronizuję…' : 'Synchronizuj teraz'}
-              </Button>
-            ) : undefined
-          }
-        >
+        <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Pozycje do doprecyzowania: {unknownQtyCount}
           </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-            W arkuszu nie podano ilości — sprawdź, czy pozycję wysłać (mogła już zostać wydana
-            lub mieć specjalne wymaganie). Ewentualnie uzupełnij ilość w Google Sheet i zsynchronizuj,
-            albo podaj ją przy wydaniu.
+            W zamówieniu nie podano ilości — sprawdź, czy pozycję wysłać (mogła już zostać wydana
+            lub mieć specjalne wymaganie), i podaj ilość przy wydaniu.
           </Typography>
         </Alert>
       )}
@@ -620,7 +576,7 @@ const QuestDetailPage: React.FC = () => {
                 <TableCell sx={{ fontWeight: 500 }}>{item.name}</TableCell>
                 <TableCell align="center">
                   {item.quantity == null ? (
-                    <Tooltip title="Ilość do doprecyzowania — w arkuszu nie podano liczby. Sprawdź, czy pozycję wysłać; ewentualnie uzupełnij w Google Sheet i zsynchronizuj.">
+                    <Tooltip title="Ilość do doprecyzowania — w zamówieniu nie podano liczby. Sprawdź, czy pozycję wysłać, i podaj ilość przy wydaniu.">
                       <Chip label="ilość: ?" size="small" color="warning" variant="outlined" />
                     </Tooltip>
                   ) : (

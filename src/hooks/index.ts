@@ -22,7 +22,6 @@ export { useQuestCounts } from './useQuestCounts';
 // Domain: Asset/Stock
 export { useStocks } from './useStocks';
 export { useCategories } from './useCategories';
-export { useCategoryMappings } from './useCategoryMappings';
 
 // Domain: Location
 export { useLocations } from './useLocations';
@@ -35,5 +34,3 @@ export { useServiceDeskUsers } from './useServiceDeskUsers';
 
 // Domain: Schedule & Sync
 export { useDutySchedule } from './useDutySchedule';
-export { useSync } from './useSync';
-export { useSyncStatus } from './useSyncStatus';

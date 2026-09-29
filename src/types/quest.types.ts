@@ -67,94 +67,16 @@ export interface UpdateQuestStatusPayload {
   status: QuestStatus;
 }
 
-export interface SyncStats {
-  quests_created: number;
-  quests_updated: number;
-  quests_unchanged: number;
-  items_added: number;
-  items_removed: number;
-}
-
-export interface SyncResponse {
-  message: string;
-  stats: SyncStats;
-  quests: Quest[];
-}
-
-export interface SyncLog {
-  id: number;
-  synced_at: string;
-  rows_processed: number;
-  quests_created: number;
-  quests_updated: number;
-  quests_unchanged: number;
-  items_added: number;
-  items_removed: number;
-  success: boolean;
-  duration_ms: number;
-  sheet_id: string;
-  errors: string;
-}
-
-export interface CategoryMapping {
-  id: number;
-  form_item_name: string;
-  category_id: number;
-  usage_count: number;
-  created_by?: number;
-  created_at: string;
-}
-
-export interface CategoryMappingsResponse {
-  count: number;
-  mappings: CategoryMapping[];
-}
-
-// SSE events — discriminated union po data.type (event name to zawsze "quest_update")
+// SSE events — discriminated union on data.type (the event name is always "quest_update").
+// quests_changed is emitted once shop orders are confirmed into quests (shop phase 1).
 export type QuestEvent =
-  | { type: 'sync_completed'; stats?: SyncStats }
+  | { type: 'quests_changed' }
   | { type: 'stocks_changed'; location_id: number; action: 'created' | 'updated' | 'deleted' };
-
-// Stan schedulera
-export interface SyncStatusResponse {
-  enabled: boolean;
-  interval?: string;   // np. "15m0s"
-  last_sync?: string;  // ISO datetime
-  next_sync?: string;  // ISO datetime
-  last_error?: string; // pusty = brak błędu
-}
-
-export interface CreateCategoryMappingPayload {
-  form_item_name: string;
-  category_id: number;
-  created_by?: number;
-}
 
 // Location Resolution Types
 
-export interface LocationMapping {
-  id: number;
-  pavilion: string;
-  location_name: string;
-  location_id: number;
-  created_at: string;
-  usage_count: number;
-}
-
-export interface LocationMappingsResponse {
-  count: number;
-  mappings: LocationMapping[];
-}
-
-export interface CreateLocationMappingPayload {
-  pavilion: string;
-  location_name: string;
-  location_id: number;
-}
-
 export interface UpdateQuestLocationPayload {
   location_id: number;
-  save_mapping?: boolean;
 }
 
 export interface UpdateQuestLocationResponse {

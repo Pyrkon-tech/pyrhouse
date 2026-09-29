@@ -47,7 +47,7 @@ const DispatchPage: React.FC = () => {
   useEffect(() => { fetchSdRequests(); }, [fetchSdRequests]);
 
   const onQuestEvent = useCallback((event: QuestEvent) => {
-    if (event.type === 'sync_completed') fetchQuests({ limit: 500 });
+    if (event.type === 'quests_changed') fetchQuests({ limit: 500 });
   }, [fetchQuests]);
   const { connected: questSseConnected } = useQuestStream({ onEvent: onQuestEvent });
 

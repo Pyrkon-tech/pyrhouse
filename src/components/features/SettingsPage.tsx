@@ -28,9 +28,8 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import SyncIcon from '@mui/icons-material/Sync';
 import { getSettingsAPI, getSettingAPI, updateSettingAPI } from '../../services/settingsService';
-import { apiClient, ApiError } from '../../services/apiClient';
+import { ApiError } from '../../services/apiClient';
 import type { Setting } from '../../types/settings.types';
 import { Button } from '../ui/Button';
 import { AppSnackbar } from '../ui';
@@ -48,7 +47,6 @@ interface SettingRowState {
 const SettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   /** Stan edycji per klucz */
   const [rowStates, setRowStates] = useState<Record<string, SettingRowState>>({});
   /** Klucz ustawienia oczekujący na potwierdzenie zapisu */
@@ -142,18 +140,6 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      await apiClient.post('/equipment-requests/sync', {});
-      showSnackbar('success', 'Synchronizacja zlecona');
-    } catch (err) {
-      showSnackbar('error', err instanceof ApiError ? err.message : 'Błąd synchronizacji');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const renderMobileReadOnly = () => (
     <Grid container spacing={2}>
       {settings.map((setting) => (
@@ -221,13 +207,6 @@ const SettingsPage: React.FC = () => {
         </Typography>
         {!isMobile && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Sync teraz">
-              <span>
-                <IconButton onClick={handleSync} disabled={syncing}>
-                  {syncing ? <CircularProgress size={20} /> : <SyncIcon />}
-                </IconButton>
-              </span>
-            </Tooltip>
             <Tooltip title="Odśwież listę">
               <IconButton onClick={fetchSettings} disabled={loading}>
                 <RefreshIcon />

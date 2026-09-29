@@ -26,5 +26,3 @@ export const deletePriceAPI = (itemName: string, supplier: string) => {
   return apiClient.delete<void>(`/equipment-requests/prices?${params}`);
 };
 
-export const syncPricesAPI = () =>
-  apiClient.post<{ message: string; updated: number }>('/equipment-requests/prices/sync');

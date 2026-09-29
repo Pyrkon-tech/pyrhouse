@@ -18,7 +18,6 @@ import {
   MenuItem,
   Select,
   FormControl,
-  CircularProgress,
   Alert,
   Tooltip,
   Paper,
@@ -26,12 +25,8 @@ import {
 import { DataTable } from '../ui/DataTable';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuests } from '../../hooks/useQuests';
-import { useSync } from '../../hooks/useSync';
 import { useQuestStream } from '../../hooks/useQuestStream';
-import { useSyncStatus } from '../../hooks/useSyncStatus';
 import { useQuestCounts } from '../../hooks/useQuestCounts';
-import { useAuth } from '../../hooks/useAuth';
-import { useNotification } from '../../context/NotificationContext';
 import LoadingSkeleton from '../ui/LoadingSkeleton';
 import type { QuestStatus, Quest, QuestEvent } from '../../types/quest.types';
 
@@ -39,7 +34,6 @@ const HourglassEmptyIcon = lazy(() => import('@mui/icons-material/HourglassEmpty
 const LocalShippingIcon = lazy(() => import('@mui/icons-material/LocalShipping'));
 const CheckCircleIcon = lazy(() => import('@mui/icons-material/CheckCircle'));
 const CancelIcon = lazy(() => import('@mui/icons-material/Cancel'));
-const SyncIcon = lazy(() => import('@mui/icons-material/Sync'));
 const SearchIcon = lazy(() => import('@mui/icons-material/Search'));
 const ClearAllIcon = lazy(() => import('@mui/icons-material/ClearAll'));
 const LinkIcon = lazy(() => import('@mui/icons-material/Link'));
@@ -75,22 +69,8 @@ const formatDate = (dateStr: string) => {
   }
 };
 
-const formatRelativeTime = (dateStr: string) => {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'przed chwilą';
-  if (minutes < 60) return `${minutes} min temu`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} godz. temu`;
-  const days = Math.floor(hours / 24);
-  return `${days} dni temu`;
-};
-
 const QuestBoardPage: React.FC = () => {
   const { quests, count, loading, error, fetchQuests } = useQuests();
-  const { syncLog, syncing, triggerSync } = useSync();
-  const { userRole } = useAuth();
-  const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -104,13 +84,10 @@ const QuestBoardPage: React.FC = () => {
   const [showMissingQtyOnly, setShowMissingQtyOnly] = useState(false);
   const [page, setPage] = useState(0);
 
-  // Sync status (scheduler info)
-  const { status: syncStatus, formatInterval } = useSyncStatus();
-
   // Liczniki per status — niezależne od aktywnego filtra tabeli
   const { counts: stats, refreshCounts } = useQuestCounts();
 
-  // SSE — auto-refresh po każdym syncu backendu
+  // SSE — auto-refresh when quests change on the backend (e.g. a shop order is confirmed)
   // pageRef + statusFilterRef żeby uniknąć stale closure w useCallback
   const pageRef = useRef(page);
   const statusFilterRef = useRef(statusFilter);
@@ -118,7 +95,7 @@ const QuestBoardPage: React.FC = () => {
   useEffect(() => { statusFilterRef.current = statusFilter; }, [statusFilter]);
 
   const onSseEvent = useCallback((event: QuestEvent) => {
-    if (event.type === 'sync_completed') {
+    if (event.type === 'quests_changed') {
       fetchQuests({
         limit: LIMIT,
         offset: pageRef.current * LIMIT,
@@ -129,8 +106,6 @@ const QuestBoardPage: React.FC = () => {
   }, [fetchQuests, refreshCounts]);
 
   const { connected: sseConnected } = useQuestStream({ onEvent: onSseEvent });
-
-  const hasAdminAccess = userRole === 'admin' || userRole === 'moderator';
 
   // Fetch quests on mount and filter/page change
   useEffect(() => {
@@ -187,20 +162,6 @@ const QuestBoardPage: React.FC = () => {
     () => quests.filter(questHasUnknownQty).length,
     [quests],
   );
-  const handleSync = async () => {
-    try {
-      const result = await triggerSync();
-      showSuccess(
-        `Synchronizacja zakończona: ${result.stats.quests_created} nowych zamówień, ${result.stats.quests_updated} zaktualizowanych`
-      );
-      setPage(0);
-      fetchQuests({ limit: LIMIT, offset: 0, status: statusFilter || undefined });
-      refreshCounts();
-    } catch {
-      showError('Błąd podczas synchronizacji');
-    }
-  };
-
   const clearFilters = () => {
     setStatusFilter('');
     setSearchQuery('');
@@ -248,46 +209,6 @@ const QuestBoardPage: React.FC = () => {
       ))}
     </Grid>
   );
-
-  const renderSyncInfo = () => {
-    if (!syncLog) return null;
-    return (
-      <Alert
-        severity={syncLog.success ? 'info' : 'warning'}
-        sx={{ mb: 2 }}
-        action={
-          hasAdminAccess ? (
-            <Button
-              size="small"
-              color="inherit"
-              startIcon={
-                syncing ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : (
-                  <Suspense fallback={null}><SyncIcon /></Suspense>
-                )
-              }
-              onClick={handleSync}
-              disabled={syncing}
-            >
-              {syncing ? 'Synchronizuję...' : 'Synchronizuj'}
-            </Button>
-          ) : undefined
-        }
-      >
-        Ostatnia synchronizacja: {formatRelativeTime(syncLog.synced_at)}
-        {syncLog.success && ` (${syncLog.quests_created} nowych zamówień, ${syncLog.quests_updated} zaktualizowanych)`}
-        {syncLog.errors && ` — Błędy: ${syncLog.errors}`}
-        {syncStatus?.enabled && (
-          <Typography component="span" variant="body2" sx={{ ml: 1, opacity: 0.75 }}>
-            {syncStatus.next_sync
-              ? `· Następny: ${new Date(syncStatus.next_sync).toLocaleTimeString('pl-PL')} (co ${formatInterval(syncStatus.interval)})`
-              : `(co ${formatInterval(syncStatus.interval)})`}
-          </Typography>
-        )}
-      </Alert>
-    );
-  };
 
   const renderFilters = () => (
     <Box
@@ -670,27 +591,7 @@ const QuestBoardPage: React.FC = () => {
             </Button>
           </Tooltip>
         </Box>
-        {hasAdminAccess && !syncLog && (
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={
-              syncing ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <Suspense fallback={null}><SyncIcon /></Suspense>
-              )
-            }
-            onClick={handleSync}
-            disabled={syncing}
-            sx={{ borderRadius: 1, px: 3 }}
-          >
-            {syncing ? 'Synchronizuję...' : 'Synchronizuj z Sheets'}
-          </Button>
-        )}
       </Box>
-      {/* Sync info */}
-      {renderSyncInfo()}
       {/* Stats */}
       {!loading && renderStatsBar()}
       {/* Error */}
@@ -727,7 +628,7 @@ const QuestBoardPage: React.FC = () => {
             }}>
             {hasActiveFilters
               ? 'Spróbuj zmienić kryteria wyszukiwania'
-              : 'Brak zamówień do wyświetlenia. Uruchom synchronizację z Google Sheets.'}
+              : 'Brak zamówień do wyświetlenia.'}
           </Typography>
           {hasActiveFilters && (
             <Button variant="outlined" onClick={clearFilters} sx={{ borderRadius: 1, px: 3 }}>

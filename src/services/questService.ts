@@ -10,17 +10,8 @@ import type {
   QuestsListResponse,
   QuestsListParams,
   UpdateQuestStatusPayload,
-  SyncResponse,
-  SyncLog,
-  SyncStatusResponse,
-  CreateCategoryMappingPayload,
-  CategoryMapping,
-  CategoryMappingsResponse,
   CreateTransferFromQuestRequest,
   CreateTransferFromQuestResponse,
-  LocationMapping,
-  LocationMappingsResponse,
-  CreateLocationMappingPayload,
   UpdateQuestLocationPayload,
   UpdateQuestLocationResponse,
   UnresolvedLocationsResponse,
@@ -56,32 +47,6 @@ export const updateQuestStatusAPI = (questId: string, payload: UpdateQuestStatus
   apiClient.patch<{ message: string; status: string }>(`/equipment-requests/quests/${questId}/status`, payload);
 
 // ============================================================================
-// Sync Operations
-// ============================================================================
-
-/**
- * Ręczna synchronizacja z Google Sheets
- */
-export const triggerSyncAPI = () =>
-  apiClient.post<SyncResponse>('/equipment-requests/sync');
-
-/**
- * Pobiera log ostatniej synchronizacji
- */
-export const getSyncLogAPI = () =>
-  apiClient.get<SyncLog>('/equipment-requests/sync-log');
-
-// ============================================================================
-// Category Mapping
-// ============================================================================
-
-/**
- * Tworzy mapowanie kategorii
- */
-export const createCategoryMappingAPI = (payload: CreateCategoryMappingPayload) =>
-  apiClient.post<{ message: string; mapping: CategoryMapping }>('/equipment-requests/category-mapping', payload);
-
-// ============================================================================
 // Transfer Integration
 // ============================================================================
 
@@ -95,28 +60,6 @@ export const createTransferFromQuestAPI = (questId: string, payload: CreateTrans
   );
 
 // ============================================================================
-// Phase 4 — Sync Status, Category Mappings, SSE
-// ============================================================================
-
-/**
- * Pobiera stan schedulera (auto-sync)
- */
-export const getSyncStatusAPI = () =>
-  apiClient.get<SyncStatusResponse>('/equipment-requests/sync-status');
-
-/**
- * Pobiera listę mapowań kategorii
- */
-export const getCategoryMappingsAPI = () =>
-  apiClient.get<CategoryMappingsResponse>('/equipment-requests/category-mappings');
-
-/**
- * Usuwa mapowanie kategorii (204 No Content)
- */
-export const deleteCategoryMappingAPI = (id: number): Promise<void> =>
-  apiClient.delete<void>(`/equipment-requests/category-mappings/${id}`);
-
-// ============================================================================
 // Location Resolution
 // ============================================================================
 
@@ -128,29 +71,9 @@ export const getUnresolvedLocationsAPI = () =>
 
 /**
  * Ręczne przypisanie lokalizacji do questa
- * save_mapping: true → zapisz jako mapping do auto-resolution w przyszłości
  */
 export const updateQuestLocationAPI = (questId: string, payload: UpdateQuestLocationPayload) =>
   apiClient.patch<UpdateQuestLocationResponse>(
     `/equipment-requests/quests/${questId}/location`,
     payload,
   );
-
-/**
- * Lista mapowań pavilion+location_name → location_id
- */
-export const getLocationMappingsAPI = () =>
-  apiClient.get<LocationMappingsResponse>('/equipment-requests/location-mappings');
-
-/**
- * Tworzy nowe mapowanie lokalizacji
- */
-export const createLocationMappingAPI = (payload: CreateLocationMappingPayload) =>
-  apiClient.post<{ message: string; mapping: LocationMapping }>('/equipment-requests/location-mappings', payload);
-
-/**
- * Usuwa mapowanie lokalizacji (204 No Content)
- */
-export const deleteLocationMappingAPI = (id: number): Promise<void> =>
-  apiClient.delete<void>(`/equipment-requests/location-mappings/${id}`);
-

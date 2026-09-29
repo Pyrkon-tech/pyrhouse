@@ -30,7 +30,6 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SyncIcon from '@mui/icons-material/Sync';
 import AddIcon from '@mui/icons-material/Add';
 import PriceChangeIcon from '@mui/icons-material/PriceChange';
 import { useNotification } from '../../context/NotificationContext';
@@ -42,7 +41,6 @@ import {
   getPricesAPI,
   upsertPriceAPI,
   deletePriceAPI,
-  syncPricesAPI,
 } from '../../services/budgetService';
 import type { BudgetSummary, PriceListItem, UpsertPriceRequest } from '../../types/budget.types';
 import { ApiError } from '../../services/apiClient';
@@ -121,11 +119,9 @@ const PriceDrawer: React.FC<{
   prices: PriceListItem[];
   suppliers: string[];
   onSaved: () => void;
-  onSynced: () => void;
-}> = ({ open, onClose, prices, suppliers, onSaved, onSynced }) => {
+}> = ({ open, onClose, prices, suppliers, onSaved }) => {
   const { showSuccess, showError } = useNotification();
   const [editing, setEditing] = useState<EditingState | null>(null);
-  const [syncing, setSyncing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const openAdd = () =>
@@ -164,19 +160,6 @@ const PriceDrawer: React.FC<{
     }
   };
 
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      const res = await syncPricesAPI();
-      showSuccess(`Zsynchronizowano ${res.updated} cen z arkusza Cennik`);
-      onSynced();
-    } catch (err) {
-      showError(err instanceof ApiError ? err.message : 'Błąd synchronizacji');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   // Group by item_name for display
   const grouped = prices.reduce<Record<string, PriceListItem[]>>((acc, p) => {
     (acc[p.item_name] ??= []).push(p);
@@ -195,10 +178,6 @@ const PriceDrawer: React.FC<{
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </Box>
       <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-        <Button variant="outline" onClick={handleSync} disabled={syncing} style={{ flex: 1 }}>
-          {syncing ? <CircularProgress size={16} sx={{ mr: 1 }} /> : <SyncIcon sx={{ mr: 1, fontSize: 18 }} />}
-          Synchronizuj z arkusza
-        </Button>
         <Button variant="outline" onClick={openAdd} style={{ flex: 1 }}>
           <AddIcon sx={{ mr: 1, fontSize: 18 }} />
           Dodaj cenę
@@ -293,7 +272,7 @@ const PriceDrawer: React.FC<{
             {prices.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                  Brak cen — dodaj ręcznie lub synchronizuj z arkusza
+                  Brak cen — dodaj pierwszą
                 </TableCell>
               </TableRow>
             )}
@@ -378,12 +357,8 @@ const BudgetPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchBudget]);
 
+  // A saved price may introduce a new supplier, so refresh suppliers too
   const handlePricesSaved = () => {
-    fetchPrices();
-    fetchBudget();
-  };
-
-  const handleSynced = () => {
     fetchSuppliers();
     fetchPrices();
     fetchBudget();
@@ -715,7 +690,6 @@ const BudgetPage: React.FC = () => {
         prices={prices}
         suppliers={suppliers}
         onSaved={handlePricesSaved}
-        onSynced={handleSynced}
       />
     </Box>
   );
