@@ -669,24 +669,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            /**
-                             * @description Number of quests returned
-                             * @example 2
-                             */
-                            count: number;
-                            /**
-                             * @description Limit applied
-                             * @example 50
-                             */
-                            limit: number;
-                            /**
-                             * @description Offset applied
-                             * @example 0
-                             */
-                            offset: number;
-                            quests: components["schemas"]["EquipmentRequestQuest"][];
-                        };
+                        "application/json": components["schemas"]["QuestsListResponse"];
                     };
                 };
                 401: components["responses"]["Unauthorized"];
@@ -4352,7 +4335,7 @@ export interface components {
              * @description When to pick up equipment (flexible format)
              * @example 17-18
              */
-            pickup_time: string | null;
+            pickup_time: string;
             /**
              * @description Person responsible for budget approval
              * @example Anna Nowak
@@ -4366,22 +4349,17 @@ export interface components {
              * @enum {string}
              */
             status: "pending" | "in_progress" | "completed" | "cancelled";
-            /**
-             * @description ID of the linked inventory transfer (set when transfer is created from quest)
-             * @example 42
-             */
-            transfer_id: number | null;
-            /**
-             * @description Status of the linked transfer (derived from transfer, not stored on quest)
-             * @example in_transit
-             * @enum {string|null}
-             */
-            transfer_status: "in_transit" | "completed" | "cancelled" | null;
+            /** @description All transfers created from this quest (a quest can be delivered in several) */
+            transfers: components["schemas"]["QuestTransfer"][];
+            /** @description Volunteers assigned to the quest's transfers */
+            assigned_volunteers: components["schemas"]["QuestVolunteer"][];
             /**
              * @description Resolved location ID from pavilion+location (null if unresolved)
              * @example 3
              */
             location_id: number | null;
+            /** @description Name of the resolved location */
+            location_name: string | null;
             /**
              * @description Whether the destination location was successfully resolved
              * @default false
@@ -4396,6 +4374,19 @@ export interface components {
              * @enum {string}
              */
             source: "sheet" | "shop";
+        };
+        QuestTransfer: {
+            transfer_id: number;
+            /** @enum {string} */
+            status: "in_transit" | "completed" | "cancelled";
+            /** Format: date-time */
+            created_at: string;
+        };
+        QuestsListResponse: {
+            count: number;
+            limit: number;
+            offset: number;
+            quests: components["schemas"]["EquipmentRequestQuest"][];
         };
         /** @description Equipment delivery destination */
         QuestDestination: {
@@ -4436,12 +4427,12 @@ export interface components {
              * @description Budget owner for this specific item (can differ from quest budget_owner)
              * @example Anna Nowak
              */
-            budget_owner: string | null;
+            budget_owner: string;
             /**
              * @description Additional notes from requestor
              * @example Must have good battery life
              */
-            notes: string | null;
+            notes: string;
         };
         PriceListItem: {
             id: number;

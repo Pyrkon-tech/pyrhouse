@@ -12,6 +12,7 @@ function makeQuest(deliveryDate: string, status: QuestStatus = 'pending'): Quest
     destination: { pavilion: '5', location: 'Sala A' },
     recipient: 'Jan',
     delivery_date: deliveryDate,
+    pickup_time: '',
     budget_owner: 'Tech',
     items: [],
     status,
@@ -23,7 +24,7 @@ function makeQuest(deliveryDate: string, status: QuestStatus = 'pending'): Quest
     return_date: null,
     shop_order_id: null,
     assigned_volunteers: [],
-  } as Quest;
+  };
 }
 
 function makeSd(status: string): ServiceDeskRequest {
