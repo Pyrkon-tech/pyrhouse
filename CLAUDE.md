@@ -26,7 +26,7 @@ PyrHouse to aplikacja React/TypeScript do zarządzania stanami magazynowymi dla 
 ```
 src/
 ├── components/
-│   ├── ui/           # Reużywalne komponenty (Button, Card, Container)
+│   ├── ui/           # Reużywalne komponenty (Button, DataTable, PageHeader, ConfirmDialog, StatusChip, ErrorBoundary…)
 │   ├── layout/       # Layout (orchestrator) + SidebarNav, UserMenu, ThemeToggle, navigation (menu defs)
 │   ├── features/     # Strony funkcjonalne (flat files + moduły folderowe)
 │   │   ├── Transfer/           # Moduł transferów (create, details, list + sub-components)
@@ -37,7 +37,7 @@ src/
 │   │   ├── UserDetails/        # Profil użytkownika (profile card, info card, transfery, dialogi)
 │   │   └── *.tsx               # Proste strony (<150 LOC)
 │   ├── common/       # Wspólne (BarcodeScanner, MapComponent)
-│   └── animations/   # Animacje przejść stron + keyframes
+│   └── animations/   # SystemInitAnimation (ekran startowy)
 ├── hooks/            # Custom hooks (27 hooków)
 ├── services/         # Warstwa API (8 serwisów)
 ├── theme/            # Design tokens + theme
@@ -54,13 +54,12 @@ src/
 | `src/theme/designTokens.ts` | Centralne design tokens |
 | `src/theme/theme.ts` | Konfiguracja MUI theme |
 | `src/routes/routes.ts` | Definicje tras |
-| `src/hooks/useStyles.ts` | Hook do stylowania |
 | `src/context/AuthContext.tsx` | Centralny stan auth (jeden interwał walidacji JWT); provider w App.tsx wewnątrz Routera |
 | `src/hooks/useAuth.ts` | Cienki wrapper na AuthContext (stare API zachowane) |
 | `src/services/apiClient.ts` | Centralny klient API |
 | `src/config/env.ts` | Konfiguracja zmiennych środowiskowych |
 | `src/context/NotificationContext.tsx` | Centralne powiadomienia |
-| `src/types/index.ts` | Centralne eksporty typów |
+| `packages/api` (`@pyrhouse/api`) | Typy API generowane z `backend/docs/openapi.yaml` (`npm run api:types`); `src/types/*.types.ts` to aliasy + ręczne payloady |
 | `src/components/features/Transfer/` | Moduł transferów (3 strony + 5 sub-components) |
 | `src/components/features/ServiceDesk/` | Moduł service desk (strona + formularz + 3 widoki) |
 | `src/components/features/QuestDispatcherMap/` | Mapa dispatch MTP z overlayami stref |
@@ -128,12 +127,11 @@ Druga aplikacja w tym repo (`shop.pyrhouse.space`, `docs/shop/PLAN.md` w workspa
 - Gradient sidebar background
 
 ### Użycie stylów
+Style przez MUI `sx` i theme (`src/theme/theme.ts`), wartości z `designTokens` — bez hardkodowanych kolorów:
 ```typescript
-import useStyles from '../hooks/useStyles';
 import { designTokens } from '../theme/designTokens';
 
-const { commonStyles } = useStyles();
-// lub bezpośrednio: designTokens.spacing.lg
+<Box sx={{ p: 2, borderRadius: designTokens.borderRadius.lg, color: 'primary.main' }} />
 ```
 
 ## Autentykacja
@@ -198,7 +196,7 @@ bez niej 401 czyści token i przekierowuje na /login.
 ### Komponenty
 1. Używaj design tokens zamiast hardkodowanych wartości
 2. Preferuj `sx` prop dla prostych stylów
-3. Używaj reużywalnych komponentów UI (Button, Card, Container)
+3. Używaj reużywalnych komponentów z `src/components/ui/` (Button, DataTable, PageHeader, ConfirmDialog, StatusChip, EmptyState)
 4. TypeScript interfaces dla wszystkich props
 
 ### Routing
@@ -208,7 +206,6 @@ bez niej 401 czyści token i przekierowuje na /login.
 
 ### Hooki
 - `useAuth` - autentykacja
-- `useStyles` - stylowanie
 - `useStorage` - localStorage/sessionStorage
 - Domenowe: useTransfers, useLocations, useCategories, etc.
 
@@ -401,12 +398,12 @@ Po zakończeniu zadania sprawdź:
 ### Dodawanie nowej strony
 1. Utwórz komponent w `src/components/features/`
 2. Dodaj trasę w `src/routes/routes.ts`
-3. Użyj `useStyles` do stylowania
+3. Styluj przez `sx` + `designTokens` / theme
 4. Dodaj typy w `src/types/`
 
 ### Modyfikacja stylów
 1. Użyj design tokens z `designTokens.ts`
-2. Rozszerz `commonStyles` w `useStyles.ts` jeśli potrzeba
+2. Wspólny wygląd komponentów MUI zmieniaj w `src/theme/theme.ts` (overrides), nie lokalnie
 3. Nigdy nie używaj hardkodowanych wartości kolorów/spacing
 
 ### Dodawanie API call (nowy sposób)

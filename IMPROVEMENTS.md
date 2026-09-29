@@ -11,7 +11,7 @@
 | 5 | Environment config | **DONE** | `src/config/env.ts` |
 | 6 | Cache invalidation pattern | **DONE** | `src/hooks/useCategories.ts` |
 | 7 | Migracja serwisów do apiClient | **IN PROGRESS** | transferService, assetService (done) |
-| 8 | UI/UX WOW Redesign | **DONE** | `designTokens.ts`, `theme.ts`, `Layout.tsx`, `useStyles.ts` |
+| 8 | UI/UX WOW Redesign | **DONE** | `designTokens.ts`, `theme.ts`, `Layout.tsx` |
 | 9 | React Query | TODO | - |
 | 10 | Lazy loading libs | TODO | - |
 | 11 | MSW setup | TODO | - |
@@ -67,7 +67,7 @@ try {
 - `src/types/location.types.ts` - Location, MapPosition, DeliveryLocation
 - `src/types/user.types.ts` - User, UserRole, JwtPayload
 - `src/types/transfer.types.ts` - Transfer, TransferItem, TransferFormData
-- `src/types/index.ts` - centralne eksporty
+- `packages/api` (`@pyrhouse/api`) - typy generowane z OpenAPI; `src/types/*.types.ts` - aliasy i payloady
 
 **Użycie:**
 ```typescript

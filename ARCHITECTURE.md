@@ -26,7 +26,6 @@ src/
 │   ├── routes.ts          # Definicje tras
 │   └── types.ts           # Typy routingu
 ├── hooks/
-│   ├── useStyles.ts       # Hook do zarządzania stylami
 │   └── ...
 └── ...
 ```
@@ -109,33 +108,6 @@ import { Card } from '../components/ui/Card';
 
 ### 4. Hook do zarządzania stylami
 
-#### useStyles (`src/hooks/useStyles.ts`)
-Centralny hook do zarządzania stylami:
-- Dostęp do design tokens
-- Predefiniowane style dla typowych przypadków
-- Responsywne style
-- Theme-aware styles
-
-```typescript
-// Przykład użycia
-import useStyles from '../hooks/useStyles';
-
-const MyComponent = () => {
-  const { commonStyles, createStyles } = useStyles();
-  
-  const customStyles = createStyles({
-    container: {
-      ...commonStyles.container,
-      backgroundColor: 'primary.main',
-    },
-  });
-  
-  return <Box sx={customStyles.container}>...</Box>;
-};
-```
-
-## Zasady architektury
-
 ### 1. Single Responsibility Principle
 Każdy komponent ma jedną odpowiedzialność:
 - Komponenty UI: Tylko prezentacja
@@ -193,9 +165,7 @@ const styles = {
   borderRadius: '8px',
 };
 
-// Nowe
-const { commonStyles } = useStyles();
-// lub
+// Nowe (sx + design tokens)
 const styles = {
   padding: designTokens.spacing.lg,
   borderRadius: designTokens.borderRadius.lg,

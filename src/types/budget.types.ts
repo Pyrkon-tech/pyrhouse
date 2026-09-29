@@ -1,38 +1,9 @@
-export interface PriceListItem {
-  id: number;
-  item_name: string;
-  supplier: string;
-  unit_price: number;
-  updated_at: string;
-}
+/** Aliases of the generated API contract (@pyrhouse/api). */
+import type { Schemas } from '@pyrhouse/api';
 
-export interface UpsertPriceRequest {
-  item_name: string;
-  supplier: string;
-  unit_price: number;
-}
-
-export interface SupplierPrice {
-  supplier: string;
-  unit_price: number;
-  total: number;
-}
-
-export interface BudgetItem {
-  item_name: string;
-  quantity: number;
-  prices: SupplierPrice[];
-}
-
-export interface SupplierTotal {
-  supplier: string;
-  total: number;
-}
-
-export interface BudgetSummary {
-  total_positions: number;
-  total_quantity: number;
-  supplier_totals: SupplierTotal[];
-  unpriced_count: number;
-  items: BudgetItem[];
-}
+export type PriceListItem = Schemas['PriceListItem'];
+export type UpsertPriceRequest = Schemas['UpsertPriceRequest'];
+export type SupplierPrice = Schemas['SupplierPrice'];
+export type BudgetItem = Schemas['BudgetItem'];
+export type SupplierTotal = Schemas['SupplierTotal'];
+export type BudgetSummary = Schemas['BudgetSummary'];

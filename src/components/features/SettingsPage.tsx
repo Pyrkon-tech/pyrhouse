@@ -44,6 +44,8 @@ interface SettingRowState {
   revealedValue: string | null;
 }
 
+const fmtUpdatedAt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('pl-PL') : '—');
+
 const SettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,7 +171,7 @@ const SettingsPage: React.FC = () => {
               <Typography variant="caption" sx={{
                 color: "text.disabled"
               }}>
-                Ostatnia zmiana: {new Date(setting.updated_at).toLocaleString('pl-PL')}
+                Ostatnia zmiana: {fmtUpdatedAt(setting.updated_at)}
               </Typography>
             </CardContent>
           </Card>
@@ -285,7 +287,7 @@ const SettingsPage: React.FC = () => {
                           color: "text.secondary",
                           fontSize: "0.75rem"
                         }}>
-                        {new Date(setting.updated_at).toLocaleString('pl-PL')}
+                        {fmtUpdatedAt(setting.updated_at)}
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ minWidth: 280 }}>

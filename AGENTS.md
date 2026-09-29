@@ -20,8 +20,8 @@ Jesteś ekspertem React/TypeScript dla projektu PyrHouse. Tworzysz komponenty zg
 
 ZASADY:
 1. Zawsze używaj TypeScript z explicit interfaces dla props
-2. Stylowanie przez useStyles hook lub designTokens - NIGDY hardkodowane wartości
-3. Używaj komponentów UI z src/components/ui/ (Button, Card, Container)
+2. Stylowanie przez `sx` + designTokens / theme - NIGDY hardkodowane wartości
+3. Używaj komponentów UI z src/components/ui/ (Button, DataTable, PageHeader, ConfirmDialog, StatusChip, EmptyState)
 4. Lazy loading dla stron (React.lazy + Suspense)
 5. Error handling przez ErrorBoundary
 6. Formularze z react-hook-form
@@ -30,7 +30,6 @@ STRUKTURA KOMPONENTU:
 ```tsx
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import useStyles from '../../hooks/useStyles';
 import { designTokens } from '../../theme/designTokens';
 
 interface MyComponentProps {
@@ -38,10 +37,8 @@ interface MyComponentProps {
 }
 
 const MyComponent: React.FC<MyComponentProps> = ({ props }) => {
-  const { commonStyles } = useStyles();
-
   return (
-    <Box sx={commonStyles.container}>
+    <Box sx={{ p: 2, borderRadius: designTokens.borderRadius.xl }}>
       {/* content */}
     </Box>
   );
@@ -51,7 +48,6 @@ export default MyComponent;
 ```
 
 PLIKI DO SPRAWDZENIA:
-- src/hooks/useStyles.ts - dostępne style
 - src/theme/designTokens.ts - tokeny designu
 - src/components/ui/ - reużywalne komponenty
 ```
@@ -178,10 +174,9 @@ PLIKI:
 Jesteś ekspertem design systemu dla projektu PyrHouse.
 
 HIERARCHIA STYLOWANIA:
-1. useStyles hook (commonStyles) - preferowane
-2. designTokens bezpośrednio
-3. sx prop dla MUI
-4. styled-components dla złożonych przypadków
+1. overrides w src/theme/theme.ts (wspólny wygląd komponentów MUI)
+2. sx prop z designTokens / kolorami z palety (`primary.main`, `text.secondary`)
+3. styled() dla złożonych przypadków
 
 NIGDY:
 - Hardkodowane wartości kolorów (#fff, rgb())
@@ -197,17 +192,8 @@ designTokens.shadows.md             // shadow
 designTokens.typography.fontSize.lg // 1.125rem
 ```
 
-COMMON STYLES (useStyles):
-- commonStyles.container
-- commonStyles.card
-- commonStyles.button
-- commonStyles.formControl
-- commonStyles.questCard
-- commonStyles.transferForm
-
 PLIKI:
 - src/theme/designTokens.ts - wszystkie tokeny
-- src/hooks/useStyles.ts - common styles
 - src/theme/theme.ts - konfiguracja MUI
 ```
 
@@ -383,7 +369,7 @@ KONWENCJE NAZEWNICTWA:
 
 INTEGRACJA Z ISTNIEJĄCYM KODEM:
 - Użyj istniejących komponentów UI
-- Rozszerz commonStyles jeśli potrzeba
+- Wspólny wygląd zmieniaj w theme.ts, nie lokalnie
 - Dodaj do nawigacji jeśli showInNav: true
 - Obsłuż loading/error states
 ```
