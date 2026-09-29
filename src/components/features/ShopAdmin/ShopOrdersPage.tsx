@@ -31,6 +31,7 @@ import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { DataTable, DataTableEmptyRow, DataTableLoadingRow } from '../../ui';
 import { useNotification } from '../../../context/NotificationContext';
 import { useLocations } from '../../../hooks/useLocations';
+import { notifyShopOrdersChanged } from '../../../hooks/useShopPendingCount';
 import {
   confirmShopOrderAPI,
   getShopOrderAPI,
@@ -152,6 +153,7 @@ const ShopOrdersPage: React.FC = () => {
     setBusy(true);
     try {
       await fn(detail);
+      notifyShopOrdersChanged();
       showSuccess(success);
       await Promise.all([fetchOrders(), fetchDetail(detail.id)]);
       return true;

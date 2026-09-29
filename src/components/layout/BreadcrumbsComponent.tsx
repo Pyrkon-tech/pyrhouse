@@ -21,7 +21,14 @@ const defaultTranslations: { [key: string]: string } = {
   users: 'Użytkownicy',
   list: 'Magazyn',
   'add-item': 'Nowy sprzęt',
-  reservations: 'Rezerwacje PYR'
+  reservations: 'Rezerwacje PYR',
+  settings: 'Ustawienia',
+  // Organizer shop panel (/shop-admin/*)
+  'shop-admin': 'Sklep',
+  orders: 'Zamówienia',
+  summary: 'Podsumowanie',
+  products: 'Produkty',
+  access: 'Dostępy',
 };
 
 const BreadcrumbsComponent: React.FC<BreadcrumbsComponentProps> = ({ pathnames, translations = {} }) => {

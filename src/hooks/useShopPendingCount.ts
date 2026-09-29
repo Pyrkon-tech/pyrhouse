@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { getShopOrdersAPI } from '../services/shopAdminService';
 
 const REFRESH_MS = 60_000;
+const CHANGED_EVENT = 'shop_orders_changed';
+
+/** Call after confirming or rejecting an order so the menu badge updates right away. */
+export const notifyShopOrdersChanged = () => window.dispatchEvent(new Event(CHANGED_EVENT));
 
 /**
  * Number of shop orders waiting for a warehouse decision — the "Sklep" menu badge (D26: no
@@ -26,9 +30,11 @@ export const useShopPendingCount = (enabled: boolean): number => {
     };
     load();
     const id = setInterval(load, REFRESH_MS);
+    window.addEventListener(CHANGED_EVENT, load);
     return () => {
       cancelled = true;
       clearInterval(id);
+      window.removeEventListener(CHANGED_EVENT, load);
     };
   }, [enabled]);
 
