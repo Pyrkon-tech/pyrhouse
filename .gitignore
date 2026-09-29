@@ -28,3 +28,6 @@ dist-ssr
 
 # Organizer shop build
 dist-shop
+
+# api:check scratch output
+packages/api/.openapi.check.d.ts
