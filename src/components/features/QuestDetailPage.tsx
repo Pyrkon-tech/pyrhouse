@@ -741,7 +741,10 @@ const QuestDetailPage: React.FC = () => {
         <Typography variant="caption" sx={{
           color: "text.secondary"
         }}>
-          Źródło: {quest.source === 'shop' ? 'Sklep' : 'Arkusz Google'}
+          Źródło:{' '}
+          {quest.source === 'shop' && quest.shop_order_id && (userRole === 'admin' || userRole === 'moderator') ? (
+            <RouterLink to={`/shop-admin/orders?order=${quest.shop_order_id}`}>zamówienie ze sklepu</RouterLink>
+          ) : quest.source === 'shop' ? 'Sklep' : 'Arkusz Google'}
         </Typography>
       </Box>
       {/* Status change confirmation dialog */}

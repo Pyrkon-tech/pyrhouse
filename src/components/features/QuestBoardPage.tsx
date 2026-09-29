@@ -44,6 +44,17 @@ const LIMIT = 100;
 
 const STATUS_ORDER: Record<string, number> = { in_progress: 0, pending: 1, completed: 2, cancelled: 3 };
 
+// Where the quest came from: the organizer shop, or the old Google Sheets form (history)
+const getSourceChip = (quest: Quest) => (
+  <Chip
+    label={quest.source === 'shop' ? 'Sklep' : 'Arkusz'}
+    size="small"
+    variant="outlined"
+    color={quest.source === 'shop' ? 'primary' : 'default'}
+    sx={{ height: 20 }}
+  />
+);
+
 const questHasUnknownQty = (quest: Quest) => quest.items.some((i) => i.quantity == null);
 
 const getStatusChip = (status: QuestStatus) => {
@@ -332,7 +343,12 @@ const QuestBoardPage: React.FC = () => {
                   <Chip label="⚠ bez ilości" size="small" color="warning" variant="outlined" sx={{ mt: 0.5, height: 20 }} />
                 )}
               </TableCell>
-              <TableCell>{getStatusChip(quest.status)}</TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
+                  {getStatusChip(quest.status)}
+                  {getSourceChip(quest)}
+                </Box>
+              </TableCell>
               <TableCell align="center">
                 <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                   {quest.transfers.map(t => (
@@ -403,7 +419,10 @@ const QuestBoardPage: React.FC = () => {
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   {quest.destination.pavilion} — {quest.destination.location}
                 </Typography>
-                {getStatusChip(quest.status)}
+                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                  {getSourceChip(quest)}
+                  {getStatusChip(quest.status)}
+                </Box>
               </Box>
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>

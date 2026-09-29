@@ -34,6 +34,7 @@ const Outbox = lazy(() => import('@mui/icons-material/Outbox'));
 const AddBusiness = lazy(() => import('@mui/icons-material/AddBusiness'));
 const ShoppingBasket = lazy(() => import('@mui/icons-material/ShoppingBasket'));
 const CalculateIcon = lazy(() => import('@mui/icons-material/Calculate'));
+const Storefront = lazy(() => import('@mui/icons-material/Storefront'));
 
 export const Icons = {
   Home,
@@ -69,6 +70,7 @@ export const Icons = {
   AddBusiness,
   ShoppingBasket,
   Calculate: CalculateIcon,
+  Storefront,
 };
 
 export interface NavMenuItem {
@@ -83,6 +85,10 @@ export interface AdminMenuItem {
   label: string;
   icon: React.ReactNode;
   allowedRoles: string[];
+  /** Highlight the item for every path under this prefix (sections with tabs) */
+  activePrefix?: string;
+  /** Count shown next to the label (queues to handle) */
+  badge?: number;
 }
 
 export const NAV_MENU_ITEMS: NavMenuItem[] = [
@@ -119,6 +125,8 @@ export const NAV_MENU_ITEMS: NavMenuItem[] = [
 ];
 
 const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
+  // Menu variant B (docs/shop/PLAN.md, D28): one entry, subpages as tabs
+  { path: '/shop-admin/orders', label: 'Sklep', icon: <Icons.Storefront />, allowedRoles: ['admin', 'moderator'], activePrefix: '/shop-admin' },
   { path: '/duty-schedule', label: 'Grafik', icon: <Icons.Event />, allowedRoles: ['admin', 'moderator'] },
   { path: '/categories', label: 'Kategorie', icon: <Icons.Category />, allowedRoles: ['admin', 'moderator', 'dispatcher'] },
   { path: '/origins', label: 'Pochodzenie', icon: <Icons.Source />, allowedRoles: ['admin', 'moderator', 'dispatcher'] },

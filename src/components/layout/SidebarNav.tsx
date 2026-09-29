@@ -6,6 +6,8 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import Badge from '@mui/material/Badge';
+import Chip from '@mui/material/Chip';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
@@ -164,37 +166,52 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
             </Typography>
           )}
           <List sx={{ pb: 1 }}>
-            {adminItems.map((item) => (
-              <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-                <Tooltip title={!showFullNav ? item.label : ''} placement="right" arrow>
-                  <ListItemButton
-                    component={RouterLink}
-                    to={item.path}
-                    onClick={() => onItemClick(item.path)}
-                    sx={navItemSx(activeItem === item.path)}
-                  >
-                    <ListItemIcon sx={navIconSx(activeItem === item.path)}>
-                      <LazyIcon>{item.icon}</LazyIcon>
-                    </ListItemIcon>
-                    {showFullNav && (
-                      <ListItemText
-                        primary={item.label}
-                        slotProps={{
-                          primary: {
-                            noWrap: true,
-                            sx: {
-                              fontWeight: activeItem === item.path ? 600 : 400,
-                              fontSize: '0.875rem',
-                              letterSpacing: '0.01em',
-                            },
-                          }
-                        }}
-                      />
-                    )}
-                  </ListItemButton>
-                </Tooltip>
-              </ListItem>
-            ))}
+            {adminItems.map((item) => {
+              const isActive = item.activePrefix ? activeItem.startsWith(item.activePrefix) : activeItem === item.path;
+              const tooltip = item.badge ? `${item.label} (${item.badge})` : item.label;
+              return (
+                <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
+                  <Tooltip title={!showFullNav ? tooltip : ''} placement="right" arrow>
+                    <ListItemButton
+                      component={RouterLink}
+                      to={item.path}
+                      onClick={() => onItemClick(item.path)}
+                      sx={navItemSx(isActive)}
+                    >
+                      <ListItemIcon sx={navIconSx(isActive)}>
+                        <Badge color="primary" variant="dot" invisible={showFullNav || !item.badge}>
+                          <LazyIcon>{item.icon}</LazyIcon>
+                        </Badge>
+                      </ListItemIcon>
+                      {showFullNav && (
+                        <ListItemText
+                          primary={item.label}
+                          slotProps={{
+                            primary: {
+                              noWrap: true,
+                              sx: {
+                                fontWeight: isActive ? 600 : 400,
+                                fontSize: '0.875rem',
+                                letterSpacing: '0.01em',
+                              },
+                            }
+                          }}
+                        />
+                      )}
+                      {showFullNav && !!item.badge && (
+                        <Chip
+                          label={item.badge}
+                          size="small"
+                          color="primary"
+                          aria-label={`${item.badge} do obsłużenia`}
+                          sx={{ height: 20, fontWeight: 700, ml: 1 }}
+                        />
+                      )}
+                    </ListItemButton>
+                  </Tooltip>
+                </ListItem>
+              );
+            })}
           </List>
         </>
       )}

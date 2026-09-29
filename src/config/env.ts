@@ -77,6 +77,10 @@ export const env = {
   /** Klucz API Google Maps */
   GOOGLE_MAPS_API_KEY: getEnvVar('VITE_GOOGLE_MAPS_API_KEY', ''),
 
+  // === Organizer shop ===
+  /** Organizer shop URL (e.g. https://shop.pyrhouse.space) — "Otwórz sklep" link; optional */
+  SHOP_URL: import.meta.env.VITE_SHOP_URL ?? '',
+
   // === App ===
   /** Nazwa aplikacji */
   APP_NAME: getEnvVar('VITE_APP_NAME', 'PyrHouse'),

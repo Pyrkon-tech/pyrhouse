@@ -19,6 +19,7 @@ import { getAdminMenuItems } from './navigation';
 import SidebarNav from './SidebarNav';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
+import { useShopPendingCount } from '../../hooks/useShopPendingCount';
 
 const DRAWER_WIDTH = 220;
 const RAIL_WIDTH = 56;
@@ -136,7 +137,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  const adminMenuItems = getAdminMenuItems(userRole);
+  const shopPending = useShopPendingCount(userRole === 'admin' || userRole === 'moderator');
+  const adminMenuItems = getAdminMenuItems(userRole).map((item) =>
+    item.activePrefix === '/shop-admin' ? { ...item, badge: shopPending } : item,
+  );
   const showFullNav = open || isMobile;
 
   const virtualParents: Record<string, string[]> = {

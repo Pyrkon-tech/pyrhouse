@@ -89,6 +89,10 @@ src/
 ### Admin routes
 - `/users/*` - Zarządzanie użytkownikami
 - `/categories` - Zarządzanie kategoriami
+- `/shop-admin/{orders,summary,products,access,settings}` - Panel sklepu dla organizatorów (moderator+, ustawienia sklepu: admin).
+  Jedna pozycja „Sklep” w menu (licznik oczekujących, `useShopPendingCount`) + zakładki `ShopAdminTabs` (wariant B menu,
+  `docs/shop/PLAN.md` D28). Kod: `src/components/features/ShopAdmin/`, serwis `shopAdminService.ts`, typy `shop.types.ts`.
+  Daty okien i zwrotów liczone w strefie Europe/Warsaw (`shopFormat.ts`: `warsawToISO`, `fmtWindow`).
 
 ## Design System
 

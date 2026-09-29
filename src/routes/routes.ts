@@ -28,6 +28,11 @@ const ReleaseCreatePage = lazy(() => import('../components/features/Releases/Rel
 const ReleaseDetailPage = lazy(() => import('../components/features/Releases/ReleaseDetailPage'));
 const BudgetPage = lazy(() => import('../components/features/BudgetPage'));
 const ReservationsPage = lazy(() => import('../components/features/ReservationsPage'));
+const ShopOrdersPage = lazy(() => import('../components/features/ShopAdmin/ShopOrdersPage'));
+const ShopSummaryPage = lazy(() => import('../components/features/ShopAdmin/ShopSummaryPage'));
+const ShopProductsPage = lazy(() => import('../components/features/ShopAdmin/ShopProductsPage'));
+const ShopAccessPage = lazy(() => import('../components/features/ShopAdmin/ShopAccessPage'));
+const ShopSettingsPage = lazy(() => import('../components/features/ShopAdmin/ShopSettingsPage'));
 
 // Public routes (nie wymagają autoryzacji)
 export const publicRoutes: RouteConfig[] = [
@@ -200,6 +205,12 @@ export const protectedRoutes: RouteConfig[] = [
 
 // Admin routes (wymagają roli admin/moderator)
 export const adminRoutes: RouteConfig[] = [
+  // Organizer shop panel — tabs of one "Sklep" section (docs/shop/PLAN.md, D28)
+  { path: '/shop-admin/orders', component: ShopOrdersPage, title: 'Sklep — zamówienia', showInNav: false, requiredRoles: ['admin', 'moderator'] },
+  { path: '/shop-admin/summary', component: ShopSummaryPage, title: 'Sklep — podsumowanie', showInNav: false, requiredRoles: ['admin', 'moderator'] },
+  { path: '/shop-admin/products', component: ShopProductsPage, title: 'Sklep — produkty', showInNav: false, requiredRoles: ['admin', 'moderator'] },
+  { path: '/shop-admin/access', component: ShopAccessPage, title: 'Sklep — dostępy', showInNav: false, requiredRoles: ['admin', 'moderator'] },
+  { path: '/shop-admin/settings', component: ShopSettingsPage, title: 'Sklep — terminy i ustawienia', showInNav: false, requiredRoles: ['admin', 'moderator'] },
   {
     path: '/duty-schedule',
     component: ScheduleDetailPage,
