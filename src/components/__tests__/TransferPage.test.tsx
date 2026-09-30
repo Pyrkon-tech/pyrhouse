@@ -6,6 +6,7 @@ import { validatePyrCodeAPI, searchPyrCodesAPI } from '../../services/transferSe
 import { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import type { Asset } from '../../types/asset.types';
 vi.mock('../../services/userService', () => ({
   getUsersAPI: vi.fn().mockResolvedValue([]),
 }));
@@ -44,14 +45,14 @@ vi.mock('../../services/transferService', () => ({
   createTransferAPI: vi.fn(),
 }));
 
-const mockValidationOk = {
+const mockValidationOk: Asset = {
   id: 1,
   pyrcode: 'TEST123',
   serial: 'SN001',
-  category: { id: 1, label: 'Test Category' },
-  location: { id: 1, name: 'Location 1', lat: 0, lng: 0, pavilion: null },
-  status: 'available' as const,
-  is_valid: true,
+  category: { id: 1, label: 'Test Category', name: 'test category', pyr_id: 'TST', type: 'asset' },
+  location: { id: 1, name: 'Location 1', pavilion: null, details: null },
+  status: 'available',
+  origin: 'pyrkon',
 };
 
 const mockSearchResponse = [

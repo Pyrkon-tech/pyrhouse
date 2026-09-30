@@ -31,7 +31,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLocations } from '../../hooks/useLocations';
 import { useDialogState } from '../../hooks/useDialogState';
 import { deleteLocation, updateLocation, createLocation } from '../../services/locationService';
-import { Location } from '../../types/location.types';
+import type { Location, UpdateLocationPayload } from '../../types/location.types';
 import { useAuth } from '../../hooks/useAuth';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
@@ -104,20 +104,21 @@ const LocationsPage: React.FC = () => {
     try {
       setDialogError(null);
       if (dialogs.editItem) {
-        const updateData: Partial<Location> = {};
+        // Empty string clears pavilion/details on the backend
+        const updateData: UpdateLocationPayload = {};
 
         if (formData.name !== dialogs.editItem.name) {
           updateData.name = formData.name;
         }
 
-        const currentDetails = formData.details.trim() || null;
-        const originalDetails = dialogs.editItem.details || null;
+        const currentDetails = formData.details.trim();
+        const originalDetails = dialogs.editItem.details ?? '';
         if (currentDetails !== originalDetails) {
           updateData.details = currentDetails;
         }
 
-        const currentPavilion = formData.pavilion || null;
-        const originalPavilion = dialogs.editItem.pavilion || null;
+        const currentPavilion = formData.pavilion;
+        const originalPavilion = dialogs.editItem.pavilion ?? '';
         if (currentPavilion !== originalPavilion) {
           updateData.pavilion = currentPavilion;
         }
@@ -129,8 +130,6 @@ const LocationsPage: React.FC = () => {
         await createLocation({
           name: formData.name,
           details: formData.details.trim() || null,
-          lat: 0,
-          lng: 0,
           pavilion: formData.pavilion || null,
         });
       }

@@ -35,35 +35,15 @@ export interface GlobalSearchResult {
 export const searchGlobalAPI = (query: string) =>
   apiClient.get<GlobalSearchResult>(`/search?q=${encodeURIComponent(query)}`);
 import type {
-  Asset,
-  AssetValidation,
-  CreateAssetPayload,
   BulkAddAssetPayload,
   BulkAddAssetItem,
-  BulkAddAssetsResponse,
+  CreatedAssets,
   AddAssetWithoutSerialPayload,
 } from '../types/asset.types';
 
 // ============================================================================
 // Asset CRUD
 // ============================================================================
-
-/**
- * Pobiera listę wszystkich zasobów
- */
-export const getAssetsAPI = () => apiClient.get<Asset[]>('/assets');
-
-/**
- * Pobiera zasób po kodzie PYR
- */
-export const fetchAssetByPyrCode = (pyrCode: string) =>
-  apiClient.get<AssetValidation>(`/assets/pyrcode/${pyrCode}`);
-
-/**
- * Tworzy nowy zasób
- */
-export const createAssetAPI = (payload: CreateAssetPayload) =>
-  apiClient.post<Asset>('/assets', payload);
 
 /**
  * Usuwa zasób
@@ -86,27 +66,14 @@ export const bulkAddAssetsAPI = (assets: BulkAddAssetItem[]) => {
     origin: assets[0].origin,
   };
 
-  return apiClient.post<BulkAddAssetsResponse>('/assets/bulk', payload);
+  return apiClient.post<CreatedAssets>('/assets/bulk', payload);
 };
-
-/**
- * Masowe dodawanie zasobów (bezpośredni format API)
- */
-export const createBulkAssetsAPI = (payload: BulkAddAssetPayload) =>
-  apiClient.post<BulkAddAssetsResponse>('/assets/bulk', payload);
-
-/**
- * Odpowiedź z API dla dodawania zasobów bez numeru seryjnego
- */
-interface AddAssetsWithoutSerialResponse {
-  created: Asset[];
-}
 
 /**
  * Dodawanie zasobów bez numeru seryjnego
  */
 export const addAssetsWithoutSerialAPI = (payload: AddAssetWithoutSerialPayload) =>
-  apiClient.post<AddAssetsWithoutSerialResponse>('/assets/without-serial', payload);
+  apiClient.post<CreatedAssets>('/assets/without-serial', payload);
 
 // ============================================================================
 // Reservations

@@ -1,18 +1,23 @@
 /**
- * Typy związane z lokalizacjami
+ * Location shapes are aliases of the generated API contract (@pyrhouse/api, from backend/docs/openapi.yaml).
+ * Map positions below are client-side only.
  */
+import type { paths, Schemas } from '@pyrhouse/api';
 
-/**
- * Podstawowy interfejs lokalizacji
- */
-export interface Location {
-  id: number;
-  name: string;
-  lat: number;
-  lng: number;
-  pavilion: string | null;
-  details?: string | null;
-}
+export type Location = Schemas['Location'];
+/** Assets and stock stored in a location (GET /locations/{id}/assets) */
+export type LocationEquipment = Schemas['LocationEquipment'];
+export type LocationAsset = Schemas['Item'];
+export type LocationStockItem = Schemas['Stock'];
+/** A location together with its equipment, as shown on the location details page */
+export type LocationDetails = Location & LocationEquipment;
+
+export type CreateLocationPayload =
+  paths['/locations']['post']['requestBody']['content']['application/json'];
+/** An empty pavilion or details clears the field */
+export type UpdateLocationPayload = NonNullable<
+  paths['/locations/{locationID}']['patch']['requestBody']
+>['content']['application/json'];
 
 /**
  * Pozycja na mapie (współrzędne GPS)
@@ -28,45 +33,3 @@ export interface MapPosition {
 export interface DeliveryLocation extends MapPosition {
   timestamp: string;
 }
-
-/**
- * Szczegóły lokalizacji z powiązanymi zasobami
- */
-export interface LocationDetails extends Location {
-  assets: LocationAsset[];
-  stock_items: LocationStockItem[];
-}
-
-/**
- * Asset przypisany do lokalizacji
- */
-export interface LocationAsset {
-  id: number;
-  pyrcode: string;
-  serial: string;
-  category: {
-    id: number;
-    label: string;
-  };
-  status: 'available' | 'unavailable' | 'in_transit';
-}
-
-/**
- * Pozycja magazynowa w lokalizacji
- */
-export interface LocationStockItem {
-  id: number;
-  category_id: number;
-  category_label: string;
-  quantity: number;
-}
-
-/**
- * Payload do tworzenia lokalizacji
- */
-export type CreateLocationPayload = Omit<Location, 'id'>;
-
-/**
- * Payload do aktualizacji lokalizacji
- */
-export type UpdateLocationPayload = Partial<Omit<Location, 'id'>>;

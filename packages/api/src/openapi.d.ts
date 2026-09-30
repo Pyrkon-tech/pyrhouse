@@ -223,6 +223,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/assets/without-serial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create assets without serial numbers
+         * @description Creates `quantity` assets of an asset-type category that have no serial number yet.
+         */
+        post: operations["createAssetsWithoutSerial"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/assets/{assetID}": {
         parameters: {
             query?: never;
@@ -270,11 +290,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List locations
+         * @description Returns all locations ordered by ID. Public (no authentication).
+         */
+        get: operations["listLocations"];
         put?: never;
         /**
          * Create a new location
-         * @description Creates a new storage location.
+         * @description Creates a new storage location. Requires moderator.
          */
         post: operations["createLocation"];
         delete?: never;
@@ -310,7 +334,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get a location */
+        get: operations["getLocation"];
         put?: never;
         post?: never;
         /**
@@ -320,7 +345,11 @@ export interface paths {
         delete: operations["deleteLocation"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update a location
+         * @description Updates the given fields; at least one is required. An empty pavilion or details clears it. Requires moderator.
+         */
+        patch: operations["updateLocation"];
         trace?: never;
     };
     "/locations/{locationID}/search": {
@@ -4116,15 +4145,17 @@ export interface components {
             /** @example Schedule - Google Sheets document ID */
             description: string;
             /** Format: date-time */
-            updated_at: string;
+            updated_at: string | null;
         };
+        /** @description Settings list row — value is null unless the list was requested with ?prefix= */
         AppSettingSummary: {
             /** @example scheduling.sheet_id */
             key: string;
+            value: string | null;
             /** @example Schedule - Google Sheets document ID */
             description: string;
             /** Format: date-time */
-            updated_at: string;
+            updated_at: string | null;
         };
         Origin: {
             id: number;
@@ -4195,12 +4226,17 @@ export interface components {
             /** @example 321 */
             id: number;
             /** @example XYZ321 */
-            serial: string;
+            serial: string | null;
             /**
              * @description Auto-generated barcode identifier
              * @example PYR-LT100
              */
             pyrcode: string;
+            /** @example available */
+            status: string;
+            /** @example pyrkon */
+            origin: string;
+            /** @description Zero-valued in location listings (GET /locations/{id}/assets), where the location is implied */
             location: components["schemas"]["Location"];
             category: components["schemas"]["ItemCategory"];
         };
@@ -4214,7 +4250,20 @@ export interface components {
         Stock: {
             id: number;
             category: components["schemas"]["ItemCategory"];
+            /** @description Zero-valued in location listings (GET /locations/{id}/assets), where the location is implied */
+            location: components["schemas"]["Location"];
             quantity: number;
+            origin: string;
+            status: string;
+        };
+        CreatedAssets: {
+            created: components["schemas"]["Item"][];
+            /** @description Per-asset failures, when some were not created */
+            errors?: string[];
+        };
+        LocationEquipment: {
+            assets: components["schemas"]["Item"][];
+            stock_items: components["schemas"]["Stock"][];
         };
         ItemCategory: {
             id: number;
@@ -4233,12 +4282,20 @@ export interface components {
              * @example Laptop
              */
             label: string;
+            /**
+             * @description PYR code prefix for this category
+             * @example LAP
+             */
+            pyr_id: string;
         };
         Location: {
             /** @example 3 */
             id: number;
             /** @example Gzdaczroom */
             name: string;
+            /** @example 5 */
+            pavilion: string | null;
+            details: string | null;
         };
         Transfer: {
             /** Format: int64 */
@@ -5084,17 +5141,59 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Assets created (may include partial errors) */
+            /** @description All assets created */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["CreatedAssets"];
+                };
+            };
+            /** @description Invalid request payload or category type, or some serials failed — then nothing is created and `errors` lists the failures */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": {
-                        created: components["schemas"]["Item"][];
-                        /** @description Errors for individual assets that failed creation */
-                        errors: string[];
+                        error: string;
+                        details?: string;
+                        errors?: string[];
                     };
+                };
+            };
+        };
+    };
+    createAssetsWithoutSerial: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    quantity: number;
+                    /** @description Location ID (defaults to 1) */
+                    location_id?: number;
+                    /** @description Asset status (defaults to "available") */
+                    status?: string;
+                    category_id: number;
+                    /** @description Origin string — validated against the origins table. Use GET /origins to list available values. */
+                    origin: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Assets created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedAssets"];
                 };
             };
             /** @description Invalid request payload or category type */
@@ -5106,6 +5205,7 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            500: components["responses"]["DefaultError"];
         };
     };
     deleteAsset: {
@@ -5180,6 +5280,27 @@ export interface operations {
             500: components["responses"]["DefaultError"];
         };
     };
+    listLocations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Locations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Location"][];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
     createLocation: {
         parameters: {
             query?: never;
@@ -5191,12 +5312,14 @@ export interface operations {
             content: {
                 "application/json": {
                     name: string;
+                    pavilion?: string | null;
+                    details?: string | null;
                 };
             };
         };
         responses: {
             /** @description Location created */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5238,10 +5361,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        assets: components["schemas"]["Item"][];
-                        stock_items: components["schemas"]["Stock"][];
-                    };
+                    "application/json": components["schemas"]["LocationEquipment"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    getLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location ID */
+                locationID: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Location */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Location"];
+                };
+            };
+            /** @description Location not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
             500: components["responses"]["DefaultError"];
@@ -5280,6 +5433,39 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    updateLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Location ID */
+                locationID: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    pavilion?: string;
+                    details?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Updated location */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Location"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
             500: components["responses"]["DefaultError"];
         };
     };

@@ -1,81 +1,15 @@
 /**
- * Typy związane z zasobami (assets/sprzętem)
+ * Asset shapes are aliases of the generated API contract (@pyrhouse/api, from backend/docs/openapi.yaml).
+ * Form payloads and reservations below are still hand-written.
  */
+import type { paths, Schemas } from '@pyrhouse/api';
 
-import { Location } from './location.types';
+/** A serialized asset (GET /assets/pyrcode/{code}, created assets, location listings) */
+export type Asset = Schemas['Item'];
+export type CreatedAssets = Schemas['CreatedAssets'];
 
-/**
- * Status zasobu
- */
-export type AssetStatus = 'available' | 'unavailable' | 'in_transit';
-
-/**
- * Kategoria zasobu
- */
-export interface AssetCategory {
-  id: number;
-  label: string;
-  description?: string;
-}
-
-/**
- * Podstawowy interfejs zasobu
- */
-export interface Asset {
-  id: number;
-  pyrcode: string;
-  serial: string;
-  category: AssetCategory;
-  location: Location;
-  status: AssetStatus;
-  origin?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-/**
- * Walidacja kodu PYR
- */
-export interface AssetValidation {
-  id: number;
-  pyrcode: string;
-  serial: string;
-  category: AssetCategory;
-  location: Location;
-  status: AssetStatus;
-  is_valid: boolean;
-}
-
-/**
- * Pozycja magazynowa (stock)
- */
-export interface StockItem {
-  id: number;
-  category_id: number;
-  category_label: string;
-  location_id: number;
-  location_name: string;
-  quantity: number;
-}
-
-/**
- * Payload do tworzenia pojedynczego zasobu
- */
-export interface CreateAssetPayload {
-  serial: string;
-  category_id: number;
-  location_id: number;
-  origin?: string;
-}
-
-/**
- * Payload do masowego dodawania zasobów
- */
-export interface BulkAddAssetPayload {
-  serials: string[];
-  category_id: number;
-  origin: string;
-}
+export type BulkAddAssetPayload =
+  paths['/assets/bulk']['post']['requestBody']['content']['application/json'];
 
 /**
  * Pojedynczy element do bulk add (używany w formularzu)
@@ -86,25 +20,8 @@ export interface BulkAddAssetItem {
   origin: string;
 }
 
-/**
- * Payload do dodawania zasobów bez numeru seryjnego
- */
-export interface AddAssetWithoutSerialPayload {
-  quantity: number;
-  category_id: number;
-  origin: string;
-}
-
-/**
- * Odpowiedź z bulk add
- */
-export interface BulkAddAssetsResponse {
-  created: number;
-  errors?: {
-    serial: string;
-    error: string;
-  }[];
-}
+export type AddAssetWithoutSerialPayload =
+  paths['/assets/without-serial']['post']['requestBody']['content']['application/json'];
 
 // ============================================================================
 // Reservations
@@ -151,9 +68,4 @@ export interface DeleteReservationsPayload {
 
 export interface DeleteReservationsResponse {
   deleted: number;
-}
-
-export interface ClaimError {
-  pyr_code: string;
-  reason: string;
 }

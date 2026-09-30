@@ -13,7 +13,7 @@ import type {
   PyrCodeSuggestion,
 } from '../types/transfer.types';
 import type { MapPosition } from '../types/location.types';
-import type { AssetValidation } from '../types/asset.types';
+import type { Asset } from '../types/asset.types';
 
 // ============================================================================
 // Transfer CRUD
@@ -67,7 +67,7 @@ export const updateTransferUsersAPI = (transferId: number, userIds: number[]) =>
  * Waliduje kod PYR
  */
 export const validatePyrCodeAPI = (pyrCode: string) =>
-  apiClient.get<AssetValidation>(`/assets/pyrcode/${pyrCode}`);
+  apiClient.get<Asset>(`/assets/pyrcode/${pyrCode}`);
 
 /**
  * Wyszukuje kody PYR w lokalizacji

@@ -31,29 +31,11 @@ const BarcodeGenerator = lazy(() =>
 );
 
 import { OriginSelect } from '../ui/OriginSelect';
+import type { Asset } from '../../types/asset.types';
 
 interface AssetEntry {
   id: string;
   serial: string;
-}
-
-interface CreatedAsset {
-  id: number;
-  serial: string;
-  location: {
-    id: number;
-    name: string;
-    details: string | null;
-  };
-  category: {
-    id: number;
-    name: string;
-    label: string;
-    pyr_id: string;
-    type: string;
-  };
-  status: string;
-  pyrcode: string;
 }
 
 interface BulkAddAssetFormProps {
@@ -73,7 +55,7 @@ export const BulkAddAssetForm: React.FC<BulkAddAssetFormProps> = ({ categories }
   const [categoryId, setCategoryId] = useState<number>(0);
   const [origin, setOrigin] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdAssets, setCreatedAssets] = useState<CreatedAsset[]>([]);
+  const [createdAssets, setCreatedAssets] = useState<Asset[]>([]);
   const [showBarcodes, setShowBarcodes] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { snackbar, showSnackbar, closeSnackbar } = useSnackbarMessage();

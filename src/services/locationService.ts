@@ -10,8 +10,7 @@ import type {
   MapPosition,
   CreateLocationPayload,
   UpdateLocationPayload,
-  LocationAsset,
-  LocationStockItem,
+  LocationEquipment,
 } from '../types/location.types';
 
 // ============================================================================
@@ -25,15 +24,14 @@ export const getLocationDetails = async (locationId: number): Promise<LocationDe
   // Równoległe pobieranie danych lokalizacji i assetów
   const [locationData, assetsData] = await Promise.all([
     apiClient.get<Location>(`/locations/${locationId}`),
-    apiClient.get<{ assets: LocationAsset[]; stock_items: LocationStockItem[] }>(
-      `/locations/${locationId}/assets`
-    ),
+    apiClient.get<LocationEquipment>(`/locations/${locationId}/assets`),
   ]);
 
+  // Older backends sent null for an empty location
   return {
     ...locationData,
-    assets: assetsData.assets || [],
-    stock_items: assetsData.stock_items || [],
+    assets: assetsData.assets ?? [],
+    stock_items: assetsData.stock_items ?? [],
   };
 };
 
@@ -46,17 +44,8 @@ export const createLocation = (data: CreateLocationPayload) =>
 /**
  * Aktualizuje lokalizację
  */
-export const updateLocation = (id: number, data: UpdateLocationPayload) => {
-  // Filtruj tylko zdefiniowane pola
-  const updateData: UpdateLocationPayload = {};
-  if (data.name !== undefined) updateData.name = data.name;
-  if (data.details !== undefined) updateData.details = data.details;
-  if (data.pavilion !== undefined) updateData.pavilion = data.pavilion;
-  if (data.lat !== undefined) updateData.lat = data.lat;
-  if (data.lng !== undefined) updateData.lng = data.lng;
-
-  return apiClient.patch<Location>(`/locations/${id}`, updateData);
-};
+export const updateLocation = (id: number, data: UpdateLocationPayload) =>
+  apiClient.patch<Location>(`/locations/${id}`, data);
 
 /**
  * Usuwa lokalizację

@@ -7,29 +7,13 @@ import Grid from '@mui/material/Grid';
 import JsBarcode from 'jsbarcode';
 import { jsPDF } from 'jspdf';
 import { FormControlLabel, Radio, RadioGroup } from '@mui/material';
+import type { Asset } from '../../types/asset.types';
 
-interface Asset {
-  id: number;
-  serial: string;
-  location: {
-    id: number;
-    name: string;
-    details?: string | null;
-  };
-  category: {
-    id: number;
-    label: string;
-    name?: string;
-    pyr_id?: string;
-    type?: string;
-  };
-  status: string;
-  pyrcode: string;
-  origin?: string;
-}
+/** Labels only need the code; callers pass full assets or list rows */
+type LabelAsset = Pick<Asset, 'pyrcode'>;
 
 interface BarcodeGeneratorProps {
-  assets: Asset[];
+  assets: LabelAsset[];
   onClose?: () => void;
 }
 

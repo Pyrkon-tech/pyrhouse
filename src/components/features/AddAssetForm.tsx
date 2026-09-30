@@ -9,6 +9,7 @@ import {
   Dialog,
 } from '@mui/material';
 import QrCodeScanner from '@mui/icons-material/QrCodeScanner';
+import type { Asset } from '../../types/asset.types';
 import { apiClient, ApiError } from '../../services/apiClient';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
@@ -22,26 +23,6 @@ const BarcodeGenerator = lazy(() =>
 // Quagga (~kamera) load only when the scanner is actually opened
 const BarcodeScanner = lazy(() => import('../common/BarcodeScanner'));
 
-
-interface Asset {
-  id: number;
-  serial: string;
-  location: {
-    id: number;
-    name: string;
-    details: string | null;
-  };
-  category: {
-    id: number;
-    name: string;
-    label: string;
-    pyr_id: string;
-    type: string;
-  };
-  status: string;
-  pyrcode: string;
-  origin?: string;
-}
 
 export const AddAssetForm: React.FC<{
   categories: Array<{ id: number; label: string; type: 'asset' | 'stock' }>;
