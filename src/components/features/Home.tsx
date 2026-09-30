@@ -31,6 +31,8 @@ import { apiClient, ApiError } from '../../services/apiClient';
 import { jwtDecode } from 'jwt-decode';
 import { searchGlobalAPI } from '../../services/assetService';
 import type { GlobalSearchAsset, GlobalSearchStock } from '../../services/assetService';
+import { getUserTransfersAPI } from '../../services/transferService';
+import type { TransferSummary } from '../../types/transfer.types';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 const BarcodeScanner = lazy(() => import('../common/BarcodeScanner'));
@@ -43,15 +45,6 @@ type SearchItem =
   | (GlobalSearchAsset & { _type: 'asset' })
   | (GlobalSearchStock & { _type: 'stock' });
 
-interface UserTransfer {
-  ID?: number;
-  id?: number;
-  FromLocationName?: string;
-  from_location_name?: string;
-  ToLocationName?: string;
-  to_location_name?: string;
-  TransferDate?: string;
-}
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -83,7 +76,7 @@ const HomePage: React.FC = () => {
   const [pyrcode, setPyrcode] = useState('');
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [userTransfers, setUserTransfers] = useState<UserTransfer[]>([]);
+  const [userTransfers, setUserTransfers] = useState<TransferSummary[]>([]);
   const [userTransfersLoading, setUserTransfersLoading] = useState(false);
 
   const theme = useTheme();
@@ -107,7 +100,7 @@ const HomePage: React.FC = () => {
       try {
         const decoded = jwtDecode(token) as { userID: number };
         setUserTransfersLoading(true);
-        setUserTransfers(await apiClient.get(`/transfers/users/${decoded.userID}?status=in_transit`));
+        setUserTransfers(await getUserTransfersAPI(decoded.userID, 'in_transit'));
       } catch {
         // ignore
       } finally {
@@ -476,9 +469,9 @@ const HomePage: React.FC = () => {
                 </Box>
               ) : (
                 userTransfers.map((transfer) => {
-                  const id = transfer.ID ?? transfer.id;
-                  const from = transfer.FromLocationName ?? transfer.from_location_name ?? '—';
-                  const to = transfer.ToLocationName ?? transfer.to_location_name ?? '—';
+                  const { id } = transfer;
+                  const from = transfer.from_location.name || '—';
+                  const to = transfer.to_location.name || '—';
                   return (
                     <Box
                       key={id}

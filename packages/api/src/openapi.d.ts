@@ -380,14 +380,14 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List all transfers
-         * @description Returns a list of all transfers in the system.
+         * List transfers
+         * @description Returns transfers (without their items), optionally filtered.
          */
         get: operations["listTransfers"];
         put?: never;
         /**
          * Create a new transfer
-         * @description Creates a new transfer of assets and stock items between locations.
+         * @description Creates a new transfer of assets and stock items between locations. At least one of `assets` / `stocks` is required; source and destination must differ.
          */
         post: operations["createTransfer"];
         delete?: never;
@@ -451,7 +451,7 @@ export interface paths {
         head?: never;
         /**
          * Cancel a transfer
-         * @description Cancels a transfer and restores all assets and stock items to their original location.
+         * @description Cancels an in-transit transfer and restores all assets and stock items to their original location. 400 when the transfer is already completed or cancelled.
          */
         patch: operations["cancelTransfer"];
         trace?: never;
@@ -514,6 +514,46 @@ export interface paths {
          * @description Updates the GPS delivery location for an in-transit or completed transfer.
          */
         patch: operations["updateDeliveryLocation"];
+        trace?: never;
+    };
+    "/transfers/{transferID}/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace transfer users
+         * @description Sets the users carrying out the transfer (replaces the previous list).
+         */
+        put: operations["updateTransferUsers"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transfers/users/{userID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Transfers of a user
+         * @description Transfers the user is assigned to, in the given status. Own transfers, or any user's for moderator+.
+         */
+        get: operations["listUserTransfers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/items/categories": {
@@ -4297,22 +4337,40 @@ export interface components {
             pavilion: string | null;
             details: string | null;
         };
-        Transfer: {
-            /** Format: int64 */
+        Message: {
+            message: string;
+        };
+        /** @enum {string} */
+        TransferStatus: "in_transit" | "completed" | "cancelled";
+        /** @description A transfer without its items (list endpoints) */
+        TransferSummary: {
             id: number;
             from_location: components["schemas"]["Location"];
             to_location: components["schemas"]["Location"];
-            /** @description Serialized assets in the transfer */
-            assets_collection: components["schemas"]["Item"][];
-            /** @description Stock items in the transfer */
-            stock_items_collection: components["schemas"]["Stock"][];
             /** Format: date-time */
             transfer_date: string;
-            /**
-             * @description Transfer status
-             * @enum {string}
-             */
-            status: "in_transit" | "completed" | "cancelled";
+            status: components["schemas"]["TransferStatus"];
+        };
+        /** @description A user assigned to carry out a transfer */
+        TransferParticipant: {
+            id: number;
+            username: string;
+            fullname: string | null;
+        };
+        DeliveryLocation: {
+            lat: number;
+            lng: number;
+            /** Format: date-time */
+            timestamp: string;
+        };
+        Transfer: components["schemas"]["TransferSummary"] & {
+            /** @description Serialized assets in the transfer */
+            assets?: components["schemas"]["Item"][];
+            /** @description Stock items in the transfer (id is the transfer line, location the destination) */
+            stock_items?: components["schemas"]["Stock"][];
+            users?: components["schemas"]["TransferParticipant"][];
+            /** @description Last reported GPS position, null until one is reported */
+            delivery_location?: components["schemas"]["DeliveryLocation"] | null;
         };
         User: {
             /**
@@ -5507,7 +5565,11 @@ export interface operations {
     };
     listTransfers: {
         parameters: {
-            query?: never;
+            query?: {
+                from_location_id?: number;
+                to_location_id?: number;
+                status?: components["schemas"]["TransferStatus"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -5520,7 +5582,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Transfer"][];
+                    "application/json": components["schemas"]["TransferSummary"][];
                 };
             };
             500: components["responses"]["DefaultError"];
@@ -5546,26 +5608,22 @@ export interface operations {
                      * @example 2
                      */
                     location_id: number;
-                    /** @description Collection of serialized assets to transfer */
-                    asset_item_collection?: {
-                        /**
-                         * Format: int64
-                         * @description Asset ID
-                         */
+                    /** @description Serialized assets to transfer */
+                    assets?: {
+                        /** @description Asset ID */
                         id: number;
                     }[];
-                    /** @description Collection of stock items to transfer */
-                    stock_item_collection?: {
-                        /**
-                         * Format: int64
-                         * @description Stock item ID
-                         */
+                    /** @description Stock items to transfer */
+                    stocks?: {
+                        /** @description Stock item ID */
                         id: number;
-                        /**
-                         * Format: int32
-                         * @description Quantity to transfer
-                         */
+                        /** @description Quantity to transfer */
                         quantity: number;
+                    }[];
+                    /** @description Users carrying out the transfer */
+                    users?: {
+                        /** @description User ID */
+                        id: number;
                     }[];
                 };
             };
@@ -5635,6 +5693,15 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            /** @description Transfer not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             500: components["responses"]["DefaultError"];
         };
     };
@@ -5656,14 +5723,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @example 3 */
-                        transfer_id: number;
-                        /** @example completed */
-                        status: string;
-                        /** @example Transfer confirmed successfully */
-                        message: string;
-                    };
+                    "application/json": components["schemas"]["Message"];
                 };
             };
             /** @description Unable to confirm transfer */
@@ -5695,14 +5755,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @example 3 */
-                        transfer_id: number;
-                        /** @example cancelled */
-                        status: string;
-                        /** @example Transfer cancelled successfully */
-                        message: string;
-                    };
+                    "application/json": components["schemas"]["Message"];
                 };
             };
             /** @description Unable to cancel transfer */
@@ -5868,14 +5921,77 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @example Delivery location updated successfully */
-                        message: string;
-                    };
+                    "application/json": components["schemas"]["Message"];
                 };
             };
             /** @description Invalid request (only in-transit or completed transfers can be updated) */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    updateTransferUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transferID: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description User IDs */
+                    users: number[];
+                };
+            };
+        };
+        responses: {
+            /** @description Users updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    listUserTransfers: {
+        parameters: {
+            query: {
+                status: components["schemas"]["TransferStatus"];
+            };
+            header?: never;
+            path: {
+                userID: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Transfers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferSummary"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Another user's transfers without moderator role */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

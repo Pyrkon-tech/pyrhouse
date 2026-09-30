@@ -6,58 +6,71 @@
 
 import { apiClient } from './apiClient';
 import type {
-  FlatTransfer,
+  TransferSummary,
   TransferDetails,
   TransferStatus,
   CreateTransferPayload,
-  PyrCodeSuggestion,
 } from '../types/transfer.types';
-import type { MapPosition } from '../types/location.types';
 import type { Asset } from '../types/asset.types';
+
+type Message = { message?: string };
 
 // ============================================================================
 // Transfer CRUD
 // ============================================================================
 
-/**
- * Tworzy nowy transfer
- */
 export const createTransferAPI = (payload: CreateTransferPayload) =>
-  apiClient.post<FlatTransfer>('/transfers', payload);
+  apiClient.post<TransferDetails>('/transfers', payload);
 
-/**
- * Pobiera szczegóły transferu
- */
 export const getTransferDetailsAPI = (transferId: number) =>
   apiClient.get<TransferDetails>(`/transfers/${transferId}`);
 
 /**
- * Pobiera transfery użytkownika według statusu
+ * Before 2026-09-30 the backend sent the raw DB row with Go field names ({ID, FromLocationName, ...}).
+ * Accept both shapes so the page works during a deploy with either backend.
  */
-export const getUserTransfersAPI = (userId: number, status: TransferStatus) =>
-  apiClient.get<FlatTransfer[]>(`/transfers/user/${userId}/status/${status}`);
+type LegacyUserTransfer = {
+  ID: number;
+  FromLocationID: number;
+  FromLocationName: string;
+  ToLocationID: number;
+  ToLocationName: string;
+  TransferDate: string;
+  Status: TransferStatus;
+};
+
+export const normalizeUserTransfer = (t: TransferSummary | LegacyUserTransfer): TransferSummary =>
+  'ID' in t
+    ? {
+        id: t.ID,
+        from_location: { id: t.FromLocationID, name: t.FromLocationName, pavilion: null, details: null },
+        to_location: { id: t.ToLocationID, name: t.ToLocationName, pavilion: null, details: null },
+        transfer_date: t.TransferDate,
+        status: t.Status,
+      }
+    : t;
+
+/** Transfers the user is assigned to, in the given status */
+export const getUserTransfersAPI = async (userId: number, status: TransferStatus) => {
+  const rows = await apiClient.getList<TransferSummary | LegacyUserTransfer>(
+    `/transfers/users/${userId}?status=${status}`
+  );
+  return rows.map(normalizeUserTransfer);
+};
 
 // ============================================================================
 // Transfer Actions
 // ============================================================================
 
-/**
- * Potwierdza transfer
- */
-export const confirmTransferAPI = (id: number, payload: { status: string }) =>
-  apiClient.patch<FlatTransfer>(`/transfers/${id}/confirm`, payload);
+export const confirmTransferAPI = (id: number) =>
+  apiClient.patch<Message>(`/transfers/${id}/confirm`);
 
-/**
- * Anuluje transfer
- */
 export const cancelTransferAPI = (transferId: string | number) =>
-  apiClient.patch<void>(`/transfers/${transferId}/cancel`);
+  apiClient.patch<Message>(`/transfers/${transferId}/cancel`);
 
-/**
- * Aktualizuje listę użytkowników przypisanych do transferu
- */
+/** Replaces the users carrying out the transfer */
 export const updateTransferUsersAPI = (transferId: number, userIds: number[]) =>
-  apiClient.put<FlatTransfer>(`/transfers/${transferId}/users`, { users: userIds });
+  apiClient.put<Message>(`/transfers/${transferId}/users`, { users: userIds });
 
 // ============================================================================
 // Asset Operations
@@ -73,7 +86,7 @@ export const validatePyrCodeAPI = (pyrCode: string) =>
  * Wyszukuje kody PYR w lokalizacji
  */
 export const searchPyrCodesAPI = (query: string, locationId: number) =>
-  apiClient.get<PyrCodeSuggestion[]>(
+  apiClient.getList<Asset>(
     `/locations/${locationId}/search?q=${encodeURIComponent(query)}`
   );
 
@@ -102,43 +115,3 @@ export const restoreStockToLocationAPI = (
     location_id: locationId,
     ...(quantity !== undefined && { quantity }),
   });
-
-// ============================================================================
-// Location Tracking
-// ============================================================================
-
-interface UpdateLocationResponse {
-  id: number;
-  delivery_location: MapPosition & { timestamp: string };
-  status: string;
-  message: string;
-}
-
-/**
- * Aktualizuje lokalizację dostawy transferu
- * TODO: Zamienić mock na prawdziwe API gdy będzie gotowe
- */
-export const updateTransferLocationAPI = (
-  transferId: number,
-  location: MapPosition
-): Promise<UpdateLocationResponse> => {
-  // Mock - do zastąpienia prawdziwym API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: transferId,
-        delivery_location: {
-          ...location,
-          timestamp: new Date().toISOString(),
-        },
-        status: 'success',
-        message: 'Lokalizacja dostawy została zaktualizowana',
-      });
-    }, 500);
-  });
-
-  // Prawdziwe API (odkomentuj gdy gotowe):
-  // return apiClient.patch(`/transfers/${transferId}/delivery-location`, {
-  //   delivery_location: { ...location, timestamp: new Date().toISOString() },
-  // });
-};

@@ -15,24 +15,16 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { LocalShipping, LocationOn } from '@mui/icons-material';
 
-export interface UserTransfer {
-  ID: number;
-  FromLocationID: number;
-  FromLocationName: string;
-  ToLocationID: number;
-  ToLocationName: string;
-  TransferDate: string;
-  Status: 'in_transit' | 'completed' | 'cancelled';
-}
+import type { TransferStatus, TransferSummary } from '../../../types/transfer.types';
 
-const STATUS_LABELS: Record<UserTransfer['Status'], { label: string; color: 'warning' | 'success' | 'error' }> = {
+const STATUS_LABELS: Record<TransferStatus, { label: string; color: 'warning' | 'success' | 'error' }> = {
   in_transit: { label: 'Oczekujący', color: 'warning' },
   completed: { label: 'Potwierdzony', color: 'success' },
   cancelled: { label: 'Anulowany', color: 'error' },
 };
 
 const UserTransfersList: React.FC<{
-  transfers: UserTransfer[];
+  transfers: TransferSummary[];
   loading: boolean;
   emptyMessage: string;
   onNavigate: (id: number) => void;
@@ -59,16 +51,16 @@ const UserTransfersList: React.FC<{
       {transfers.map((transfer) => {
         let formattedDate: string;
         try {
-          formattedDate = format(new Date(transfer.TransferDate), 'PPpp', { locale: pl });
+          formattedDate = format(new Date(transfer.transfer_date), 'PPpp', { locale: pl });
         } catch {
-          formattedDate = transfer.TransferDate;
+          formattedDate = transfer.transfer_date;
         }
 
-        const status = STATUS_LABELS[transfer.Status];
+        const status = STATUS_LABELS[transfer.status];
 
         return (
           <ListItem
-            key={transfer.ID}
+            key={transfer.id}
             sx={{
               border: '1px solid',
               borderColor: 'divider',
@@ -79,7 +71,7 @@ const UserTransfersList: React.FC<{
             }}
           >
             <ListItemButton
-              onClick={() => onNavigate(transfer.ID)}
+              onClick={() => onNavigate(transfer.id)}
               sx={{
                 flexDirection: { xs: 'column', sm: 'row' },
                 alignItems: { xs: 'flex-start', sm: 'center' },
@@ -93,7 +85,7 @@ const UserTransfersList: React.FC<{
                 <ListItemText
                   primary={
                     <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                      Transfer #{transfer.ID}
+                      Transfer #{transfer.id}
                     </Typography>
                   }
                   sx={{ m: 0 }}
@@ -109,7 +101,7 @@ const UserTransfersList: React.FC<{
                     mb: 0.5
                   }}>
                   <LocationOn fontSize="small" color="action" />
-                  <Typography variant="body2">Z: {transfer.FromLocationName}</Typography>
+                  <Typography variant="body2">Z: {transfer.from_location.name}</Typography>
                 </Box>
                 <Box
                   sx={{
@@ -119,7 +111,7 @@ const UserTransfersList: React.FC<{
                     mb: 0.5
                   }}>
                   <LocationOn fontSize="small" color="action" />
-                  <Typography variant="body2">Do: {transfer.ToLocationName}</Typography>
+                  <Typography variant="body2">Do: {transfer.to_location.name}</Typography>
                 </Box>
                 <Typography
                   variant="caption"

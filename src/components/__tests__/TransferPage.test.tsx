@@ -55,23 +55,9 @@ const mockValidationOk: Asset = {
   origin: 'pyrkon',
 };
 
-const mockSearchResponse = [
-  {
-    id: 1,
-    pyrcode: 'TEST123',
-    serial: 'SN001',
-    location: { id: 1, name: 'Location 1' },
-    category: { id: 1, label: 'Test Category' },
-    status: 'available' as const
-  },
-  {
-    id: 2,
-    pyrcode: 'TEST456',
-    serial: 'SN002',
-    location: { id: 1, name: 'Location 1' },
-    category: { id: 1, label: 'Test Category' },
-    status: 'available' as const
-  },
+const mockSearchResponse: Asset[] = [
+  { ...mockValidationOk, id: 1, pyrcode: 'TEST123', serial: 'SN001' },
+  { ...mockValidationOk, id: 2, pyrcode: 'TEST456', serial: 'SN002' },
 ];
 
 const Wrapper = ({ children }: { children: ReactNode }) => {

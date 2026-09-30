@@ -1,25 +1,15 @@
 // Shared model for the transfer form (TransferFormCore + its subcomponents)
 
+import type { Asset } from '../../../../types/asset.types';
+
 export interface TransferFormUser {
   id: number;
   username: string;
   fullname: string | null;
 }
 
-export interface FormPyrCodeSuggestion {
-  id: number;
-  pyrcode: string;
-  serial: string;
-  location: {
-    id: number;
-    name: string;
-  };
-  category: {
-    id: number;
-    label: string;
-  };
-  status: 'available' | 'unavailable' | 'in_transit';
-}
+/** A PYR code search hit (GET /locations/{id}/search) */
+export type FormPyrCodeSuggestion = Asset;
 
 export type FormValidationStatus = 'success' | 'failure' | '';
 

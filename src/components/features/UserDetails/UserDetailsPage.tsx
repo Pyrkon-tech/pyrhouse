@@ -20,7 +20,9 @@ import { apiClient, ApiError } from '../../../services/apiClient';
 import { discordAuthService } from '../../../services/discordAuthService';
 import { googleAuthService } from '../../../services/googleAuthService';
 import type { UserDetails, UserListItem, JwtPayload } from '../../../types/user.types';
-import UserTransfersList, { UserTransfer } from './UserTransfersList';
+import UserTransfersList from './UserTransfersList';
+import { getUserTransfersAPI } from '../../../services/transferService';
+import type { TransferSummary } from '../../../types/transfer.types';
 import ProfileCard from './ProfileCard';
 import UserInfoCard from './UserInfoCard';
 import { PasswordDialog, PointsDialog, MergeDiscordDialog } from './dialogs';
@@ -42,7 +44,7 @@ const UserDetailsPage: React.FC = () => {
   const [passwordData, setPasswordData] = useState({ newPassword: '', confirmPassword: '' });
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [transfers, setTransfers] = useState<UserTransfer[]>([]);
+  const [transfers, setTransfers] = useState<TransferSummary[]>([]);
   const [transfersLoading, setTransfersLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [isPointsDialogOpen, setIsPointsDialogOpen] = useState(false);
@@ -97,8 +99,7 @@ const UserDetailsPage: React.FC = () => {
       setTransfersLoading(true);
       try {
         const status = tabValue === 0 ? 'in_transit' : 'completed';
-        const data = await apiClient.get<UserTransfer[]>(`/transfers/users/${id}?status=${status}`);
-        setTransfers(data);
+        setTransfers(await getUserTransfersAPI(Number(id), status));
       } catch (err) {
         if (err instanceof ApiError && (err.status === 400 || err.status === 401)) {
           showSnackbar('error', 'Nie udało się pobrać transferów. Spróbuj odświeżyć stronę.');

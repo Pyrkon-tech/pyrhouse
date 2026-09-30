@@ -113,13 +113,9 @@ const TransferDetailsPage: React.FC = () => {
   useEffect(() => {
     if (!transfer) return;
     switch (transfer.status) {
-      case 'created':
-        setCurrentStep(0);
-        break;
       case 'in_transit':
         setCurrentStep(1);
         break;
-      case 'delivered':
       case 'completed':
       case 'cancelled':
         setCurrentStep(2);
@@ -133,7 +129,7 @@ const TransferDetailsPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      await confirmTransferAPI(numericId, { status: 'completed' });
+      await confirmTransferAPI(numericId);
       const updatedTransfer = await getTransferDetailsAPI(numericId);
       setTransfer(updatedTransfer);
     } catch (err) {
