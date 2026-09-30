@@ -1,40 +1,16 @@
-export type ServiceDeskStatus = 'new' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
-export type ServiceDeskPriority = 'high' | 'medium' | 'low';
-export type ServiceDeskType = 'hardware_issue' | 'replacement' | 'technical_problem' | 'other';
+/**
+ * Service desk shapes are aliases of the generated API contract (@pyrhouse/api, from backend/docs/openapi.yaml).
+ */
+import type { Schemas } from '@pyrhouse/api';
 
-export interface ServiceDeskRequest {
-  id: number;
-  title: string;
-  description: string;
-  type: ServiceDeskType;
-  priority: ServiceDeskPriority;
-  status: ServiceDeskStatus;
-  location?: string;
-  location_id?: number;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-  assigned_to_user?: {
-    id: number;
-    username: string;
-    fullname?: string | null;
-  } | null;
-  created_by_user?: {
-    id?: number;
-    username?: string;
-    fullname?: string | null;
-  } | null;
-}
-
+export type ServiceDeskStatus = Schemas['ServiceDeskStatus'];
+export type ServiceDeskPriority = Schemas['ServiceDeskPriority'];
+export type ServiceDeskType = Schemas['ServiceDeskType'];
+export type ServiceDeskRequest = Schemas['ServiceDeskRequest'];
+export type ServiceDeskComment = Schemas['ServiceDeskComment'];
 /** Request type metadata returned by GET /service-desk/request-types */
-export interface ServiceDeskRequestTypeInfo {
-  id: string;
-  name: string;
-}
+export type ServiceDeskRequestTypeInfo = Schemas['ServiceDeskRequestType'];
+export type CreateServiceDeskRequestPayload = Schemas['CreateServiceDeskRequest'];
 
-/** Minimal user shape the service desk UI needs (assignment dropdowns etc.) */
-export interface ServiceDeskUserSummary {
-  id: number;
-  username: string;
-  fullname?: string | null;
-}
+/** User shape the service desk shows (assignee, author, assignment dropdowns) */
+export type ServiceDeskUserSummary = Schemas['ServiceDeskUser'];

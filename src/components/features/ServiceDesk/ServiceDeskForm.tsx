@@ -7,6 +7,19 @@ import { useLocations } from '../../../hooks/useLocations';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import { StyledPaper, StyledTextField, StyledSelect, StyledButton, StyledFormControl } from './ServiceDeskForm.styles';
 import type { Location } from '../../../types/location.types';
+import type {
+  CreateServiceDeskRequestPayload,
+  ServiceDeskPriority,
+  ServiceDeskType,
+} from '../../../types/servicedesk.types';
+
+interface FormState {
+  title: string;
+  description: string;
+  type: ServiceDeskType | '';
+  priority: ServiceDeskPriority | '';
+  created_by: string;
+}
 
 const REQUEST_TYPES = [
   { id: 'hardware_issue', name: 'Awaria sprzętu' },
@@ -40,7 +53,7 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
 }) => {
   const { send } = useSendPublicServiceDeskRequest();
   const { locations, refetch: fetchLocations } = useLocations();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     title: '',
     description: '',
     type: '',
@@ -59,7 +72,8 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<unknown>) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value as string }));
+    // Select values come from the fixed option lists, so they are valid type/priority values
+    setForm(f => ({ ...f, [name]: value as string }) as FormState);
   };
 
   const isLocationValid = locationId !== null || locationInput.trim().length > 1;
@@ -134,15 +148,17 @@ const ServiceDeskForm: React.FC<ServiceDeskFormProps> = ({
             setError(null);
             setSuccess(false);
             try {
+              const { type, priority } = form;
+              if (!type) return; // submit is disabled until a type is picked
               const base = {
                 title: form.title,
                 description: form.description.trim() ? form.description : 'brak opisu',
-                type: form.type,
+                type,
                 ...buildLocationPayload(),
               };
-              const data = hidePriority
+              const data: CreateServiceDeskRequestPayload = hidePriority
                 ? { ...base, priority: 'high', created_by: form.created_by.trim() }
-                : { ...base, priority: form.priority };
+                : { ...base, ...(priority ? { priority } : {}) };
               await send(data);
               setSuccess(true);
               setForm({ title: '', description: '', type: '', priority: hidePriority ? 'high' : '', created_by: '' });

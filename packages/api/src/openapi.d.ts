@@ -1304,6 +1304,140 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/service-desk/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List requests */
+        get: operations["listServiceDeskRequests"];
+        put?: never;
+        /**
+         * Submit a request
+         * @description Public (the reporting form). Anonymous callers are rate-limited per IP (15/min); with a valid warehouse token the request is linked to that user. New requests are always `new` and unassigned.
+         */
+        post: operations["createServiceDeskRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/service-desk/requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** Get a request */
+        get: operations["getServiceDeskRequest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/service-desk/requests/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Change status */
+        put: operations["changeServiceDeskStatus"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/service-desk/requests/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Assign to a user */
+        put: operations["assignServiceDeskRequest"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/service-desk/requests/{id}/priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Change priority */
+        put: operations["changeServiceDeskPriority"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/service-desk/requests/{id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /** List comments */
+        get: operations["listServiceDeskComments"];
+        put?: never;
+        /** Add a comment */
+        post: operations["addServiceDeskComment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/service-desk/request-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Request types */
+        get: operations["listServiceDeskRequestTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/service-desk/stream": {
         parameters: {
             query?: never;
@@ -4437,6 +4571,62 @@ export interface components {
             pavilion: string | null;
             details: string | null;
         };
+        /** @enum {string} */
+        ServiceDeskStatus: "new" | "in_progress" | "waiting" | "resolved" | "closed";
+        /** @enum {string} */
+        ServiceDeskPriority: "low" | "medium" | "high";
+        /** @enum {string} */
+        ServiceDeskType: "hardware_issue" | "replacement" | "technical_problem" | "other";
+        ServiceDeskUser: {
+            id: number;
+            username: string;
+            fullname: string | null;
+        };
+        ServiceDeskRequest: {
+            id: number;
+            title: string;
+            description: string;
+            type: components["schemas"]["ServiceDeskType"];
+            status: components["schemas"]["ServiceDeskStatus"];
+            priority: components["schemas"]["ServiceDeskPriority"];
+            /** @description Reporter name as typed in the form */
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** @description Name of the linked location, or the free-text location */
+            location: string | null;
+            location_id: number | null;
+            /** @description Account that submitted it, null for anonymous reports */
+            created_by_user: components["schemas"]["ServiceDeskUser"] | null;
+            assigned_to_user: components["schemas"]["ServiceDeskUser"] | null;
+        };
+        /** @description Give at most one of `location` / `location_id`. */
+        CreateServiceDeskRequest: {
+            title: string;
+            description?: string;
+            type: components["schemas"]["ServiceDeskType"];
+            priority?: components["schemas"]["ServiceDeskPriority"];
+            /** @description Reporter name */
+            created_by?: string;
+            location?: string;
+            location_id?: number;
+        };
+        ServiceDeskComment: {
+            id: number;
+            request_id: number;
+            content: string;
+            /** Format: date-time */
+            created_at: string;
+            user: components["schemas"]["ServiceDeskUser"];
+        };
+        ServiceDeskRequestType: {
+            id: string;
+            name: string;
+            description: string;
+            category: string;
+        };
         Message: {
             message: string;
         };
@@ -4730,82 +4920,6 @@ export interface components {
              */
             unpriced_count: number;
             items: components["schemas"]["BudgetItem"][];
-        };
-        ServiceDeskRequest: {
-            /** @example Zepsuta drukarka */
-            title: string;
-            /** @example Drukarka w sali A przestała działać */
-            description: string;
-            /**
-             * @example hardware_issue
-             * @enum {string}
-             */
-            type: "hardware_issue" | "replacement" | "technical_problem" | "other";
-            /**
-             * @example medium
-             * @enum {string}
-             */
-            priority: "low" | "medium" | "high" | "urgent";
-            /** @example Jan Kowalski */
-            created_by: string;
-            /**
-             * @description Free-text location. Mutually exclusive with location_id.
-             * @example Pokój obok sali B
-             */
-            location?: string | null;
-            /**
-             * @description ID of a known location (from GET /locations). Mutually exclusive with location.
-             * @example 3
-             */
-            location_id?: number | null;
-        };
-        ServiceDeskRequestResponse: {
-            /** @example 42 */
-            id: number;
-            title: string;
-            description: string;
-            /** @enum {string} */
-            type: "hardware_issue" | "replacement" | "technical_problem" | "other";
-            /** @enum {string} */
-            status: "new" | "in_progress" | "waiting" | "resolved" | "closed";
-            /** @enum {string} */
-            priority: "low" | "medium" | "high" | "urgent";
-            created_by: string;
-            /**
-             * @description Resolved location display value — location name when location_id is set, free-text otherwise.
-             * @example Sala A
-             */
-            location: string | null;
-            /**
-             * @description ID of the linked location. Null when free-text was used.
-             * @example 3
-             */
-            location_id: number | null;
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            updated_at: string;
-            created_by_user: components["schemas"]["ServiceDeskUser"] | null;
-            assigned_to_user: components["schemas"]["ServiceDeskUser"] | null;
-        };
-        ServiceDeskUser: {
-            id: number;
-            username: string;
-            fullname: string | null;
-        };
-        ServiceDeskComment: {
-            id: number;
-            request_id: number;
-            content: string;
-            /** Format: date-time */
-            created_at: string;
-            user: components["schemas"]["ServiceDeskUser"];
-        };
-        ServiceDeskRequestType: {
-            /** @enum {string} */
-            id: "hardware_issue" | "replacement" | "technical_problem" | "other";
-            name: string;
-            description: string;
         };
         Volunteer: {
             /**
@@ -6758,6 +6872,357 @@ export interface operations {
                 };
             };
             500: components["responses"]["DefaultError"];
+        };
+    };
+    listServiceDeskRequests: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated statuses */
+                status?: string;
+                location_id?: number;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Requests, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDeskRequest"][];
+                };
+            };
+            /** @description Invalid location_id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    createServiceDeskRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateServiceDeskRequest"];
+            };
+        };
+        responses: {
+            /** @description Request created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDeskRequest"];
+                };
+            };
+            /** @description Invalid payload (unknown type/priority, missing title, both location and location_id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Rate limit exceeded (anonymous) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    getServiceDeskRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDeskRequest"];
+                };
+            };
+            /** @description Invalid ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    changeServiceDeskStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    status: components["schemas"]["ServiceDeskStatus"];
+                };
+            };
+        };
+        responses: {
+            /** @description Status changed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Invalid status */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    assignServiceDeskRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    assigned_to_id: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Assigned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Invalid payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    changeServiceDeskPriority: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    priority: components["schemas"]["ServiceDeskPriority"];
+                };
+            };
+        };
+        responses: {
+            /** @description Priority changed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Invalid priority */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    listServiceDeskComments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Comments, oldest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDeskComment"][];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    addServiceDeskComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    content: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The new comment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDeskComment"];
+                };
+            };
+            /** @description Invalid payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    listServiceDeskRequestTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Types with labels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDeskRequestType"][];
+                };
+            };
         };
     };
 }
