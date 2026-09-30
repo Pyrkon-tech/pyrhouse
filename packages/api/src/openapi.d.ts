@@ -2142,6 +2142,7 @@ export interface paths {
                         "application/json": components["schemas"]["SuggestResponse"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
             };
         };
         put?: never;
@@ -2210,12 +2211,15 @@ export interface paths {
                         "application/json": components["schemas"]["ReleaseDetail"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
                 /** @description Validation error (asset in_transit, in another draft, insufficient stock) */
                 409: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
                 };
             };
         };
@@ -2267,7 +2271,10 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete a draft release */
+        /**
+         * Delete a draft release
+         * @description Only drafts can be deleted. Requires moderator role.
+         */
         delete: {
             parameters: {
                 query?: never;
@@ -2284,14 +2291,18 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["Message"];
+                    };
                 };
-                /** @description Release not in draft status */
+                /** @description Release not found or not in draft status */
                 409: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
                 };
             };
         };
@@ -2336,12 +2347,24 @@ export interface paths {
                         "application/json": components["schemas"]["ReleaseDetail"];
                     };
                 };
-                /** @description Validation error */
+                400: components["responses"]["BadRequest"];
+                /** @description Release not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Release is not a draft, or item validation failed */
                 409: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
                 };
             };
         };
@@ -2364,7 +2387,7 @@ export interface paths {
         /**
          * Confirm and execute release
          * @description Permanently removes assets from inventory and decreases stock quantities.
-         *     Refreshes snapshots with latest data before deletion. Requires admin role.
+         *     Refreshes snapshots with latest data before deletion. Requires moderator role.
          */
         post: {
             parameters: {
@@ -2386,12 +2409,23 @@ export interface paths {
                         "application/json": components["schemas"]["ReleaseDetail"];
                     };
                 };
-                /** @description Validation error (items changed since draft creation) */
+                /** @description Release not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Release is not a draft, or items changed since draft creation */
                 409: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
                 };
             };
         };
@@ -4431,12 +4465,12 @@ export interface components {
         };
         Transfer: components["schemas"]["TransferSummary"] & {
             /** @description Serialized assets in the transfer */
-            assets?: components["schemas"]["Item"][];
+            assets: components["schemas"]["Item"][];
             /** @description Stock items in the transfer (id is the transfer line, location the destination) */
-            stock_items?: components["schemas"]["Stock"][];
-            users?: components["schemas"]["TransferParticipant"][];
+            stock_items: components["schemas"]["Stock"][];
+            users: components["schemas"]["TransferParticipant"][];
             /** @description Last reported GPS position, null until one is reported */
-            delivery_location?: components["schemas"]["DeliveryLocation"] | null;
+            delivery_location: components["schemas"]["DeliveryLocation"] | null;
         };
         /**
          * @description How the account was created
@@ -4813,11 +4847,12 @@ export interface components {
             id: number;
             /** @example WYD-2026-001 */
             reference: string;
-            origin_id: number | null;
-            /** @example probis */
+            origin_id: number;
+            /**
+             * @description Origin slug
+             * @example probis
+             */
             origin_label: string | null;
-            /** @example Probis Sp. z o.o. */
-            released_to: string;
             notes: string | null;
             /** @enum {string} */
             status: "draft" | "completed";
@@ -4829,12 +4864,13 @@ export interface components {
             created_at: string;
         };
         ReleaseDetail: components["schemas"]["Release"] & {
-            assets?: components["schemas"]["ReleaseAsset"][];
-            stocks?: components["schemas"]["ReleaseStock"][];
-            summary?: {
-                total_assets: number;
-                total_stock_quantity: number;
-            };
+            assets: components["schemas"]["ReleaseAsset"][];
+            stocks: components["schemas"]["ReleaseStock"][];
+            summary: components["schemas"]["ReleaseSummary"];
+        };
+        ReleaseSummary: {
+            total_assets: number;
+            total_stock_quantity: number;
         };
         ReleaseAsset: {
             id: number;
@@ -4862,29 +4898,30 @@ export interface components {
             location_name: string | null;
         };
         SuggestResponse: {
-            assets: {
-                id: number;
-                pyr_code: string | null;
-                item_serial: string | null;
-                status: string;
-                category_name: string | null;
-                origin_label: string | null;
-                location_name: string | null;
-            }[];
-            stocks: {
-                id: number;
-                quantity: number;
-                category_name: string | null;
-                origin_label: string | null;
-                location_name: string | null;
-            }[];
+            assets: components["schemas"]["SuggestedAsset"][];
+            stocks: components["schemas"]["SuggestedStock"][];
         };
+        SuggestedAsset: {
+            id: number;
+            pyr_code: string | null;
+            item_serial: string | null;
+            status: string;
+            category_name: string | null;
+            origin_label: string | null;
+            location_name: string | null;
+        };
+        SuggestedStock: {
+            id: number;
+            quantity: number;
+            category_name: string | null;
+            origin_label: string | null;
+            location_name: string | null;
+        };
+        /** @description At least one of `assets` / `stocks` is required. */
         CreateReleaseRequest: {
-            /** @description Optional origin to tag this release */
-            origin_id?: number;
-            /** @example Probis Sp. z o.o. */
-            released_to: string;
-            notes?: string;
+            /** @description Origin (owner) the items are released back to */
+            origin_id: number;
+            notes?: string | null;
             /** @description Asset IDs (items table) */
             assets?: number[];
             stocks?: {

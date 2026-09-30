@@ -1,78 +1,16 @@
-export type ReleaseStatus = 'draft' | 'completed';
+/**
+ * Release (permanent hand-back to an origin) shapes are aliases of the generated API contract
+ * (@pyrhouse/api, from backend/docs/openapi.yaml).
+ */
+import type { Schemas } from '@pyrhouse/api';
 
-export interface Release {
-  id: number;
-  reference: string;
-  origin_id: number | null;
-  origin_label: string | null;
-  notes: string | null;
-  status: ReleaseStatus;
-  created_by: number;
-  created_by_name: string | null;
-  completed_at: string | null;
-  created_at: string;
-}
-
-export interface ReleaseAsset {
-  id: number;
-  item_id: number;
-  pyr_code: string | null;
-  item_serial: string | null;
-  category_name: string | null;
-  origin_label: string | null;
-  location_name: string | null;
-}
-
-export interface ReleaseStock {
-  id: number;
-  stock_id: number;
-  item_category_id: number;
-  category_name: string | null;
-  quantity: number;
-  origin_label: string | null;
-  location_name: string | null;
-}
-
-export interface ReleaseDetail extends Release {
-  assets: ReleaseAsset[];
-  stocks: ReleaseStock[];
-  summary: {
-    total_assets: number;
-    total_stock_quantity: number;
-  };
-}
-
-export interface SuggestedAsset {
-  id: number;
-  pyr_code: string | null;
-  item_serial: string | null;
-  status: string;
-  category_name: string | null;
-  origin_label: string | null;
-  location_name: string | null;
-}
-
-export interface SuggestedStock {
-  id: number;
-  quantity: number;
-  category_name: string | null;
-  origin_label: string | null;
-  location_name: string | null;
-}
-
-export interface SuggestResponse {
-  assets: SuggestedAsset[];
-  stocks: SuggestedStock[];
-}
-
-export interface CreateReleasePayload {
-  origin_id?: number;
-  notes?: string;
-  assets: number[];
-  stocks: { stock_id: number; quantity: number }[];
-}
-
-export interface UpdateReleaseItemsPayload {
-  assets: number[];
-  stocks: { stock_id: number; quantity: number }[];
-}
+export type Release = Schemas['Release'];
+export type ReleaseStatus = Release['status'];
+export type ReleaseAsset = Schemas['ReleaseAsset'];
+export type ReleaseStock = Schemas['ReleaseStock'];
+export type ReleaseDetail = Schemas['ReleaseDetail'];
+export type SuggestedAsset = Schemas['SuggestedAsset'];
+export type SuggestedStock = Schemas['SuggestedStock'];
+export type SuggestResponse = Schemas['SuggestResponse'];
+export type CreateReleasePayload = Schemas['CreateReleaseRequest'];
+export type UpdateReleaseItemsPayload = Schemas['UpdateItemsRequest'];
