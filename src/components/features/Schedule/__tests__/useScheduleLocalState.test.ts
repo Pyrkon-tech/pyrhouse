@@ -8,10 +8,17 @@ import type { ScheduleDetail, ScheduleSlot, ScheduleVolunteer } from '../../../.
 function makeVolunteer(overrides: Partial<ScheduleVolunteer> = {}): ScheduleVolunteer {
   return {
     id: 1,
+    schedule_id: 1,
     nickname: 'Alice',
     user_id: null,
+    city: null,
     target_hours: 14,
+    // The API always sends the availability window; default to the whole month
+    available_from: '2026-06-01T00:00:00Z',
+    available_to: '2026-06-30T23:59:59Z',
+    notes: null,
     assigned_hours: 0,
+    discord_confirmed: null,
     slots: [],
     ...overrides,
   };
@@ -20,6 +27,7 @@ function makeVolunteer(overrides: Partial<ScheduleVolunteer> = {}): ScheduleVolu
 function makeSlot(overrides: Partial<ScheduleSlot> = {}): ScheduleSlot {
   return {
     id: 1,
+    schedule_id: 1,
     type: 'festival',
     label: 'Slot A',
     start: '2026-06-10T10:00:00Z',
@@ -41,8 +49,11 @@ function makeDetail(overrides: Partial<ScheduleDetail> = {}): ScheduleDetail {
     event_end: '2026-06-15T00:00:00Z',
     festival_start: '2026-06-10T00:00:00Z',
     festival_end: '2026-06-12T00:00:00Z',
+    status: 'active',
     slots: [],
     volunteers: [],
+    validation: { valid: true, issues: [] },
+    day_windows: [],
     ...overrides,
   };
 }
@@ -148,7 +159,7 @@ describe('unassignVolunteer', () => {
   it('removes volunteer from slot by assignment ID', () => {
     const { result } = renderHook(() => useScheduleLocalState());
     const vol = makeVolunteer();
-    const slot = makeSlot({ capacity: 2, volunteers: [{ id: 99, nickname: 'Alice' }] });
+    const slot = makeSlot({ capacity: 2, volunteers: [{ id: 99, volunteer_id: 99, nickname: 'Alice' }] });
     act(() => { result.current.loadFromServer(makeDetail({ volunteers: [vol], slots: [slot] })); });
 
     act(() => { result.current.unassignVolunteer(99); });
@@ -160,7 +171,7 @@ describe('unassignVolunteer', () => {
   it('recomputes volunteer assigned_hours after unassignment', () => {
     const { result } = renderHook(() => useScheduleLocalState());
     const vol = makeVolunteer({ assigned_hours: 4, slots: [1] });
-    const slot = makeSlot({ credit_hours: 4, capacity: 2, volunteers: [{ id: 99, nickname: 'Alice' }] });
+    const slot = makeSlot({ credit_hours: 4, capacity: 2, volunteers: [{ id: 99, volunteer_id: 99, nickname: 'Alice' }] });
     act(() => { result.current.loadFromServer(makeDetail({ volunteers: [vol], slots: [slot] })); });
 
     act(() => { result.current.unassignVolunteer(99); });
@@ -176,7 +187,7 @@ describe('moveVolunteer', () => {
   it('removes from source slot and adds to target slot', () => {
     const { result } = renderHook(() => useScheduleLocalState());
     const vol = makeVolunteer();
-    const slotA = makeSlot({ id: 10, volunteers: [{ id: 99, nickname: 'Alice' }], capacity: 2 });
+    const slotA = makeSlot({ id: 10, volunteers: [{ id: 99, volunteer_id: 99, nickname: 'Alice' }], capacity: 2 });
     const slotB = makeSlot({ id: 20, volunteers: [], capacity: 2 });
     act(() => { result.current.loadFromServer(makeDetail({ volunteers: [vol], slots: [slotA, slotB] })); });
 
@@ -192,7 +203,7 @@ describe('moveVolunteer', () => {
   it('returns a negative temp assignment ID for the new assignment', () => {
     const { result } = renderHook(() => useScheduleLocalState());
     const vol = makeVolunteer();
-    const slotA = makeSlot({ id: 10, volunteers: [{ id: 99, nickname: 'Alice' }], capacity: 2 });
+    const slotA = makeSlot({ id: 10, volunteers: [{ id: 99, volunteer_id: 99, nickname: 'Alice' }], capacity: 2 });
     const slotB = makeSlot({ id: 20, volunteers: [], capacity: 2 });
     act(() => { result.current.loadFromServer(makeDetail({ volunteers: [vol], slots: [slotA, slotB] })); });
 
@@ -219,7 +230,7 @@ describe('deleteVolunteer', () => {
   it('removes volunteer from all slot assignments', () => {
     const { result } = renderHook(() => useScheduleLocalState());
     const vol = makeVolunteer();
-    const slot = makeSlot({ volunteers: [{ id: 99, nickname: 'Alice' }], capacity: 2 });
+    const slot = makeSlot({ volunteers: [{ id: 99, volunteer_id: 99, nickname: 'Alice' }], capacity: 2 });
     act(() => { result.current.loadFromServer(makeDetail({ volunteers: [vol], slots: [slot] })); });
 
     act(() => { result.current.deleteVolunteer(1); });
@@ -559,7 +570,7 @@ describe('recomputeVolunteerHours', () => {
   it('recomputes hours to 0 after unassigning the only assignment', () => {
     const { result } = renderHook(() => useScheduleLocalState());
     const vol = makeVolunteer({ assigned_hours: 4, slots: [1] });
-    const slot = makeSlot({ credit_hours: 4, capacity: 2, volunteers: [{ id: 99, nickname: 'Alice' }] });
+    const slot = makeSlot({ credit_hours: 4, capacity: 2, volunteers: [{ id: 99, volunteer_id: 99, nickname: 'Alice' }] });
     act(() => { result.current.loadFromServer(makeDetail({ volunteers: [vol], slots: [slot] })); });
 
     act(() => { result.current.unassignVolunteer(99); });

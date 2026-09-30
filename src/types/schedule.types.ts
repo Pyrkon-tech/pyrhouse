@@ -1,329 +1,63 @@
 // ============================================================================
-// Schedule (Harmonogram dyżurów) types
-// Matches backend API: singular /schedule (one active schedule at a time)
+// Schedule (Harmonogram dyżurów) types — aliases of the generated API contract
+// (@pyrhouse/api, from backend/docs/openapi.yaml). One active schedule at a time.
 // ============================================================================
+import type { Schemas } from '@pyrhouse/api';
 
-export type SlotType = 'montage' | 'festival' | 'demontage';
-
-export type ValidationIssueType =
-  | 'under_hours'
-  | 'over_hours'
-  | 'no_festival_shifts'
-  | 'slot_understaffed'
-  | 'slot_overstaffed'
-  | 'slot_too_long'
-  | 'consecutive_over_6h'
-  | 'insufficient_break'
-  | 'double_booked'
-  | 'outside_availability';
-
-export type ValidationSeverity = 'error' | 'warning' | 'info';
-
-// ---- Slot volunteer (assignment) --------------------------------------------
-
+export type SlotType = Schemas['SlotType'];
+type ServerValidationIssue = Schemas['ValidationIssue'];
 /**
- * Volunteer record inside a slot.
- * `id` = assignment_id (used for DELETE /schedule/assignments/:id and swap).
+ * Issues come from the server (GET/POST /schedule/validate, inline in the schedule) or from the client-side
+ * pre-check (useScheduleValidation), which adds `slot_too_long` and may omit `message`.
+ * `slot` is a human-readable slot description — use `slot_id` to find the slot.
  */
-export interface SlotVolunteer {
-  /** Assignment ID — used for delete/swap operations */
-  id: number;
-  nickname: string;
-}
-
-// ---- Volunteer in schedule -------------------------------------------------
-
-/**
- * Volunteer imported into the active schedule.
- * May or may not have a system account (user_id: null = no account, norma!).
- */
-export interface ScheduleVolunteer {
-  id: number;
-  nickname: string;
-  /** null = no system account (volunteer registered only in schedule) */
-  user_id: number | null;
-  /** Target duty hours (standard: 14, extended: 18) */
-  target_hours: number;
-  /** Hours already assigned in this schedule */
-  assigned_hours: number;
-  /** IDs of slots this volunteer is assigned to */
-  slots: number[];
-  // Optional metadata from import
-  city?: string;
-  available_from?: string;
-  available_to?: string;
-  notes?: string;
-}
-
-// ---- Slot ------------------------------------------------------------------
-
-export interface ScheduleSlot {
-  id: number;
-  type: SlotType;
-  /** Human-readable label e.g. "Montaż - Wtorek" */
-  label: string;
-  /** ISO datetime */
-  start: string;
-  /** ISO datetime */
-  end: string;
-  /** Credit hours for this slot (not calendar hours — e.g. full day = 7h credit) */
-  credit_hours: number;
-  /** Required number of volunteers */
-  capacity: number;
-  volunteers: SlotVolunteer[];
-}
-
-// ---- Schedule base ---------------------------------------------------------
-
-export interface Schedule {
-  id: number;
-  name: string;
-  /** Incremented on every save. Send back in PUT /schedule/draft for optimistic locking. 0 = skip check. */
-  version: number;
-  created_at: string;
-  /** ISO datetime — overall event start (includes pre-festival montage period) */
-  event_start: string;
-  /** ISO datetime — overall event end (includes post-festival demontage period) */
-  event_end: string;
-  /** ISO datetime — festival phase start */
-  festival_start: string;
-  /** ISO datetime — festival phase end */
-  festival_end: string;
-}
-
-// ---- Validation ------------------------------------------------------------
-
-export interface ValidationIssue {
+export type ValidationIssueType = ServerValidationIssue['type'] | 'slot_too_long';
+export type ValidationIssue = Omit<ServerValidationIssue, 'type' | 'message'> & {
   type: ValidationIssueType;
-  /** Severity: error blocks publish, warning/info are informational */
-  severity?: ValidationSeverity;
-  /** Volunteer nickname (for volunteer-related issues) */
-  volunteer?: string;
-  /** Volunteer ID (for UI highlighting) */
-  volunteer_id?: number;
-  /** Slot ID (for slot-related issues / UI highlighting) */
-  slot_id?: number;
-  /** Legacy field — same as slot_id */
-  slot?: number;
-  /** Assigned hours (for under_hours / over_hours) */
-  assigned?: number;
-  /** Target hours (for under_hours) */
-  target?: number;
-  /** Slot capacity (for slot_understaffed / slot_overstaffed) */
-  capacity?: number;
-  /** Generic message from backend */
   message?: string;
-}
-
+};
+export type ValidationSeverity = ServerValidationIssue['severity'];
 export interface ValidationResult {
   valid: boolean;
   issues: ValidationIssue[];
 }
 
-// ---- Day window ------------------------------------------------------------
+/** Volunteer inside a slot; `id` is the assignment ID (delete/move/swap use it) */
+export type SlotVolunteer = Schemas['SlotVolunteer'];
+/** Volunteer of the active schedule; user_id null = no warehouse account (normal) */
+export type ScheduleVolunteer = Schemas['VolunteerWithSlots'];
+export type ScheduleSlot = Schemas['SlotWithVolunteers'];
+export type Schedule = Schemas['Schedule'];
+/** Operating window for montage/demontage on one date (default 08:00–20:00) */
+export type DayWindow = Schemas['DayWindow'];
+export type SetDayWindowPayload = Schemas['UpsertDayWindowRequest'];
+export type ScheduleDetail = Omit<Schemas['ScheduleDetail'], 'validation'> & { validation: ValidationResult };
 
-/**
- * Operational time window for a single day (montage/demontage).
- * If no window is set for a date, the backend defaults to 08:00–20:00.
- */
-export interface DayWindow {
-  id: number;
-  schedule_id: number;
-  /** ISO date e.g. "2026-06-16" */
-  date: string;
-  /** "HH:MM" e.g. "10:00" */
-  window_start: string;
-  /** "HH:MM" e.g. "18:00" */
-  window_end: string;
-}
+export type CreateSchedulePayload = Schemas['CreateScheduleRequest'];
+export type ImportVolunteerItem = Schemas['VolunteerInput'];
+export type ImportVolunteersPayload = Schemas['ImportVolunteersRequest'];
+export type ImportResult = Schemas['ImportResult'];
+export type ImportSheetResult = Schemas['ImportSheetResult'];
+/** PATCH /schedule/volunteers/:vid — user_id null unlinks, omitted keeps the link */
+export type UpdateVolunteerPayload = Schemas['UpdateVolunteerRequest'];
+export type SwapAssignmentPayload = Schemas['SwapRequest'];
+export type CreateAssignmentPayload = Schemas['AddAssignmentRequest'];
+export type AssignmentDetail = Schemas['AssignmentDetail'];
+export type CreateSlotPayload = Schemas['CreateSlotRequest'];
+export type UpdateSlotPayload = Schemas['UpdateSlotRequest'];
 
-/** Body for PUT /schedule/day-windows */
-export interface SetDayWindowPayload {
-  /** ISO date e.g. "2026-06-16" */
-  date: string;
-  window_start: string;
-  window_end: string;
-}
+export type OnDutyUser = Schemas['OnDutyUser'];
+export type OnDutyVolunteer = Schemas['OnDutyEntry'];
 
-// ---- Schedule detail (GET /schedule) ---------------------------------------
-
-/** Full schedule with slots, volunteers and optional inline validation */
-export interface ScheduleDetail extends Schedule {
-  slots: ScheduleSlot[];
-  volunteers: ScheduleVolunteer[];
-  /**
-   * Per-day operational windows for montage/demontage slots.
-   * Absent dates use the backend default (08:00–20:00).
-   */
-  day_windows?: DayWindow[];
-  /**
-   * Validation is included inline in GET /schedule response.
-   * May also be fetched separately via GET /schedule/validate.
-   */
-  validation?: ValidationResult;
-}
-
-// ---- Payloads ---------------------------------------------------------------
-
-export interface CreateSchedulePayload {
-  name: string;
-  /** ISO date string e.g. "2026-04-07" */
-  event_start: string;
-  event_end: string;
-  /** ISO datetime string e.g. "2026-04-10 10:00" — festival phase within event */
-  festival_start: string;
-  festival_end: string;
-}
-
-/**
- * Single volunteer for bulk import.
- * user_id: null = no system account (common — volunteers don't need accounts).
- * Dates format: "YYYY-MM-DD HH:MM"
- */
-export interface ImportVolunteerItem {
-  nickname: string;
-  city?: string;
-  /** Target duty hours. Standard = 14, extended = 18 */
-  hours: number;
-  /** Format: YYYY-MM-DD HH:MM */
-  available_from: string;
-  /** Format: YYYY-MM-DD HH:MM */
-  available_to: string;
-  notes?: string;
-  /** null = no system account (link later via PATCH /schedule/volunteers/:vid) */
-  user_id?: number | null;
-}
-
-/** Body for POST /schedule/volunteers */
-export interface ImportVolunteersPayload {
-  volunteers: ImportVolunteerItem[];
-}
-
-/**
- * Body for PATCH /schedule/volunteers/:vid.
- * All fields optional — typical use: link system account after volunteer registers.
- */
-export interface UpdateVolunteerPayload {
-  user_id?: number | null;
-  nickname?: string;
-  hours?: number;
-  notes?: string;
-}
-
-/** Body for POST /schedule/assignments/swap */
-export interface SwapAssignmentPayload {
-  assignment_a: number;
-  assignment_b: number;
-}
-
-/** Body for POST /schedule/assignments — add volunteer to slot */
-export interface CreateAssignmentPayload {
-  volunteer_id: number;
-  slot_id: number;
-}
-
-// ---- Slot CRUD payloads ---------------------------------------------------
-
-/** Body for POST /schedule/slots */
-export interface CreateSlotPayload {
-  type: SlotType;
-  start: string;
-  end: string;
-  capacity: number;
-  label?: string;
-}
-
-/** Body for PATCH /schedule/slots/:id (all fields optional) */
-export interface UpdateSlotPayload {
-  type?: SlotType;
-  start?: string;
-  end?: string;
-  capacity?: number;
-  label?: string;
-}
-
-// ---- On-duty roster (dispatch integration) --------------------------------
-
-export interface OnDutyUser {
-  id: number;
-  username: string;
-  fullname: string | null;
-  avatar_url: string | null;
-  discord_username: string | null;
-}
-
-export interface OnDutyVolunteer {
-  volunteer_id: number;
-  nickname: string;
-  slot_id: number;
-  slot_label: string | null;
-  slot_end: string;
-  status: 'available' | 'on_mission';
-  current_mission: string | null;
-  user_id: number | null;
-  user: OnDutyUser | null;
-}
-
-// ---- Draft (bulk save) payloads -------------------------------------------
-
-/** Slot item in PUT /schedule/draft body */
-export interface DraftSlotItem {
-  /** Existing slot ID (update) */
-  id?: number;
-  /** Client-side temp ID (create) — mapped back in response */
-  temp_id?: string;
-  type: SlotType;
-  start: string;
-  end: string;
-  capacity: number;
-  label?: string;
-}
-
-/** Assignment item in PUT /schedule/draft body */
-export interface DraftAssignmentItem {
-  volunteer_id: number;
-  /** Reference to existing slot */
-  slot_id?: number;
-  /** Reference to slot with temp_id (for newly created slots) */
-  slot_temp_id?: string;
-}
-
-/** Body for PUT /schedule/draft */
-export interface DraftPayload {
-  /** Send the version from last GET/PUT response. 0 or omitted = skip conflict check (compat mode). */
-  version: number;
-  slots: DraftSlotItem[];
-  assignments: DraftAssignmentItem[];
-}
-
-/** Response from PUT /schedule/draft */
-export interface DraftResponse {
+export type DraftSlotItem = Schemas['DraftSlot'];
+export type DraftAssignmentItem = Schemas['DraftAssignment'];
+/** PUT /schedule/draft — version from the last read; 0 skips the conflict check */
+export type DraftPayload = Schemas['SaveDraftRequest'];
+export type DraftResponse = Omit<Schemas['SaveDraftResponse'], 'schedule' | 'validation'> & {
   schedule: ScheduleDetail;
-  created_slots: { temp_id: string; id: number }[];
   validation: ValidationResult;
-}
+};
 
-// ---- My schedule (GET /schedule/volunteers/me) -----------------------------
-
-export interface MyScheduleSlot {
-  assignment_id: number;
-  slot_id: number;
-  slot_type: SlotType;
-  start_time: string;
-  end_time: string;
-  credit_hours: number;
-  label: string | null;
-}
-
-export interface MyScheduleVolunteer {
-  id: number;
-  nickname: string;
-  user_id: number | null;
-  assigned_hours: number;
-  target_hours: number;
-}
-
-export interface MyScheduleResponse {
-  volunteer: MyScheduleVolunteer;
-  slots: MyScheduleSlot[];
-}
+export type MyScheduleSlot = Schemas['MyScheduleSlot'];
+export type MyScheduleVolunteer = Schemas['ScheduleVolunteer'];
+export type MyScheduleResponse = Schemas['MySchedule'];

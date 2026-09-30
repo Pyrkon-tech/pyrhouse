@@ -22,6 +22,7 @@ import type { ScheduleSlot, ScheduleVolunteer, ValidationResult } from '../../..
 function makeSlot(overrides: Partial<ScheduleSlot> = {}): ScheduleSlot {
   return {
     id: 1,
+    schedule_id: 1,
     type: 'festival',
     label: 'Festiwal 1',
     start: '2026-06-19T10:00:00Z',
@@ -36,10 +37,17 @@ function makeSlot(overrides: Partial<ScheduleSlot> = {}): ScheduleSlot {
 function makeVol(overrides: Partial<ScheduleVolunteer> = {}): ScheduleVolunteer {
   return {
     id: 1,
+    schedule_id: 1,
     nickname: 'Alice',
     user_id: null,
+    city: null,
     target_hours: 14,
+    // The API always sends the availability window; default to the whole month
+    available_from: '2026-06-01T00:00:00Z',
+    available_to: '2026-06-30T23:59:59Z',
+    notes: null,
     assigned_hours: 0,
+    discord_confirmed: null,
     slots: [],
     ...overrides,
   };
@@ -257,7 +265,7 @@ describe('buildGridData', () => {
       start: '2026-06-19T22:00:00Z',
       end: '2026-06-20T02:00:00Z',
       capacity: 1,
-      volunteers: [{ id: 100, nickname: 'Alice' }],
+      volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
     });
     const vols = [makeVol({ id: 1, nickname: 'Alice' })];
 
@@ -388,7 +396,7 @@ describe('buildGridData', () => {
 
   describe('validation status mapping', () => {
     const slot = makeSlot({
-      volunteers: [{ id: 100, nickname: 'Alice' }, { id: 101, nickname: 'Bob' }],
+      volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }, { id: 101, volunteer_id: 101, nickname: 'Bob' }],
     });
     const vols = [
       makeVol({ id: 1, nickname: 'Alice' }),
@@ -732,7 +740,7 @@ describe('buildTimelineData', () => {
 
   it('validation status propagates correctly', () => {
     const slot = makeSlot({
-      volunteers: [{ id: 100, nickname: 'Alice' }],
+      volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
     });
     const vols = [makeVol({ id: 1, nickname: 'Alice' })];
     const validation: ValidationResult = {

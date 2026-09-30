@@ -359,9 +359,19 @@ const ScheduleDetailPage: React.FC = () => {
     }
     const endISO = `${endDateKey}T${pad(ehh)}:${mm}:00Z`;
     const newId = localState.createSlot(type, startISO, endISO);
-    const newSlot = { id: newId, type, label: '', start: startISO, end: endISO, capacity: 1, credit_hours: 0, volunteers: [] };
+    const newSlot: ScheduleSlot = {
+      id: newId,
+      schedule_id: localState.state.schedule?.id ?? 0,
+      type,
+      label: '',
+      start: startISO,
+      end: endISO,
+      capacity: 1,
+      credit_hours: 0,
+      volunteers: [],
+    };
     setEditAnchorEl(null);
-    setEditingSlot(newSlot as ScheduleSlot);
+    setEditingSlot(newSlot);
     showSuccess('Slot utworzony — edytuj szczegóły');
   }, [localState, phaseFilter, newSlotType, showSuccess]);
 

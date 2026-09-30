@@ -2569,6 +2569,399 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the active schedule
+         * @description Slots with their volunteers, volunteers with their slots, validation and day windows.
+         *     Requires user role.
+         */
+        get: operations["getSchedule"];
+        put?: never;
+        /**
+         * Create the active schedule
+         * @description Creates a schedule, makes it the active one and generates montage/festival/demontage slots.
+         *     Requires moderator role.
+         */
+        post: operations["createSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a schedule
+         * @description Only after the event has ended (409 before).
+         *     Requires admin role.
+         */
+        delete: operations["deleteSchedule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/volunteers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List volunteers of the active schedule
+         * @description Requires user role.
+         */
+        get: operations["listScheduleVolunteers"];
+        put?: never;
+        /**
+         * Import volunteers
+         * @description Upserts by nickname into the active schedule.
+         *     Requires moderator role.
+         */
+        post: operations["importVolunteers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/volunteers/import-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import volunteers from Google Sheets
+         * @description Row-level parse problems are returned in `errors`; the rest is imported.
+         *     Requires moderator role.
+         */
+        post: operations["importVolunteersFromSheet"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/volunteers/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My duty schedule
+         * @description The volunteer linked to the caller's account in the active schedule, with their slots.
+         *     Requires user role.
+         */
+        get: operations["getMySchedule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/volunteers/{vid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a volunteer
+         * @description Requires admin role.
+         */
+        delete: operations["deleteScheduleVolunteer"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a volunteer
+         * @description Only fields present in the body change. Send user_id null to unlink the account; omit it to keep the link.
+         *     Requires moderator role.
+         */
+        patch: operations["updateScheduleVolunteer"];
+        trace?: never;
+    };
+    "/schedule/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Auto-assign volunteers
+         * @description Runs the solver over the active schedule. 409 lists volunteers whose availability blocks generation.
+         *     Requires admin role.
+         */
+        post: operations["generateSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign a volunteer to a slot
+         * @description Requires moderator role.
+         */
+        post: operations["addAssignment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/assignments/{aid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove an assignment
+         * @description Idempotent: an unknown ID also returns 204.
+         *     Requires moderator role.
+         */
+        delete: operations["deleteAssignment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/assignments/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move an assignment to another slot
+         * @description Requires moderator role.
+         */
+        post: operations["moveAssignment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/assignments/swap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Swap two assignments
+         * @description Requires moderator role.
+         */
+        post: operations["swapAssignments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a slot
+         * @description Requires moderator role.
+         */
+        post: operations["createSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/slots/{sid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a slot
+         * @description Festival slots cannot be deleted (403).
+         *     Requires moderator role.
+         */
+        delete: operations["deleteSlot"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a slot
+         * @description The type of a festival slot cannot change (422).
+         *     Requires moderator role.
+         */
+        patch: operations["updateSlot"];
+        trace?: never;
+    };
+    "/schedule/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the whole schedule
+         * @description Replaces slots and assignments in one transaction. `version` from the last read enables the conflict check (409); 0 skips it. New slots use `temp_id`, mapped to real IDs in `created_slots`.
+         *     Requires moderator role.
+         */
+        put: operations["saveDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validate the active schedule
+         * @description Requires user role.
+         */
+        get: operations["validateSchedule"];
+        put?: never;
+        /**
+         * Validate a draft without saving
+         * @description Requires moderator role.
+         */
+        post: operations["validateDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/export/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the schedule as CSV
+         * @description Requires moderator role.
+         */
+        get: operations["exportScheduleCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/export/sheets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export the schedule to Google Sheets
+         * @description Requires moderator role.
+         */
+        post: operations["exportScheduleSheets"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/on-duty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Volunteers on duty
+         * @description Volunteers assigned to a slot active at `at` (default now); `status` is `on_mission` while they carry an in-progress quest transfer.
+         *     Requires user role.
+         */
+        get: operations["getOnDuty"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/schedule/day-windows": {
         parameters: {
             query?: never;
@@ -2578,43 +2971,11 @@ export interface paths {
         };
         get?: never;
         /**
-         * Upsert day window
-         * @description Creates or updates the operating time window for a specific calendar date.
-         *     Montage/demontage slots for that date will use this window when regenerated.
-         *     If a window already exists for the date it is overwritten.
+         * Upsert a day window
+         * @description Operating window for montage/demontage slots on one date (default 08:00–20:00). Takes effect on the next slot regeneration.
+         *     Requires moderator role.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpsertDayWindowRequest"];
-                };
-            };
-            responses: {
-                /** @description Window saved */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["DayWindow"];
-                    };
-                };
-                400: components["responses"]["DefaultError"];
-                /** @description No active schedule */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        put: operations["upsertDayWindow"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2633,40 +2994,10 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Delete day window
-         * @description Removes the custom window for the given date. The next slot regeneration will use the default 08:00–20:00 window for that day.
+         * Delete a day window
+         * @description Requires moderator role.
          */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    date: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Window deleted */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Window not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        delete: operations["deleteDayWindow"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2683,114 +3014,14 @@ export interface paths {
         put?: never;
         /**
          * Regenerate montage/demontage slots
-         * @description Deletes all non-festival slots for the active schedule and re-creates them
-         *     using the current day windows. Festival slots and their assignments are preserved.
-         *     All non-festival assignments are removed. Bumps the schedule version.
+         * @description Recreates non-festival slots from the day windows; their assignments are removed, festival slots stay. Bumps the version.
          *     Requires admin role.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Schedule detail after regeneration */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ScheduleDetail"];
-                    };
-                };
-                /** @description No active schedule */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        post: operations["regenerateSlots"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/schedule/volunteers/{vid}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update volunteer
-         * @description Partially updates a volunteer. Only fields present in the request body are changed.
-         *     Send `"user_id": null` to unlink the volunteer from a user account;
-         *     omit the field to leave the link unchanged. Requires moderator role.
-         */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    vid: number;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        nickname: string;
-                        city: string;
-                        /** @description Target hours */
-                        hours: number;
-                        /** @example 2026-06-16 08:00 */
-                        available_from: string;
-                        /** @example 2026-06-16 20:00 */
-                        available_to: string;
-                        notes: string;
-                        /** @description Linked user account ID. Explicit null unlinks the user. */
-                        user_id: number | null;
-                    };
-                };
-            };
-            responses: {
-                /** @description Updated volunteer */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                400: components["responses"]["DefaultError"];
-                /** @description Volunteer not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Provided user_id does not exist */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
         trace?: never;
     };
     "/shop/auth/google/exchange": {
@@ -4120,60 +4351,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description Schedule slot with the volunteers assigned to it (internal/scheduling SlotWithVolunteers) */
-        SlotWithVolunteers: {
-            id: number;
-            schedule_id: number;
-            /** @enum {string} */
-            type: "montage" | "festival" | "demontage";
-            /** Format: date-time */
-            start: string;
-            /** Format: date-time */
-            end: string;
-            credit_hours: number;
-            capacity: number;
-            label: string | null;
-            volunteers: {
-                /** @description Assignment ID */
-                id: number;
-                volunteer_id: number;
-                nickname: string;
-            }[];
-        };
-        /** @description Schedule volunteer with the IDs of the slots they are assigned to (internal/scheduling VolunteerWithSlots) */
-        VolunteerWithSlots: {
-            id: number;
-            schedule_id: number;
-            user_id: number | null;
-            nickname: string;
-            city: string | null;
-            target_hours: number;
-            /** Format: date-time */
-            available_from: string;
-            /** Format: date-time */
-            available_to: string;
-            notes: string | null;
-            assigned_hours: number;
-            discord_confirmed: string | null;
-            slots: number[];
-        };
-        ValidationIssue: {
-            type: string;
-            severity: string;
-            volunteer: string;
-            volunteer_id: number;
-            slot: string;
-            slot_id: number;
-            assigned: number;
-            target: number;
-            capacity: number;
-            message: string;
-        };
-        ValidationResult: {
-            valid: boolean;
-            /** @description May be null when there are no issues (Go nil slice) */
-            issues: components["schemas"]["ValidationIssue"][] | null;
-        };
         ShopError: {
             /** @description Human-readable message (Polish) */
             error: string;
@@ -4627,6 +4804,284 @@ export interface components {
             description: string;
             category: string;
         };
+        /** @description Error body of /schedule endpoints (`error` is a machine slug, `message` is for the user) */
+        ScheduleError: {
+            /** @example not_found */
+            error: string;
+            message: string;
+            details?: unknown;
+        };
+        /** @enum {string} */
+        SlotType: "montage" | "festival" | "demontage";
+        Schedule: {
+            id: number;
+            name: string;
+            /**
+             * Format: date-time
+             * @description Whole event including montage
+             */
+            event_start: string;
+            /**
+             * Format: date-time
+             * @description Whole event including demontage
+             */
+            event_end: string;
+            /** Format: date-time */
+            festival_start: string;
+            /** Format: date-time */
+            festival_end: string;
+            /** @example active */
+            status: string;
+            /** @description Bumped on every save; send back in PUT /schedule/draft for the conflict check */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+        };
+        ScheduleSlot: {
+            id: number;
+            schedule_id: number;
+            type: components["schemas"]["SlotType"];
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            /** @description Hours credited to each volunteer (not necessarily the slot length) */
+            credit_hours: number;
+            capacity: number;
+            label: string | null;
+        };
+        /** @description A volunteer assigned to a slot; `id` is the assignment ID */
+        SlotVolunteer: {
+            id: number;
+            volunteer_id: number;
+            nickname: string;
+        };
+        SlotWithVolunteers: components["schemas"]["ScheduleSlot"] & {
+            volunteers: components["schemas"]["SlotVolunteer"][];
+        };
+        ScheduleVolunteer: {
+            id: number;
+            schedule_id: number;
+            /** @description Linked warehouse account; null = volunteer without an account */
+            user_id: number | null;
+            nickname: string;
+            city: string | null;
+            target_hours: number;
+            /** Format: date-time */
+            available_from: string;
+            /** Format: date-time */
+            available_to: string;
+            notes: string | null;
+            assigned_hours: number;
+            discord_confirmed: string | null;
+        };
+        VolunteerWithSlots: components["schemas"]["ScheduleVolunteer"] & {
+            /** @description IDs of the slots the volunteer is assigned to */
+            slots: number[];
+        };
+        /** @description Only the fields relevant to the issue type are present. */
+        ValidationIssue: {
+            /** @enum {string} */
+            type: "under_hours" | "over_hours" | "no_festival_shifts" | "slot_understaffed" | "insufficient_break" | "double_booked" | "outside_availability";
+            /** @enum {string} */
+            severity: "error" | "warning";
+            /** @description Volunteer nickname */
+            volunteer?: string;
+            volunteer_id?: number;
+            /** @description Slot description */
+            slot?: string;
+            slot_id?: number;
+            assigned?: number;
+            target?: number;
+            capacity?: number;
+            message: string;
+        };
+        ValidationResult: {
+            /** @description false when any issue has severity error */
+            valid: boolean;
+            issues: components["schemas"]["ValidationIssue"][];
+        };
+        DayWindow: {
+            id: number;
+            schedule_id: number;
+            /** @example 2026-06-16 */
+            date: string;
+            /** @example 10:00 */
+            window_start: string;
+            /** @example 18:00 */
+            window_end: string;
+        };
+        UpsertDayWindowRequest: {
+            /** @example 2026-06-16 */
+            date: string;
+            /** @example 10:00 */
+            window_start: string;
+            /** @example 18:00 */
+            window_end: string;
+        };
+        ScheduleDetail: components["schemas"]["Schedule"] & {
+            slots: components["schemas"]["SlotWithVolunteers"][];
+            volunteers: components["schemas"]["VolunteerWithSlots"][];
+            validation: components["schemas"]["ValidationResult"];
+            day_windows: components["schemas"]["DayWindow"][];
+        };
+        CreateScheduleRequest: {
+            name: string;
+            /** @example 2026-06-14 */
+            event_start: string;
+            /** @example 2026-06-23 */
+            event_end: string;
+            /** @example 2026-06-18 10:00 */
+            festival_start: string;
+            /** @example 2026-06-21 18:00 */
+            festival_end: string;
+        };
+        VolunteerInput: {
+            nickname: string;
+            city?: string | null;
+            /** @description Target hours (14 standard, 18 extended) */
+            hours: number;
+            /** @example 2026-06-16 08:00 */
+            available_from: string;
+            /** @example 2026-06-22 20:00 */
+            available_to: string;
+            notes?: string | null;
+            user_id?: number | null;
+        };
+        ImportVolunteersRequest: {
+            volunteers: components["schemas"]["VolunteerInput"][];
+        };
+        ImportFromSheetRequest: {
+            sheet_id: string;
+            sheet_name: string;
+        };
+        ImportResult: {
+            imported: number;
+            updated: number;
+            skipped: number;
+        };
+        ImportSheetResult: components["schemas"]["ImportResult"] & {
+            /** @description Rows that could not be parsed */
+            errors: string[];
+        };
+        UpdateVolunteerRequest: {
+            nickname?: string;
+            city?: string;
+            /** @description Target hours */
+            hours?: number;
+            /** @example 2026-06-16 08:00 */
+            available_from?: string;
+            /** @example 2026-06-16 20:00 */
+            available_to?: string;
+            notes?: string;
+            /** @description Linked account; explicit null unlinks, omitted keeps the link */
+            user_id?: number | null;
+        };
+        MySchedule: {
+            volunteer: components["schemas"]["ScheduleVolunteer"];
+            slots: components["schemas"]["MyScheduleSlot"][];
+        };
+        MyScheduleSlot: {
+            assignment_id: number;
+            slot_id: number;
+            slot_type: components["schemas"]["SlotType"];
+            /** Format: date-time */
+            start_time: string;
+            /** Format: date-time */
+            end_time: string;
+            credit_hours: number;
+            label: string | null;
+        };
+        AddAssignmentRequest: {
+            volunteer_id: number;
+            slot_id: number;
+        };
+        AssignmentDetail: {
+            id: number;
+            slot_id: number;
+            volunteer_id: number;
+            nickname: string;
+        };
+        MoveAssignmentRequest: {
+            assignment_id: number;
+            to_slot_id: number;
+        };
+        MoveResponse: {
+            deleted_assignment_id: number;
+            created_assignment: components["schemas"]["AssignmentDetail"];
+        };
+        SwapRequest: {
+            assignment_a: number;
+            assignment_b: number;
+        };
+        SwapResponse: {
+            assignment_a: components["schemas"]["AssignmentDetail"];
+            assignment_b: components["schemas"]["AssignmentDetail"];
+        };
+        CreateSlotRequest: {
+            type: components["schemas"]["SlotType"];
+            start: string;
+            end: string;
+            capacity?: number;
+            label?: string | null;
+        };
+        UpdateSlotRequest: {
+            type?: components["schemas"]["SlotType"];
+            start?: string;
+            end?: string;
+            capacity?: number;
+            label?: string | null;
+        };
+        /** @description Existing slot (`id`) or a new one (`temp_id`) */
+        DraftSlot: {
+            id?: number;
+            temp_id?: string;
+            type: components["schemas"]["SlotType"];
+            start: string;
+            end: string;
+            capacity?: number;
+            label?: string | null;
+        };
+        /** @description Refers to a slot by `slot_id` or, for a new slot, `slot_temp_id` */
+        DraftAssignment: {
+            volunteer_id: number;
+            slot_id?: number;
+            slot_temp_id?: string;
+        };
+        SaveDraftRequest: {
+            /** @description Version from the last read; 0 skips the conflict check */
+            version?: number;
+            slots: components["schemas"]["DraftSlot"][];
+            assignments: components["schemas"]["DraftAssignment"][];
+        };
+        SaveDraftResponse: {
+            schedule: components["schemas"]["ScheduleDetail"];
+            created_slots: {
+                temp_id: string;
+                id: number;
+            }[];
+            validation: components["schemas"]["ValidationResult"];
+        };
+        OnDutyUser: {
+            id: number;
+            username: string;
+            fullname: string | null;
+            avatar_url: string | null;
+            discord_username: string | null;
+        };
+        OnDutyEntry: {
+            volunteer_id: number;
+            nickname: string;
+            slot_id: number;
+            slot_label: string | null;
+            /** Format: date-time */
+            slot_end: string;
+            /** @enum {string} */
+            status: "available" | "on_mission";
+            current_mission: string | null;
+            user_id: number | null;
+            user: components["schemas"]["OnDutyUser"] | null;
+        };
         Message: {
             message: string;
         };
@@ -5050,49 +5505,17 @@ export interface components {
                 quantity: number;
             }[];
         };
-        DayWindow: {
-            id: number;
-            schedule_id: number;
-            /** @example 2026-06-16 */
-            date: string;
-            /** @example 10:00 */
-            window_start: string;
-            /** @example 18:00 */
-            window_end: string;
-        };
-        UpsertDayWindowRequest: {
-            /** @example 2026-06-16 */
-            date: string;
-            /** @example 10:00 */
-            window_start: string;
-            /** @example 18:00 */
-            window_end: string;
-        };
-        /** @description Full schedule state including slots, volunteers, validation, and day windows. */
-        ScheduleDetail: {
-            id: number;
-            name: string;
-            /** Format: date-time */
-            event_start: string;
-            /** Format: date-time */
-            event_end: string;
-            /** Format: date-time */
-            festival_start: string;
-            /** Format: date-time */
-            festival_end: string;
-            /** @enum {string} */
-            status: "draft" | "active" | "archived";
-            version: number;
-            /** Format: date-time */
-            created_at: string;
-            slots: components["schemas"]["SlotWithVolunteers"][];
-            volunteers: components["schemas"]["VolunteerWithSlots"][];
-            validation: components["schemas"]["ValidationResult"];
-            /** @description Custom operating windows per calendar date. Empty = all days use default 08:00–20:00. */
-            day_windows: components["schemas"]["DayWindow"][];
-        };
     };
     responses: {
+        /** @description Unexpected error */
+        ScheduleInternalError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ScheduleError"];
+            };
+        };
         /** @description Invalid request */
         BadRequest: {
             headers: {
@@ -7223,6 +7646,1049 @@ export interface operations {
                     "application/json": components["schemas"]["ServiceDeskRequestType"][];
                 };
             };
+        };
+    };
+    getSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active schedule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleDetail"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    createSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateScheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created schedule */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleDetail"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    deleteSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Schedule ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Schedule not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Event has not ended yet (event_not_ended) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    listScheduleVolunteers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Volunteers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleVolunteer"][];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    importVolunteers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportVolunteersRequest"];
+            };
+        };
+        responses: {
+            /** @description Import summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    importVolunteersFromSheet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportFromSheetRequest"];
+            };
+        };
+        responses: {
+            /** @description Import summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSheetResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+            /** @description Google Sheets integration not configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+        };
+    };
+    getMySchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description My schedule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySchedule"];
+                };
+            };
+            /** @description No active schedule, or the caller is not linked to a volunteer */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    deleteScheduleVolunteer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Volunteer ID */
+                vid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Volunteer not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    updateScheduleVolunteer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Volunteer ID */
+                vid: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVolunteerRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated volunteer */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleVolunteer"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Volunteer not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description user_id does not exist */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    generateSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Schedule after generation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleDetail"];
+                };
+            };
+            /** @description Generation blocked (details.volunteers) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    addAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddAssignmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Assignment */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentDetail"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Already assigned to this slot */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    deleteAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Assignment ID */
+                aid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    moveAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveAssignmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Moved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoveResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Assignment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Already assigned to the target slot */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    swapAssignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwapRequest"];
+            };
+        };
+        responses: {
+            /** @description Swapped */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwapResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description One or both assignments not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    createSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSlotRequest"];
+            };
+        };
+        responses: {
+            /** @description Slot */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleSlot"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    deleteSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slot ID */
+                sid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Festival slot */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Slot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    updateSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slot ID */
+                sid: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSlotRequest"];
+            };
+        };
+        responses: {
+            /** @description Slot */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleSlot"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Slot not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Cannot change the type of a festival slot */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    saveDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description Saved schedule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaveDraftResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description Version conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    validateSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Validation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationResult"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    validateDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description Validation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    exportScheduleCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    exportScheduleSheets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rows written */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        rows_written: number;
+                    };
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+            /** @description Google Sheets integration not configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+        };
+    };
+    getOnDuty: {
+        parameters: {
+            query?: {
+                /** @description RFC 3339 time */
+                at?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description On-duty volunteers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnDutyEntry"][];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    upsertDayWindow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpsertDayWindowRequest"];
+            };
+        };
+        responses: {
+            /** @description Window saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DayWindow"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    deleteDayWindow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Window deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Window not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    regenerateSlots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Schedule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleDetail"];
+                };
+            };
+            /** @description No active schedule */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleError"];
+                };
+            };
+            500: components["responses"]["ScheduleInternalError"];
         };
     };
 }

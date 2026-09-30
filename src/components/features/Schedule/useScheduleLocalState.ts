@@ -245,7 +245,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
         ...prev,
         slots: prev.slots.map((s) => {
           if (s.id !== slotId) return s;
-          const newVols = [...s.volunteers, { id: tempId, nickname }];
+          const newVols = [...s.volunteers, { id: tempId, volunteer_id: volunteerId, nickname }];
           // Auto-increase capacity if slot is full
           const newCapacity = Math.max(s.capacity, newVols.length);
           return { ...s, volunteers: newVols, capacity: newCapacity };
@@ -325,7 +325,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
             return { ...s, volunteers: s.volunteers.filter((sv) => sv.id !== assignmentId) };
           }
           if (s.id === toSlotId) {
-            return { ...s, volunteers: [...s.volunteers, { id: tempId, nickname }] };
+            return { ...s, volunteers: [...s.volunteers, { id: tempId, volunteer_id: volunteerId, nickname }] };
           }
           return s;
         }),
@@ -352,6 +352,7 @@ export function useScheduleLocalState(): UseScheduleLocalStateReturn {
       if (!prev) return prev;
       const newSlot: ScheduleSlot = {
         id: tempId,
+        schedule_id: prev.id,
         type,
         label: autoLabel,
         start,

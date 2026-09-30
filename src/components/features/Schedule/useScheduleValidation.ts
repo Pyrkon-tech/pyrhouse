@@ -48,7 +48,6 @@ export function useScheduleValidation(
           type: 'slot_too_long',
           severity: 'error',
           slot_id: slot.id,
-          slot: slot.id,
           message: `${slot.label}: slot trwa ${durationH}h (max 8h)`,
         });
       }

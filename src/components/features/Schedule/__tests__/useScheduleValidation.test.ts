@@ -8,6 +8,7 @@ import type { ScheduleSlot, ScheduleVolunteer } from '../../../../types/schedule
 function makeSlot(overrides: Partial<ScheduleSlot> = {}): ScheduleSlot {
   return {
     id: 1,
+    schedule_id: 1,
     type: 'festival',
     label: 'Festival 1',
     start: '2026-06-19T10:00:00Z',
@@ -22,10 +23,17 @@ function makeSlot(overrides: Partial<ScheduleSlot> = {}): ScheduleSlot {
 function makeVol(overrides: Partial<ScheduleVolunteer> = {}): ScheduleVolunteer {
   return {
     id: 1,
+    schedule_id: 1,
     nickname: 'Alice',
     user_id: null,
+    city: null,
     target_hours: 14,
+    // The API always sends the availability window; default to the whole month
+    available_from: '2026-06-01T00:00:00Z',
+    available_to: '2026-06-30T23:59:59Z',
+    notes: null,
     assigned_hours: 0,
+    discord_confirmed: null,
     slots: [],
     ...overrides,
   };
@@ -39,16 +47,16 @@ describe('useScheduleValidation', () => {
     // is signalled visually in the grid, not as a validation issue
     it('does not flag under/overstaffed slots', () => {
       const slots = [
-        makeSlot({ id: 1, capacity: 3, volunteers: [{ id: 1, nickname: 'Alice' }] }),
+        makeSlot({ id: 1, capacity: 3, volunteers: [{ id: 1, volunteer_id: 1, nickname: 'Alice' }] }),
         makeSlot({
           id: 2,
           capacity: 1,
-          volunteers: [{ id: 1, nickname: 'Alice' }, { id: 2, nickname: 'Bob' }],
+          volunteers: [{ id: 1, volunteer_id: 1, nickname: 'Alice' }, { id: 2, volunteer_id: 2, nickname: 'Bob' }],
         }),
       ];
       const { result } = renderHook(() => useScheduleValidation(slots, []));
       const capacityIssues = result.current.issues.filter(
-        (i) => i.type === 'slot_understaffed' || i.type === 'slot_overstaffed',
+        (i) => i.type === 'slot_understaffed',
       );
       expect(capacityIssues).toHaveLength(0);
     });
@@ -87,13 +95,13 @@ describe('useScheduleValidation', () => {
           id: 1,
           start: '2026-06-19T10:00:00Z',
           end: '2026-06-19T14:00:00Z',
-          volunteers: [{ id: 100, nickname: 'Alice' }],
+          volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
         }),
         makeSlot({
           id: 2,
           start: '2026-06-19T12:00:00Z',
           end: '2026-06-19T16:00:00Z',
-          volunteers: [{ id: 101, nickname: 'Alice' }],
+          volunteers: [{ id: 101, volunteer_id: 101, nickname: 'Alice' }],
         }),
       ];
       const vols = [makeVol({ id: 1, nickname: 'Alice' })];
@@ -110,13 +118,13 @@ describe('useScheduleValidation', () => {
           id: 1,
           start: '2026-06-19T08:00:00Z',
           end: '2026-06-19T10:00:00Z',
-          volunteers: [{ id: 100, nickname: 'Alice' }],
+          volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
         }),
         makeSlot({
           id: 2,
           start: '2026-06-19T10:00:00Z',
           end: '2026-06-19T12:00:00Z',
-          volunteers: [{ id: 101, nickname: 'Alice' }],
+          volunteers: [{ id: 101, volunteer_id: 101, nickname: 'Alice' }],
         }),
       ];
       const vols = [makeVol({ id: 1, nickname: 'Alice' })];
@@ -131,13 +139,13 @@ describe('useScheduleValidation', () => {
           id: 1,
           start: '2026-06-19T10:00:00Z',
           end: '2026-06-19T14:00:00Z',
-          volunteers: [{ id: 100, nickname: 'Alice' }],
+          volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
         }),
         makeSlot({
           id: 2,
           start: '2026-06-19T12:00:00Z',
           end: '2026-06-19T16:00:00Z',
-          volunteers: [{ id: 101, nickname: 'Bob' }],
+          volunteers: [{ id: 101, volunteer_id: 101, nickname: 'Bob' }],
         }),
       ];
       const vols = [
@@ -155,7 +163,7 @@ describe('useScheduleValidation', () => {
       const slots = [makeSlot({
         start: '2026-06-18T10:00:00Z',
         end: '2026-06-18T14:00:00Z',
-        volunteers: [{ id: 100, nickname: 'Alice' }],
+        volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
       })];
       const vols = [makeVol({
         nickname: 'Alice',
@@ -172,7 +180,7 @@ describe('useScheduleValidation', () => {
       const slots = [makeSlot({
         start: '2026-06-22T20:00:00Z',
         end: '2026-06-22T23:00:00Z',
-        volunteers: [{ id: 100, nickname: 'Alice' }],
+        volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
       })];
       const vols = [makeVol({
         nickname: 'Alice',
@@ -188,7 +196,7 @@ describe('useScheduleValidation', () => {
       const slots = [makeSlot({
         start: '2026-06-19T10:00:00Z',
         end: '2026-06-19T14:00:00Z',
-        volunteers: [{ id: 100, nickname: 'Alice' }],
+        volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
       })];
       const vols = [makeVol({
         nickname: 'Alice',
@@ -200,11 +208,11 @@ describe('useScheduleValidation', () => {
       expect(issue).toBeUndefined();
     });
 
-    it('skips availability check when no window set', () => {
+    it('does not flag a slot inside the availability window', () => {
       const slots = [makeSlot({
-        volunteers: [{ id: 100, nickname: 'Alice' }],
+        volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
       })];
-      const vols = [makeVol({ nickname: 'Alice' })]; // no available_from/to
+      const vols = [makeVol({ nickname: 'Alice' })]; // default window covers the slot
       const { result } = renderHook(() => useScheduleValidation(slots, vols));
       const issue = result.current.issues.find((i) => i.type === 'outside_availability');
       expect(issue).toBeUndefined();
@@ -215,7 +223,7 @@ describe('useScheduleValidation', () => {
     it('returns valid=true when no issues', () => {
       const slots = [makeSlot({
         capacity: 1,
-        volunteers: [{ id: 100, nickname: 'Alice' }],
+        volunteers: [{ id: 100, volunteer_id: 100, nickname: 'Alice' }],
       })];
       const vols = [makeVol({ assigned_hours: 14, target_hours: 14 })];
       const { result } = renderHook(() => useScheduleValidation(slots, vols));

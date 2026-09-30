@@ -156,7 +156,7 @@ export function buildGridData(
       if (issue.volunteer_id) {
         (isError ? errorVolunteerIds : warningVolunteerIds).add(issue.volunteer_id);
       }
-      const slotId = issue.slot_id ?? issue.slot;
+      const slotId = issue.slot_id;
       if (slotId) {
         (isError ? errorSlotIds : warningSlotIds).add(slotId);
       }
@@ -470,7 +470,7 @@ export function buildTimelineData(
       if (issue.volunteer_id) {
         (isError ? errorVolunteerIds : warningVolunteerIds).add(issue.volunteer_id);
       }
-      const slotId = issue.slot_id ?? issue.slot;
+      const slotId = issue.slot_id;
       if (slotId) {
         (isError ? errorSlotIds : warningSlotIds).add(slotId);
       }
@@ -808,7 +808,7 @@ export function buildCalendarData(
   const warningSlotIds = new Set<number>();
   if (validation) {
     for (const issue of validation.issues) {
-      const slotId = issue.slot_id ?? issue.slot;
+      const slotId = issue.slot_id;
       if (slotId != null) {
         (issue.severity === 'error' ? errorSlotIds : warningSlotIds).add(slotId);
       }

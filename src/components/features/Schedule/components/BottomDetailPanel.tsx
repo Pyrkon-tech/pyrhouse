@@ -54,7 +54,7 @@ const BottomDetailPanel: React.FC<BottomDetailPanelProps> = ({
   const nicknameToVol = new Map(volunteers.map((v) => [v.nickname, v]));
 
   const slotIssues = validationIssues.filter(
-    (i) => i.slot_id === selectedSlotId || i.slot === selectedSlotId,
+    (i) => i.slot_id === selectedSlotId,
   );
 
   const headerRef = React.useRef<HTMLDivElement>(null);
