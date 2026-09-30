@@ -4,37 +4,25 @@
 
 import { apiClient } from './apiClient';
 import type {
-  User,
   UserListItem,
   UserDetails,
-  LoginResponse,
-  RegisterResponse,
+  AdjustPointsResponse,
   LinkDiscordPayload,
-  LinkDiscordResponse,
   MergeDiscordResponse,
   LinkGooglePayload,
-  LinkGoogleResponse,
 } from '../types/user.types';
+
+type Message = { message?: string };
 
 // ============================================================================
 // Auth (publiczne endpointy)
 // ============================================================================
 
 /**
- * Logowanie użytkownika
- */
-export const loginUser = (username: string, password: string) =>
-  apiClient.post<LoginResponse>('/users/login', { username, password }, { skipAuth: true });
-
-/**
- * Rejestracja użytkownika
+ * Rejestracja użytkownika (konto nieaktywne do czasu aktywacji przez moderatora; 409 = zajęta nazwa)
  */
 export const registerUser = (username: string, password: string, fullname: string) =>
-  apiClient.post<RegisterResponse>(
-    '/users/register',
-    { username, password, fullname },
-    { skipAuth: true }
-  );
+  apiClient.post<Message>('/users/register', { username, password, fullname }, { skipAuth: true });
 
 // ============================================================================
 // User Management (wymagają autoryzacji)
@@ -43,7 +31,7 @@ export const registerUser = (username: string, password: string, fullname: strin
 /**
  * Pobiera listę wszystkich użytkowników (bez discord_id/avatar_url)
  */
-export const getUsersAPI = () => apiClient.get<UserListItem[]>('/users');
+export const getUsersAPI = () => apiClient.getList<UserListItem>('/users');
 
 /**
  * Pobiera szczegóły użytkownika (z pełnymi danymi Discord)
@@ -54,7 +42,7 @@ export const getUserAPI = (userId: number) => apiClient.get<UserDetails>(`/users
  * Dodaje punkty użytkownikowi
  */
 export const addUserPointsAPI = (userId: number, points: number) =>
-  apiClient.post<User>(`/users/${userId}/points`, { points });
+  apiClient.post<AdjustPointsResponse>(`/users/${userId}/points`, { points });
 
 // ============================================================================
 // Discord Integration
@@ -72,7 +60,7 @@ export const addUserPointsAPI = (userId: number, points: number) =>
  * - 500: Błąd komunikacji z Discord API
  */
 export const linkDiscordAPI = (userId: number, payload: LinkDiscordPayload) =>
-  apiClient.post<LinkDiscordResponse>(`/users/${userId}/link-discord`, payload);
+  apiClient.post<Message>(`/users/${userId}/link-discord`, payload);
 
 /**
  * Scala ghost konto Discord z kontem docelowym
@@ -107,4 +95,4 @@ export const mergeDiscordAPI = (targetUserId: number, sourceUserId: number) =>
  * - 409: Konto Google jest już podłączone do innego usera
  */
 export const linkGoogleAPI = (userId: number, payload: LinkGooglePayload) =>
-  apiClient.post<LinkGoogleResponse>(`/users/${userId}/link-google`, payload);
+  apiClient.post<Message>(`/users/${userId}/link-google`, payload);

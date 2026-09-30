@@ -609,15 +609,35 @@ export interface paths {
         };
         /**
          * List all users
-         * @description Returns a list of all users. Requires moderator role or higher.
+         * @description Returns all users ordered by ID. Requires dispatcher role or higher.
          */
         get: operations["listUsers"];
         put?: never;
         /**
          * Create a user
-         * @description Creates a new user account. Requires admin role.
+         * @description Creates an active user account. Requires admin role.
          */
         post: operations["createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Self-register
+         * @description Public. Creates an inactive account with role `user` and no points (any `role`, `points` or `active` in the body is ignored); a moderator activates it.
+         */
+        post: operations["registerUser"];
         delete?: never;
         options?: never;
         head?: never;
@@ -636,17 +656,21 @@ export interface paths {
         };
         /**
          * Get user by ID
-         * @description Returns a single user. Requires user role or higher.
+         * @description Own account, or any account for moderator+.
          */
         get: operations["getUser"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete a user
+         * @description Requires admin role. 409 when the user still has linked records.
+         */
+        delete: operations["deleteUser"];
         options?: never;
         head?: never;
         /**
          * Update a user
-         * @description Updates an existing user. Requires admin role.
+         * @description Updates the given fields. Owners may change their own fullname, username and password; moderators may also (de)activate plain users; admins may change everything including role and points.
          */
         patch: operations["updateUser"];
         trace?: never;
@@ -665,17 +689,59 @@ export interface paths {
         put?: never;
         /**
          * Adjust user points
-         * @description Adds or subtracts points from a user. Use positive values to add, negative to subtract. Requires admin role.
+         * @description Adds (positive) or subtracts (negative) points. Requires admin role.
          */
         post: operations["adjustUserPoints"];
         delete?: never;
         options?: never;
         head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}/merge-discord": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
-         * Set user points
-         * @description Sets the absolute points value for a user. Requires admin role.
+         * Merge a Discord ghost account
+         * @description Moves the Discord identity of `source_user_id` (an account created by Discord login) onto this user. The source is deleted, or deactivated when it still has linked records. Requires moderator role.
          */
-        patch: operations["setUserPoints"];
+        post: operations["mergeDiscord"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}/link-google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link Google account
+         * @description Links a Google account (authorization code from the Google OAuth flow). Owner or admin.
+         */
+        post: operations["linkGoogle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/users/{id}/link-discord": {
@@ -4372,16 +4438,29 @@ export interface components {
             /** @description Last reported GPS position, null until one is reported */
             delivery_location?: components["schemas"]["DeliveryLocation"] | null;
         };
-        User: {
-            /**
-             * Format: int64
-             * @example 1
-             */
+        /**
+         * @description How the account was created
+         * @enum {string}
+         */
+        AuthProvider: "local" | "discord" | "google";
+        /** @description A row of GET /users (no OAuth identifiers) */
+        UserListItem: {
+            id: number;
+            username: string;
+            fullname: string | null;
+            role: components["schemas"]["Role"];
+            points: number;
+            active: boolean;
+            discord_username: string | null;
+            auth_provider: components["schemas"]["AuthProvider"];
+        };
+        UserDetails: {
+            /** @example 1 */
             id: number;
             /** @example johndoe */
             username: string;
             /** @example John Doe */
-            fullname: string;
+            fullname: string | null;
             role: components["schemas"]["Role"];
             /**
              * @description User reward points
@@ -4393,34 +4472,24 @@ export interface components {
              * @example true
              */
             active: boolean;
-            /**
-             * @description Discord user ID (if linked)
-             * @example 123456789012345678
-             */
+            /** @description Discord user ID (if linked) */
             discord_id: string | null;
-            /**
-             * @description Discord username (if linked)
-             * @example user#1234
-             */
+            /** @description Discord username (if linked) */
             discord_username: string | null;
-            /**
-             * @description Discord avatar URL (if linked)
-             * @example https://cdn.discordapp.com/avatars/123/abc.png
-             */
+            /** @description Avatar URL from Discord or Google (if linked) */
             avatar_url: string | null;
-            /**
-             * @description Authentication method
-             * @example local
-             * @enum {string}
-             */
-            auth_provider: "local" | "discord";
+            /** @description Google account ID (if linked) */
+            google_id: string | null;
+            /** @description Google account e-mail (if linked) */
+            google_email: string | null;
+            auth_provider: components["schemas"]["AuthProvider"];
         };
         /**
-         * @description User permission level (hierarchical)
+         * @description User permission level (hierarchical: user < dispatcher < moderator < admin)
          * @example user
          * @enum {string}
          */
-        Role: "user" | "moderator" | "admin";
+        Role: "user" | "dispatcher" | "moderator" | "admin";
         /** @description Equipment request quest (historic quests were imported from the Google Sheets form) */
         EquipmentRequestQuest: {
             /**
@@ -6117,16 +6186,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"][];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
+                    "application/json": components["schemas"]["UserListItem"][];
                 };
             };
             /** @description Forbidden - insufficient permissions */
@@ -6151,13 +6211,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example johndoe */
                     username: string;
-                    /** @example password123 */
                     password: string;
-                    /** @example John Doe */
                     fullname?: string;
-                    role: components["schemas"]["Role"];
+                    role?: components["schemas"]["Role"];
+                    points?: number;
                 };
             };
         };
@@ -6168,10 +6226,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @example User registered successfully */
-                        message: string;
-                    };
+                    "application/json": components["schemas"]["Message"];
                 };
             };
             /** @description Invalid request payload */
@@ -6183,8 +6238,8 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            /** @description Forbidden - insufficient permissions */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6192,8 +6247,55 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Forbidden - insufficient permissions */
-            403: {
+            /** @description Username already taken (code USERNAME_TAKEN) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    registerUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    username: string;
+                    password: string;
+                    fullname?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Account created (inactive) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Username already taken (code USERNAME_TAKEN) */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6222,7 +6324,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"];
+                    "application/json": components["schemas"]["UserDetails"];
                 };
             };
             /** @description Invalid user ID */
@@ -6234,8 +6336,50 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            /** @description Forbidden - not your account */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Invalid user ID */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6252,8 +6396,8 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description User not found */
-            404: {
+            /** @description User has linked records */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6277,22 +6421,23 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example John Doe Updated */
-                    fullname: string;
-                    /** @example newpassword123 */
-                    password: string;
-                    role: components["schemas"]["Role"];
+                    fullname?: string;
+                    username?: string;
+                    password?: string;
+                    role?: components["schemas"]["Role"];
+                    points?: number;
+                    active?: boolean;
                 };
             };
         };
         responses: {
-            /** @description User updated */
+            /** @description Updated user */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"];
+                    "application/json": components["schemas"]["UserDetails"];
                 };
             };
             /** @description Invalid request payload or user ID */
@@ -6304,8 +6449,70 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            /** @description Forbidden - insufficient permissions for a field */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Username already taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    adjustUserPoints: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Points to add (positive) or subtract (negative) */
+                    points: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Points adjusted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                        /** @description Current points after adjustment */
+                        points: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6334,7 +6541,7 @@ export interface operations {
             500: components["responses"]["DefaultError"];
         };
     };
-    adjustUserPoints: {
+    mergeDiscord: {
         parameters: {
             query?: never;
             header?: never;
@@ -6347,33 +6554,25 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /**
-                     * @description Points to add (positive) or subtract (negative)
-                     * @example 10
-                     */
-                    points: number;
+                    source_user_id: number;
                 };
             };
         };
         responses: {
-            /** @description Points adjusted */
+            /** @description Merged */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @example User points updated successfully */
                         message: string;
-                        /**
-                         * @description Current points after adjustment
-                         * @example 110
-                         */
-                        points: number;
+                        /** @description false = the source was deactivated instead of deleted */
+                        source_deleted: boolean;
                     };
                 };
             };
-            /** @description Invalid request payload */
+            /** @description Same user, or the source has no Discord account */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -6382,8 +6581,8 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            /** @description Source or target not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6391,8 +6590,8 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Forbidden - insufficient permissions */
-            403: {
+            /** @description Target already has a Discord account */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6403,7 +6602,7 @@ export interface operations {
             500: components["responses"]["DefaultError"];
         };
     };
-    setUserPoints: {
+    linkGoogle: {
         parameters: {
             query?: never;
             header?: never;
@@ -6416,28 +6615,22 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /**
-                     * @description New absolute points value
-                     * @example 100
-                     */
-                    points: number;
+                    code: string;
+                    redirect_uri: string;
                 };
             };
         };
         responses: {
-            /** @description Points updated */
+            /** @description Google account linked */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @example User points updated successfully */
-                        message: string;
-                    };
+                    "application/json": components["schemas"]["Message"];
                 };
             };
-            /** @description Invalid request payload */
+            /** @description Invalid request or code exchange failed */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -6446,8 +6639,8 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            /** @description Not your account, or the Google domain is not allowed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6455,8 +6648,8 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
-            /** @description Forbidden - insufficient permissions */
-            403: {
+            /** @description Google account already linked to another user */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

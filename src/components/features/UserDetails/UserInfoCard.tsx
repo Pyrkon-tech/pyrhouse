@@ -16,9 +16,15 @@ import {
   SelectChangeEvent,
   Tooltip,
 } from '@mui/material';
-import type { UserDetails } from '../../../types/user.types';
+import type { AuthProvider, UserDetails } from '../../../types/user.types';
 import { DiscordIcon, DISCORD_COLOR } from './brandIcons';
 import { getRoleColor } from './roleColors';
+
+const AUTH_PROVIDER_LABELS: Record<AuthProvider, string> = {
+  local: 'Hasło',
+  discord: 'Discord',
+  google: 'Google',
+};
 
 const EditIcon = lazy(() => import('@mui/icons-material/Edit'));
 const LockIcon = lazy(() => import('@mui/icons-material/Lock'));
@@ -177,7 +183,7 @@ const UserInfoCard: React.FC<UserInfoCardProps> = ({
               color: "text.secondary"
             }}>Metoda logowania</Typography>
             <Typography variant="body1">
-              {user.auth_provider === 'discord' ? 'Discord OAuth' : 'Hasło'}
+              {AUTH_PROVIDER_LABELS[user.auth_provider]}
             </Typography>
           </Grid>
 

@@ -144,9 +144,15 @@ const LoginForm: React.FC = () => {
       setFullname('');
       setUsername('');
       setPassword('');
-      showSnackbar('success', 'Zarejestrowano pomyślnie. Możesz się teraz zalogować.');
+      // New accounts are inactive until a moderator activates them
+      showSnackbar('success', 'Konto założone. Zalogujesz się, gdy moderator je aktywuje.');
     } catch (err) {
-      const message = err instanceof Error && err.message ? err.message : 'Wystąpił błąd';
+      const message =
+        err instanceof ApiError && err.status === 409
+          ? 'Ta nazwa użytkownika jest już zajęta'
+          : err instanceof Error && err.message
+            ? err.message
+            : 'Wystąpił błąd';
       setRegisterError(message);
       showSnackbar('error', message);
     } finally {
