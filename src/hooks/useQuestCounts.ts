@@ -7,7 +7,8 @@ type QuestCounts = paths['/equipment-requests/quests/counts']['get']['responses'
 const EMPTY: QuestCounts = { pending: 0, in_progress: 0, completed: 0, cancelled: 0 };
 
 /** Quest counts per status from one grouped query (GET /equipment-requests/quests/counts). */
-export const useQuestCounts = () => {
+/** @param refreshMs poll interval (menu badges); omitted = load once */
+export const useQuestCounts = (refreshMs?: number) => {
   const [counts, setCounts] = useState<QuestCounts>(EMPTY);
 
   const fetchCounts = useCallback(async () => {
@@ -20,7 +21,10 @@ export const useQuestCounts = () => {
 
   useEffect(() => {
     fetchCounts();
-  }, [fetchCounts]);
+    if (!refreshMs) return;
+    const id = setInterval(fetchCounts, refreshMs);
+    return () => clearInterval(id);
+  }, [fetchCounts, refreshMs]);
 
   return { counts, refreshCounts: fetchCounts };
 };

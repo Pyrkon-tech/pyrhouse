@@ -35,7 +35,7 @@ interface SidebarNavProps {
   isMobile: boolean;
   userRole: string | null;
   /** Counters for queue items (NavItem.badge) */
-  badges: { shop?: number };
+  badges: { shop?: number; quests?: number; servicedesk?: number };
   onItemClick: (path: string) => void;
 }
 

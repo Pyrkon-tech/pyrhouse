@@ -20,6 +20,10 @@ import SidebarNav from './SidebarNav';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
 import { useShopPendingCount } from '../../hooks/useShopPendingCount';
+import { useQuestCounts } from '../../hooks/useQuestCounts';
+import { useServiceDeskCounts } from '../../hooks/useServiceDeskCounts';
+
+const BADGE_REFRESH_MS = 60_000;
 
 const DRAWER_WIDTH = 220;
 const RAIL_WIDTH = 56;
@@ -138,6 +142,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const shopPending = useShopPendingCount(userRole === 'admin' || userRole === 'moderator');
+  // Queue counters in the menu: pending quests, new service desk requests
+  const { counts: questCounts } = useQuestCounts(BADGE_REFRESH_MS);
+  const { counts: sdCounts } = useServiceDeskCounts(BADGE_REFRESH_MS);
   const showFullNav = open || isMobile;
 
   const virtualParents: Record<string, string[]> = {
@@ -270,7 +277,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           showFullNav={showFullNav}
           isMobile={isMobile}
           userRole={userRole}
-          badges={{ shop: shopPending }}
+          badges={{ shop: shopPending, quests: questCounts.pending, servicedesk: sdCounts.new }}
           onItemClick={handleMenuItemClick}
         />
       </Drawer>

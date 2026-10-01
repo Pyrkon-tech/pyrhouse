@@ -48,6 +48,23 @@ describe('SidebarNav', () => {
     expect(screen.getByRole('link', { name: /Administracja/ })).toHaveAttribute('href', '/categories');
   });
 
+  it('shows queue counters on Zapotrzebowania and Service Desk', () => {
+    render(
+      <MemoryRouter>
+        <SidebarNav
+          activeItem="/home"
+          showFullNav
+          isMobile={false}
+          userRole="user"
+          badges={{ quests: 5, servicedesk: 2 }}
+          onItemClick={() => {}}
+        />
+      </MemoryRouter>,
+    );
+    expect(within(screen.getByRole('link', { name: /Zapotrzebowania/ })).getByText('5')).toBeInTheDocument();
+    expect(within(screen.getByRole('link', { name: /Service Desk/ })).getByText('2')).toBeInTheDocument();
+  });
+
   it('has no Administracja for a plain user', () => {
     renderNav('user');
     expect(screen.queryByRole('link', { name: /Administracja/ })).toBeNull();

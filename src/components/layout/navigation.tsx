@@ -88,7 +88,7 @@ export interface NavItem {
   /** Highlight the item for every path under these prefixes */
   activePrefixes?: string[];
   /** Counter source shown next to the label */
-  badge?: 'shop';
+  badge?: 'shop' | 'quests' | 'servicedesk';
   /** Small hint after the label */
   tag?: string;
   hideOnMobile?: boolean;
@@ -105,8 +105,8 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Operacje',
     items: [
       { path: '/dispatch', label: 'Dispatch', icon: <Icons.Map />, hideOnMobile: true },
-      { path: '/quests', label: 'Zapotrzebowania', icon: <Icons.AddBusiness />, activePrefixes: ['/quests'] },
-      { path: '/servicedesk', label: 'Service Desk', icon: <Icons.MedicalServices />, activePrefixes: ['/servicedesk'] },
+      { path: '/quests', label: 'Zapotrzebowania', icon: <Icons.AddBusiness />, activePrefixes: ['/quests'], badge: 'quests' },
+      { path: '/servicedesk', label: 'Service Desk', icon: <Icons.MedicalServices />, activePrefixes: ['/servicedesk'], badge: 'servicedesk' },
       { path: '/transfers', label: 'Transfery', icon: <Icons.ShoppingBasket />, activePrefixes: ['/transfers'] },
       { path: '/duty-schedule', label: 'Grafik', icon: <Icons.Event />, allowedRoles: ['admin', 'moderator'] },
       { path: '/releases', label: 'Demontażkon', icon: <Icons.Outbox />, activePrefixes: ['/releases'], tag: 'po Pyrkonie' },
