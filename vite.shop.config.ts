@@ -28,6 +28,9 @@ const shopHtml = (): Plugin => ({
 // warehouse (docs/shop/PLAN.md, D1). No PWA: organizers use it a few times a year.
 export default defineConfig({
   publicDir: path.resolve(__dirname, 'shop/public'),
+  // Own dependency cache: `make dev` runs both apps at once, and a shared node_modules/.vite makes each
+  // dev server invalidate the other's optimized deps (504 "Outdated Optimize Dep", blank pages).
+  cacheDir: 'node_modules/.vite-shop',
   plugins: [
     shopHtml(),
     react({
