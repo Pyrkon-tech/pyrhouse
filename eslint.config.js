@@ -77,6 +77,11 @@ export default [
     files: ['**/*.{ts,tsx}'],
     rules: {
       'no-undef': 'off',
+      // Go sends an empty list as null; getList always returns an array (frontend/CLAUDE.md)
+      'no-restricted-syntax': ['error', {
+        selector: "CallExpression[callee.property.name='get'] > TSTypeParameterInstantiation > TSArrayType",
+        message: 'Fetch lists with apiClient.getList<T>() — the backend may send null for an empty list.',
+      }],
     },
   },
   {

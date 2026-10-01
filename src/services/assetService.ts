@@ -98,7 +98,7 @@ export const getReservationsAPI = (params?: { status?: ReservationStatus; catego
   if (params?.status) query.set('status', params.status);
   if (params?.category_id) query.set('category_id', String(params.category_id));
   const qs = query.toString();
-  return apiClient.get<AssetReservation[]>(`/assets/reservations${qs ? `?${qs}` : ''}`);
+  return apiClient.getList<AssetReservation>(`/assets/reservations${qs ? `?${qs}` : ''}`);
 };
 
 export const claimReservationsAPI = (payload: ClaimReservationsPayload) =>

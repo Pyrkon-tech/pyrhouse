@@ -3,11 +3,11 @@ import type { Origin, CreateOriginPayload, UpdateOriginPayload } from '../types/
 
 /** Lista aktywnych originów (dla formularzy, dropdownów) */
 export const getOriginsAPI = () =>
-  apiClient.get<Origin[]>('/origins');
+  apiClient.getList<Origin>('/origins');
 
 /** Lista wszystkich originów włącznie z nieaktywnymi (moderator+) */
 export const getAllOriginsAPI = () =>
-  apiClient.get<Origin[]>('/origins/all');
+  apiClient.getList<Origin>('/origins/all');
 
 /** Tworzy nowy origin (admin) */
 export const createOriginAPI = (payload: CreateOriginPayload) =>

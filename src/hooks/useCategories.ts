@@ -52,7 +52,7 @@ export const useCategories = () => {
         }
       }
 
-      const data = await apiClient.get<Category[]>('/assets/categories');
+      const data = await apiClient.getList<Category>('/assets/categories');
 
       // Update cache
       localStorage.setItem(CACHE_KEY, JSON.stringify({

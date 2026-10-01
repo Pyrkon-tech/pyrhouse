@@ -35,7 +35,7 @@ const DispatchPage: React.FC = () => {
 
   const fetchSdRequests = useCallback(async () => {
     try {
-      const data = await apiClient.get<ServiceDeskRequest[]>(
+      const data = await apiClient.getList<ServiceDeskRequest>(
         '/service-desk/requests?status=new,in_progress,waiting&limit=500'
       );
       setSdRequests(Array.isArray(data) ? data : []);

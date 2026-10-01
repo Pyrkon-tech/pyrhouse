@@ -17,7 +17,7 @@ export const useServiceDeskTypes = () => {
     }
     setLoading(true);
     apiClient
-      .get<ServiceDeskRequestTypeInfo[]>(TYPES_API)
+      .getList<ServiceDeskRequestTypeInfo>(TYPES_API)
       .then((data) => {
         const map: Record<string, ServiceDeskRequestTypeInfo> = {};
         data.forEach((t) => { map[t.id] = t; });

@@ -51,7 +51,7 @@ export const useOrigins = (fetchAll = false) => {
     setError(null);
     try {
       const endpoint = fetchAll ? '/origins/all' : '/origins';
-      const data = await apiClient.get<Origin[]>(endpoint);
+      const data = await apiClient.getList<Origin>(endpoint);
       if (!fetchAll) {
         localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
       }

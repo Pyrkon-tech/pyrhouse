@@ -15,7 +15,7 @@ export const useServiceDeskRequests = (status: string, search: string) => {
     const params = new URLSearchParams();
     if (status && status !== 'all') params.append('status', status);
     apiClient
-      .get<ServiceDeskRequest[]>(`${REQUESTS_API}?${params.toString()}`)
+      .getList<ServiceDeskRequest>(`${REQUESTS_API}?${params.toString()}`)
       .then(setRequests)
       .catch((e) =>
         setError(e instanceof ApiError ? e.message : 'Błąd pobierania zgłoszeń')

@@ -21,7 +21,7 @@ export const useServiceDeskComments = (requestId: string | number | undefined) =
     setLoading(true);
     setError(null);
     try {
-      const data = await apiClient.get<ServiceDeskComment[]>(`/service-desk/requests/${requestId}/comments`);
+      const data = await apiClient.getList<ServiceDeskComment>(`/service-desk/requests/${requestId}/comments`);
       setComments(Array.isArray(data) ? data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : []);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Błąd pobierania komentarzy');

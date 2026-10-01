@@ -18,7 +18,7 @@ export const getReleasesAPI = (filters?: { status?: string; origin_id?: number }
   if (filters?.status) params.append('status', filters.status);
   if (filters?.origin_id) params.append('origin_id', String(filters.origin_id));
   const qs = params.toString();
-  return apiClient.get<Release[]>(qs ? `/releases?${qs}` : '/releases');
+  return apiClient.getList<Release>(qs ? `/releases?${qs}` : '/releases');
 };
 
 export const getReleaseAPI = (id: number): Promise<ReleaseDetail> =>

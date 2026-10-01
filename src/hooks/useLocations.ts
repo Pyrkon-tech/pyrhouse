@@ -11,7 +11,7 @@ export const useLocations = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiClient.get<Location[]>('/locations');
+      const data = await apiClient.getList<Location>('/locations');
       setLocations(data);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Nie udało się pobrać lokalizacji');
