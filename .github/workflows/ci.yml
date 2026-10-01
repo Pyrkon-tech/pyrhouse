@@ -38,6 +38,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      # The organizer shop is a second app in this repo (shop.pyrhouse.space)
+      - name: Build shop
+        run: npm run build:shop
+
       # Browser smoke: catches runtime crashes a green build hides
       # (e.g. the MUI-icon interop crash that broke prod while build passed)
       - name: Install Playwright Chromium
