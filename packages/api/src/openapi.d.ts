@@ -15,29 +15,7 @@ export interface paths {
          * Health check
          * @description Returns application health status, uptime, and version.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Application is healthy */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example ok */
-                            status: string;
-                        };
-                    };
-                };
-            };
-        };
+        get: operations["getHealth"];
         put?: never;
         post?: never;
         delete?: never;
@@ -270,7 +248,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List stock items */
+        get: operations["listStocks"];
         put?: never;
         /**
          * Create a stock item
@@ -556,7 +535,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/categories": {
+    "/assets/{assetID}/serial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Asset ID */
+                assetID: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change an asset's serial number
+         * @description Requires dispatcher role.
+         */
+        patch: operations["updateAssetSerial"];
+        trace?: never;
+    };
+    "/assets/{assetID}/logs/location": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Asset ID */
+                assetID: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Log an asset's GPS position
+         * @description Appends a location entry to the asset's audit log (shown on the asset timeline).
+         */
+        patch: operations["logAssetLocation"];
+        trace?: never;
+    };
+    "/assets/report": {
         parameters: {
             query?: never;
             header?: never;
@@ -564,23 +589,91 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List all categories
-         * @description Returns all item categories.
+         * Assets report (CSV)
+         * @description Requires moderator role.
          */
-        get: operations["listCategories"];
+        get: operations["getAssetsReport"];
         put?: never;
-        /**
-         * Create a category
-         * @description Creates a new item category. Name and PYR ID are auto-generated from the label.
-         */
-        post: operations["createCategory"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/items/categories/{categoryID}": {
+    "/stocks/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stock report (CSV)
+         * @description Requires moderator role.
+         */
+        get: operations["getStockReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stocks/{stockID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Stock item ID */
+                stockID: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a stock item
+         * @description Requires moderator role.
+         */
+        delete: operations["deleteStock"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a stock item
+         * @description Requires dispatcher role.
+         */
+        patch: operations["updateStock"];
+        trace?: never;
+    };
+    "/assets/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List PYR code reservations */
+        get: operations["listReservations"];
+        put?: never;
+        /**
+         * Reserve PYR codes
+         * @description Reserves `quantity` PYR codes of a category for labels printed before the assets exist.
+         */
+        post: operations["reservePyrCodes"];
+        /**
+         * Delete reservations
+         * @description By PYR codes or IDs; claimed reservations cannot be deleted (409). Requires moderator role.
+         */
+        delete: operations["deleteReservations"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/reservations/claim": {
         parameters: {
             query?: never;
             header?: never;
@@ -589,15 +682,180 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Create assets from reserved codes
+         * @description Turns reserved PYR codes into assets (optionally with serials). Per-code failures return 400.
+         */
+        post: operations["claimReservations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Global search
+         * @description Matches PYR code, serial, category, location and origin (at least 2 characters).
+         */
+        get: operations["globalSearch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dispatch/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dispatch events (SSE)
+         * @description Server-Sent Events with volunteer status changes for the dispatch map; the event name is the `type` field.
+         */
+        get: operations["streamDispatch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Readiness
+         * @description 503 while the database is unreachable.
+         */
+        get: operations["getReadiness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Start Google login (redirect) */
+        get: operations["googleLogin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/google/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exchange a Google authorization code for a warehouse token
+         * @description Restricted to the allowed Google Workspace domain; inactive accounts get 403.
+         */
+        post: operations["googleExchange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/discord/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exchange a Discord authorization code for a warehouse token
+         * @description Inactive accounts get 403.
+         */
+        post: operations["discordExchange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all categories */
+        get: operations["listCategories"];
+        put?: never;
+        /**
+         * Create a category
+         * @description Name and PYR ID are generated from the label unless given. Requires dispatcher role.
+         */
+        post: operations["createCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/categories/{categoryID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category ID */
+                categoryID: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         post?: never;
         /**
          * Delete a category
-         * @description Deletes an item category by ID. Fails if items still reference this category.
+         * @description Fails (409) while assets or stock use the category. Requires moderator role.
          */
         delete: operations["deleteCategory"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update a category
+         * @description Changing the type or PYR ID is refused (409) while items use the category. Requires admin role.
+         */
+        patch: operations["updateCategory"];
         trace?: never;
     };
     "/users": {
@@ -782,34 +1040,7 @@ export interface paths {
          *
          *     **Phase 2:** Database-backed with pagination and status filtering.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Filter by quest status */
-                    status?: "pending" | "in_progress" | "completed" | "cancelled";
-                    /** @description Maximum number of quests to return (max 500) */
-                    limit?: number;
-                    /** @description Number of quests to skip for pagination */
-                    offset?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of quests with pagination info */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["QuestsListResponse"];
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
+        get: operations["getEquipmentRequestsQuests"];
         put?: never;
         post?: never;
         delete?: never;
@@ -829,42 +1060,23 @@ export interface paths {
          * Get single quest by ID
          * @description Retrieves details of a specific equipment request quest by its ID.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Quest ID (generated hash) */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Quest details */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["EquipmentRequestQuest"];
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Quest not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example Quest not found */
-                            error: string;
-                        };
-                    };
-                };
-            };
+        get: operations["getEquipmentRequestsQuestsById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/equipment-requests/quests/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
+        get?: never;
         put?: never;
         post?: never;
         delete?: never;
@@ -880,67 +1092,7 @@ export interface paths {
          *     manual status changes are rejected with 409 Conflict. Use transfer endpoints
          *     (confirm/cancel) instead — quest status is automatically synced from transfer.
          */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Quest ID */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * @example in_progress
-                         * @enum {string}
-                         */
-                        status: "pending" | "in_progress" | "completed" | "cancelled";
-                    };
-                };
-            };
-            responses: {
-                /** @description Status updated successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example Quest status updated successfully */
-                            message: string;
-                            /** @example in_progress */
-                            status: string;
-                        };
-                    };
-                };
-                /** @description Invalid status value */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Quest is linked to a transfer — manual status changes not allowed */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example Quest status is managed by linked transfer */
-                            error: string;
-                            /** @example Quest is linked to transfer 42. Use transfer endpoints to change status. */
-                            details: string;
-                        };
-                    };
-                };
-                500: components["responses"]["DefaultError"];
-            };
-        };
+        patch: operations["updateQuestStatus"];
         trace?: never;
     };
     "/equipment-requests/quests/{id}/transfer": {
@@ -962,95 +1114,7 @@ export interface paths {
          *
          *     On success, the quest status changes to 'in_progress' and transfer_id is set.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Quest ID */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Source warehouse location ID
-                         * @example 1
-                         */
-                        from_location_id: number;
-                        /**
-                         * @description Destination location ID (defaults to the quest's stored location_id; 422 if the quest has none)
-                         * @example 5
-                         */
-                        to_location_id?: number | null;
-                        /** @description Stock items to transfer — the server never picks them; use transfer-preview for suggestions. At least one stock item or asset is required. */
-                        stock_items?: {
-                            /** @description Non-serialized stock item ID */
-                            id: number;
-                            quantity: number;
-                        }[];
-                        /** @description Serialized assets to include in transfer */
-                        assets?: {
-                            /** @description Serialized asset item ID */
-                            id: number;
-                        }[];
-                        /** @description Users assigned to delivery */
-                        users?: {
-                            id: number;
-                        }[];
-                    };
-                };
-            };
-            responses: {
-                /** @description Transfer created successfully */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example Transfer created from quest successfully */
-                            message: string;
-                            /** @example 42 */
-                            transfer_id: number;
-                            /** @example quest-f6c39c6c14716069 */
-                            quest_id: string;
-                        };
-                    };
-                };
-                /** @description Invalid request body */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Quest not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Quest is completed or cancelled (a quest may have several transfers) */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description No destination (no to_location_id and the quest has no location) or no stock items / assets in the request */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        post: operations["postEquipmentRequestsQuestsByIdTransfer"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1070,69 +1134,7 @@ export interface paths {
          *     Resolves destination location and stock items without creating anything.
          *     Useful for the frontend to pre-populate a "create transfer" form.
          */
-        get: {
-            parameters: {
-                query: {
-                    /** @description Source warehouse location ID to resolve stock from */
-                    from_location_id: number;
-                };
-                header?: never;
-                path: {
-                    /** @description Quest ID */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Transfer preview */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example 1 */
-                            from_location_id: number;
-                            /** @example 5 */
-                            to_location_id: number | null;
-                            /** @example Maskarada */
-                            to_location_name: string;
-                            resolved_items: {
-                                stock_id: number;
-                                category_id: number;
-                                category_name: string;
-                                item_name: string;
-                                quantity: number;
-                                available: number;
-                            }[];
-                            unresolved_items: {
-                                item_name: string;
-                                /** @description Null when the item has no quantity (reason "quantity not specified") */
-                                quantity: number | null;
-                                category_id: number | null;
-                                reason: string;
-                            }[];
-                        };
-                    };
-                };
-                /** @description Missing from_location_id parameter */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Quest not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        get: operations["getEquipmentRequestsQuestsByIdTransferPreview"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1152,31 +1154,7 @@ export interface paths {
          * List quests with unresolved locations
          * @description Returns quests where location_resolved is false (destination could not be auto-matched).
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of quests needing manual location assignment */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            count: number;
-                            quests: components["schemas"]["EquipmentRequestQuest"][];
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                500: components["responses"]["DefaultError"];
-            };
-        };
+        get: operations["getEquipmentRequestsQuestsUnresolvedLocations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1202,50 +1180,7 @@ export interface paths {
          * Manually assign location to quest
          * @description Assigns a location to a quest (e.g. a historic sheet quest whose destination was never resolved).
          */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Quest ID */
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example 3 */
-                        location_id: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description Location assigned successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Quest not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                500: components["responses"]["DefaultError"];
-            };
-        };
+        patch: operations["patchEquipmentRequestsQuestsByIdLocation"];
         trace?: never;
     };
     "/dispatch/volunteers": {
@@ -1268,34 +1203,7 @@ export interface paths {
          *
          *     Filter by status using comma-separated values: `?status=available,on_mission`
          */
-        get: {
-            parameters: {
-                query?: {
-                    /**
-                     * @description Comma-separated status filter, e.g. `available,on_mission`
-                     * @example available,on_mission
-                     */
-                    status?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of volunteers */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Volunteer"][];
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                500: components["responses"]["DefaultError"];
-            };
-        };
+        get: operations["getDispatchVolunteers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1467,27 +1375,7 @@ export interface paths {
          *
          *     The connection stays open until the client disconnects.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description SSE stream opened */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/event-stream": string;
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
+        get: operations["getServiceDeskStream"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1521,27 +1409,7 @@ export interface paths {
          *
          *     The connection stays open until the client disconnects.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description SSE stream opened */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/event-stream": string;
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
+        get: operations["getEquipmentRequestsStream"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1565,41 +1433,7 @@ export interface paths {
          *     Any number of suppliers is supported — no schema change needed for new ones.
          *     Pass vat=true to get gross prices (net × 1.23).
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Filter by person responsible for budget (case-insensitive). Empty = all. */
-                    budget_owner?: string;
-                    /** @description If true, multiply all prices by 1.23 (gross with 23% VAT). */
-                    vat?: boolean;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Budget summary */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["BudgetSummary"];
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Forbidden - admin role required */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        get: operations["getEquipmentRequestsBudget"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1620,38 +1454,7 @@ export interface paths {
          * @description **Requires admin role.**
          *     Returns distinct non-empty budget_owner values from quests for the person filter dropdown.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of persons */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            persons: string[];
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Forbidden - admin role required */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        get: operations["getEquipmentRequestsBudgetPersons"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1673,45 +1476,7 @@ export interface paths {
          *     Returns the distinct supplier names that have at least one price entry.
          *     Use this to build dynamic column headers in the frontend.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Supplier list */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /**
-                             * @example [
-                             *       "Netland",
-                             *       "Oki-event",
-                             *       "Probis"
-                             *     ]
-                             */
-                            suppliers: string[];
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Forbidden - admin role required */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        get: operations["getEquipmentRequestsSuppliers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1732,123 +1497,19 @@ export interface paths {
          * @description **Requires admin role.**
          *     Returns all (item_name, supplier, unit_price) rows, sorted by item_name then supplier.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Price list */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            prices: components["schemas"]["PriceListItem"][];
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Forbidden - admin role required */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        get: operations["getEquipmentRequestsPrices"];
         /**
          * Create or update a price entry
          * @description **Requires admin role.**
          *     Upserts the unit_price for (item_name, supplier). To add a new supplier just use its name — no schema change required.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpsertPriceRequest"];
-                };
-            };
-            responses: {
-                /** @description Price saved */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
-                /** @description Forbidden - admin role required */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        put: operations["putEquipmentRequestsPrices"];
         post?: never;
         /**
          * Delete a price entry
          * @description **Requires admin role.** Deletes the row for the given (item_name, supplier) combination.
          */
-        delete: {
-            parameters: {
-                query: {
-                    /** @example Laptop */
-                    item_name: string;
-                    /** @example Probis */
-                    supplier: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Price deleted */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-                401: components["responses"]["Unauthorized"];
-                /** @description Forbidden - admin role required */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        delete: operations["deleteEquipmentRequestsPrices"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1865,92 +1526,13 @@ export interface paths {
          * List active origins
          * @description Returns all active origins sorted by sort_order. Used to populate dropdowns on the frontend.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of active origins */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Origin"][];
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
+        get: operations["getOrigins"];
         put?: never;
         /**
          * Create a new origin
          * @description Creates a new origin entry. Requires admin role.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * @description URL-friendly identifier (lowercase, hyphens). Must be unique.
-                         * @example new-source
-                         */
-                        slug: string;
-                        /**
-                         * @description Human-readable display name
-                         * @example New Source
-                         */
-                        label: string;
-                        /**
-                         * @description If true, accepts format slug-{suffix} (e.g. personal-jan)
-                         * @default false
-                         */
-                        allow_suffix?: boolean;
-                        /**
-                         * @description Display ordering (lower = first)
-                         * @default 0
-                         */
-                        sort_order?: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description Origin created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Origin"];
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Origin with this slug already exists */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        post: operations["postOrigins"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1968,27 +1550,7 @@ export interface paths {
          * List all origins (including inactive)
          * @description Returns all origins including deactivated ones. Requires moderator role. Used for admin panel.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of all origins */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Origin"][];
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
+        get: operations["getOriginsAll"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2011,91 +1573,14 @@ export interface paths {
          * Deactivate an origin (soft delete)
          * @description Sets active=false. Existing records with this origin remain, but new records cannot use it. Requires admin role.
          */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Origin deactivated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example Origin deactivated successfully */
-                            message: string;
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Origin not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        delete: operations["deleteOriginsById"];
         options?: never;
         head?: never;
         /**
          * Update an origin
          * @description Updates origin properties (label, sort_order, allow_suffix, active). Requires admin role.
          */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        label: string;
-                        allow_suffix: boolean;
-                        active: boolean;
-                        sort_order: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description Origin updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Origin"];
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Origin not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        patch: operations["patchOriginsById"];
         trace?: never;
     };
     "/settings": {
@@ -2109,30 +1594,7 @@ export interface paths {
          * List all settings
          * @description Returns all application settings. Optionally filter by key prefix. Values are hidden in the list view — use GET /settings/:key to read a specific value.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Filter settings by key prefix (e.g. "equipment_request") */
-                    prefix?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of settings */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AppSettingSummary"][];
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
+        get: operations["getSettings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2152,89 +1614,12 @@ export interface paths {
          * Get a setting by key
          * @description Returns a single setting including its value.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Setting key (e.g. "scheduling.sheet_id") */
-                    key: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Setting found */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AppSetting"];
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Setting not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        get: operations["getSettingsByKey"];
         /**
          * Update a setting
          * @description Updates the value of an existing setting. Only existing keys can be updated.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Setting key */
-                    key: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @description New value for the setting */
-                        value: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Setting updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example Setting updated successfully */
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                401: components["responses"]["Unauthorized"];
-                /** @description Setting not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        put: operations["putSettingsByKey"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2253,32 +1638,7 @@ export interface paths {
          * Suggest items for release by origin
          * @description Returns assets and stocks matching the given origin (and optional location) that are available for permanent release.
          */
-        get: {
-            parameters: {
-                query: {
-                    /** @description Origin ID to filter items by */
-                    origin_id: number;
-                    /** @description Optional location filter */
-                    location_id?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Suggested items */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["SuggestResponse"];
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-            };
-        };
+        get: operations["getReleasesSuggest"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2295,68 +1655,13 @@ export interface paths {
             cookie?: never;
         };
         /** List releases */
-        get: {
-            parameters: {
-                query?: {
-                    status?: "draft" | "completed";
-                    origin_id?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of releases */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Release"][];
-                    };
-                };
-            };
-        };
+        get: operations["getReleases"];
         put?: never;
         /**
          * Create a draft release
          * @description Creates a new release in draft status with the selected assets and stocks. Snapshots item data at creation time.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CreateReleaseRequest"];
-                };
-            };
-            responses: {
-                /** @description Draft release created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ReleaseDetail"];
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-                /** @description Validation error (asset in_transit, in another draft, insufficient stock) */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        post: operations["postReleases"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2374,72 +1679,14 @@ export interface paths {
          * Get release details (for PDF)
          * @description Returns full release with asset/stock snapshots and summary. Use this for generating PDF receipts.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Release details */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ReleaseDetail"];
-                    };
-                };
-                /** @description Release not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        get: operations["getReleasesById"];
         put?: never;
         post?: never;
         /**
          * Delete a draft release
          * @description Only drafts can be deleted. Requires moderator role.
          */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Release deleted */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Message"];
-                    };
-                };
-                /** @description Release not found or not in draft status */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        delete: operations["deleteReleasesById"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2457,51 +1704,7 @@ export interface paths {
          * Update items in a draft release
          * @description Replaces the complete list of assets and stocks in a draft release.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpdateItemsRequest"];
-                };
-            };
-            responses: {
-                /** @description Updated release */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ReleaseDetail"];
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-                /** @description Release not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Release is not a draft, or item validation failed */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        put: operations["putReleasesByIdItems"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2523,46 +1726,7 @@ export interface paths {
          * @description Permanently removes assets from inventory and decreases stock quantities.
          *     Refreshes snapshots with latest data before deletion. Requires moderator role.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Release confirmed */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ReleaseDetail"];
-                    };
-                };
-                /** @description Release not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Release is not a draft, or items changed since draft creation */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
+        post: operations["postReleasesByIdConfirm"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3043,47 +2207,7 @@ export interface paths {
          *     Error `code` values: `invalid_redirect_uri`, `google_exchange_failed`, `email_not_verified`,
          *     `account_inactive`, `invite_invalid`, `access_denied`, `login_in_progress` (409), `rate_limited`, `shop_login_unavailable`.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        code: string;
-                        /** @example https://shop.pyrhouse.space/auth/google/callback */
-                        redirect_uri: string;
-                        /** @description PKCE verifier whose S256 challenge started the Google login */
-                        code_verifier: string;
-                        /** @description Plaintext token from an invite link (`/invite/<token>`) */
-                        invite_token?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Logged in */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @description Shop JWT (aud=pyrhouse-shop). Not accepted by warehouse endpoints. */
-                            token: string;
-                            account: components["schemas"]["ShopAccount"];
-                        };
-                    };
-                };
-                400: components["responses"]["ShopError"];
-                403: components["responses"]["ShopError"];
-                409: components["responses"]["ShopError"];
-                429: components["responses"]["ShopError"];
-                503: components["responses"]["ShopError"];
-            };
-        };
+        post: operations["postShopAuthGoogleExchange"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3098,36 +2222,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current shop account */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Account */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopAccount"];
-                    };
-                };
-                401: components["responses"]["ShopError"];
-                /** @description Account blocked (`account_inactive`) — checked on every request */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopError"];
-                    };
-                };
-            };
-        };
+        get: operations["getShopMe"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3144,26 +2239,7 @@ export interface paths {
             cookie?: never;
         };
         /** Shop configuration for organizers */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Configuration */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopConfig"];
-                    };
-                };
-            };
-        };
+        get: operations["getShopConfig"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3183,26 +2259,7 @@ export interface paths {
          * Active products
          * @description Ordered by section, sort order and name. `price` is null for every product when prices are hidden.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Products */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopProduct"][];
-                    };
-                };
-            };
-        };
+        get: operations["getShopCatalog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3219,26 +2276,7 @@ export interface paths {
             cookie?: never;
         };
         /** Delivery locations */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Locations (group by pavilion in the UI) */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopLocation"][];
-                    };
-                };
-            };
-        };
+        get: operations["getShopLocations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3258,26 +2296,7 @@ export interface paths {
          * Upcoming delivery and return windows
          * @description Active windows that have not ended yet, ordered by start.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Windows */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopWindow"][];
-                    };
-                };
-            };
-        };
+        get: operations["getShopDeliveryWindows"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3297,26 +2316,7 @@ export interface paths {
          * Budget owner suggestions
          * @description The account's own earlier `budget_owner` values, most recent first (max 20). Never other accounts' values.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Suggestions */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": string[];
-                    };
-                };
-            };
-        };
+        get: operations["getShopBudgetOwners"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3333,26 +2333,7 @@ export interface paths {
             cookie?: never;
         };
         /** My orders */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description The account's orders, newest first */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"][];
-                    };
-                };
-            };
-        };
+        get: operations["getShopOrders"];
         put?: never;
         /**
          * Submit an order
@@ -3361,51 +2342,7 @@ export interface paths {
          *     `return_date` (optional) within the return window, location exists.
          *     Send an `Idempotency-Key` header; repeating it returns the original order with 200.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    "Idempotency-Key"?: string;
-                };
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopOrderInput"];
-                };
-            };
-            responses: {
-                /** @description Same Idempotency-Key — the original order */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"];
-                    };
-                };
-                /** @description Created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"];
-                    };
-                };
-                400: components["responses"]["ShopError"];
-                /** @description Orders closed (`orders_closed`) */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopError"];
-                    };
-                };
-            };
-        };
+        post: operations["postShopOrders"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3426,66 +2363,12 @@ export interface paths {
          * My order
          * @description Another account's order is a 404.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Shop order ID */
-                    id: components["parameters"]["ShopOrderID"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Order */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"];
-                    };
-                };
-                404: components["responses"]["ShopError"];
-            };
-        };
+        get: operations["getShopOrdersById"];
         /**
          * Edit my order
          * @description Only while `submitted`. `version` must match the current one (409 `version_conflict` otherwise).
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Shop order ID */
-                    id: components["parameters"]["ShopOrderID"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopOrderInput"] & {
-                        version: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description Updated order */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"];
-                    };
-                };
-                400: components["responses"]["ShopError"];
-                404: components["responses"]["ShopError"];
-                409: components["responses"]["ShopError"];
-            };
-        };
+        put: operations["putShopOrdersById"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3509,35 +2392,7 @@ export interface paths {
          * Cancel my order
          * @description Only while `submitted`.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Shop order ID */
-                    id: components["parameters"]["ShopOrderID"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopVersionInput"];
-                };
-            };
-            responses: {
-                /** @description Cancelled order */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"];
-                    };
-                };
-                404: components["responses"]["ShopError"];
-                409: components["responses"]["ShopError"];
-            };
-        };
+        post: operations["postShopOrdersByIdCancel"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3552,56 +2407,13 @@ export interface paths {
             cookie?: never;
         };
         /** All products (including inactive) */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Products */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopProduct"][];
-                    };
-                };
-            };
-        };
+        get: operations["getAdminShopProducts"];
         put?: never;
         /**
          * Create a product
          * @description The product is tied to an existing item category; create a new category with `POST /categories` first.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopProductInput"];
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopProduct"];
-                    };
-                };
-                400: components["responses"]["ShopError"];
-            };
-        };
+        post: operations["postAdminShopProducts"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3622,34 +2434,7 @@ export interface paths {
          * Update a product
          * @description There is no delete — set `active` to false. Existing orders keep their name/price snapshots.
          */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: components["parameters"]["ShopResourceID"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopProductInput"];
-                };
-            };
-            responses: {
-                /** @description Updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopProduct"];
-                    };
-                };
-                400: components["responses"]["ShopError"];
-                404: components["responses"]["ShopError"];
-            };
-        };
+        put: operations["putAdminShopProductsById"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3665,53 +2450,10 @@ export interface paths {
             cookie?: never;
         };
         /** All delivery and return windows */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Windows */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopWindow"][];
-                    };
-                };
-            };
-        };
+        get: operations["getAdminShopDeliveryWindows"];
         put?: never;
         /** Create a window */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopWindowInput"];
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopWindow"];
-                    };
-                };
-                400: components["responses"]["ShopError"];
-            };
-        };
+        post: operations["postAdminShopDeliveryWindows"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3729,60 +2471,13 @@ export interface paths {
         };
         get?: never;
         /** Update a window */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: components["parameters"]["ShopResourceID"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopWindowInput"];
-                };
-            };
-            responses: {
-                /** @description Updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopWindow"];
-                    };
-                };
-                404: components["responses"]["ShopError"];
-            };
-        };
+        put: operations["putAdminShopDeliveryWindowsById"];
         post?: never;
         /**
          * Delete a window
          * @description 409 `window_in_use` when orders use it — deactivate it instead.
          */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: components["parameters"]["ShopResourceID"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Deleted */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                404: components["responses"]["ShopError"];
-                409: components["responses"]["ShopError"];
-            };
-        };
+        delete: operations["deleteAdminShopDeliveryWindowsById"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3796,28 +2491,7 @@ export interface paths {
             cookie?: never;
         };
         /** All orders */
-        get: {
-            parameters: {
-                query?: {
-                    status?: "submitted" | "confirmed" | "rejected" | "cancelled";
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Orders, newest first (prices always included) */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"][];
-                    };
-                };
-            };
-        };
+        get: operations["getAdminShopOrders"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3834,30 +2508,7 @@ export interface paths {
             cookie?: never;
         };
         /** What to prepare — submitted and confirmed orders aggregated */
-        get: {
-            parameters: {
-                query?: {
-                    group?: "product" | "day" | "location";
-                    /** @description `confirmed` = confirmed orders only; default = submitted and confirmed */
-                    status?: "confirmed";
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Rows grouped by the key and product */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopSummary"];
-                    };
-                };
-            };
-        };
+        get: operations["getAdminShopOrdersSummary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3877,30 +2528,7 @@ export interface paths {
             cookie?: never;
         };
         /** Order with its event log */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Shop order ID */
-                    id: components["parameters"]["ShopOrderID"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Order */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrderDetail"];
-                    };
-                };
-                404: components["responses"]["ShopError"];
-            };
-        };
+        get: operations["getAdminShopOrdersById"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3911,41 +2539,7 @@ export interface paths {
          * @description `items` only while `submitted` (moderators may use inactive products and exceed `max_per_order`).
          *     `location_id` also after confirmation — the quest moves with it in the same transaction.
          */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Shop order ID */
-                    id: components["parameters"]["ShopOrderID"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        version: number;
-                        location_id?: number;
-                        location_note?: string | null;
-                        items?: components["schemas"]["ShopOrderItemInput"][];
-                    };
-                };
-            };
-            responses: {
-                /** @description Updated order */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"];
-                    };
-                };
-                400: components["responses"]["ShopError"];
-                404: components["responses"]["ShopError"];
-                409: components["responses"]["ShopError"];
-            };
-        };
+        patch: operations["patchAdminShopOrdersById"];
         trace?: never;
     };
     "/admin/shop/orders/{id}/confirm": {
@@ -3966,35 +2560,7 @@ export interface paths {
          *     location), an event. A second confirm is 409 `already_confirmed`. Broadcasts
          *     `quests_changed` on `/equipment-requests/stream`.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Shop order ID */
-                    id: components["parameters"]["ShopOrderID"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopVersionInput"];
-                };
-            };
-            responses: {
-                /** @description Confirmed order (`quest_id` set) */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"];
-                    };
-                };
-                404: components["responses"]["ShopError"];
-                409: components["responses"]["ShopError"];
-            };
-        };
+        post: operations["postAdminShopOrdersByIdConfirm"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4017,38 +2583,7 @@ export interface paths {
          * Reject an order
          * @description The reason is shown to the organizer.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Shop order ID */
-                    id: components["parameters"]["ShopOrderID"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        version: number;
-                        reason: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Rejected order */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopOrder"];
-                    };
-                };
-                400: components["responses"]["ShopError"];
-                409: components["responses"]["ShopError"];
-            };
-        };
+        post: operations["postAdminShopOrdersByIdReject"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4063,59 +2598,13 @@ export interface paths {
             cookie?: never;
         };
         /** Shop accounts (including allowlist entries that never logged in) */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Accounts */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopAccount"][];
-                    };
-                };
-            };
-        };
+        get: operations["getAdminShopAccounts"];
         put?: never;
         /**
          * Add an e-mail to the allowlist
          * @description The first Google login with this e-mail binds the account.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: email */
-                        email: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Allowlist entry */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopAccount"];
-                    };
-                };
-                409: components["responses"]["ShopError"];
-            };
-        };
+        post: operations["postAdminShopAccounts"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4141,35 +2630,7 @@ export interface paths {
          * Block or unblock an account
          * @description Takes effect on the account's next request.
          */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: components["parameters"]["ShopResourceID"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        active: boolean;
-                    };
-                };
-            };
-            responses: {
-                /** @description Account */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopAccount"];
-                    };
-                };
-                404: components["responses"]["ShopError"];
-            };
-        };
+        patch: operations["patchAdminShopAccountsById"];
         trace?: never;
     };
     "/admin/shop/invites": {
@@ -4180,58 +2641,13 @@ export interface paths {
             cookie?: never;
         };
         /** Invites (tokens are never listed) */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Invites */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopInvite"][];
-                    };
-                };
-            };
-        };
+        get: operations["getAdminShopInvites"];
         put?: never;
         /**
          * Create a one-time invite (valid 48 h)
          * @description The plaintext `token` and `url` are returned only here; the server stores a hash.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @example Jan — Gamesroom */
-                        label: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Invite */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopInviteCreated"];
-                    };
-                };
-            };
-        };
+        post: operations["postAdminShopInvites"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4251,36 +2667,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Revoke an invite */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: components["parameters"]["ShopResourceID"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Revoked */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                404: components["responses"]["ShopError"];
-                /** @description Already used or revoked (`invite_closed`) */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopError"];
-                    };
-                };
-            };
-        };
+        delete: operations["deleteAdminShopInvitesById"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4294,52 +2681,9 @@ export interface paths {
             cookie?: never;
         };
         /** Shop settings (admin) */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Settings */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopSettings"];
-                    };
-                };
-            };
-        };
+        get: operations["getAdminShopSettings"];
         /** Update shop settings (admin) */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ShopSettings"];
-                };
-            };
-            responses: {
-                /** @description Saved settings */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ShopSettings"];
-                    };
-                };
-                400: components["responses"]["ShopError"];
-            };
-        };
+        put: operations["putAdminShopSettings"];
         post?: never;
         delete?: never;
         options?: never;
@@ -5082,6 +3426,17 @@ export interface components {
             user_id: number | null;
             user: components["schemas"]["OnDutyUser"] | null;
         };
+        PyrCodeReservation: {
+            id: number;
+            pyr_code: string;
+            category_id: number;
+            /** Format: date-time */
+            reserved_at: string;
+            /** Format: date-time */
+            claimed_at: string | null;
+            /** @description Asset created from this code */
+            item_id: number | null;
+        };
         Message: {
             message: string;
         };
@@ -5567,6 +3922,29 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Application is healthy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example ok */
+                        status: string;
+                    };
+                };
+            };
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -5786,6 +4164,16 @@ export interface operations {
                     "application/json": components["schemas"]["Item"];
                 };
             };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
         };
     };
     getAssetByPyrcode: {
@@ -5945,6 +4333,41 @@ export interface operations {
             };
         };
     };
+    listStocks: {
+        parameters: {
+            query?: {
+                location_id?: number;
+                category_id?: number;
+                category_label?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stock items */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stock"][];
+                };
+            };
+            /** @description Invalid query parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
     createStockItem: {
         parameters: {
             query?: never;
@@ -5978,6 +4401,16 @@ export interface operations {
                     "application/json": components["schemas"]["StockItem"];
                 };
             };
+            /** @description Invalid request payload or origin */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["DefaultError"];
         };
     };
@@ -6065,6 +4498,7 @@ export interface operations {
                     "application/json": components["schemas"]["LocationEquipment"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["DefaultError"];
         };
     };
@@ -6228,6 +4662,7 @@ export interface operations {
                     "application/json": components["schemas"]["TransferSummary"][];
                 };
             };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["DefaultError"];
         };
     };
@@ -6369,6 +4804,16 @@ export interface operations {
                     "application/json": components["schemas"]["Message"];
                 };
             };
+            /** @description Invalid transfer ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             /** @description Unable to confirm transfer */
             500: {
                 headers: {
@@ -6401,6 +4846,16 @@ export interface operations {
                     "application/json": components["schemas"]["Message"];
                 };
             };
+            /** @description Invalid transfer ID, or the transfer is not in transit */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             /** @description Unable to cancel transfer */
             500: {
                 headers: {
@@ -6645,6 +5100,586 @@ export interface operations {
             500: components["responses"]["DefaultError"];
         };
     };
+    updateAssetSerial: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Asset ID */
+                assetID: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    serial: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Updated asset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Item"];
+                };
+            };
+            /** @description Invalid ID or payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Serial number already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    logAssetLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Asset ID */
+                assetID: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    delivery_location: {
+                        lat: number;
+                        lng: number;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Logged */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Invalid ID or payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    getAssetsReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV file (attachment) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    getStockReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV file (attachment) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    deleteStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Stock item ID */
+                stockID: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Invalid ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    updateStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Stock item ID */
+                stockID: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    location_id?: number;
+                    quantity?: number;
+                    /** @description Origin string, validated against GET /origins */
+                    origin?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Updated stock item */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stock"];
+                };
+            };
+            /** @description Invalid ID, payload or origin */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    listReservations: {
+        parameters: {
+            query?: {
+                status?: "free" | "claimed" | "all";
+                category_id?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PyrCodeReservation"][];
+                };
+            };
+            /** @description Invalid status or category_id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    reservePyrCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    category_id: number;
+                    quantity: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Reserved codes */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        reservations: components["schemas"]["PyrCodeReservation"][];
+                    };
+                };
+            };
+            /** @description Invalid payload or category */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    deleteReservations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    pyr_codes: string[];
+                    ids: number[];
+                };
+            };
+        };
+        responses: {
+            /** @description Deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        deleted: number;
+                    };
+                };
+            };
+            /** @description Neither pyr_codes nor ids given */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Some reservations are already claimed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    claimReservations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    origin: string;
+                    /** @description Defaults to 1 */
+                    location_id?: number;
+                    items: {
+                        pyr_code: string;
+                        serial?: string | null;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Created assets */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created: components["schemas"]["Item"][];
+                    };
+                };
+            };
+            /** @description Invalid payload, or some codes cannot be claimed (errors[]) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    globalSearch: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matches */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        assets: components["schemas"]["Item"][];
+                        stocks: components["schemas"]["Stock"][];
+                    };
+                };
+            };
+            /** @description Query shorter than 2 characters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    streamDispatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE stream opened */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getReadiness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ready */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Database unreachable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    googleLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to Google's consent screen */
+            307: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    googleExchange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    code: string;
+                    redirect_uri: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Logged in */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Warehouse JWT */
+                        token: string;
+                    };
+                };
+            };
+            /** @description Invalid body or code exchange failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Domain not allowed or account inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    discordExchange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    code: string;
+                    redirect_uri: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Logged in */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Warehouse JWT */
+                        token: string;
+                    };
+                };
+            };
+            /** @description Invalid body or code exchange failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Account inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
     listCategories: {
         parameters: {
             query?: never;
@@ -6654,7 +5689,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List of categories */
+            /** @description Categories */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6663,6 +5698,8 @@ export interface operations {
                     "application/json": components["schemas"]["ItemCategory"][];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
         };
     };
     createCategory: {
@@ -6675,16 +5712,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /**
-                     * @description Category type identifier
-                     * @example laptop
-                     */
-                    type: string;
-                    /**
-                     * @description Human-readable category label
-                     * @example Laptop
-                     */
                     label: string;
+                    /** @enum {string} */
+                    type?: "asset" | "stock";
+                    /** @description 1–4 alphanumeric characters */
+                    pyr_id?: string;
                 };
             };
         };
@@ -6707,6 +5739,7 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            500: components["responses"]["DefaultError"];
         };
     };
     deleteCategory: {
@@ -6727,22 +5760,80 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        message: string;
-                    };
+                    "application/json": components["schemas"]["Message"];
                 };
             };
-            /** @description Cannot delete - category is still referenced by items */
+            /** @description Invalid ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Category is in use */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        message: string;
-                    };
+                    "application/json": components["schemas"]["Error"];
                 };
             };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    updateCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category ID */
+                categoryID: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    label?: string;
+                    /** @enum {string} */
+                    type?: "asset" | "stock";
+                    /** @description 1–3 alphanumeric characters */
+                    pyr_id?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Category updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Invalid payload or nothing to update */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Category is in use */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["DefaultError"];
         };
     };
     listUsers: {
@@ -7297,6 +6388,380 @@ export interface operations {
             500: components["responses"]["DefaultError"];
         };
     };
+    getEquipmentRequestsQuests: {
+        parameters: {
+            query?: {
+                /** @description Filter by quest status */
+                status?: "pending" | "in_progress" | "completed" | "cancelled";
+                /** @description Maximum number of quests to return (max 500) */
+                limit?: number;
+                /** @description Number of quests to skip for pagination */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of quests with pagination info */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestsListResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getEquipmentRequestsQuestsById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Quest ID (generated hash) */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quest details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentRequestQuest"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Quest not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example Quest not found */
+                        error: string;
+                    };
+                };
+            };
+        };
+    };
+    updateQuestStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Quest ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @example in_progress
+                     * @enum {string}
+                     */
+                    status: "pending" | "in_progress" | "completed" | "cancelled";
+                };
+            };
+        };
+        responses: {
+            /** @description Status updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example Quest status updated successfully */
+                        message: string;
+                        /** @example in_progress */
+                        status: string;
+                    };
+                };
+            };
+            /** @description Invalid status value */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Quest is linked to a transfer — manual status changes not allowed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example Quest status is managed by linked transfer */
+                        error: string;
+                        /** @example Quest is linked to transfer 42. Use transfer endpoints to change status. */
+                        details: string;
+                    };
+                };
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    postEquipmentRequestsQuestsByIdTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Quest ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Source warehouse location ID
+                     * @example 1
+                     */
+                    from_location_id: number;
+                    /**
+                     * @description Destination location ID (defaults to the quest's stored location_id; 422 if the quest has none)
+                     * @example 5
+                     */
+                    to_location_id?: number | null;
+                    /** @description Stock items to transfer — the server never picks them; use transfer-preview for suggestions. At least one stock item or asset is required. */
+                    stock_items?: {
+                        /** @description Non-serialized stock item ID */
+                        id: number;
+                        quantity: number;
+                    }[];
+                    /** @description Serialized assets to include in transfer */
+                    assets?: {
+                        /** @description Serialized asset item ID */
+                        id: number;
+                    }[];
+                    /** @description Users assigned to delivery */
+                    users?: {
+                        id: number;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Transfer created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example Transfer created from quest successfully */
+                        message: string;
+                        /** @example 42 */
+                        transfer_id: number;
+                        /** @example quest-f6c39c6c14716069 */
+                        quest_id: string;
+                    };
+                };
+            };
+            /** @description Invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Quest not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Quest is completed or cancelled (a quest may have several transfers) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No destination (no to_location_id and the quest has no location) or no stock items / assets in the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getEquipmentRequestsQuestsByIdTransferPreview: {
+        parameters: {
+            query: {
+                /** @description Source warehouse location ID to resolve stock from */
+                from_location_id: number;
+            };
+            header?: never;
+            path: {
+                /** @description Quest ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Transfer preview */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example 1 */
+                        from_location_id: number;
+                        /** @example 5 */
+                        to_location_id: number | null;
+                        /** @example Maskarada */
+                        to_location_name: string;
+                        resolved_items: {
+                            stock_id: number;
+                            category_id: number;
+                            category_name: string;
+                            item_name: string;
+                            quantity: number;
+                            available: number;
+                        }[];
+                        unresolved_items: {
+                            item_name: string;
+                            /** @description Null when the item has no quantity (reason "quantity not specified") */
+                            quantity: number | null;
+                            category_id: number | null;
+                            reason: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description Missing from_location_id parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Quest not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getEquipmentRequestsQuestsUnresolvedLocations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of quests needing manual location assignment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                        quests: components["schemas"]["EquipmentRequestQuest"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    patchEquipmentRequestsQuestsByIdLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Quest ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @example 3 */
+                    location_id: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Location assigned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Quest not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    getDispatchVolunteers: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma-separated status filter, e.g. `available,on_mission`
+                 * @example available,on_mission
+                 */
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of volunteers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Volunteer"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
     listServiceDeskRequests: {
         parameters: {
             query?: {
@@ -7578,6 +7043,7 @@ export interface operations {
                     "application/json": components["schemas"]["ServiceDeskComment"][];
                 };
             };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["DefaultError"];
         };
     };
@@ -7644,6 +7110,775 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceDeskRequestType"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getServiceDeskStream: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE stream opened */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getEquipmentRequestsStream: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE stream opened */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getEquipmentRequestsBudget: {
+        parameters: {
+            query?: {
+                /** @description Filter by person responsible for budget (case-insensitive). Empty = all. */
+                budget_owner?: string;
+                /** @description If true, multiply all prices by 1.23 (gross with 23% VAT). */
+                vat?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Budget summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Forbidden - admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getEquipmentRequestsBudgetPersons: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of persons */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        persons: string[];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Forbidden - admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getEquipmentRequestsSuppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Supplier list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @example [
+                         *       "Netland",
+                         *       "Oki-event",
+                         *       "Probis"
+                         *     ]
+                         */
+                        suppliers: string[];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Forbidden - admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getEquipmentRequestsPrices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Price list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        prices: components["schemas"]["PriceListItem"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Forbidden - admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    putEquipmentRequestsPrices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpsertPriceRequest"];
+            };
+        };
+        responses: {
+            /** @description Price saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Forbidden - admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteEquipmentRequestsPrices: {
+        parameters: {
+            query: {
+                /** @example Laptop */
+                item_name: string;
+                /** @example Probis */
+                supplier: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Price deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Forbidden - admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getOrigins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of active origins */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Origin"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    postOrigins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description URL-friendly identifier (lowercase, hyphens). Must be unique.
+                     * @example new-source
+                     */
+                    slug: string;
+                    /**
+                     * @description Human-readable display name
+                     * @example New Source
+                     */
+                    label: string;
+                    /**
+                     * @description If true, accepts format slug-{suffix} (e.g. personal-jan)
+                     * @default false
+                     */
+                    allow_suffix?: boolean;
+                    /**
+                     * @description Display ordering (lower = first)
+                     * @default 0
+                     */
+                    sort_order?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Origin created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Origin"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Origin with this slug already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getOriginsAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of all origins */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Origin"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    deleteOriginsById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Origin deactivated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example Origin deactivated successfully */
+                        message: string;
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Origin not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    patchOriginsById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    label: string;
+                    allow_suffix: boolean;
+                    active: boolean;
+                    sort_order: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Origin updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Origin"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Origin not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getSettings: {
+        parameters: {
+            query?: {
+                /** @description Filter settings by key prefix (e.g. "equipment_request") */
+                prefix?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppSettingSummary"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getSettingsByKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Setting key (e.g. "scheduling.sheet_id") */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Setting found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppSetting"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Setting not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    putSettingsByKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Setting key */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description New value for the setting */
+                    value: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Setting updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example Setting updated successfully */
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description Setting not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getReleasesSuggest: {
+        parameters: {
+            query: {
+                /** @description Origin ID to filter items by */
+                origin_id: number;
+                /** @description Optional location filter */
+                location_id?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Suggested items */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    getReleases: {
+        parameters: {
+            query?: {
+                status?: "draft" | "completed";
+                origin_id?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of releases */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    postReleases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReleaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Draft release created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDetail"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Validation error (asset in_transit, in another draft, insufficient stock) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getReleasesById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Release details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDetail"];
+                };
+            };
+            /** @description Release not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteReleasesById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Release deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Release not found or not in draft status */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    putReleasesByIdItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateItemsRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated release */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDetail"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Release not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Release is not a draft, or item validation failed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postReleasesByIdConfirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Release confirmed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDetail"];
+                };
+            };
+            /** @description Release not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Release is not a draft, or items changed since draft creation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
                 };
             };
         };
@@ -8689,6 +8924,882 @@ export interface operations {
                 };
             };
             500: components["responses"]["ScheduleInternalError"];
+        };
+    };
+    postShopAuthGoogleExchange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    code: string;
+                    /** @example https://shop.pyrhouse.space/auth/google/callback */
+                    redirect_uri: string;
+                    /** @description PKCE verifier whose S256 challenge started the Google login */
+                    code_verifier: string;
+                    /** @description Plaintext token from an invite link (`/invite/<token>`) */
+                    invite_token?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Logged in */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Shop JWT (aud=pyrhouse-shop). Not accepted by warehouse endpoints. */
+                        token: string;
+                        account: components["schemas"]["ShopAccount"];
+                    };
+                };
+            };
+            400: components["responses"]["ShopError"];
+            403: components["responses"]["ShopError"];
+            409: components["responses"]["ShopError"];
+            429: components["responses"]["ShopError"];
+            503: components["responses"]["ShopError"];
+        };
+    };
+    getShopMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopAccount"];
+                };
+            };
+            401: components["responses"]["ShopError"];
+            /** @description Account blocked (`account_inactive`) — checked on every request */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopError"];
+                };
+            };
+        };
+    };
+    getShopConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopConfig"];
+                };
+            };
+            401: components["responses"]["ShopError"];
+        };
+    };
+    getShopCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Products */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopProduct"][];
+                };
+            };
+            401: components["responses"]["ShopError"];
+        };
+    };
+    getShopLocations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Locations (group by pavilion in the UI) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopLocation"][];
+                };
+            };
+            401: components["responses"]["ShopError"];
+        };
+    };
+    getShopDeliveryWindows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Windows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopWindow"][];
+                };
+            };
+            401: components["responses"]["ShopError"];
+        };
+    };
+    getShopBudgetOwners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Suggestions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+            401: components["responses"]["ShopError"];
+        };
+    };
+    getShopOrders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The account's orders, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"][];
+                };
+            };
+            401: components["responses"]["ShopError"];
+        };
+    };
+    postShopOrders: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopOrderInput"];
+            };
+        };
+        responses: {
+            /** @description Same Idempotency-Key — the original order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"];
+                };
+            };
+            400: components["responses"]["ShopError"];
+            /** @description Orders closed (`orders_closed`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopError"];
+                };
+            };
+        };
+    };
+    getShopOrdersById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shop order ID */
+                id: components["parameters"]["ShopOrderID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"];
+                };
+            };
+            404: components["responses"]["ShopError"];
+        };
+    };
+    putShopOrdersById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shop order ID */
+                id: components["parameters"]["ShopOrderID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopOrderInput"] & {
+                    version: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Updated order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"];
+                };
+            };
+            400: components["responses"]["ShopError"];
+            404: components["responses"]["ShopError"];
+            409: components["responses"]["ShopError"];
+        };
+    };
+    postShopOrdersByIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shop order ID */
+                id: components["parameters"]["ShopOrderID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopVersionInput"];
+            };
+        };
+        responses: {
+            /** @description Cancelled order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"];
+                };
+            };
+            404: components["responses"]["ShopError"];
+            409: components["responses"]["ShopError"];
+        };
+    };
+    getAdminShopProducts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Products */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopProduct"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    postAdminShopProducts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopProductInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopProduct"];
+                };
+            };
+            400: components["responses"]["ShopError"];
+        };
+    };
+    putAdminShopProductsById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ShopResourceID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopProductInput"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopProduct"];
+                };
+            };
+            400: components["responses"]["ShopError"];
+            404: components["responses"]["ShopError"];
+        };
+    };
+    getAdminShopDeliveryWindows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Windows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopWindow"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    postAdminShopDeliveryWindows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopWindowInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopWindow"];
+                };
+            };
+            400: components["responses"]["ShopError"];
+        };
+    };
+    putAdminShopDeliveryWindowsById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ShopResourceID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopWindowInput"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopWindow"];
+                };
+            };
+            404: components["responses"]["ShopError"];
+        };
+    };
+    deleteAdminShopDeliveryWindowsById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ShopResourceID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["ShopError"];
+            409: components["responses"]["ShopError"];
+        };
+    };
+    getAdminShopOrders: {
+        parameters: {
+            query?: {
+                status?: "submitted" | "confirmed" | "rejected" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Orders, newest first (prices always included) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getAdminShopOrdersSummary: {
+        parameters: {
+            query?: {
+                group?: "product" | "day" | "location";
+                /** @description `confirmed` = confirmed orders only; default = submitted and confirmed */
+                status?: "confirmed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rows grouped by the key and product */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getAdminShopOrdersById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shop order ID */
+                id: components["parameters"]["ShopOrderID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrderDetail"];
+                };
+            };
+            404: components["responses"]["ShopError"];
+        };
+    };
+    patchAdminShopOrdersById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shop order ID */
+                id: components["parameters"]["ShopOrderID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    version: number;
+                    location_id?: number;
+                    location_note?: string | null;
+                    items?: components["schemas"]["ShopOrderItemInput"][];
+                };
+            };
+        };
+        responses: {
+            /** @description Updated order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"];
+                };
+            };
+            400: components["responses"]["ShopError"];
+            404: components["responses"]["ShopError"];
+            409: components["responses"]["ShopError"];
+        };
+    };
+    postAdminShopOrdersByIdConfirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shop order ID */
+                id: components["parameters"]["ShopOrderID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopVersionInput"];
+            };
+        };
+        responses: {
+            /** @description Confirmed order (`quest_id` set) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"];
+                };
+            };
+            404: components["responses"]["ShopError"];
+            409: components["responses"]["ShopError"];
+        };
+    };
+    postAdminShopOrdersByIdReject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Shop order ID */
+                id: components["parameters"]["ShopOrderID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    version: number;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Rejected order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOrder"];
+                };
+            };
+            400: components["responses"]["ShopError"];
+            409: components["responses"]["ShopError"];
+        };
+    };
+    getAdminShopAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopAccount"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    postAdminShopAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: email */
+                    email: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Allowlist entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopAccount"];
+                };
+            };
+            409: components["responses"]["ShopError"];
+        };
+    };
+    patchAdminShopAccountsById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ShopResourceID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    active: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopAccount"];
+                };
+            };
+            404: components["responses"]["ShopError"];
+        };
+    };
+    getAdminShopInvites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invites */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopInvite"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    postAdminShopInvites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @example Jan — Gamesroom */
+                    label: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Invite */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopInviteCreated"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    deleteAdminShopInvitesById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["ShopResourceID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["ShopError"];
+            /** @description Already used or revoked (`invite_closed`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopError"];
+                };
+            };
+        };
+    };
+    getAdminShopSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopSettings"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    putAdminShopSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopSettings"];
+            };
+        };
+        responses: {
+            /** @description Saved settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopSettings"];
+                };
+            };
+            400: components["responses"]["ShopError"];
         };
     };
 }
