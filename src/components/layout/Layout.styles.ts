@@ -1,18 +1,6 @@
 import { SxProps, Theme } from "@mui/material";
 import { designTokens } from '@pyrhouse/ui';
 
-// Helper do tworzenia stylów zależnych od trybu
-const getGlassStyles = (mode: 'light' | 'dark') => ({
-  background: mode === 'dark'
-    ? designTokens.glass.dark.background
-    : designTokens.glass.light.backgroundStrong,
-  backdropFilter: designTokens.glass.light.backdropBlur,
-  WebkitBackdropFilter: designTokens.glass.light.backdropBlur, // Safari
-  borderBottom: mode === 'dark'
-    ? `1px solid ${designTokens.darkPalette.border.default}`
-    : '1px solid rgba(255, 152, 0, 0.1)',
-});
-
 const styles: {
   root: SxProps<Theme>;
   navigation: SxProps<Theme>;
@@ -76,6 +64,4 @@ const styles: {
 };
 
 // Export helper for glass styles
-export const glassStyles = getGlassStyles;
-
 export default styles;

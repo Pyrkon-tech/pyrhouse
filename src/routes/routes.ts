@@ -267,23 +267,3 @@ export const allRoutes = [
   ...protectedRoutes,
   ...adminRoutes,
 ];
-
-// Helper functions
-export const getRouteByPath = (path: string): RouteConfig | undefined => {
-  return allRoutes.find(route => route.path === path);
-};
-
-export const getNavRoutes = (userRole?: string): RouteConfig[] => {
-  return allRoutes.filter(route => {
-    if (!route.showInNav) return false;
-    if (route.requiredRoles && userRole) {
-      return route.requiredRoles.includes(userRole as 'admin' | 'moderator');
-    }
-    return true;
-  });
-};
-
-export const getRouteTitle = (path: string): string => {
-  const route = getRouteByPath(path);
-  return route?.title || 'Nieznana strona';
-}; 

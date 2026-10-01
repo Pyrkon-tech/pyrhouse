@@ -14,7 +14,6 @@ import type {
   CreateTransferFromQuestResponse,
   UpdateQuestLocationPayload,
   UpdateQuestLocationResponse,
-  UnresolvedLocationsResponse,
 } from '../types/quest.types';
 
 // ============================================================================
@@ -62,12 +61,6 @@ export const createTransferFromQuestAPI = (questId: string, payload: CreateTrans
 // ============================================================================
 // Location Resolution
 // ============================================================================
-
-/**
- * Questy z nierozwiązaną lokalizacją (location_resolved: false)
- */
-export const getUnresolvedLocationsAPI = () =>
-  apiClient.get<UnresolvedLocationsResponse>('/equipment-requests/quests/unresolved-locations');
 
 /**
  * Ręczne przypisanie lokalizacji do questa

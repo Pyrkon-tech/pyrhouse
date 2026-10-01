@@ -27,6 +27,8 @@
     "@mui/icons-material": "^9.1.1",
     "@mui/material": "^9.1.1",
     "@mui/system": "^9.1.1",
+    "@pyrhouse/api": "*",
+    "@pyrhouse/ui": "*",
     "@vis.gl/react-google-maps": "^1.8.3",
     "date-fns": "^4.1.0",
     "jsbarcode": "^3.12.3",
@@ -38,6 +40,7 @@
     "react-router-dom": "^7.15.0"
   },
   "devDependencies": {
+    "@emotion/babel-plugin": "^11.13.5",
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -61,7 +64,6 @@
     "vite": "8.0.16",
     "vite-plugin-compression2": "^2.5.3",
     "vite-plugin-pwa": "^1.3.0",
-    "vite-plugin-svgr": "^5.2.0",
     "vitest": "^4.1.5"
   },
   "resolutions": {

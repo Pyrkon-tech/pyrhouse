@@ -5,10 +5,7 @@ import type {
   ScheduleVolunteer,
   ValidationResult,
   CreateSchedulePayload,
-  ImportVolunteersPayload,
   UpdateVolunteerPayload,
-  SwapAssignmentPayload,
-  CreateAssignmentPayload,
   CreateSlotPayload,
   UpdateSlotPayload,
   DraftPayload,
@@ -59,14 +56,6 @@ export const createScheduleAPI = (payload: CreateSchedulePayload) =>
 
 // ---- Volunteers ------------------------------------------------------------
 
-/**
- * POST /schedule/volunteers — bulk import of volunteer data.
- * Volunteers do NOT need system accounts (user_id: null is normal).
- * Replaces previous volunteer list entirely.
- */
-export const importVolunteersAPI = (payload: ImportVolunteersPayload) =>
-  apiClient.post<void>('/schedule/volunteers', payload);
-
 /** GET /schedule/volunteers — list all volunteers in active schedule */
 export const getVolunteersAPI = () =>
   apiClient.getList<ScheduleVolunteer>('/schedule/volunteers');
@@ -90,25 +79,6 @@ export const getMyVolunteerScheduleAPI = () =>
   }));
 
 // ---- Assignments -----------------------------------------------------------
-
-/**
- * POST /schedule/assignments — add volunteer to slot.
- * Returns 201 { id, slot_id, volunteer_id }.
- * Error 500 if volunteer already assigned to that slot (UNIQUE constraint).
- */
-export const createAssignmentAPI = (payload: CreateAssignmentPayload) =>
-  apiClient.post<{ id: number; slot_id: number; volunteer_id: number }>('/schedule/assignments', payload);
-
-/** DELETE /schedule/assignments/:aid — remove a volunteer from a slot */
-export const deleteAssignmentAPI = (assignmentId: number) =>
-  apiClient.delete<void>(`/schedule/assignments/${assignmentId}`);
-
-/**
- * POST /schedule/assignments/swap — exchange two volunteers between slots.
- * Both parameters are assignment IDs (SlotVolunteer.id from GET /schedule response).
- */
-export const swapAssignmentsAPI = (payload: SwapAssignmentPayload) =>
-  apiClient.post<void>('/schedule/assignments/swap', payload);
 
 // ---- Slot CRUD (v2) --------------------------------------------------------
 
@@ -162,10 +132,6 @@ export const validateScheduleAPI = () =>
   apiClient.get<ValidationResult>('/schedule/validate').then(normalizeValidation);
 
 // ---- Publishing & export ---------------------------------------------------
-
-/** PATCH /schedule/publish — publish schedule (admin only) */
-export const publishScheduleAPI = () =>
-  apiClient.patch<ScheduleDetail>('/schedule/publish', {}).then(normalizeScheduleDetail);
 
 /**
  * POST /schedule/export/sheets — push schedule to Google Sheets.

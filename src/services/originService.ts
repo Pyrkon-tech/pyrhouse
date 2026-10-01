@@ -1,14 +1,6 @@
 import { apiClient } from './apiClient';
 import type { Origin, CreateOriginPayload, UpdateOriginPayload } from '../types/origin.types';
 
-/** Lista aktywnych originów (dla formularzy, dropdownów) */
-export const getOriginsAPI = () =>
-  apiClient.getList<Origin>('/origins');
-
-/** Lista wszystkich originów włącznie z nieaktywnymi (moderator+) */
-export const getAllOriginsAPI = () =>
-  apiClient.getList<Origin>('/origins/all');
-
 /** Tworzy nowy origin (admin) */
 export const createOriginAPI = (payload: CreateOriginPayload) =>
   apiClient.post<Origin>('/origins', payload);
