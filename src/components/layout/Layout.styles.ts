@@ -1,5 +1,5 @@
 import { SxProps, Theme } from "@mui/material";
-import { designTokens } from '../../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 
 // Helper do tworzenia stylów zależnych od trybu
 const getGlassStyles = (mode: 'light' | 'dark') => ({

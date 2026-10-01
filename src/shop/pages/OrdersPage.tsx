@@ -29,8 +29,8 @@ import { useCart } from '../Cart';
 import { useCatalog } from '../Catalog';
 import { useShopSession } from '../ShopSession';
 import { organizerStatus } from '../status';
-import { fmtDateTime, fmtDayKey, fmtLocation, fmtMoney, fmtOrderDates, fmtWindow } from '../../utils/shopFormat';
-import type { ShopOrder } from '../../types/shop.types';
+import { fmtDateTime, fmtDayKey, fmtLocation, fmtMoney, fmtOrderDates, fmtWindow } from '@pyrhouse/ui';
+import type { ShopOrder } from '@pyrhouse/api';
 
 const STEPS = ['Złożone', 'Potwierdzone', 'W drodze', 'Dostarczone', 'Zwrot'];
 

@@ -12,7 +12,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 import LazyIcon from '../ui/LazyIcon';
-import { designTokens } from '../../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 import { Icons, NAV_MENU_ITEMS, AdminMenuItem } from './navigation';
 
 interface SidebarNavProps {

@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getToken, setToken, setUnauthorizedHandler, shopApi } from './api';
-import type { ShopAccount, ShopConfig } from '../types/shop.types';
+import type { ShopAccount, ShopConfig } from '@pyrhouse/api';
 
 interface Session {
   account: ShopAccount | null;

@@ -54,15 +54,20 @@ export default [
     },
   },
   {
-    // The organizer shop is a separate app (docs/shop/PLAN.md): it must not pull in warehouse code.
-    // Shared on purpose: theme/, components/ui/, types/, config/env.
-    files: ['src/shop/**/*.{ts,tsx}'],
+    // The organizer shop is a separate app (docs/shop/PLAN.md): it imports only its own src/shop/ files and the
+    // shared packages (@pyrhouse/api, @pyrhouse/ui) — never warehouse code under src/.
+    files: ['src/shop/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [{
-          group: ['**/components/features/**', '**/components/layout/**', '**/context/**', '**/hooks/**', '**/services/**', '**/routes/**'],
-          message: 'The shop must not import warehouse code — use src/shop/ or the shared theme/, components/ui/, types/, config/.',
-        }],
+        patterns: [{ group: ['../*'], message: 'The shop must not import from src/ — use src/shop/, @pyrhouse/api or @pyrhouse/ui.' }],
+      }],
+    },
+  },
+  {
+    files: ['src/shop/*/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{ group: ['../../*'], message: 'The shop must not import from src/ — use src/shop/, @pyrhouse/api or @pyrhouse/ui.' }],
       }],
     },
   },

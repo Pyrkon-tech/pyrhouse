@@ -18,7 +18,7 @@ import type {
   ShopSummaryGroup,
   ShopWindow,
   ShopWindowInput,
-} from '../types/shop.types';
+} from '@pyrhouse/api';
 
 const BASE = '/admin/shop';
 

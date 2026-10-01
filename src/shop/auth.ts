@@ -3,7 +3,7 @@
  * The backend refuses an exchange without code_verifier, so a Google code cannot be exchanged
  * from anyone else's browser — nobody can take over another person's invite (docs/shop/PLAN.md).
  */
-import { env } from '../config/env';
+import { env } from './env';
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const PENDING_KEY = 'shop_login_pending';

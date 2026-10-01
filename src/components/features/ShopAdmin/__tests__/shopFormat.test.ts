@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { dayKey, fmtOrderDates, orderStatusView, warsawToISO } from '../shopFormat';
-import type { ShopOrder } from '../../../../types/shop.types';
+import type { ShopOrder } from '@pyrhouse/api';
 
 describe('warsawToISO', () => {
   it('converts summer time (CEST, UTC+2)', () => {

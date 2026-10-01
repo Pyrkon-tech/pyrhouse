@@ -2,7 +2,7 @@
  * Formatting shared by the organizer shop and the warehouse shop panel.
  * Dates are Europe/Warsaw calendar days and times, whatever the viewer's time zone.
  */
-import type { ShopLocation, ShopOrder, ShopWindow } from '../types/shop.types';
+import type { ShopLocation, ShopOrder, ShopWindow } from '@pyrhouse/api';
 
 // Windows and return days are Polish calendar days, whatever the viewer's time zone.
 const TZ = 'Europe/Warsaw';

@@ -19,6 +19,9 @@ src/
 │   ├── features/           # Komponenty funkcjonalne
 │   └── common/             # Wspólne komponenty
 ├── theme/
+│   └── ThemeContext.tsx   # Provider motywu (tryb jasny/ciemny)
+...
+packages/ui/src/           # @pyrhouse/ui — wspólne z aplikacją sklepu
 │   ├── designTokens.ts     # Centralne design tokens
 │   ├── theme.ts           # Konfiguracja motywu
 │   └── ...
@@ -34,7 +37,7 @@ src/
 
 ### 1. Design System
 
-#### Design Tokens (`src/theme/designTokens.ts`)
+#### Design Tokens (`packages/ui/src/designTokens.ts`)
 Centralny system wartości designowych:
 - **Kolory**: Paleta kolorów z wariantami light/dark
 - **Typografia**: Rozmiary fontów, wagi, line-height
@@ -46,7 +49,7 @@ Centralny system wartości designowych:
 
 ```typescript
 // Przykład użycia
-import { designTokens } from '../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 
 const styles = {
   padding: designTokens.spacing.lg,
@@ -55,7 +58,7 @@ const styles = {
 };
 ```
 
-#### Motyw (`src/theme/theme.ts`)
+#### Motyw (`packages/ui/src/theme.ts`)
 Konfiguracja Material-UI z design tokens:
 - Automatyczne generowanie motywów light/dark
 - Cache'owanie motywów dla wydajności

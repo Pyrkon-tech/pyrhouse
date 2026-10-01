@@ -23,8 +23,8 @@ import { useCart } from '../Cart';
 import { useCatalog } from '../Catalog';
 import { useShopSession } from '../ShopSession';
 import QuantityStepper from '../QuantityStepper';
-import { fmtDateTime, fmtMoney } from '../../utils/shopFormat';
-import type { ShopProduct } from '../../types/shop.types';
+import { fmtDateTime, fmtMoney } from '@pyrhouse/ui';
+import type { ShopProduct } from '@pyrhouse/api';
 
 const ALL = '__all__';
 

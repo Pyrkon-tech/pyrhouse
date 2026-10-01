@@ -27,7 +27,7 @@ import {
 import { apiClient, ApiError } from '../../services/apiClient';
 import { useStorage } from '../../hooks/useStorage';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
-import pyrkonLogo from '../../assets/images/p-logo.svg';
+import pyrkonLogo from '@pyrhouse/ui/assets/p-logo.svg';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 import { jwtDecode } from 'jwt-decode';

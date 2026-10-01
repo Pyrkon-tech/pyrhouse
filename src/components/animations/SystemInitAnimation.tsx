@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Box, LinearProgress, Typography } from '@mui/material';
 import { keyframes } from '@mui/system';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
-import pyrkonLogo from '../../assets/images/p-logo.svg';
+import pyrkonLogo from '@pyrhouse/ui/assets/p-logo.svg';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(8px); }

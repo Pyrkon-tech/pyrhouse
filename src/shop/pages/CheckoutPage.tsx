@@ -26,8 +26,8 @@ import { useCart, type CartLine } from '../Cart';
 import { useCatalog } from '../Catalog';
 import { useShopSession } from '../ShopSession';
 import QuantityStepper from '../QuantityStepper';
-import { dayKey, fmtDayKey, fmtMoney, fmtWindow } from '../../utils/shopFormat';
-import type { ShopLocation, ShopOrder, ShopWindow } from '../../types/shop.types';
+import { dayKey, fmtDayKey, fmtMoney, fmtWindow } from '@pyrhouse/ui';
+import type { ShopLocation, ShopOrder, ShopWindow } from '@pyrhouse/api';
 
 const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
   <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>

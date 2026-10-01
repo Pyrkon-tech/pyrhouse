@@ -3,7 +3,7 @@ import { Alert, Box, Button, Divider, Paper, Typography } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { Navigate, useLocation } from 'react-router-dom';
-import logo from '../../assets/images/p-logo.svg';
+import logo from '@pyrhouse/ui/assets/p-logo.svg';
 import { getInvite, startLogin } from '../auth';
 import { useShopSession } from '../ShopSession';
 

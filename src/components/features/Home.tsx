@@ -36,7 +36,7 @@ import type { TransferSummary } from '../../types/transfer.types';
 import { AppSnackbar } from '../ui/AppSnackbar';
 import { useSnackbarMessage } from '../../hooks/useSnackbarMessage';
 const BarcodeScanner = lazy(() => import('../common/BarcodeScanner'));
-import { designTokens } from '../../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 import { useQuestCounts } from '../../hooks/useQuestCounts';
 import { useQuests } from '../../hooks/useQuests';
 import { useServiceDeskRequests } from '../../hooks/useServiceDeskRequests';

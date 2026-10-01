@@ -4,7 +4,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { useTheme } from '@mui/material';
 import LazyIcon from '../ui/LazyIcon';
-import { designTokens } from '../../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 import { useThemeMode } from '../../theme/ThemeContext';
 import { Icons } from './navigation';
 

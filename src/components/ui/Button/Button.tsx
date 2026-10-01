@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button as MuiButton, ButtonProps as MuiButtonProps, styled } from '@mui/material';
-import { designTokens } from '../../../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 
 export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';

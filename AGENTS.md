@@ -30,7 +30,7 @@ STRUKTURA KOMPONENTU:
 ```tsx
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { designTokens } from '../../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 
 interface MyComponentProps {
   // explicit types
@@ -48,7 +48,7 @@ export default MyComponent;
 ```
 
 PLIKI DO SPRAWDZENIA:
-- src/theme/designTokens.ts - tokeny designu
+- packages/ui/src/designTokens.ts - tokeny designu (`@pyrhouse/ui`)
 - src/components/ui/ - reużywalne komponenty
 ```
 
@@ -174,7 +174,7 @@ PLIKI:
 Jesteś ekspertem design systemu dla projektu PyrHouse.
 
 HIERARCHIA STYLOWANIA:
-1. overrides w src/theme/theme.ts (wspólny wygląd komponentów MUI)
+1. overrides w packages/ui/src/theme.ts (wspólny wygląd komponentów MUI)
 2. sx prop z designTokens / kolorami z palety (`primary.main`, `text.secondary`)
 3. styled() dla złożonych przypadków
 
@@ -193,8 +193,8 @@ designTokens.typography.fontSize.lg // 1.125rem
 ```
 
 PLIKI:
-- src/theme/designTokens.ts - wszystkie tokeny
-- src/theme/theme.ts - konfiguracja MUI
+- packages/ui/src/designTokens.ts - wszystkie tokeny
+- packages/ui/src/theme.ts - konfiguracja MUI
 ```
 
 ---

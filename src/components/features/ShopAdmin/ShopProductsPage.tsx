@@ -22,7 +22,7 @@ import { DataTable, DataTableEmptyRow, DataTableLoadingRow } from '../../ui';
 import { useNotification } from '../../../context/NotificationContext';
 import { useCategories } from '../../../hooks/useCategories';
 import { createShopProductAPI, getShopProductsAPI, updateShopProductAPI } from '../../../services/shopAdminService';
-import type { ShopProduct, ShopProductInput } from '../../../types/shop.types';
+import type { ShopProduct, ShopProductInput } from '@pyrhouse/api';
 import ShopAdminTabs from './ShopAdminTabs';
 import { fmtMoney, shopErrorMessage } from './shopFormat';
 

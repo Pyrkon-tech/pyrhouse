@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import { useTheme, useMediaQuery } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import LazyIcon from '../ui/LazyIcon';
-import { designTokens } from '../../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 import { useAnimationPreference } from '../../hooks/useAnimationPreference';
 import { Icons } from './navigation';
 import ThemeToggle from './ThemeToggle';

@@ -9,7 +9,7 @@ export { SearchBar } from './SearchBar';
 export { EmptyState } from './EmptyState';
 export { PageLoader } from './PageLoader';
 export { OriginSelect } from './OriginSelect';
-export { ErrorBoundary } from './ErrorBoundary';
+export { ErrorBoundary } from '@pyrhouse/ui';
 
 // Default exports (legacy pattern)
 export { default as ThemeSwitch } from './ThemeSwitch';

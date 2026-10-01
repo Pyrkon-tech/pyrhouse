@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { Link as RouterLink, NavLink, Outlet } from 'react-router-dom';
-import logo from '../assets/images/p-logo.svg';
+import logo from '@pyrhouse/ui/assets/p-logo.svg';
 import { useShopSession } from './ShopSession';
 import { useCart } from './Cart';
 import CartDrawer from './CartDrawer';

@@ -8,7 +8,7 @@ import { useCart } from './Cart';
 import { useCatalog } from './Catalog';
 import { useShopSession } from './ShopSession';
 import QuantityStepper from './QuantityStepper';
-import { fmtMoney } from '../utils/shopFormat';
+import { fmtMoney } from '@pyrhouse/ui';
 
 const CartDrawer: React.FC = () => {
   const { lines, open, setOpen, setQuantity } = useCart();

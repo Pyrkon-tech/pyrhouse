@@ -51,8 +51,8 @@ src/
 | Plik | Opis |
 |------|------|
 | `src/App.tsx` | Główny komponent z routingiem |
-| `src/theme/designTokens.ts` | Centralne design tokens |
-| `src/theme/theme.ts` | Konfiguracja MUI theme |
+| `packages/ui` (`@pyrhouse/ui`) | Wspólne dla magazynu i sklepu: `designTokens`, theme MUI (`createThemeWithMode`), `ErrorBoundary`, formatery sklepu (`shopFormat`), logo (`assets/p-logo.svg`) |
+| `src/theme/ThemeContext.tsx` | Provider motywu magazynu (tryb jasny/ciemny w storage) |
 | `src/routes/routes.ts` | Definicje tras |
 | `src/context/AuthContext.tsx` | Centralny stan auth (jeden interwał walidacji JWT); provider w App.tsx wewnątrz Routera |
 | `src/hooks/useAuth.ts` | Cienki wrapper na AuthContext (stare API zachowane) |
@@ -90,15 +90,15 @@ src/
 - `/categories` - Zarządzanie kategoriami
 - `/shop-admin/{orders,summary,products,access,settings}` - Panel sklepu dla organizatorów (moderator+, ustawienia sklepu: admin).
   Jedna pozycja „Sklep” w menu (licznik oczekujących, `useShopPendingCount`) + zakładki `ShopAdminTabs` (wariant B menu,
-  `docs/shop/PLAN.md` D28). Kod: `src/components/features/ShopAdmin/`, serwis `shopAdminService.ts`, typy `shop.types.ts`.
-  Daty okien i zwrotów liczone w strefie Europe/Warsaw (`shopFormat.ts`: `warsawToISO`, `fmtWindow`).
+  `docs/shop/PLAN.md` D28). Kod: `src/components/features/ShopAdmin/`, serwis `shopAdminService.ts`, typy sklepu z `@pyrhouse/api` (`packages/api/src/shop.ts`).
+  Daty okien i zwrotów liczone w strefie Europe/Warsaw (`@pyrhouse/ui` → `shopFormat.ts`: `warsawToISO`, `fmtWindow`).
 
 ## Sklep dla organizatorów (`src/shop/`) — osobna aplikacja
 
 Druga aplikacja w tym repo (`shop.pyrhouse.space`, `docs/shop/PLAN.md` w workspace): entry `shop.html` →
 `src/shop/main.tsx`, config `vite.shop.config.ts`, `npm run dev:shop` (:3001), `npm run build:shop` → `dist-shop/`
-(bez PWA, własny `shop/public/`). ESLint zabrania importów z kodu magazynu (`components/features|layout`, `context`,
-`hooks`, `services`, `routes`); wspólne są `theme/`, `components/ui/`, `types/`, `config/`, `utils/shopFormat.ts`.
+(bez PWA, własny `shop/public/`). Sklep importuje wyłącznie z `src/shop/` i pakietów `@pyrhouse/api`,
+`@pyrhouse/ui` — ESLint blokuje każdy import wychodzący poza `src/shop/`. Env sklepu: `src/shop/env.ts`.
 
 - Własny klient HTTP `src/shop/api.ts` i token pod kluczem `shop_token` (nie `token`) — 401 prowadzi do logowania sklepu.
 - Logowanie Google z PKCE + `state` (`src/shop/auth.ts`); backend odrzuca exchange bez `code_verifier`.
@@ -127,9 +127,9 @@ Druga aplikacja w tym repo (`shop.pyrhouse.space`, `docs/shop/PLAN.md` w workspa
 - Gradient sidebar background
 
 ### Użycie stylów
-Style przez MUI `sx` i theme (`src/theme/theme.ts`), wartości z `designTokens` — bez hardkodowanych kolorów:
+Style przez MUI `sx` i theme (`packages/ui/src/theme.ts`), wartości z `designTokens` — bez hardkodowanych kolorów:
 ```typescript
-import { designTokens } from '../theme/designTokens';
+import { designTokens } from '@pyrhouse/ui';
 
 <Box sx={{ p: 2, borderRadius: designTokens.borderRadius.lg, color: 'primary.main' }} />
 ```
@@ -403,7 +403,7 @@ Po zakończeniu zadania sprawdź:
 
 ### Modyfikacja stylów
 1. Użyj design tokens z `designTokens.ts`
-2. Wspólny wygląd komponentów MUI zmieniaj w `src/theme/theme.ts` (overrides), nie lokalnie
+2. Wspólny wygląd komponentów MUI zmieniaj w `packages/ui/src/theme.ts` (overrides), nie lokalnie
 3. Nigdy nie używaj hardkodowanych wartości kolorów/spacing
 
 ### Dodawanie API call (nowy sposób)

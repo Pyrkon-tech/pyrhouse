@@ -1,5 +1,5 @@
 import type { ChipProps } from '@mui/material';
-import type { ShopOrder } from '../types/shop.types';
+import type { ShopOrder } from '@pyrhouse/api';
 
 export interface OrganizerStatus {
   label: string;

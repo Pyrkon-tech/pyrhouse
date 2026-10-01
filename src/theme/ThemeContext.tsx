@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useMemo, ReactNode, useEffect } from 'react';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { createThemeWithMode } from './theme';
+import { createThemeWithMode } from '@pyrhouse/ui';
 import { useStorage } from '../hooks/useStorage';
 
 // Typy dla trybu motywu

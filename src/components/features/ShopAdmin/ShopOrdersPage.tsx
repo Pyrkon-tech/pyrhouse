@@ -40,7 +40,7 @@ import {
   patchShopOrderAPI,
   rejectShopOrderAPI,
 } from '../../../services/shopAdminService';
-import type { ShopOrder, ShopOrderDetail, ShopOrderStatus, ShopProduct } from '../../../types/shop.types';
+import type { ShopOrder, ShopOrderDetail, ShopOrderStatus, ShopProduct } from '@pyrhouse/api';
 import ShopAdminTabs from './ShopAdminTabs';
 import {
   fmtDateTime,

@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { shopApi } from './api';
 import { useShopSession } from './ShopSession';
-import type { ShopProduct } from '../types/shop.types';
+import type { ShopProduct } from '@pyrhouse/api';
 
 interface CatalogState {
   products: ShopProduct[];

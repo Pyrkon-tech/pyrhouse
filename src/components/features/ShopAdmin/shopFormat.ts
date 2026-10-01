@@ -1,7 +1,7 @@
 import type { ChipProps } from '@mui/material';
-import type { ShopAccessSource, ShopInviteStatus, ShopOrder } from '../../../types/shop.types';
+import type { ShopAccessSource, ShopInviteStatus, ShopOrder } from '@pyrhouse/api';
 
-export * from '../../../utils/shopFormat';
+export * from '@pyrhouse/ui';
 
 interface StatusView {
   label: string;

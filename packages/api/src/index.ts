@@ -6,3 +6,4 @@ import type { components, paths } from './openapi';
 
 export type { components, paths };
 export type Schemas = components['schemas'];
+export type * from './shop';

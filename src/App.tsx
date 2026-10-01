@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Suspense } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
-import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { ErrorBoundary } from '@pyrhouse/ui';
 import PrivateRoute from './components/features/Authorisation';
 import Layout from './components/layout/Layout';
 import LoadingSkeleton from './components/ui/LoadingSkeleton';

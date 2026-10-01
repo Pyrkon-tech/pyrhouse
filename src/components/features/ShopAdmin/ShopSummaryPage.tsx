@@ -16,7 +16,7 @@ import {
 import DownloadIcon from '@mui/icons-material/Download';
 import { DataTable, DataTableEmptyRow, DataTableLoadingRow } from '../../ui';
 import { getShopOrdersAPI, getShopSummaryAPI } from '../../../services/shopAdminService';
-import type { ShopOrder, ShopSummaryGroup, ShopSummaryRow } from '../../../types/shop.types';
+import type { ShopOrder, ShopSummaryGroup, ShopSummaryRow } from '@pyrhouse/api';
 import ShopAdminTabs from './ShopAdminTabs';
 import { fmtDayKey, fmtMoney, shopErrorMessage } from './shopFormat';
 

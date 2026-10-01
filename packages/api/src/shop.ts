@@ -2,7 +2,9 @@
  * Organizer shop types — aliases of the generated API contract (@pyrhouse/api, from
  * backend/docs/openapi.yaml). Change the spec and run `npm run api:types`; do not hand-edit shapes here.
  */
-import type { Schemas } from '@pyrhouse/api';
+import type { components } from './openapi';
+
+type Schemas = components['schemas'];
 
 export type ShopOrder = Schemas['ShopOrder'];
 export type ShopOrderDetail = Schemas['ShopOrderDetail'];

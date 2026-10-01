@@ -35,7 +35,7 @@ import {
   revokeShopInviteAPI,
   setShopAccountActiveAPI,
 } from '../../../services/shopAdminService';
-import type { CreatedShopInvite, ShopAccessSource, ShopAccount, ShopInvite, ShopSettings } from '../../../types/shop.types';
+import type { CreatedShopInvite, ShopAccessSource, ShopAccount, ShopInvite, ShopSettings } from '@pyrhouse/api';
 import ShopAdminTabs from './ShopAdminTabs';
 import { ACCESS_SOURCE_LABEL, INVITE_STATUS_VIEW, fmtDateTime, shopErrorMessage } from './shopFormat';
 

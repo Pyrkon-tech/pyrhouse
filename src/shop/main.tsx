@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
-import { createThemeWithMode } from '../theme/theme';
-import { ErrorBoundary } from '../components/ui/ErrorBoundary';
+import { createThemeWithMode } from '@pyrhouse/ui';
+import { ErrorBoundary } from '@pyrhouse/ui';
 import ShopApp from './ShopApp';
 
 // The shop uses the PyrHouse dark design (mockups), with no light/dark switch.

@@ -27,7 +27,7 @@ import {
   updateShopSettingsAPI,
   updateShopWindowAPI,
 } from '../../../services/shopAdminService';
-import type { ShopSettings, ShopWindow, ShopWindowKind } from '../../../types/shop.types';
+import type { ShopSettings, ShopWindow, ShopWindowKind } from '@pyrhouse/api';
 import ShopAdminTabs from './ShopAdminTabs';
 import { dayKey, fmtDayKey, fmtWindow, shopErrorMessage, warsawToISO } from './shopFormat';
 

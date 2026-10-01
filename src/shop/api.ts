@@ -2,7 +2,7 @@
  * HTTP client of the organizer shop. Deliberately separate from the warehouse apiClient: the shop
  * token lives under its own key and a 401 leads to the shop login, never the warehouse one.
  */
-import { env } from '../config/env';
+import { env } from './env';
 import type {
   ShopAccount,
   ShopConfig,
@@ -11,7 +11,7 @@ import type {
   ShopOrderInput,
   ShopProduct,
   ShopWindow,
-} from '../types/shop.types';
+} from '@pyrhouse/api';
 
 export const SHOP_TOKEN_KEY = 'shop_token';
 
