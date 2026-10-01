@@ -2892,6 +2892,8 @@ export interface components {
              * @enum {string|null}
              */
             quest_status: "pending" | "in_progress" | "completed" | "cancelled" | null;
+            /** @description The warehouse changed the items or the location after submission (see the order events) */
+            changed_by_warehouse: boolean;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */

@@ -104,6 +104,11 @@ const OrderDetail: React.FC<{ order: ShopOrder; onChanged: (o: ShopOrder) => voi
       {order.status === 'rejected' && (
         <Alert severity="error"><strong>Powód odrzucenia:</strong> {order.status_reason || '—'}</Alert>
       )}
+      {order.changed_by_warehouse && (
+        <Alert severity="warning">
+          Magazyn zmienił pozycje lub miejsce dostawy tego zamówienia — poniżej aktualna wersja.
+        </Alert>
+      )}
       {locked && (
         <Alert severity="info" icon={<LockOutlinedIcon />}>
           Zamówienie potwierdzone przez magazyn — nie można go już zmienić. Potrzebujesz czegoś więcej? Użyj „Zamów ponownie”.
@@ -239,6 +244,9 @@ const OrdersPage: React.FC = () => {
                   <Chip size="small" label={st.label} color={st.color} />
                 </Box>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>{fmtLocation(o.location)}</Typography>
+                {o.changed_by_warehouse && (
+                  <Typography variant="caption" sx={{ color: 'warning.main' }}>Zmienione przez magazyn</Typography>
+                )}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'text.secondary' }}>
                   <span>{fmtOrderDates(o)}</span>
                   <span>{o.total != null ? fmtMoney(o.total) : ''}</span>
