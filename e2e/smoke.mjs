@@ -26,11 +26,24 @@ const fakeToken = process.env.SMOKE_TOKEN || [
 
 // Network/CORS noise is expected (no backend in CI) and must not fail the smoke
 const IGNORABLE = [/Failed to load resource/i, /net::ERR/i, /CORS/i, /Access to fetch/i, /ERR_CONNECTION/i];
-const ERROR_BOUNDARY_TEXT = 'Coś poszło nie tak';
+// ErrorBoundary marks its fallback with this test id (packages/ui/src/ErrorBoundary.tsx)
+const ERROR_BOUNDARY = '[data-testid="error-boundary"]';
 
+// Main pages of every menu section (the token is an admin, so admin-only pages render too)
 const ROUTES = [
   { path: '/login', token: false, expect: 'Zaloguj się' },
   { path: '/home', token: true, expect: 'Home' },
+  { path: '/quests', token: true, expect: 'Zapotrzebowania' },
+  { path: '/servicedesk', token: true, expect: 'Service Desk' },
+  { path: '/transfers', token: true, expect: 'Transfery' },
+  { path: '/transfers/create', token: true, expect: 'Nowe' },
+  { path: '/list', token: true, expect: 'Sprzęt' },
+  { path: '/locations', token: true, expect: 'Lokalizacje' },
+  { path: '/releases', token: true, expect: 'Demontażkon' },
+  { path: '/duty-schedule', token: true, expect: 'Grafik' },
+  { path: '/shop-admin/orders', token: true, expect: 'Sklep' },
+  { path: '/users', token: true, expect: 'Administracja' },
+  { path: '/categories', token: true, expect: 'Administracja' },
 ];
 
 const browser = await chromium.launch();
@@ -63,7 +76,7 @@ for (const route of ROUTES) {
   const problems = [];
   if (navError) problems.push(`navigation failed: ${navError}`);
   if (!body) problems.push('empty <body> (white page)');
-  if (body.includes(ERROR_BOUNDARY_TEXT)) problems.push('rendered ErrorBoundary fallback');
+  if (await page.locator(ERROR_BOUNDARY).count()) problems.push('rendered ErrorBoundary fallback');
   if (route.expect && !body.includes(route.expect)) problems.push(`missing expected text "${route.expect}"`);
   if (pageErrors.length) problems.push(`uncaught page errors:\n    ${pageErrors.join('\n    ')}`);
   if (consoleErrors.length) problems.push(`console errors:\n    ${consoleErrors.join('\n    ')}`);

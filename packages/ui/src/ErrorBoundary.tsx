@@ -46,7 +46,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', p: 2 }}>
+        // data-testid: the browser smoke test (e2e/smoke.mjs) detects a crash by it, not by the wording
+        <Box
+          data-testid="error-boundary"
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', p: 2 }}
+        >
           <Paper elevation={3} sx={{ p: 4, maxWidth: 440, textAlign: 'center' }}>
             <Typography sx={{ fontSize: 56, lineHeight: 1, mb: 1 }} aria-hidden="true">
               🐭🔧

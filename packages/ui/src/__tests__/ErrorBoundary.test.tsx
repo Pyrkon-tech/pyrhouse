@@ -19,6 +19,8 @@ describe('ErrorBoundary', () => {
     expect(screen.getByRole('button', { name: 'Odśwież stronę' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć na start' })).toBeInTheDocument();
     expect(screen.getByText(/kabel wyrwany/)).toBeInTheDocument();
+    // e2e/smoke.mjs finds a crashed page by this id
+    expect(screen.getByTestId('error-boundary')).toBeInTheDocument();
     spy.mockRestore();
   });
 
