@@ -1143,6 +1143,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/equipment-requests/quests/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quest counts per status
+         * @description Number of items in every status (all statuses present, zero included). Feeds menu and dashboard counters.
+         */
+        get: operations["countQuests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/equipment-requests/quests/unresolved-locations": {
         parameters: {
             query?: never;
@@ -1227,6 +1247,26 @@ export interface paths {
          * @description Public (the reporting form). Anonymous callers are rate-limited per IP (15/min); with a valid warehouse token the request is linked to that user. New requests are always `new` and unassigned.
          */
         post: operations["createServiceDeskRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/service-desk/requests/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Request counts per status
+         * @description Number of items in every status (all statuses present, zero included). Feeds menu and dashboard counters.
+         */
+        get: operations["countServiceDeskRequests"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6665,6 +6705,33 @@ export interface operations {
             };
         };
     };
+    countQuests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Counts per status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        pending: number;
+                        in_progress: number;
+                        completed: number;
+                        cancelled: number;
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["DefaultError"];
+        };
+    };
     getEquipmentRequestsQuestsUnresolvedLocations: {
         parameters: {
             query?: never;
@@ -6838,6 +6905,34 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            500: components["responses"]["DefaultError"];
+        };
+    };
+    countServiceDeskRequests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Counts per status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        new: number;
+                        in_progress: number;
+                        waiting: number;
+                        resolved: number;
+                        closed: number;
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["DefaultError"];
         };
     };

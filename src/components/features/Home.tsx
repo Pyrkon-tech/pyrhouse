@@ -39,7 +39,7 @@ const BarcodeScanner = lazy(() => import('../common/BarcodeScanner'));
 import { designTokens } from '@pyrhouse/ui';
 import { useQuestCounts } from '../../hooks/useQuestCounts';
 import { useQuests } from '../../hooks/useQuests';
-import { useServiceDeskRequests } from '../../hooks/useServiceDeskRequests';
+import { useServiceDeskCounts } from '../../hooks/useServiceDeskCounts';
 
 type SearchItem =
   | (GlobalSearchAsset & { _type: 'asset' })
@@ -84,7 +84,8 @@ const HomePage: React.FC = () => {
 
   const { counts } = useQuestCounts();
   const { quests: pendingQuests, loading: pendingLoading, fetchQuests } = useQuests();
-  const { requests: sdRequests, loading: sdLoading } = useServiceDeskRequests('pending', '');
+  // New (not yet picked up) requests — the service desk queue
+  const { counts: sdCounts } = useServiceDeskCounts();
 
   useEffect(() => {
     if (!isMobile) {
@@ -194,7 +195,7 @@ const HomePage: React.FC = () => {
     },
     {
       label: 'Service Desk',
-      value: sdLoading ? null : sdRequests.length,
+      value: sdCounts.new,
       icon: <MedicalServices fontSize="small" />,
       color: designTokens.colors.accent[500],
       bg: 'rgba(0,172,193,0.08)',
