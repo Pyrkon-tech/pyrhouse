@@ -5,15 +5,15 @@
 | # | Propozycja | Status | Plik(i) |
 |---|------------|--------|---------|
 | 1 | API Client | **DONE** | `src/services/apiClient.ts` |
-| 2 | Centralizacja typów | **DONE** | `src/types/*.ts` |
-| 3 | Rozszerzenie config/api | **DONE** | `src/config/api.ts` |
+| 2 | Centralizacja typów | **DONE** | typy generowane ze specu: `packages/api` (`@pyrhouse/api`); `src/types/*.ts` to aliasy |
+| 3 | Rozszerzenie config/api | **DONE → zastąpione** | `src/config/api.ts` usunięty, wszystko przez `apiClient` |
 | 4 | NotificationContext | **DONE** | `src/context/NotificationContext.tsx` |
 | 5 | Environment config | **DONE** | `src/config/env.ts` |
 | 6 | Cache invalidation pattern | **DONE** | `src/hooks/useCategories.ts` |
-| 7 | Migracja serwisów do apiClient | **IN PROGRESS** | transferService, assetService (done) |
-| 8 | UI/UX WOW Redesign | **DONE** | `designTokens.ts`, `theme.ts`, `Layout.tsx` |
+| 7 | Migracja serwisów do apiClient | **DONE** (2026-06) | listy wyłącznie przez `getList` — pilnuje ESLint |
+| 8 | UI/UX WOW Redesign | **DONE** | `packages/ui` (`designTokens.ts`, `theme.ts`), `Layout.tsx`; menu wariant B (2026-10) |
 | 9 | React Query | TODO | - |
-| 10 | Lazy loading libs | TODO | - |
+| 10 | Lazy loading libs | **DONE** | skaner (Quagga) przez `lazy()`, `jspdf` przez dynamic import |
 | 11 | MSW setup | TODO | - |
 | 12 | Feature folders | TODO | - |
 
