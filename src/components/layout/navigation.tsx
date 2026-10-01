@@ -73,67 +73,93 @@ export const Icons = {
   Storefront,
 };
 
-export interface NavMenuItem {
-  path?: string;
-  label: string;
-  icon: React.ReactNode;
-  type?: 'divider';
-}
+export type Role = 'user' | 'dispatcher' | 'moderator' | 'admin';
 
-export interface AdminMenuItem {
+/**
+ * Warehouse menu, variant B (docs/shop/PLAN.md, D28): short groups, queues with counters, actions under one
+ * "Nowe" button, administration as one entry with tabs. Roles must match `requiredRoles` in routes.ts.
+ */
+export interface NavItem {
   path: string;
   label: string;
   icon: React.ReactNode;
-  allowedRoles: string[];
-  /** Highlight the item for every path under this prefix (sections with tabs) */
-  activePrefix?: string;
-  /** Count shown next to the label (queues to handle) */
-  badge?: number;
+  /** Visible only to these roles (omitted = everyone) */
+  allowedRoles?: Role[];
+  /** Highlight the item for every path under these prefixes */
+  activePrefixes?: string[];
+  /** Counter source shown next to the label */
+  badge?: 'shop';
+  /** Small hint after the label */
+  tag?: string;
+  hideOnMobile?: boolean;
 }
 
-export const NAV_MENU_ITEMS: NavMenuItem[] = [
-  { path: '/home', label: 'Home', icon: <Icons.Home /> },
+export interface NavGroup {
+  label?: string;
+  items: NavItem[];
+}
+
+export const NAV_GROUPS: NavGroup[] = [
+  { items: [{ path: '/home', label: 'Home', icon: <Icons.Home /> }] },
   {
-    type: 'divider',
-    label: 'Zamówienia',
-    icon: <Icons.AutoAwesome sx={{ fontSize: '0.9rem' }} />
+    label: 'Operacje',
+    items: [
+      { path: '/dispatch', label: 'Dispatch', icon: <Icons.Map />, hideOnMobile: true },
+      { path: '/quests', label: 'Zapotrzebowania', icon: <Icons.AddBusiness />, activePrefixes: ['/quests'] },
+      { path: '/servicedesk', label: 'Service Desk', icon: <Icons.MedicalServices />, activePrefixes: ['/servicedesk'] },
+      { path: '/transfers', label: 'Transfery', icon: <Icons.ShoppingBasket />, activePrefixes: ['/transfers'] },
+      { path: '/duty-schedule', label: 'Grafik', icon: <Icons.Event />, allowedRoles: ['admin', 'moderator'] },
+      { path: '/releases', label: 'Demontażkon', icon: <Icons.Outbox />, activePrefixes: ['/releases'], tag: 'po Pyrkonie' },
+    ],
   },
-  { path: '/dispatch', label: 'Mapa Dispatch', icon: <Icons.Map /> },
-  { path: '/quests', label: 'Zapotrzebowanie', icon: <Icons.AddBusiness /> },
-  { path: '/servicedesk', label: 'Service Desk', icon: <Icons.MedicalServices /> },
   {
-    type: 'divider',
-    label: 'Transfery',
-    icon: <Icons.LocalShipping sx={{ fontSize: '0.9rem' }} />
-  },
-  { path: '/transfers/create', label: 'Nowy transfer', icon: <Icons.RocketLaunch /> },
-  { path: '/transfers', label: 'Transfery', icon: <Icons.ShoppingBasket /> },
-  {
-    type: 'divider',
     label: 'Magazyn',
-    icon: <Icons.Inventory2 sx={{ fontSize: '0.9rem' }} />
+    items: [
+      { path: '/list', label: 'Sprzęt', icon: <Icons.Warehouse />, activePrefixes: ['/list', '/equipment'] },
+      { path: '/locations', label: 'Lokalizacje', icon: <Icons.EditLocationAlt />, activePrefixes: ['/locations'] },
+      {
+        path: '/shop-admin/orders',
+        label: 'Sklep',
+        icon: <Icons.Storefront />,
+        allowedRoles: ['admin', 'moderator'],
+        activePrefixes: ['/shop-admin'],
+        badge: 'shop',
+      },
+    ],
   },
-  { path: '/add-item', label: 'Dodaj sprzęt', icon: <Icons.AddTask /> },
-  { path: '/list', label: 'Stan Magazynowy', icon: <Icons.Warehouse /> },
-  { path: '/locations', label: 'Lokalizacje', icon: <Icons.EditLocationAlt /> },
-  {
-    type: 'divider',
-    label: 'Po Pyrkonie',
-    icon: <Icons.Outbox sx={{ fontSize: '0.9rem' }} />
-  },
-  { path: '/releases', label: 'Demontażkon', icon: <Icons.Outbox /> },
 ];
 
-const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
-  // Menu variant B (docs/shop/PLAN.md, D28): one entry, subpages as tabs
-  { path: '/shop-admin/orders', label: 'Sklep', icon: <Icons.Storefront />, allowedRoles: ['admin', 'moderator'], activePrefix: '/shop-admin' },
-  { path: '/duty-schedule', label: 'Grafik', icon: <Icons.Event />, allowedRoles: ['admin', 'moderator'] },
-  { path: '/categories', label: 'Kategorie', icon: <Icons.Category />, allowedRoles: ['admin', 'moderator', 'dispatcher'] },
-  { path: '/origins', label: 'Pochodzenie', icon: <Icons.Source />, allowedRoles: ['admin', 'moderator', 'dispatcher'] },
-  { path: '/budget', label: 'Budżet', icon: <Icons.Calculate />, allowedRoles: ['admin'] },
-  { path: '/users', label: 'Użytkownicy', icon: <Icons.People />, allowedRoles: ['admin', 'moderator'] },
-  { path: '/settings', label: 'Ustawienia', icon: <Icons.Settings />, allowedRoles: ['admin'] },
+/** "Nowe" button: the frequent create actions, kept out of the list */
+export const NEW_ACTIONS: { path: string; label: string; icon: React.ReactNode }[] = [
+  { path: '/transfers/create', label: 'Transfer', icon: <Icons.RocketLaunch /> },
+  { path: '/add-item', label: 'Sprzęt', icon: <Icons.AddTask /> },
+  { path: '/servicedesk/request', label: 'Zgłoszenie', icon: <Icons.MedicalServices /> },
 ];
 
-export const getAdminMenuItems = (userRole: string | null): AdminMenuItem[] =>
-  ADMIN_MENU_ITEMS.filter((item) => userRole != null && item.allowedRoles.includes(userRole));
+/** Tabs of the single "Administracja" entry; each tab keeps its own route and roles */
+export const ADMIN_TABS: { path: string; label: string; allowedRoles: Role[] }[] = [
+  { path: '/categories', label: 'Kategorie', allowedRoles: ['admin', 'moderator', 'dispatcher'] },
+  { path: '/origins', label: 'Pochodzenie', allowedRoles: ['admin', 'moderator', 'dispatcher'] },
+  { path: '/budget', label: 'Budżet', allowedRoles: ['admin'] },
+  { path: '/users', label: 'Użytkownicy', allowedRoles: ['admin', 'moderator'] },
+  { path: '/settings', label: 'Ustawienia', allowedRoles: ['admin'] },
+];
+
+const allowed = (roles: Role[] | undefined, userRole: string | null): boolean =>
+  !roles || (userRole != null && (roles as string[]).includes(userRole));
+
+export const getNavGroups = (userRole: string | null): NavGroup[] =>
+  NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => allowed(i.allowedRoles, userRole)) })).filter(
+    (g) => g.items.length > 0,
+  );
+
+export const getAdminTabs = (userRole: string | null) => ADMIN_TABS.filter((t) => allowed(t.allowedRoles, userRole));
+
+/** The admin tab whose section the path belongs to (e.g. /users/42 → Użytkownicy) */
+export const findAdminTab = (pathname: string) =>
+  ADMIN_TABS.find((t) => pathname === t.path || pathname.startsWith(`${t.path}/`));
+
+export const isNavItemActive = (item: NavItem, pathname: string): boolean =>
+  item.activePrefixes
+    ? item.activePrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+    : pathname === item.path;

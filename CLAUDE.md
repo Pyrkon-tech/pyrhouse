@@ -85,6 +85,13 @@ src/
 - `/servicedesk` - Service desk
 - `/dispatch` - Mapa Dispatch (centrum dowodzenia dyżurnego — questy + SD per strefa, SSE, urgency)
 
+### Menu (wariant B, `docs/shop/PLAN.md` D28)
+Definicja w `src/components/layout/navigation.tsx` (`NAV_GROUPS`, `NEW_ACTIONS`, `ADMIN_TABS`), render w `SidebarNav`:
+Home · **Operacje** (Dispatch, Zapotrzebowania, Service Desk, Transfery, Grafik, Demontażkon) · **Magazyn** (Sprzęt,
+Lokalizacje, Sklep z licznikiem) · przycisk **„Nowe”** (transfer, sprzęt, zgłoszenie) · na dole **Administracja** — jedna
+pozycja, a jej strony (Kategorie, Pochodzenie, Budżet, Użytkownicy, Ustawienia) dostają zakładki z `AdminTabs`
+renderowane przez `Layout`. Role pozycji i zakładek muszą zgadzać się z `requiredRoles` w `routes.ts`.
+
 ### Admin routes
 - `/users/*` - Zarządzanie użytkownikami
 - `/categories` - Zarządzanie kategoriami

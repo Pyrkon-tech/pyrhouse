@@ -1,29 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import Badge from '@mui/material/Badge';
 import Chip from '@mui/material/Chip';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import AddIcon from '@mui/icons-material/Add';
 import { Link as RouterLink } from 'react-router-dom';
 import LazyIcon from '../ui/LazyIcon';
 import { designTokens } from '@pyrhouse/ui';
-import { Icons, NAV_MENU_ITEMS, AdminMenuItem } from './navigation';
+import {
+  Icons,
+  NEW_ACTIONS,
+  NavItem,
+  findAdminTab,
+  getAdminTabs,
+  getNavGroups,
+  isNavItemActive,
+} from './navigation';
 
 interface SidebarNavProps {
+  /** Current pathname */
   activeItem: string;
   showFullNav: boolean;
   isMobile: boolean;
-  adminItems: AdminMenuItem[];
+  userRole: string | null;
+  /** Counters for queue items (NavItem.badge) */
+  badges: { shop?: number };
   onItemClick: (path: string) => void;
 }
 
-const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobile, adminItems, onItemClick }) => {
+const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobile, userRole, badges, onItemClick }) => {
+  const [newAnchor, setNewAnchor] = useState<HTMLElement | null>(null);
   const navItemSx = (isActive: boolean): object => ({
     borderRadius: '8px',
     mx: showFullNav ? 1 : 0.5,
@@ -75,6 +92,67 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
     },
   });
 
+  const groupLabelSx = {
+    color: 'text.secondary',
+    px: 2.5,
+    py: 0.4,
+    fontSize: '0.65rem',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+  } as const;
+
+  const renderItem = (item: NavItem, isActive: boolean, badge?: number) => {
+    const tooltip = badge ? `${item.label} (${badge})` : item.label;
+    return (
+      <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
+        <Tooltip title={!showFullNav ? tooltip : ''} placement="right" arrow>
+          <ListItemButton
+            component={RouterLink}
+            to={item.path}
+            onClick={() => onItemClick(item.path)}
+            sx={navItemSx(isActive)}
+          >
+            <ListItemIcon sx={navIconSx(isActive)}>
+              <Badge color="primary" variant="dot" invisible={showFullNav || !badge}>
+                <LazyIcon>{item.icon}</LazyIcon>
+              </Badge>
+            </ListItemIcon>
+            {showFullNav && (
+              <ListItemText
+                primary={item.label}
+                secondary={item.tag}
+                slotProps={{
+                  primary: {
+                    noWrap: true,
+                    sx: { fontWeight: isActive ? 600 : 400, fontSize: '0.875rem', letterSpacing: '0.01em' },
+                  },
+                  secondary: {
+                    noWrap: true,
+                    sx: { fontSize: '0.68rem', color: isActive ? 'rgba(255,255,255,0.8)' : 'text.secondary' },
+                  },
+                }}
+              />
+            )}
+            {showFullNav && !!badge && (
+              <Chip
+                label={badge}
+                size="small"
+                color="primary"
+                aria-label={`${badge} do obsłużenia`}
+                sx={{ height: 20, fontWeight: 700, ml: 1 }}
+              />
+            )}
+          </ListItemButton>
+        </Tooltip>
+      </ListItem>
+    );
+  };
+
+  const groups = getNavGroups(userRole);
+  const adminTabs = getAdminTabs(userRole);
+  const adminActive = !!findAdminTab(activeItem);
+
   return (
     <Box sx={{
       display: 'flex',
@@ -83,135 +161,77 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ activeItem, showFullNav, isMobi
       pt: isMobile ? '64px' : 0.5,
       overflowX: 'hidden',
     }}>
-      <List sx={{ flexGrow: 1, px: 0 }}>
-        {NAV_MENU_ITEMS.map((item, index) => (
-          item.type === 'divider' ? (
-            <Box key={`divider-${index}`}>
-              <Divider sx={{ my: showFullNav ? 0.75 : 0.5, mx: showFullNav ? 1.5 : 0.75 }} />
-              {showFullNav && (
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    color: "text.secondary",
-                    px: 2.5,
-                    py: 0.4,
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.75
-                  }}>
-                  <LazyIcon>{item.icon}</LazyIcon>
-                  {item.label}
-                </Typography>
+      {/* Create actions live under one button instead of the list */}
+      <Box sx={{ px: showFullNav ? 1.5 : 0.5, pt: 1, pb: 0.5, display: 'flex', justifyContent: 'center' }}>
+        {showFullNav ? (
+          <Button
+            fullWidth
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={(e) => setNewAnchor(e.currentTarget)}
+            aria-haspopup="menu"
+          >
+            Nowe
+          </Button>
+        ) : (
+          <Tooltip title="Nowe" placement="right" arrow>
+            <IconButton color="primary" onClick={(e) => setNewAnchor(e.currentTarget)} aria-label="Nowe" aria-haspopup="menu">
+              <AddIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Menu
+          anchorEl={newAnchor}
+          open={!!newAnchor}
+          onClose={() => setNewAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        >
+          {NEW_ACTIONS.map((a) => (
+            <MenuItem
+              key={a.path}
+              component={RouterLink}
+              to={a.path}
+              onClick={() => {
+                setNewAnchor(null);
+                onItemClick(a.path);
+              }}
+            >
+              <ListItemIcon>
+                <LazyIcon>{a.icon}</LazyIcon>
+              </ListItemIcon>
+              {a.label}
+            </MenuItem>
+          ))}
+        </Menu>
+      </Box>
+
+      <List sx={{ flexGrow: 1, px: 0, pt: 0 }}>
+        {groups.map((group, gi) => (
+          <Box key={group.label ?? `group-${gi}`}>
+            {group.label && (
+              <>
+                <Divider sx={{ my: showFullNav ? 0.75 : 0.5, mx: showFullNav ? 1.5 : 0.75 }} />
+                {showFullNav && <Typography variant="subtitle2" sx={groupLabelSx}>{group.label}</Typography>}
+              </>
+            )}
+            {group.items
+              .filter((item) => !(isMobile && item.hideOnMobile))
+              .map((item) =>
+                renderItem(item, isNavItemActive(item, activeItem), item.badge ? badges[item.badge] : undefined),
               )}
-            </Box>
-          ) : isMobile && item.path === '/dispatch' ? null : (
-            <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-              <Tooltip title={!showFullNav ? item.label : ''} placement="right" arrow>
-                <ListItemButton
-                  component={RouterLink}
-                  to={item.path!}
-                  onClick={() => item.path && onItemClick(item.path)}
-                  sx={navItemSx(activeItem === item.path)}
-                >
-                  <ListItemIcon sx={navIconSx(activeItem === item.path)}>
-                    <LazyIcon>{item.icon}</LazyIcon>
-                  </ListItemIcon>
-                  {showFullNav && (
-                    <ListItemText
-                      primary={item.label}
-                      slotProps={{
-                        primary: {
-                          noWrap: true,
-                          sx: {
-                            fontWeight: activeItem === item.path ? 600 : 400,
-                            fontSize: '0.875rem',
-                            letterSpacing: '0.01em',
-                          },
-                        }
-                      }}
-                    />
-                  )}
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-          )
+          </Box>
         ))}
       </List>
-      {adminItems.length > 0 && (
+
+      {/* Rarely used: pinned to the bottom */}
+      {adminTabs.length > 0 && (
         <>
           <Divider sx={{ my: showFullNav ? 0.75 : 0.5, mx: showFullNav ? 1.5 : 0.75 }} />
-          {showFullNav && (
-            <Typography
-              variant="subtitle2"
-              sx={{
-                color: "text.secondary",
-                px: 2.5,
-                py: 0.4,
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.75
-              }}>
-              <LazyIcon>
-                <Icons.AdminPanelSettings sx={{ fontSize: '1rem' }} />
-              </LazyIcon>
-              Admin
-            </Typography>
-          )}
           <List sx={{ pb: 1 }}>
-            {adminItems.map((item) => {
-              const isActive = item.activePrefix ? activeItem.startsWith(item.activePrefix) : activeItem === item.path;
-              const tooltip = item.badge ? `${item.label} (${item.badge})` : item.label;
-              return (
-                <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-                  <Tooltip title={!showFullNav ? tooltip : ''} placement="right" arrow>
-                    <ListItemButton
-                      component={RouterLink}
-                      to={item.path}
-                      onClick={() => onItemClick(item.path)}
-                      sx={navItemSx(isActive)}
-                    >
-                      <ListItemIcon sx={navIconSx(isActive)}>
-                        <Badge color="primary" variant="dot" invisible={showFullNav || !item.badge}>
-                          <LazyIcon>{item.icon}</LazyIcon>
-                        </Badge>
-                      </ListItemIcon>
-                      {showFullNav && (
-                        <ListItemText
-                          primary={item.label}
-                          slotProps={{
-                            primary: {
-                              noWrap: true,
-                              sx: {
-                                fontWeight: isActive ? 600 : 400,
-                                fontSize: '0.875rem',
-                                letterSpacing: '0.01em',
-                              },
-                            }
-                          }}
-                        />
-                      )}
-                      {showFullNav && !!item.badge && (
-                        <Chip
-                          label={item.badge}
-                          size="small"
-                          color="primary"
-                          aria-label={`${item.badge} do obsłużenia`}
-                          sx={{ height: 20, fontWeight: 700, ml: 1 }}
-                        />
-                      )}
-                    </ListItemButton>
-                  </Tooltip>
-                </ListItem>
-              );
-            })}
+            {renderItem(
+              { path: adminTabs[0].path, label: 'Administracja', icon: <Icons.AdminPanelSettings /> },
+              adminActive,
+            )}
           </List>
         </>
       )}

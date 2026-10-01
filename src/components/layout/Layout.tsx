@@ -15,7 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useStorage } from '../../hooks/useStorage';
 import BreadcrumbsComponent from './BreadcrumbsComponent';
 import { designTokens } from '@pyrhouse/ui';
-import { getAdminMenuItems } from './navigation';
+import AdminTabs from './AdminTabs';
 import SidebarNav from './SidebarNav';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
@@ -138,9 +138,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const shopPending = useShopPendingCount(userRole === 'admin' || userRole === 'moderator');
-  const adminMenuItems = getAdminMenuItems(userRole).map((item) =>
-    item.activePrefix === '/shop-admin' ? { ...item, badge: shopPending } : item,
-  );
   const showFullNav = open || isMobile;
 
   const virtualParents: Record<string, string[]> = {
@@ -272,7 +269,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           activeItem={activeItem}
           showFullNav={showFullNav}
           isMobile={isMobile}
-          adminItems={adminMenuItems}
+          userRole={userRole}
+          badges={{ shop: shopPending }}
           onItemClick={handleMenuItemClick}
         />
       </Drawer>
@@ -289,6 +287,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       >
         <Suspense fallback={<div>Ładowanie...</div>}>
           {generateBreadcrumbs()}
+          <AdminTabs pathname={location.pathname} userRole={userRole} />
           {children}
         </Suspense>
       </Box>
