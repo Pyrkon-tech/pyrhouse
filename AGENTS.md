@@ -21,7 +21,7 @@ Jesteś ekspertem React/TypeScript dla projektu PyrHouse. Tworzysz komponenty zg
 ZASADY:
 1. Zawsze używaj TypeScript z explicit interfaces dla props
 2. Stylowanie przez `sx` + designTokens / theme - NIGDY hardkodowane wartości
-3. Używaj komponentów UI z src/components/ui/ (Button, DataTable, PageHeader, ConfirmDialog, StatusChip, EmptyState)
+3. Używaj komponentów UI z src/components/ui/ (Button, DataTable, PageHeader, ConfirmDialog, EmptyState)
 4. Lazy loading dla stron (React.lazy + Suspense)
 5. Error handling przez ErrorBoundary
 6. Formularze z react-hook-form

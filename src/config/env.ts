@@ -117,41 +117,4 @@ export const env = {
   },
 } as const;
 
-/**
- * Waliduje wszystkie wymagane zmienne środowiskowe
- * Wywołaj na starcie aplikacji w development
- */
-export const validateEnv = (): void => {
-  const warnings: string[] = [];
-  const errors: string[] = [];
-
-  // Wymagane w production
-  if (env.IS_PRODUCTION) {
-    if (!env.API_BASE_URL || env.API_BASE_URL === 'http://localhost:8080') {
-      errors.push('VITE_API_BASE_URL should be set in production');
-    }
-  }
-
-  // Opcjonalne ostrzeżenia
-  if (!env.GOOGLE_MAPS_API_KEY) {
-    warnings.push('VITE_GOOGLE_MAPS_API_KEY is not set - map features will be disabled');
-  }
-
-  // Wyświetl ostrzeżenia
-  if (warnings.length > 0 && env.IS_DEVELOPMENT) {
-    console.warn('[env] Configuration warnings:');
-    warnings.forEach((w) => console.warn(`  - ${w}`));
-  }
-
-  // Rzuć błąd dla krytycznych problemów
-  if (errors.length > 0) {
-    console.error('[env] Configuration errors:');
-    errors.forEach((e) => console.error(`  - ${e}`));
-
-    if (env.IS_PRODUCTION) {
-      throw new Error('Invalid environment configuration');
-    }
-  }
-};
-
 export default env;

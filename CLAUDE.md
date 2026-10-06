@@ -26,7 +26,7 @@ PyrHouse to aplikacja React/TypeScript do zarządzania stanami magazynowymi dla 
 ```
 src/
 ├── components/
-│   ├── ui/           # Reużywalne komponenty (Button, DataTable, PageHeader, ConfirmDialog, StatusChip, ErrorBoundary…)
+│   ├── ui/           # Reużywalne komponenty (Button, DataTable, PageHeader, ConfirmDialog, EmptyState…; ErrorBoundary w `@pyrhouse/ui`)
 │   ├── layout/       # Layout (orchestrator) + SidebarNav, UserMenu, ThemeToggle, navigation (menu defs)
 │   ├── features/     # Strony funkcjonalne (flat files + moduły folderowe)
 │   │   ├── Transfer/           # Moduł transferów (create, details, list + sub-components)
@@ -203,7 +203,7 @@ bez niej 401 czyści token i przekierowuje na /login.
 ### Komponenty
 1. Używaj design tokens zamiast hardkodowanych wartości
 2. Preferuj `sx` prop dla prostych stylów
-3. Używaj reużywalnych komponentów z `src/components/ui/` (Button, DataTable, PageHeader, ConfirmDialog, StatusChip, EmptyState)
+3. Używaj reużywalnych komponentów z `src/components/ui/` (Button, DataTable, PageHeader, ConfirmDialog, EmptyState)
 4. TypeScript interfaces dla wszystkich props
 
 ### Routing

@@ -1,5 +1,3 @@
-import { Theme } from '@mui/material/styles';
-
 // Design tokens - centralne wartości dla całej aplikacji
 // WOW REDESIGN - Orange jako PRIMARY (Pyrkon branding)
 export const designTokens = {
@@ -274,42 +272,3 @@ export const designTokens = {
     tooltip: 1800,
   },
 };
-
-// Helper functions
-export const getDesignToken = (path: string) => {
-  const keys = path.split('.');
-  let value: unknown = designTokens;
-  
-  for (const key of keys) {
-    value = (value as Record<string, unknown>)[key];
-    if (value === undefined) {
-      console.warn(`Design token not found: ${path}`);
-      return undefined;
-    }
-  }
-  
-  return value;
-};
-
-// Theme-aware design tokens
-export const createThemeTokens = (theme: Theme) => ({
-  ...designTokens,
-  colors: {
-    ...designTokens.colors,
-    background: {
-      default: theme.palette.background.default,
-      paper: theme.palette.background.paper,
-      elevated: theme.palette.mode === 'dark' ? '#1e1e1e' : '#ffffff',
-    },
-    text: {
-      primary: theme.palette.text.primary,
-      secondary: theme.palette.text.secondary,
-      disabled: theme.palette.text.disabled,
-    },
-    border: {
-      light: theme.palette.divider,
-      medium: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
-      strong: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-    },
-  },
-});
